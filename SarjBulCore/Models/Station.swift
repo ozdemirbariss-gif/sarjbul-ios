@@ -14,6 +14,7 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
     public var sources: [String]
     public var updatedAt: String?
     public var confidenceScore: Double
+    public let searchKey: String
 
     public init(
         id: String,
@@ -43,6 +44,13 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         self.sources = sources
         self.updatedAt = updatedAt
         self.confidenceScore = confidenceScore
+        searchKey = Station.makeSearchKey(
+            name: name,
+            address: address,
+            operatorName: operatorName,
+            socket: socket,
+            power: power
+        )
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -76,6 +84,26 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         sources = try container.decodeIfPresent([String].self, forKey: .sources) ?? []
         updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
         confidenceScore = try container.decodeIfPresent(Double.self, forKey: .confidenceScore) ?? 0.62
+        searchKey = Station.makeSearchKey(
+            name: name,
+            address: address,
+            operatorName: operatorName,
+            socket: socket,
+            power: power
+        )
+    }
+
+    private static func makeSearchKey(
+        name: String,
+        address: String,
+        operatorName: String,
+        socket: String,
+        power: String
+    ) -> String {
+        "\(name) \(address) \(operatorName) \(socket) \(power)".folding(
+            options: [.diacriticInsensitive, .caseInsensitive],
+            locale: Locale(identifier: "tr_TR")
+        )
     }
 }
 
@@ -88,11 +116,5 @@ public extension Station {
         NumberParser.firstDecimal(in: price) ?? 9999
     }
 
-    var searchableText: String {
-        "\(name) \(address) \(operatorName) \(socket) \(power)".folding(
-            options: [.diacriticInsensitive, .caseInsensitive],
-            locale: Locale(identifier: "tr_TR")
-        )
-    }
+    var searchableText: String { searchKey }
 }
-

@@ -1,10 +1,13 @@
 import SwiftUI
 
 struct RootView: View {
-    @EnvironmentObject private var appState: AppState
+    @Environment(AppState.self) private var appState
 
     var body: some View {
-        TabView(selection: $appState.tab) {
+        TabView(selection: Binding(
+            get: { appState.tab },
+            set: { appState.tab = $0 }
+        )) {
             HomeView()
                 .tabItem { Label("Ana Sayfa", systemImage: "house.fill") }
                 .tag(AppState.Tab.home)
@@ -22,7 +25,7 @@ struct RootView: View {
                 .tag(AppState.Tab.account)
         }
         .tint(SBColor.accent)
-        .task { appState.load() }
+        .preferredColorScheme(.light)
+        .task { await appState.load() }
     }
 }
-

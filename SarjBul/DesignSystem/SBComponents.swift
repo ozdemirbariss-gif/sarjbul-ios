@@ -96,4 +96,14 @@ extension View {
         self
         #endif
     }
+
+    @ViewBuilder
+    func sbMediumSheet() -> some View {
+        #if os(iOS)
+        presentationDetents([.medium])
+            .presentationBackground(.ultraThinMaterial)
+        #else
+        self
+        #endif
+    }
 }

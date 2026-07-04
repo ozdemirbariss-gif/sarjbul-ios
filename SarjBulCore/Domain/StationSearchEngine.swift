@@ -22,7 +22,7 @@ public struct StationSearchEngine: Sendable {
             guard station.powerKW >= filters.minimumPowerKW else { continue }
             guard filters.socketFilters.isEmpty || filters.socketFilters.contains(where: { station.socket.localizedCaseInsensitiveContains($0) }) else { continue }
             guard filters.operatorFilters.isEmpty || filters.operatorFilters.contains(station.operatorName) else { continue }
-            guard normalizedSearch.isEmpty || station.searchableText.localizedCaseInsensitiveContains(normalizedSearch) else { continue }
+            guard normalizedSearch.isEmpty || station.searchKey.contains(normalizedSearch) else { continue }
 
             let straightLine = DistanceCalculator.haversineKm(
                 from: origin,

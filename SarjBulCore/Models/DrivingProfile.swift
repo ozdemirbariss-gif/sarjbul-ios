@@ -1,6 +1,6 @@
 import Foundation
 
-public struct DrivingProfile: Equatable, Sendable {
+public struct DrivingProfile: Codable, Equatable, Sendable {
     public var batteryKWh: Double
     public var chargePercent: Int
     public var consumptionKWhPer100Km: Double
@@ -31,4 +31,3 @@ public struct DrivingProfile: Equatable, Sendable {
         return min(100, max(0, Double(chargePercent) - spentPercent))
     }
 }
-

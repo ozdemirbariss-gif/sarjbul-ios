@@ -6,18 +6,6 @@ struct StationCard: View {
     var candidate: StationCandidate
     var rank: Int
 
-    @State private var camera: MapCameraPosition
-
-    init(candidate: StationCandidate, rank: Int) {
-        self.candidate = candidate
-        self.rank = rank
-        let center = CLLocationCoordinate2D(latitude: candidate.station.latitude, longitude: candidate.station.longitude)
-        _camera = State(initialValue: .region(MKCoordinateRegion(
-            center: center,
-            span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
-        )))
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             mapPreview
@@ -33,16 +21,10 @@ struct StationCard: View {
     }
 
     private var mapPreview: some View {
-        Map(position: $camera) {
-            Marker(candidate.station.name, coordinate: CLLocationCoordinate2D(
-                latitude: candidate.station.latitude,
-                longitude: candidate.station.longitude
-            ))
-            .tint(SBColor.navy)
-        }
-        .frame(height: 210)
+        StationMapPreview(station: candidate.station)
         .overlay(alignment: .topLeading) {
             Button {
+                Haptic.tap()
                 openInAppleMaps()
             } label: {
                 Image(systemName: "arrow.up.right")
@@ -53,6 +35,7 @@ struct StationCard: View {
                     .clipShape(Circle())
                     .shadow(radius: 12)
             }
+            .accessibilityLabel("Rotayı Haritalar'da aç")
             .padding(16)
         }
         .overlay(alignment: .topTrailing) {
@@ -115,6 +98,7 @@ struct StationCard: View {
             }
 
             SBPrimaryButton(title: "Rotayı Aç", systemImage: "map") {
+                Haptic.tap()
                 openInAppleMaps()
             }
 
@@ -151,4 +135,3 @@ struct StationCard: View {
         destination.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
     }
 }
-

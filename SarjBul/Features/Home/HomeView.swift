@@ -3,7 +3,7 @@ import SarjBulCore
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject private var appState: AppState
+    @Environment(AppState.self) private var appState
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -13,6 +13,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     hero
+                    statusChip
                     quickActions
                     locationSection
                     drivingProfile
@@ -25,13 +26,13 @@ struct HomeView: View {
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 appState.updateLocation(latitude: location.latitude, longitude: location.longitude, source: .device)
             }
-            .alert("Bilgi", isPresented: Binding(
-                get: { appState.errorMessage != nil },
-                set: { if !$0 { appState.errorMessage = nil } }
+            .alert("İşlem tamamlanamadı", isPresented: Binding(
+                get: { appState.message != nil },
+                set: { if !$0 { appState.dismissMessage() } }
             )) {
                 Button("Tamam", role: .cancel) {}
             } message: {
-                Text(appState.errorMessage ?? "")
+                Text(appState.message ?? "")
             }
         }
     }
@@ -52,12 +53,24 @@ struct HomeView: View {
         .padding(.top, 10)
     }
 
+    private var statusChip: some View {
+        Text(appState.stationLoadChipText)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(SBColor.navy)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.white.opacity(0.72))
+            .clipShape(Capsule())
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appState.stationLoadChipText)
+    }
+
     private var quickActions: some View {
         HStack(spacing: 10) {
             preferenceButton(.nearest, icon: "location.north.line")
             preferenceButton(.fastest, icon: "bolt.fill")
             preferenceButton(.economical, icon: "creditcard")
             Button {
+                Haptic.tap()
                 appState.tab = .lounge
             } label: {
                 Label("Salon", systemImage: "gamecontroller")
@@ -69,6 +82,7 @@ struct HomeView: View {
 
     private func preferenceButton(_ preference: RoutePreference, icon: String) -> some View {
         Button {
+            Haptic.tap()
             appState.filters.preference = preference
         } label: {
             Label(preference.title, systemImage: icon)
@@ -98,6 +112,7 @@ struct HomeView: View {
                 }
 
                 SBPrimaryButton(title: "Konumumu kullan", systemImage: "location.fill") {
+                    Haptic.tap()
                     locationManager.requestLocation()
                 }
 
@@ -112,6 +127,7 @@ struct HomeView: View {
                         .textFieldStyle(.roundedBorder)
 
                         Button("Manuel konumu kullan") {
+                            Haptic.tap()
                             appState.updateLocation(latitude: manualLatitude, longitude: manualLongitude, source: .manual)
                         }
                         .buttonStyle(.borderedProminent)
@@ -156,14 +172,20 @@ struct HomeView: View {
                     MetricInput(
                         title: "Batarya kapasitesi",
                         unit: "kWh",
-                        value: $appState.profile.batteryKWh,
+                        value: Binding(
+                            get: { appState.profile.batteryKWh },
+                            set: { appState.profile.batteryKWh = $0 }
+                        ),
                         range: 1...250,
                         step: 1
                     )
                     MetricInput(
                         title: "Ortalama tüketim",
                         unit: "kWh",
-                        value: $appState.profile.consumptionKWhPer100Km,
+                        value: Binding(
+                            get: { appState.profile.consumptionKWhPer100Km },
+                            set: { appState.profile.consumptionKWhPer100Km = $0 }
+                        ),
                         range: 5...40,
                         step: 0.1
                     )
@@ -172,16 +194,24 @@ struct HomeView: View {
                 Text("\(Int(appState.profile.safeRangeKm.rounded())) km güvenli menzille yola hazırsın")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(SBColor.ink)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.45, dampingFraction: 0.85), value: appState.profile.safeRangeKm)
             }
         }
     }
 
     private var routeAction: some View {
-        SBPrimaryButton(title: "Şarj Bul", systemImage: "arrow.right") {
-            appState.findStations()
+        SBPrimaryButton(title: appState.isSearching ? "Hesaplanıyor..." : "Şarj Bul", systemImage: "arrow.right") {
+            Haptic.tap()
+            Task {
+                await appState.findStations()
+                if !appState.routeCandidates.isEmpty {
+                    Haptic.success()
+                }
+            }
         }
-        .disabled(appState.stations.isEmpty)
-        .opacity(appState.stations.isEmpty ? 0.55 : 1)
+        .disabled(!appState.canSearch)
+        .opacity(appState.canSearch ? 1 : 0.55)
     }
 }
 
@@ -196,5 +226,6 @@ private struct QuickActionStyle: ButtonStyle {
             .background(active ? SBColor.accent.opacity(0.95) : .white.opacity(0.72))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
