@@ -1,0 +1,33 @@
+[
+  {
+    "id": "near_ac",
+    "isim": "Yakın AC İstasyon",
+    "adres": "Test Mahallesi",
+    "enlem": 38.3949,
+    "boylam": 27.1898,
+    "hiz": "22 kW AC",
+    "operator": "TestCharge",
+    "soket": "Type 2",
+    "fiyat": "8.00 TL/kWh",
+    "kaynak": "fixture",
+    "kaynaklar": ["fixture"],
+    "guncelleme_tarihi": "2026-06-30T10:00:00Z",
+    "guven_skoru": 0.90
+  },
+  {
+    "id": "fast_dc",
+    "isim": "Hızlı DC İstasyon",
+    "adres": "Otoyol",
+    "enlem": 38.4200,
+    "boylam": 27.2200,
+    "hiz": "180 kW DC",
+    "operator": "FastEV",
+    "soket": "CCS",
+    "fiyat": "12.00 TL/kWh",
+    "kaynak": "fixture",
+    "kaynaklar": ["fixture", "osm"],
+    "guncelleme_tarihi": "2026-06-30T10:00:00Z",
+    "guven_skoru": 0.96
+  }
+]
+
