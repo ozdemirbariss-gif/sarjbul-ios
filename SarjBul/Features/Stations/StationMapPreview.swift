@@ -25,6 +25,7 @@ enum MapSnapshotter {
             center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
             span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
         )
+        options.mapType = .mutedStandard
         options.size = size
 
         guard let snapshot = try? await MKMapSnapshotter(options: options).start() else {

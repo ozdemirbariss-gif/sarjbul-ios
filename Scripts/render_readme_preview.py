@@ -132,7 +132,7 @@ def pill(canvas, box, label, active=False):
 
 
 def primary(canvas, box, label):
-    g = gradient((box[2] - box[0], box[3] - box[1]))
+    g = gradient((box[2] - box[0], box[3] - box[1]), left=ACCENT, right=PRIMARY_DEEP)
     mask = Image.new("L", g.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, g.size[0], g.size[1]), radius=RADII["lg"], fill=255)
     canvas.paste(g, (box[0], box[1]), mask)

@@ -60,8 +60,15 @@ struct HomeView: View {
             Haptic.tap()
             appState.filters.preference = preference
         } label: {
-            Label(preference.title, systemImage: icon)
-                .frame(maxWidth: .infinity)
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.headline.weight(.heavy))
+                Text(preference.title)
+                    .font(.caption.weight(.heavy))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+            }
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(QuickActionStyle(active: appState.filters.preference == preference))
     }
@@ -224,7 +231,7 @@ struct HomeView: View {
                 Spacer(minLength: 0)
             }
             .padding(22)
-            .background(SBColor.surface)
+            .background(LinearGradient.sbSoftPanel)
 
             Button {
                 guard appState.canSearch else { return }
@@ -349,13 +356,13 @@ private struct QuickActionStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(active ? SBColor.ink : SBColor.muted)
+            .foregroundStyle(active ? SBColor.accent : SBColor.muted)
             .frame(maxWidth: .infinity)
-            .frame(height: 104)
-            .background(SBColor.glassStrong)
-            .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+            .frame(height: 68)
+            .background(active ? SBColor.electricBlue : SBColor.glassStrong)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .stroke(active ? SBColor.lineStrong : SBColor.line, lineWidth: active ? 2 : 1)
             )
             .sbSoftShadow()
@@ -426,7 +433,7 @@ private struct BatteryBar: View {
                 Capsule()
                     .fill(SBColor.line)
                 Capsule()
-                    .fill(LinearGradient.sbPrimary)
+                    .fill(LinearGradient.sbNeon)
                     .frame(width: fillWidth)
                 Capsule()
                     .stroke(SBColor.line, lineWidth: 1)

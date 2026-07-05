@@ -5,16 +5,16 @@ struct SBScreenBackground: View {
         ZStack {
             SBColor.background
             RadialGradient(
-                colors: [SBColor.accent.opacity(0.20), .clear],
+                colors: [SBColor.accent.opacity(0.18), .clear],
+                center: .top,
+                startRadius: 20,
+                endRadius: 460
+            )
+            RadialGradient(
+                colors: [SBColor.primaryDeep.opacity(0.12), .clear],
                 center: .bottomLeading,
                 startRadius: 20,
                 endRadius: 520
-            )
-            RadialGradient(
-                colors: [SBColor.primaryDeep.opacity(0.10), .clear],
-                center: .topTrailing,
-                startRadius: 20,
-                endRadius: 420
             )
         }
         .ignoresSafeArea()
@@ -122,7 +122,7 @@ struct SBPanel<Content: View>: View {
     var body: some View {
         content
             .padding(20)
-            .background(SBColor.surface)
+            .background(LinearGradient.sbSoftPanel)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
@@ -142,7 +142,7 @@ struct SBSecondaryPanel<Content: View>: View {
     var body: some View {
         content
             .padding(20)
-            .background(SBColor.glassStrong)
+            .background(LinearGradient.sbSoftPanel)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
@@ -169,7 +169,7 @@ struct SBPrimaryButton: View {
             .foregroundStyle(SBColor.ink)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(LinearGradient.sbPrimary)
+            .background(LinearGradient.sbNeon)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             .sbGlowShadow()
         }
@@ -211,20 +211,26 @@ struct MetricInput: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.caption.weight(.semibold))
+                .font(.headline.weight(.heavy))
                 .foregroundStyle(SBColor.muted)
 
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
+            HStack(alignment: .center, spacing: 8) {
                 TextField(title, value: $value, format: .number.precision(.fractionLength(step < 1 ? 1 : 0)))
-                    .font(.title3.weight(.bold))
+                    .font(SBFont.display(size: 28, weight: .heavy))
                     .foregroundStyle(SBColor.ink)
+                    .multilineTextAlignment(.center)
+                    .monospacedDigit()
                     .sbDecimalKeyboard()
                     .onChange(of: value) { _, newValue in
                         value = min(range.upperBound, max(range.lowerBound, newValue))
                     }
                 Text(unit)
-                    .font(.caption.weight(.bold))
+                    .font(.caption2.weight(.heavy))
                     .foregroundStyle(SBColor.muted)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(SBColor.surface)
+                    .clipShape(Capsule())
             }
             .padding(.horizontal, 14)
             .frame(height: 72)

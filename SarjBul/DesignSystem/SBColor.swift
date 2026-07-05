@@ -235,4 +235,20 @@ extension LinearGradient {
             endPoint: .trailing
         )
     }
+
+    static var sbNeon: LinearGradient {
+        LinearGradient(
+            colors: [SBColor.accent, SBColor.primaryDeep.opacity(0.92)],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
+    static var sbSoftPanel: LinearGradient {
+        LinearGradient(
+            colors: [SBColor.glassStrong, SBColor.surfaceSolid.opacity(0.78)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
 }

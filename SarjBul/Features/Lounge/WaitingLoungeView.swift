@@ -2,6 +2,7 @@ import Combine
 import SwiftUI
 
 struct WaitingLoungeView: View {
+    @Environment(AppState.self) private var appState
     @State private var playerY: CGFloat = 0
     @State private var jumpVelocity: CGFloat = 0
     @State private var obstacleX: CGFloat = 260
@@ -14,75 +15,113 @@ struct WaitingLoungeView: View {
     private let timer = Timer.publish(every: 0.025, on: .main, in: .common)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("ŞARJ ARASI")
-                    .font(.caption.weight(.heavy))
-                    .foregroundStyle(SBColor.accent)
-                Text("Salon")
-                    .font(SBFont.display(size: 54, weight: .bold))
-                Text("Aracın dolarken reflekslerini açık tutan kısa ve sürprizli bir oyun.")
-                    .font(.headline)
-                    .foregroundStyle(SBColor.muted)
-            }
+        ZStack(alignment: .topLeading) {
+            SBScreenBackground()
 
-            SBPanel {
-                VStack(spacing: 18) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("VOLT DASH")
-                                .font(.caption.weight(.heavy))
-                                .foregroundStyle(SBColor.electricBlue)
-                            Text(crashed ? "Çarptın" : running ? "Koşuyor" : "Hazır")
-                                .font(.largeTitle.weight(.heavy))
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing) {
-                            Text("SKOR \(score)")
-                                .font(.headline.weight(.bold))
-                            Text("EN İYİ \(best)")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(SBColor.muted)
-                        }
-                    }
-
-                    GeometryReader { proxy in
-                        ZStack(alignment: .bottomLeading) {
-                            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                                .fill(SBColor.background)
-
-                            Capsule()
-                                .fill(LinearGradient.sbPrimary)
-                                .frame(width: 44, height: 44)
-                                .offset(x: 44, y: -max(0, playerY))
-                                .sbGlowShadow()
-
-                            RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous)
-                                .fill(SBColor.electricBlue)
-                                .frame(width: 34, height: 72)
-                                .offset(x: obstacleX, y: 0)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            jump()
-                        }
-                        .onReceive(timer) { _ in
-                            tick(width: proxy.size.width)
-                        }
-                    }
-                    .frame(height: 360)
-
-                    SBPrimaryButton(title: running ? "Zıpla" : "Başlat", systemImage: "bolt.fill") {
-                        running ? jump() : start()
-                    }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
+                    gamePanel
                 }
+                .padding(.horizontal, 22)
+                .padding(.top, 94)
+                .padding(.bottom, 28)
             }
-            Spacer()
+
+            SBBackButton {
+                appState.tab = .home
+            }
+            .padding(.leading, 18)
+            .padding(.top, 6)
         }
-        .padding(22)
-        .background(SBColor.background.ignoresSafeArea())
         .onDisappear {
             stopTimer()
+        }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("ŞARJ ARASI")
+                .font(.caption.weight(.heavy))
+                .foregroundStyle(SBColor.primaryDeep)
+                .textCase(.uppercase)
+            Text("Salon")
+                .font(SBFont.display(size: 52, weight: .heavy))
+                .foregroundStyle(SBColor.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+            Text("Aracın dolarken reflekslerini açık tutan kısa ve sürprizli bir oyun.")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(SBColor.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.leading, 92)
+    }
+
+    private var gamePanel: some View {
+        SBPanel {
+            VStack(spacing: 18) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("VOLT DASH")
+                            .font(.caption.weight(.heavy))
+                            .foregroundStyle(SBColor.primaryDeep)
+                        Text(crashed ? "Çarptın" : running ? "Koşuyor" : "Hazır")
+                            .font(SBFont.display(size: 36, weight: .heavy))
+                            .foregroundStyle(SBColor.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 6) {
+                        Text("SKOR \(score)")
+                            .font(.headline.weight(.heavy))
+                        Text("EN İYİ \(best)")
+                            .font(.caption.weight(.heavy))
+                            .foregroundStyle(SBColor.muted)
+                    }
+                }
+
+                GeometryReader { proxy in
+                    ZStack(alignment: .bottomLeading) {
+                        RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [SBColor.surfaceSolid.opacity(0.92), SBColor.accent.opacity(0.12)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                                    .stroke(SBColor.line, lineWidth: 1)
+                            )
+
+                        Capsule()
+                            .fill(LinearGradient.sbPrimary)
+                            .frame(width: 44, height: 44)
+                            .offset(x: 44, y: -max(0, playerY))
+                            .sbGlowShadow()
+
+                        RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous)
+                            .fill(SBColor.electricBlue)
+                            .frame(width: 34, height: 72)
+                            .offset(x: obstacleX, y: 0)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        jump()
+                    }
+                    .onReceive(timer) { _ in
+                        tick(width: proxy.size.width)
+                    }
+                }
+                .frame(height: 330)
+
+                SBPrimaryButton(title: running ? "Zıpla" : "Başlat", systemImage: "bolt.fill") {
+                    running ? jump() : start()
+                }
+            }
         }
     }
 
