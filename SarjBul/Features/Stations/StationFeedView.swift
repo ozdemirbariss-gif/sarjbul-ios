@@ -4,6 +4,7 @@ import SwiftUI
 struct StationFeedView: View {
     @Environment(AppState.self) private var appState
     @State private var filterSheetPresented = false
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -15,6 +16,9 @@ struct StationFeedView: View {
                 ), prompt: "İstasyon ara")
                 .onSubmit(of: .search) {
                     Task { await appState.findStations() }
+                }
+                .onChange(of: appState.filters.searchText) { _, _ in
+                    scheduleSearchRefresh()
                 }
                 .toolbar {
                     Button {
@@ -37,6 +41,16 @@ struct StationFeedView: View {
                     }
                     .sbMediumSheet()
                 }
+        }
+    }
+
+    private func scheduleSearchRefresh() {
+        guard appState.userLocation != nil, !appState.routeCandidates.isEmpty else { return }
+        searchTask?.cancel()
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            await appState.findStations()
         }
     }
 

@@ -6,6 +6,7 @@ import SarjBulCore
 final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocationManagerDelegate {
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var lastLocation: UserLocation?
+    @Published var lastError: Error?
 
     private let manager = CLLocationManager()
 
@@ -17,6 +18,7 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
     }
 
     func requestLocation() {
+        lastError = nil
         authorizationStatus = manager.authorizationStatus
         if authorizationStatus == .notDetermined {
             #if os(macOS)
@@ -38,11 +40,12 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let coordinate = locations.last?.coordinate else { return }
+        lastError = nil
         lastLocation = UserLocation(latitude: coordinate.latitude, longitude: coordinate.longitude, source: .device)
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        // UI manuel konum kartını göstermeye devam eder.
+        lastError = error
     }
 
     private var locationAccessGranted: Bool {

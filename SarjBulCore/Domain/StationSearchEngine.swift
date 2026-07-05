@@ -28,9 +28,10 @@ public struct StationSearchEngine: Sendable {
             candidates.removeAll(keepingCapacity: true)
 
             for station in stations {
+                guard station.hasValidCoordinate else { continue }
                 guard isInsideBoundingBox(station: station, origin: origin, radiusKm: radiusKm) else { continue }
-                guard station.powerKW >= filters.minimumPowerKW else { continue }
-                guard filters.socketFilters.isEmpty || filters.socketFilters.contains(where: { station.socket.localizedCaseInsensitiveContains($0) }) else { continue }
+                guard filters.minimumPowerKW <= 0 || !station.hasKnownPower || station.powerKW >= filters.minimumPowerKW else { continue }
+                guard filters.socketFilters.isEmpty || !station.hasKnownSocket || filters.socketFilters.contains(where: { station.socket.localizedCaseInsensitiveContains($0) }) else { continue }
                 guard filters.operatorFilters.isEmpty || filters.operatorFilters.contains(station.operatorName) else { continue }
                 guard normalizedSearch.isEmpty || station.searchKey.contains(normalizedSearch) else { continue }
 
@@ -74,6 +75,10 @@ public struct StationSearchEngine: Sendable {
     private func radiusSteps(rangeFilterEnabled: Bool, safeRangeKm: Double) -> [Double] {
         var radius = max(20, rangeFilterEnabled ? safeRangeKm : defaultCandidateRadiusKm)
         var steps: [Double] = []
+
+        if rangeFilterEnabled {
+            return [min(radius, maxCandidateRadiusKm)]
+        }
 
         while radius <= maxCandidateRadiusKm {
             let rounded = (radius * 10).rounded() / 10

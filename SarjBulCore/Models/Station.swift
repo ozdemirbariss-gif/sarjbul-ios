@@ -124,11 +124,39 @@ public extension Station {
     }
 
     var powerKW: Double {
-        NumberParser.firstDecimal(in: power) ?? 0
+        if let value = NumberParser.firstDecimal(in: power) {
+            return value
+        }
+
+        let normalized = power.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+        if normalized.contains("standart") && normalized.contains("ac") {
+            return 22
+        }
+        if normalized.contains("ac") {
+            return 11
+        }
+        return 0
     }
 
     var priceValue: Double {
         NumberParser.firstDecimal(in: price) ?? 9999
+    }
+
+    var hasKnownPower: Bool {
+        NumberParser.firstDecimal(in: power) != nil
+            || power.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR")).contains("ac")
+    }
+
+    var hasKnownSocket: Bool {
+        let normalized = socket.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return !normalized.isEmpty && !normalized.contains("bilinmiyor") && !normalized.contains("unknown")
+    }
+
+    var hasValidCoordinate: Bool {
+        (-90...90).contains(latitude)
+            && (-180...180).contains(longitude)
+            && !(abs(latitude) < 0.000001 && abs(longitude) < 0.000001)
     }
 
     var searchableText: String { searchKey }

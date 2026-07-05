@@ -61,6 +61,21 @@ struct StationSearchEngineTests {
         #expect(candidates.first?.station.id == "fast_dc")
     }
 
+    @Test
+    func turkishPriceFormatsAreParsed() {
+        #expect(NumberParser.firstDecimal(in: "1.250,00 TL") == 1250)
+        #expect(NumberParser.firstDecimal(in: "12,50 TL/kWh") == 12.5)
+        #expect(NumberParser.firstDecimal(in: "8.00 TL/kWh") == 8)
+    }
+
+    @Test
+    func positiveStatusTextIsNotClassifiedAsRisk() {
+        let statusClass = FirebaseRESTClient.statusClass(status: "Sorunsuz çalışıyor", comment: "")
+
+        #expect(statusClass == "bos")
+        #expect(FirebaseRESTClient.statusSummaryState(forStatusClass: statusClass) == "aktif")
+    }
+
     private func loadFixture() throws -> [Station] {
         let url = try #require(Bundle.module.url(forResource: "stations.fixture", withExtension: "json", subdirectory: "Fixtures"))
         let data = try Data(contentsOf: url)

@@ -18,7 +18,8 @@ public struct FirebaseRESTClient: Sendable {
         }
         guard let url = components?.url else { return [:] }
         let (data, response) = try await session.data(from: url)
-        guard (response as? HTTPURLResponse)?.statusCode ?? 500 < 300 else { return [:] }
+        try validate(response: response, data: data)
+        guard !data.isEmpty, String(data: data, encoding: .utf8) != "null" else { return [:] }
         return try JSONDecoder().decode([String: StationStatusSummary].self, from: data)
     }
 
@@ -53,7 +54,12 @@ public struct FirebaseRESTClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.httpBody = "grant_type=refresh_token&refresh_token=\(refreshToken)".data(using: .utf8)
+        var body = URLComponents()
+        body.queryItems = [
+            URLQueryItem(name: "grant_type", value: "refresh_token"),
+            URLQueryItem(name: "refresh_token", value: refreshToken)
+        ]
+        request.httpBody = body.percentEncodedQuery?.data(using: .utf8)
 
         let (data, response) = try await session.data(for: request)
         try validate(response: response, data: data)
@@ -120,9 +126,8 @@ public struct FirebaseRESTClient: Sendable {
             path: "station_status/\(stationKey).json",
             idToken: idToken,
             body: StationStatusSummary(
-                durum: statusClass == "bos" ? "aktif" : statusClass == "mesgul" ? "riskli" : "belirsiz",
-                etiket: status,
-                toplam: 1
+                durum: Self.statusSummaryState(forStatusClass: statusClass),
+                etiket: status
             )
         )
     }
@@ -178,23 +183,24 @@ public struct FirebaseRESTClient: Sendable {
         guard statusCode < 300 else {
             let message = (try? JSONDecoder().decode(FirebaseErrorEnvelope.self, from: data).error.message)
                 ?? HTTPURLResponse.localizedString(forStatusCode: statusCode)
-            throw FirebaseRESTError.requestFailed(message)
+            throw FirebaseRESTError.requestFailed(message, statusCode: statusCode)
         }
     }
 
-    private static func statusClass(status: String, comment: String) -> String {
+    static func statusClass(status: String, comment: String) -> String {
         let text = "\(status) \(comment)"
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
-        if ["sorun", "ariza", "bozuk", "calismiyor"].contains(where: text.contains) {
-            return "mesgul"
-        }
-        if ["sira", "dolu", "bekleme", "mesgul"].contains(where: text.contains) {
-            return "mesgul"
-        }
         if ["uygun", "bos", "sorunsuz", "aktif"].contains(where: text.contains) {
             return "bos"
         }
+        if ["sorun", "ariza", "bozuk", "calismiyor", "sira", "dolu", "bekleme", "mesgul"].contains(where: text.contains) {
+            return "mesgul"
+        }
         return "belirsiz"
+    }
+
+    static func statusSummaryState(forStatusClass statusClass: String) -> String {
+        statusClass == "bos" ? "aktif" : statusClass == "mesgul" ? "riskli" : "belirsiz"
     }
 }
 
@@ -215,11 +221,20 @@ public struct FirebaseAuthSession: Codable, Equatable, Sendable {
     public var email: String?
     public var refreshToken: String
     public var expiresIn: String?
+    public var issuedAt: Date
     public var localId: String?
     public var userId: String?
 
     public var uid: String {
         localId ?? userId ?? ""
+    }
+
+    public var isExpired: Bool {
+        Date() >= issuedAt.addingTimeInterval(TimeInterval(max(60, expiresInSeconds) - 60))
+    }
+
+    private var expiresInSeconds: Int {
+        Int(expiresIn ?? "") ?? 3600
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -230,6 +245,7 @@ public struct FirebaseAuthSession: Codable, Equatable, Sendable {
         case refreshTokenSnake = "refresh_token"
         case expiresIn
         case expiresInSnake = "expires_in"
+        case issuedAt
         case localId
         case userId = "user_id"
     }
@@ -239,6 +255,7 @@ public struct FirebaseAuthSession: Codable, Equatable, Sendable {
         email: String? = nil,
         refreshToken: String,
         expiresIn: String? = nil,
+        issuedAt: Date = Date(),
         localId: String? = nil,
         userId: String? = nil
     ) {
@@ -246,6 +263,7 @@ public struct FirebaseAuthSession: Codable, Equatable, Sendable {
         self.email = email
         self.refreshToken = refreshToken
         self.expiresIn = expiresIn
+        self.issuedAt = issuedAt
         self.localId = localId
         self.userId = userId
     }
@@ -259,6 +277,7 @@ public struct FirebaseAuthSession: Codable, Equatable, Sendable {
             ?? container.decode(String.self, forKey: .refreshTokenSnake)
         expiresIn = try container.decodeIfPresent(String.self, forKey: .expiresIn)
             ?? container.decodeIfPresent(String.self, forKey: .expiresInSnake)
+        issuedAt = try container.decodeIfPresent(Date.self, forKey: .issuedAt) ?? Date()
         localId = try container.decodeIfPresent(String.self, forKey: .localId)
         userId = try container.decodeIfPresent(String.self, forKey: .userId)
     }
@@ -269,6 +288,7 @@ public struct FirebaseAuthSession: Codable, Equatable, Sendable {
         try container.encodeIfPresent(email, forKey: .email)
         try container.encode(refreshToken, forKey: .refreshToken)
         try container.encodeIfPresent(expiresIn, forKey: .expiresIn)
+        try container.encode(issuedAt, forKey: .issuedAt)
         try container.encodeIfPresent(localId, forKey: .localId)
         try container.encodeIfPresent(userId, forKey: .userId)
     }
@@ -276,13 +296,20 @@ public struct FirebaseAuthSession: Codable, Equatable, Sendable {
 
 public enum FirebaseRESTError: LocalizedError, Equatable {
     case invalidURL
-    case requestFailed(String)
+    case requestFailed(String, statusCode: Int? = nil)
+
+    public var isUnauthorized: Bool {
+        if case .requestFailed(_, let statusCode) = self {
+            return statusCode == 401
+        }
+        return false
+    }
 
     public var errorDescription: String? {
         switch self {
         case .invalidURL:
             "Firebase adresi geçersiz."
-        case .requestFailed(let message):
+        case .requestFailed(let message, _):
             message
         }
     }

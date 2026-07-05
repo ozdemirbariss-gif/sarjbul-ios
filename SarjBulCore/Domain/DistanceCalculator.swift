@@ -24,8 +24,7 @@ public enum DistanceCalculator {
     }
 
     public static func estimatedMinutes(distanceKm: Double) -> Int {
-        guard distanceKm > 0 else { return 1 }
+        guard distanceKm > 0 else { return 0 }
         return max(1, Int((distanceKm / averageSpeedKmh * 60).rounded()))
     }
 }
-

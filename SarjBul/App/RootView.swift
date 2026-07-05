@@ -31,6 +31,11 @@ struct RootView: View {
             get: { appState.message != nil },
             set: { if !$0 { appState.dismissMessage() } }
         )) {
+            if appState.canRetryStationLoad {
+                Button("Tekrar dene") {
+                    Task { await appState.retryLoad() }
+                }
+            }
             Button("Tamam", role: .cancel) {}
         } message: {
             Text(appState.message ?? "")

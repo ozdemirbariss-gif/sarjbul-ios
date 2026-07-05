@@ -1,14 +1,17 @@
+import Combine
 import SwiftUI
 
 struct WaitingLoungeView: View {
     @State private var playerY: CGFloat = 0
+    @State private var jumpVelocity: CGFloat = 0
     @State private var obstacleX: CGFloat = 260
     @State private var running = false
     @State private var score = 0
     @State private var best = UserDefaults.standard.integer(forKey: "voltDashBest")
     @State private var crashed = false
+    @State private var timerConnection: (any Cancellable)?
 
-    private let timer = Timer.publish(every: 0.025, on: .main, in: .common).autoconnect()
+    private let timer = Timer.publish(every: 0.025, on: .main, in: .common)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -78,6 +81,9 @@ struct WaitingLoungeView: View {
         }
         .padding(22)
         .background(SBColor.background.ignoresSafeArea())
+        .onDisappear {
+            stopTimer()
+        }
     }
 
     private func start() {
@@ -85,7 +91,10 @@ struct WaitingLoungeView: View {
         crashed = false
         running = true
         playerY = 0
+        jumpVelocity = 0
         obstacleX = 260
+        timerConnection?.cancel()
+        timerConnection = timer.connect()
     }
 
     private func jump() {
@@ -93,18 +102,15 @@ struct WaitingLoungeView: View {
             start()
             return
         }
-        withAnimation(.spring(response: 0.16, dampingFraction: 0.55)) {
-            playerY = 112
+        guard playerY <= 1 else {
+            return
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            withAnimation(.easeIn(duration: 0.18)) {
-                playerY = 0
-            }
-        }
+        jumpVelocity = 11.8
     }
 
     private func tick(width: CGFloat) {
         guard running else { return }
+        updatePlayerPhysics()
         obstacleX -= 4.4
         if obstacleX < -40 {
             obstacleX = width + CGFloat.random(in: 30...120)
@@ -116,9 +122,23 @@ struct WaitingLoungeView: View {
         if playerFrame.intersects(obstacleFrame) {
             running = false
             crashed = true
+            stopTimer()
             best = max(best, score)
             UserDefaults.standard.set(best, forKey: "voltDashBest")
         }
     }
-}
 
+    private func updatePlayerPhysics() {
+        guard playerY > 0 || jumpVelocity > 0 else { return }
+        playerY = max(0, playerY + jumpVelocity)
+        jumpVelocity -= 0.72
+        if playerY == 0 {
+            jumpVelocity = 0
+        }
+    }
+
+    private func stopTimer() {
+        timerConnection?.cancel()
+        timerConnection = nil
+    }
+}

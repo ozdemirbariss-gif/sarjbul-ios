@@ -49,6 +49,7 @@ final class AppState {
     var loadingMessage: String?
     var errorMessage: String?
     var successMessage: String?
+    private var pendingFavoriteKeys: Set<String> = []
 
     private let repository: any StationRepository
     private let firebaseClient: FirebaseRESTClient?
@@ -89,6 +90,7 @@ final class AppState {
     func load() async {
         guard stations.isEmpty else { return }
         loadingMessage = "İstasyonlar hazırlanıyor"
+        errorMessage = nil
         let repository = repository
 
         do {
@@ -104,6 +106,10 @@ final class AppState {
             loadingMessage = nil
             errorMessage = error.localizedDescription
         }
+    }
+
+    func retryLoad() async {
+        await load()
     }
 
     func updateLocation(latitude: Double, longitude: Double, source: UserLocation.Source) {
@@ -165,6 +171,10 @@ final class AppState {
     var stationLoadChipText: String {
         if let loadingMessage { return loadingMessage }
         return stations.isEmpty ? "İstasyonlar hazırlanıyor" : "\(stations.count) istasyon hazır"
+    }
+
+    var canRetryStationLoad: Bool {
+        stations.isEmpty && loadingMessage == nil && errorMessage != nil
     }
 
     var isFirebaseConfigured: Bool {
@@ -234,6 +244,7 @@ final class AppState {
     func signOut() {
         authSession = nil
         favorites = []
+        stationStatuses = [:]
     }
 
     func isFavorite(_ stationKey: String) -> Bool {
@@ -241,11 +252,14 @@ final class AppState {
     }
 
     func toggleFavorite(_ stationKey: String) async {
-        guard let firebaseClient, let session = authSession else {
+        guard let firebaseClient else {
             errorMessage = "Kaydetmek için giriş yapmalısın."
             return
         }
+        guard !pendingFavoriteKeys.contains(stationKey) else { return }
 
+        pendingFavoriteKeys.insert(stationKey)
+        defer { pendingFavoriteKeys.remove(stationKey) }
         let shouldFavorite = !favorites.contains(stationKey)
         if shouldFavorite {
             favorites.insert(stationKey)
@@ -254,12 +268,14 @@ final class AppState {
         }
 
         do {
-            try await firebaseClient.setFavorite(
-                uid: session.uid,
-                stationKey: stationKey,
-                isFavorite: shouldFavorite,
-                idToken: session.idToken
-            )
+            try await authenticatedRequest { session in
+                try await firebaseClient.setFavorite(
+                    uid: session.uid,
+                    stationKey: stationKey,
+                    isFavorite: shouldFavorite,
+                    idToken: session.idToken
+                )
+            }
         } catch {
             if shouldFavorite {
                 favorites.remove(stationKey)
@@ -271,19 +287,21 @@ final class AppState {
     }
 
     func reportStatus(stationKey: String, status: String) async {
-        guard let firebaseClient, let session = authSession else {
+        guard let firebaseClient else {
             errorMessage = "Durum bildirmek için giriş yapmalısın."
             return
         }
 
         do {
-            try await firebaseClient.sendStationReport(
-                stationKey: stationKey,
-                status: status,
-                comment: status,
-                uid: session.uid,
-                idToken: session.idToken
-            )
+            try await authenticatedRequest { session in
+                try await firebaseClient.sendStationReport(
+                    stationKey: stationKey,
+                    status: status,
+                    comment: status,
+                    uid: session.uid,
+                    idToken: session.idToken
+                )
+            }
             await loadStationStatuses()
             await findStations()
         } catch {
@@ -294,19 +312,67 @@ final class AppState {
     private func loadStationStatuses() async {
         guard let firebaseClient else { return }
         do {
-            stationStatuses = try await firebaseClient.stationStatuses(idToken: authSession?.idToken)
+            if authSession != nil {
+                stationStatuses = try await authenticatedRequest { session in
+                    try await firebaseClient.stationStatuses(idToken: session.idToken)
+                }
+            } else {
+                stationStatuses = try await firebaseClient.stationStatuses()
+            }
         } catch {
             stationStatuses = [:]
         }
     }
 
     private func loadFavorites() async {
-        guard let firebaseClient, let authSession else { return }
+        guard let firebaseClient, authSession != nil else { return }
         do {
-            favorites = try await firebaseClient.favoriteIDs(uid: authSession.uid, idToken: authSession.idToken)
+            favorites = try await authenticatedRequest { session in
+                try await firebaseClient.favoriteIDs(uid: session.uid, idToken: session.idToken)
+            }
         } catch {
-            favorites = []
+            errorMessage = error.localizedDescription
         }
+    }
+
+    private func authenticatedRequest<T>(_ operation: (FirebaseAuthSession) async throws -> T) async throws -> T {
+        do {
+            return try await operation(try await validToken())
+        } catch let error as FirebaseRESTError where error.isUnauthorized {
+            return try await operation(try await forceRefreshToken())
+        }
+    }
+
+    private func validToken() async throws -> FirebaseAuthSession {
+        guard authSession != nil else {
+            throw FirebaseRESTError.requestFailed("Oturum yok.")
+        }
+        if authSession?.isExpired == true {
+            return try await forceRefreshToken()
+        }
+        return authSession!
+    }
+
+    private func forceRefreshToken() async throws -> FirebaseAuthSession {
+        guard let firebaseClient else {
+            throw FirebaseRESTError.requestFailed("Firebase ayarları AppConfig.plist içinde tanımlı değil.")
+        }
+        guard let current = authSession else {
+            throw FirebaseRESTError.requestFailed("Oturum yok.")
+        }
+
+        var refreshed = try await firebaseClient.refreshSession(refreshToken: current.refreshToken)
+        if refreshed.email == nil {
+            refreshed.email = current.email
+        }
+        if refreshed.localId == nil {
+            refreshed.localId = current.localId
+        }
+        if refreshed.userId == nil {
+            refreshed.userId = current.userId
+        }
+        authSession = refreshed
+        return refreshed
     }
 
     private static func restoreProfile() -> DrivingProfile {
@@ -320,13 +386,21 @@ final class AppState {
     }
 
     private static func restoreAuthSession() -> FirebaseAuthSession? {
-        guard
-            let data = UserDefaults.standard.data(forKey: authSessionDefaultsKey),
-            let session = try? JSONDecoder().decode(FirebaseAuthSession.self, from: data)
-        else {
-            return nil
+        if
+            let data = KeychainStore.data(for: authSessionDefaultsKey),
+            let session = try? JSONDecoder().decode(FirebaseAuthSession.self, from: data) {
+            return session
         }
-        return session
+
+        if
+            let data = UserDefaults.standard.data(forKey: authSessionDefaultsKey),
+            let session = try? JSONDecoder().decode(FirebaseAuthSession.self, from: data) {
+            KeychainStore.set(data, for: authSessionDefaultsKey)
+            UserDefaults.standard.removeObject(forKey: authSessionDefaultsKey)
+            return session
+        }
+
+        return nil
     }
 
     private func persistProfile() {
@@ -337,12 +411,14 @@ final class AppState {
 
     private func persistAuthSession() {
         guard let authSession else {
+            KeychainStore.remove(Self.authSessionDefaultsKey)
             UserDefaults.standard.removeObject(forKey: Self.authSessionDefaultsKey)
             return
         }
 
         if let data = try? JSONEncoder().encode(authSession) {
-            UserDefaults.standard.set(data, forKey: Self.authSessionDefaultsKey)
+            KeychainStore.set(data, for: Self.authSessionDefaultsKey)
+            UserDefaults.standard.removeObject(forKey: Self.authSessionDefaultsKey)
         }
     }
 }

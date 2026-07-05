@@ -6,8 +6,5 @@
     <string></string>
     <key>firebaseAPIKey</key>
     <string></string>
-    <key>routingURLTemplate</key>
-    <string></string>
 </dict>
 </plist>
-

@@ -4,10 +4,13 @@
 <dict>
     <key>CFBundleDisplayName</key>
     <string>SarjBul</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>UILaunchScreen</key>
     <dict/>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Yakindaki sarj istasyonlarini bulmak ve varis sarjini hesaplamak icin konumun kullanilir.</string>
 </dict>
 </plist>
-

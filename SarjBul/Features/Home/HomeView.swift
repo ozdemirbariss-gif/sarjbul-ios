@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var manualLongitude = 27.1891
     @State private var selectedPreset: ManualLocationPreset?
     @State private var didRequestDeviceLocation = false
+    @State private var locationRequestTimedOut = false
 
     var body: some View {
         NavigationStack {
@@ -28,8 +29,7 @@ struct HomeView: View {
             }
             .onAppear {
                 guard !didRequestDeviceLocation, appState.userLocation == nil else { return }
-                didRequestDeviceLocation = true
-                locationManager.requestLocation()
+                requestDeviceLocation()
             }
         }
     }
@@ -78,14 +78,13 @@ struct HomeView: View {
 
                     SBPrimaryButton(title: "Konumumu kullan", systemImage: "location.fill") {
                         Haptic.tap()
-                        didRequestDeviceLocation = true
-                        locationManager.requestLocation()
+                        requestDeviceLocation()
                     }
 
                     if manualLocationEntryVisible {
                         manualLocationForm
                     } else {
-                        Text("Konum izni bekleniyor. İzin vermezsen şehir veya koordinat girişi açılır.")
+                        Text(locationWaitingText)
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(SBColor.muted)
                     }
@@ -187,11 +186,35 @@ struct HomeView: View {
 
     private var manualLocationEntryVisible: Bool {
         if appState.userLocation?.source == .manual { return true }
+        if locationManager.lastError != nil || locationRequestTimedOut { return true }
         switch locationManager.authorizationStatus {
         case .denied, .restricted:
             return true
         default:
             return !didRequestDeviceLocation
+        }
+    }
+
+    private var locationWaitingText: String {
+        switch locationManager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            "Konum alınıyor. Sinyal gelmezse şehir veya koordinat girişi açılır."
+        case .notDetermined:
+            "Konum izni bekleniyor. İzin vermezsen şehir veya koordinat girişi açılır."
+        default:
+            "Konuma erişilemiyor. Şehir veya koordinatla devam edebilirsin."
+        }
+    }
+
+    private func requestDeviceLocation() {
+        didRequestDeviceLocation = true
+        locationRequestTimedOut = false
+        locationManager.requestLocation()
+        Task {
+            try? await Task.sleep(for: .seconds(4))
+            if appState.userLocation?.source != .device {
+                locationRequestTimedOut = true
+            }
         }
     }
 

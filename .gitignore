@@ -10,4 +10,4 @@ xcuserdata/
 *.dSYM.zip
 *.dSYM
 SarjBul.xcodeproj/
-
+SarjBul/Resources/AppConfig.plist
