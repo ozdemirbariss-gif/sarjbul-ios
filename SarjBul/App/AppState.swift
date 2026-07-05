@@ -33,7 +33,7 @@ final class AppState {
     private static let profileDefaultsKey = "drivingProfile"
     private static let authSessionDefaultsKey = "firebaseAuthSession"
 
-    var tab: Tab = .home
+    var tab: Tab = .account
     private(set) var stations: [Station] = []
     private(set) var stationStatuses: [String: StationStatusSummary] = [:]
     var profile = DrivingProfile() {

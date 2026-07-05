@@ -4,53 +4,30 @@ import SwiftUI
 struct StationFeedView: View {
     @Environment(AppState.self) private var appState
     @State private var filterSheetPresented = false
-    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
-        NavigationStack {
+        ZStack(alignment: .topLeading) {
+            SBScreenBackground()
             content
-                .navigationTitle("Rotalar")
-                .searchable(text: Binding(
-                    get: { appState.filters.searchText },
-                    set: { appState.filters.searchText = $0 }
-                ), prompt: "İstasyon ara")
-                .onSubmit(of: .search) {
-                    Task { await appState.findStations() }
-                }
-                .onChange(of: appState.filters.searchText) { _, _ in
-                    scheduleSearchRefresh()
-                }
-                .toolbar {
-                    Button {
-                        Haptic.tap()
-                        filterSheetPresented = true
-                    } label: {
-                        Label("Filtreler", systemImage: "slider.horizontal.3")
-                    }
-                }
-                .sheet(isPresented: $filterSheetPresented) {
-                    StationFilterSheet(
-                        filters: Binding(
-                            get: { appState.filters },
-                            set: { appState.filters = $0 }
-                        )
-                    ) {
-                        Haptic.tap()
-                        filterSheetPresented = false
-                        Task { await appState.findStations() }
-                    }
-                    .sbMediumSheet()
-                }
-        }
-    }
 
-    private func scheduleSearchRefresh() {
-        guard appState.userLocation != nil, !appState.routeCandidates.isEmpty else { return }
-        searchTask?.cancel()
-        searchTask = Task {
-            try? await Task.sleep(for: .milliseconds(350))
-            guard !Task.isCancelled else { return }
-            await appState.findStations()
+            SBBackButton {
+                appState.tab = .home
+            }
+            .padding(.leading, 18)
+            .padding(.top, 6)
+        }
+        .sheet(isPresented: $filterSheetPresented) {
+            StationFilterSheet(
+                filters: Binding(
+                    get: { appState.filters },
+                    set: { appState.filters = $0 }
+                )
+            ) {
+                Haptic.tap()
+                filterSheetPresented = false
+                Task { await appState.findStations() }
+            }
+            .sbMediumSheet()
         }
     }
 
@@ -58,47 +35,74 @@ struct StationFeedView: View {
     private var content: some View {
         switch appState.search {
         case .idle:
-            ContentUnavailableView(
+            emptyState(
                 "Rota hazır değil",
-                systemImage: "bolt.car",
-                description: Text("Ana sayfadan konumunu seçip Şarj Bul'a bas.")
+                icon: "bolt.car",
+                message: "Ana sayfadan konumunu seçip En Uygun İstasyonu Bul'a bas."
             )
         case .searching:
-            ProgressView("En iyi duraklar hesaplanıyor")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(SBColor.background.ignoresSafeArea())
+            VStack(spacing: 18) {
+                ProgressView()
+                    .tint(SBColor.accent)
+                    .scaleEffect(1.2)
+                Text("En iyi duraklar hesaplanıyor")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.muted)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed(let message):
-            ContentUnavailableView(
-                "Rota hesaplanamadı",
-                systemImage: "exclamationmark.triangle",
-                description: Text(message)
-            )
+            emptyState("Rota hesaplanamadı", icon: "exclamationmark.triangle", message: message)
         case .results(let candidates):
             if candidates.isEmpty {
-                ContentUnavailableView(
+                emptyState(
                     "Uygun istasyon bulunamadı",
-                    systemImage: "magnifyingglass",
-                    description: Text("Filtreleri gevşetip tekrar deneyebilirsin.")
+                    icon: "magnifyingglass",
+                    message: "Filtreleri gevşetip tekrar deneyebilirsin."
                 )
             } else {
-                    ScrollView {
-                        LazyVStack(spacing: 18) {
-                            ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                                StationCard(candidate: candidate, rank: index + 1)
-                                    .containerRelativeFrame(.vertical, count: 1, spacing: 18)
-                                    .scrollTransition { content, phase in
-                                        content
-                                            .opacity(phase.isIdentity ? 1 : 0.55)
-                                            .scaleEffect(phase.isIdentity ? 1 : 0.94)
-                                    }
-                            }
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        Color.clear.frame(height: 84)
+                        ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
+                            StationCard(candidate: candidate, rank: index + 1)
+                                .containerRelativeFrame(.vertical, count: 1, spacing: 22)
+                                .scrollTransition { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1 : 0.72)
+                                        .scaleEffect(phase.isIdentity ? 1 : 0.92)
+                                }
                         }
-                        .scrollTargetLayout()
-                        .padding(18)
                     }
-                    .scrollTargetBehavior(.viewAligned)
-                    .background(SBColor.background.ignoresSafeArea())
+                    .scrollTargetLayout()
+                    .padding(.horizontal, 18)
+                }
+                .scrollTargetBehavior(.viewAligned)
             }
+        }
+    }
+
+    private func emptyState(_ title: String, icon: String, message: String) -> some View {
+        VStack {
+            Spacer()
+            SBSecondaryPanel {
+                VStack(spacing: 16) {
+                    Image(systemName: icon)
+                        .font(.largeTitle.weight(.heavy))
+                        .foregroundStyle(SBColor.accent)
+                    Text(title)
+                        .font(SBFont.display(size: 30, weight: .heavy))
+                        .foregroundStyle(SBColor.ink)
+                    Text(message)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(SBColor.muted)
+                        .multilineTextAlignment(.center)
+                    SBDarkButton(title: "Ana Sayfaya Dön", systemImage: "house") {
+                        appState.tab = .home
+                    }
+                }
+            }
+            .padding(22)
+            Spacer()
         }
     }
 }

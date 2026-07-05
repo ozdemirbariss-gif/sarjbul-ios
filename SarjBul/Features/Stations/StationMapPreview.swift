@@ -41,25 +41,28 @@ struct StationMapPreview: View {
     @State private var image: SBMapSnapshotImage?
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             if let image {
                 SnapshotImage(image: image)
                     .transition(AnyTransition.opacity)
             } else {
                 Rectangle()
-                    .fill(.quaternary)
+                    .fill(SBColor.surface)
                     .overlay {
                         ProgressView()
                             .tint(SBColor.accent)
                     }
             }
 
-            Image(systemName: "bolt.circle.fill")
-                .font(.system(size: 40, weight: .bold))
-                .foregroundStyle(.white, SBColor.electricBlue)
-                .sbGlowShadow()
+            LinearGradient(
+                colors: [.clear, SBColor.accent.opacity(0.72)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            RouteSketch()
         }
-        .frame(height: 210)
+        .frame(height: 330)
         .clipped()
         .animation(.easeOut(duration: 0.25), value: image != nil)
         .task(id: station.id) {
@@ -68,6 +71,38 @@ struct StationMapPreview: View {
                 lon: station.longitude,
                 size: CGSize(width: 430, height: 230)
             )
+        }
+    }
+}
+
+private struct RouteSketch: View {
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+
+            Path { path in
+                path.move(to: CGPoint(x: width * 0.52, y: height * 0.98))
+                path.addCurve(
+                    to: CGPoint(x: width * 0.56, y: height * 0.08),
+                    control1: CGPoint(x: width * 0.49, y: height * 0.68),
+                    control2: CGPoint(x: width * 0.61, y: height * 0.34)
+                )
+            }
+            .stroke(
+                SBColor.electricBlue,
+                style: StrokeStyle(lineWidth: 8, lineCap: .round, dash: [12, 12])
+            )
+
+            Circle()
+                .fill(SBColor.accent)
+                .frame(width: 18, height: 18)
+                .position(x: width * 0.49, y: height * 0.74)
+
+            Image(systemName: "mappin.circle.fill")
+                .font(.title.weight(.heavy))
+                .foregroundStyle(.white, SBColor.electricBlue)
+                .position(x: width * 0.56, y: height * 0.12)
         }
     }
 }

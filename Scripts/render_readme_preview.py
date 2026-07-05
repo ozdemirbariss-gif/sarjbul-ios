@@ -139,69 +139,124 @@ def primary(canvas, box, label):
     text(ImageDraw.Draw(canvas), ((box[0] + box[2]) // 2, (box[1] + box[3]) // 2), label, font_key="body_b", anchor="mm")
 
 
+def bottom_nav(canvas, ax, ay, active="home"):
+    draw = ImageDraw.Draw(canvas)
+    nav = (ax - 4, ay + 576, ax + 280, ay + 646)
+    rounded(draw, nav, radius=34, fill=ELECTRIC, outline=LINE, width=1)
+    tabs = [("home", "Ana", ax + 8), ("lounge", "Salon", ax + 76), ("routes", "Rotalar", ax + 144), ("account", "Hesap", ax + 212)]
+    for key, label, tx in tabs:
+        fill = SURFACE if key == active else SURFACE_SOFT
+        rounded(draw, (tx, ay + 586, tx + 58, ay + 636), radius=25, fill=fill, outline=LINE)
+        text(draw, (tx + 29, ay + 611), label, fill=INK if key == active else MUTED, font_key="tiny", anchor="mm")
+
+
+def account(canvas, x, y):
+    area = phone(canvas, x, y, "Giriş")
+    draw = ImageDraw.Draw(canvas)
+    ax, ay, _, _ = area
+    pill(canvas, (ax + 172, ay - 44, ax + 224, ay - 6), "TR", True)
+    pill(canvas, (ax + 224, ay - 44, ax + 276, ay - 6), "EN")
+    hero = (ax, ay + 28, ax + 276, ay + 294)
+    rounded(draw, hero, radius=RADII["card"], fill=SURFACE)
+    rounded(draw, (ax + 22, ay + 56, ax + 156, ay + 102), radius=23, fill=SURFACE, outline=LINE)
+    draw.ellipse((ax + 42, ay + 70, ax + 66, ay + 94), fill=gradient((24, 24)).getpixel((8, 8)))
+    draw.ellipse((ax + 78, ay + 77, ax + 92, ay + 91), fill=ACCENT)
+    text(draw, (ax + 104, ay + 68), "ŞarjBul", font_key="h2")
+    text(draw, (ax + 20, ay + 146), "Akımı", fill=MUTED, font_key="title")
+    rounded(draw, (ax + 20, ay + 198, ax + 210, ay + 252), radius=RADII["md"], fill=ACCENT, outline=None)
+    text(draw, (ax + 34, ay + 202), "yakala.", font_key="title")
+    draw.rounded_rectangle((ax + 198, ay + 242, ax + 302, ay + 252), radius=5, fill=ACCENT)
+
+    guest = (ax, ay + 318, ax + 276, ay + 446)
+    rounded(draw, guest, radius=RADII["xl"])
+    text(draw, (ax + 18, ay + 340), "En yakın şarjı hemen bul", font_key="h2")
+    text(draw, (ax + 18, ay + 374), "Üyelik gerekmez. Konumunu seçip\nrotanı oluşturabilirsin.", fill=MUTED, font_key="small_b")
+    primary(canvas, (ax + 18, ay + 402, ax + 258, ay + 434), "Hemen başla")
+
+    auth = (ax, ay + 474, ax + 276, ay + 650)
+    rounded(draw, auth, radius=RADII["xl"])
+    draw.line((ax + 20, ay + 496, ax + 256, ay + 496), fill=LINE, width=2)
+    text(draw, (ax + 18, ay + 520), "Hesabınla devam et", font_key="h2")
+    text(draw, (ax + 18, ay + 552), "Favoriler ve bildirimler hesabına kaydedilir.", fill=MUTED, font_key="small_b")
+    pill(canvas, (ax + 18, ay + 588, ax + 128, ay + 628), "Giriş", True)
+    pill(canvas, (ax + 128, ay + 588, ax + 258, ay + 628), "Kayıt")
+
+
 def home(canvas, x, y):
     area = phone(canvas, x, y, "Ana Sayfa")
     draw = ImageDraw.Draw(canvas)
     ax, ay, _, _ = area
-    pill(canvas, (ax, ay, ax + 86, ay + 54), "Yakın", True)
-    pill(canvas, (ax + 94, ay, ax + 180, ay + 54), "Hızlı")
-    pill(canvas, (ax + 188, ay, ax + 274, ay + 54), "Uygun")
+    pill(canvas, (ax + 4, ay + 8, ax + 86, ay + 72), "Yakın")
+    pill(canvas, (ax + 98, ay + 8, ax + 180, ay + 72), "Hızlı")
+    pill(canvas, (ax + 192, ay + 8, ax + 274, ay + 72), "Uygun")
 
-    card = (ax, ay + 76, ax + 276, ay + 222)
-    rounded(draw, card, radius=RADII["xl"])
-    draw.ellipse((ax + 18, ay + 98, ax + 66, ay + 146), fill=NAVY)
-    draw.ellipse((ax + 34, ay + 114, ax + 50, ay + 130), outline=SURFACE, width=2)
-    draw.line((ax + 26, ay + 122, ax + 58, ay + 122), fill=SURFACE, width=2)
-    draw.line((ax + 42, ay + 106, ax + 42, ay + 138), fill=SURFACE, width=2)
-    text(draw, (ax + 83, ay + 94), "Nereden başlıyorsun?", font_key="body_b")
-    text(draw, (ax + 83, ay + 120), "38.3939, 27.1891", fill=MUTED, font_key="small_b")
-    primary(canvas, (ax + 18, ay + 158, ax + 258, ay + 204), "Konumumu kullan")
-
-    text(draw, (ax + 4, ay + 250), "SÜRÜŞ PROFİLİ", fill=PRIMARY_DEEP, font_key="small_b")
-    profile = (ax, ay + 276, ax + 276, ay + 560)
+    text(draw, (ax, ay + 118), "SÜRÜŞ PROFİLİ", fill=PRIMARY_DEEP, font_key="small_b")
+    profile = (ax, ay + 154, ax + 276, ay + 456)
     rounded(draw, profile, radius=RADII["xl"])
-    text(draw, (ax + 18, ay + 298), "Şarj %", font_key="body_b")
-    text(draw, (ax + 238, ay + 298), "%30", font_key="body_b")
-    draw.line((ax + 20, ay + 338, ax + 250, ay + 338), fill=LINE, width=6)
-    draw.line((ax + 20, ay + 338, ax + 92, ay + 338), fill=ACCENT, width=6)
-    draw.ellipse((ax + 85, ay + 326, ax + 110, ay + 351), fill=ELECTRIC)
-    draw.arc((ax + 26, ay + 374, ax + 126, ay + 474), -90, 18, fill=ACCENT, width=12)
-    text(draw, (ax + 76, ay + 416), "%30", font_key="h2", anchor="mm")
-    text(draw, (ax + 156, ay + 386), "Seçili batarya seviyesi", fill=MUTED, font_key="small_b")
-    text(draw, (ax + 156, ay + 414), "Yola hazır", font_key="h2")
-    pill(canvas, (ax + 20, ay + 496, ax + 122, ay + 542), "75 kWh")
-    pill(canvas, (ax + 136, ay + 496, ax + 258, ay + 542), "16.9 kWh")
-    primary(canvas, (ax, ay + 580, ax + 276, ay + 632), "Şarj Bul")
+    text(draw, (ax + 18, ay + 176), "Şarj %", fill=MUTED, font_key="body_b")
+    text(draw, (ax + 138, ay + 194), "30", fill=MUTED, font_key="body_b", anchor="mm")
+    draw.line((ax + 20, ay + 218, ax + 250, ay + 218), fill=LINE, width=5)
+    draw.line((ax + 20, ay + 218, ax + 100, ay + 218), fill=ACCENT, width=5)
+    draw.ellipse((ax + 92, ay + 206, ax + 118, ay + 232), fill=ELECTRIC)
+    draw.arc((ax + 28, ay + 274, ax + 118, ay + 364), -90, 18, fill=ACCENT, width=12)
+    text(draw, (ax + 73, ay + 314), "%30", font_key="h2", anchor="mm")
+    text(draw, (ax + 138, ay + 290), "Seçili batarya seviyesi", fill=MUTED, font_key="small_b")
+    text(draw, (ax + 138, ay + 320), "Yola hazır", font_key="h2")
+    draw.line((ax + 18, ay + 382, ax + 258, ay + 382), fill=LINE, width=1)
+    pill(canvas, (ax + 18, ay + 402, ax + 128, ay + 442), "75")
+    pill(canvas, (ax + 148, ay + 402, ax + 258, ay + 442), "16,9")
+    pill(canvas, (ax, ay + 484, ax + 276, ay + 532), "Filtreler ve sürüş ayarları")
+    bottom_nav(canvas, ax, ay, "home")
+
+
+def recommendation(canvas, ax, y):
+    draw = ImageDraw.Draw(canvas)
+    card = (ax, y, ax + 276, y + 112)
+    rounded(draw, card, radius=RADII["xl"], fill=SURFACE, outline=ACCENT, width=8)
+    draw.rounded_rectangle((ax, y + 64, ax + 276, y + 112), radius=22, fill=ELECTRIC)
+    draw.rounded_rectangle((ax + 20, y + 22, ax + 64, y + 66), radius=16, fill=ELECTRIC)
+    text(draw, (ax + 38, y + 32), "↯", fill=ACCENT, font_key="h2", anchor="mm")
+    text(draw, (ax + 82, y + 22), "Akıllı menzil önerisi", fill=MUTED, font_key="small_b")
+    text(draw, (ax + 82, y + 42), "100 km güvenli menzille", font_key="small_b")
+    text(draw, (ax + 82, y + 58), "yola hazırsın", font_key="small_b")
+    text(draw, (ax + 82, y + 78), "En Uygun İstasyonu Bul", fill=SURFACE, font_key="small_b")
+
+
+def suggestion(canvas, x, y):
+    area = phone(canvas, x, y, "Öneri")
+    ax, ay, _, _ = area
+    recommendation(canvas, ax, ay + 218)
+    bottom_nav(canvas, ax, ay, "home")
 
 
 def route(canvas, x, y):
     area = phone(canvas, x, y, "Rota Kartı")
     draw = ImageDraw.Draw(canvas)
     ax, ay, _, _ = area
-    card = (ax, ay, ax + 276, ay + 598)
-    rounded(draw, card, radius=RADII["xl"])
-    map_box = (ax + 14, ay + 14, ax + 262, ay + 184)
+    card = (ax, ay + 32, ax + 276, ay + 586)
+    rounded(draw, card, radius=36, fill=ACCENT, outline=ACCENT, width=8)
+    map_box = (ax + 10, ay + 42, ax + 266, ay + 232)
     rounded(draw, map_box, radius=RADII["lg"], fill=SURFACE_SOFT, outline=None)
     for i in range(6):
         yy = map_box[1] + 24 + i * 24
         draw.line((map_box[0] + 8, yy, map_box[2] - 8, yy + 6), fill=LINE, width=1)
-    route_points = [(ax + 48, ay + 132), (ax + 116, ay + 100), (ax + 168, ay + 114), (ax + 214, ay + 66), (ax + 238, ay + 56)]
-    draw.line(route_points, fill=NAVY, width=5, joint="curve")
-    draw.ellipse((ax + 38, ay + 122, ax + 58, ay + 142), fill=ACCENT, outline=SURFACE, width=4)
-    draw.ellipse((ax + 230, ay + 48, ax + 248, ay + 66), fill=NAVY, outline=SURFACE, width=3)
-    draw.ellipse((ax + 210, ay + 22, ax + 264, ay + 76), fill=SURFACE)
-    text(draw, (ax + 237, ay + 42), "57", font_key="h2", anchor="mm")
-    text(draw, (ax + 237, ay + 62), "SKOR", fill=MUTED, font_key="tiny", anchor="mm")
-    text(draw, (ax + 20, ay + 220), "2.2 km", font_key="title")
-    text(draw, (ax + 22, ay + 274), "3 dk · varış %26", fill=MUTED, font_key="body_b")
-    text(draw, (ax + 22, ay + 314), "Oyak Buca Konutları 2. Etap", font_key="body_b")
-    text(draw, (ax + 22, ay + 340), "otoWATT", fill=MUTED, font_key="small_b")
-    pill(canvas, (ax + 20, ay + 372, ax + 96, ay + 432), "GÜÇ\n22 kW")
-    pill(canvas, (ax + 106, ay + 372, ax + 182, ay + 432), "SOKET\nCCS")
-    pill(canvas, (ax + 192, ay + 372, ax + 262, ay + 432), "FİYAT\nBilinmiyor")
-    pill(canvas, (ax + 20, ay + 452, ax + 130, ay + 482), "Varış güvenli")
-    pill(canvas, (ax + 142, ay + 452, ax + 252, ay + 482), "Canlı veri yok")
-    primary(canvas, (ax + 20, ay + 504, ax + 256, ay + 552), "Rotayı Aç")
+    draw.line((ax + 150, ay + 222, ax + 162, ay + 70), fill=ELECTRIC, width=6)
+    pill(canvas, (ax + 22, ay + 62, ax + 95, ay + 102), "59 SKOR")
+    pill(canvas, (ax + 212, ay + 62, ax + 260, ay + 102), "02/80")
+    pill(canvas, (ax + 24, ay + 178, ax + 118, ay + 214), "YAKLAŞIK")
+    text(draw, (ax + 18, ay + 252), "1.7 km", font_key="title")
+    text(draw, (ax + 18, ay + 304), "2 dk · varış %30", fill=ELECTRIC, font_key="body_b")
+    pill(canvas, (ax + 18, ay + 332, ax + 118, ay + 364), "Varış %30")
+    pill(canvas, (ax + 126, ay + 332, ax + 228, ay + 364), "Sapma +0.3")
+    rounded(draw, (ax + 18, ay + 386, ax + 258, ay + 456), radius=RADII["lg"], fill=blend(SURFACE, ACCENT, 0.54), outline=LINE)
+    text(draw, (ax + 34, ay + 400), "ŞARJ NOKTASI", fill=MUTED, font_key="small_b")
+    text(draw, (ax + 34, ay + 422), "Marlen Residence Hotel", font_key="body_b")
+    pill(canvas, (ax + 18, ay + 472, ax + 94, ay + 518), "GÜÇ\nAC")
+    pill(canvas, (ax + 102, ay + 472, ax + 178, ay + 518), "SOKET\nBilinmiyor")
+    pill(canvas, (ax + 186, ay + 472, ax + 258, ay + 518), "FİYAT\nBilinmiyor")
+    rounded(draw, (ax + 18, ay + 536, ax + 258, ay + 582), radius=RADII["lg"], fill=ELECTRIC, outline=None)
+    text(draw, (ax + 34, ay + 548), "Rotayı Aç", fill=SURFACE, font_key="body_b")
+    bottom_nav(canvas, ax, ay, "routes")
 
 
 def lounge(canvas, x, y):
@@ -233,22 +288,7 @@ def lounge(canvas, x, y):
     )
     rounded(draw, (ax + 206, ay + 336, ax + 242, ay + 410), radius=RADII["sm"], fill=ELECTRIC, outline=None)
     primary(canvas, (ax + 48, ay + 524, ax + 228, ay + 578), "Başlat")
-
-
-def account(canvas, x, y):
-    area = phone(canvas, x, y, "Hesap")
-    draw = ImageDraw.Draw(canvas)
-    ax, ay, _, _ = area
-    text(draw, (ax, ay), "Hesap", font_key="title")
-    panel = (ax, ay + 78, ax + 276, ay + 420)
-    rounded(draw, panel, radius=RADII["xl"])
-    pill(canvas, (ax + 18, ay + 100, ax + 258, ay + 142), "Giriş        Kayıt        Sıfırla")
-    rounded(draw, (ax + 18, ay + 170, ax + 258, ay + 222), radius=RADII["md"], fill=SURFACE, outline=LINE)
-    text(draw, (ax + 36, ay + 188), "E-posta", fill=MUTED, font_key="body")
-    rounded(draw, (ax + 18, ay + 240, ax + 258, ay + 292), radius=RADII["md"], fill=SURFACE, outline=LINE)
-    text(draw, (ax + 36, ay + 258), "Şifre", fill=MUTED, font_key="body")
-    primary(canvas, (ax + 18, ay + 318, ax + 258, ay + 370), "Giriş yap")
-    text(draw, (ax + 20, ay + 456), "Favoriler ve durum bildirimleri\nhesapla senkronize edilir.", fill=MUTED, font_key="body_b")
+    bottom_nav(canvas, ax, ay, "lounge")
 
 
 def main():
@@ -259,11 +299,11 @@ def main():
     canvas = Image.new("RGBA", (1480, 880), BG)
     draw = ImageDraw.Draw(canvas)
     text(draw, (52, 34), "SarjBul iOS Preview", font_key="title")
-    text(draw, (54, 88), "SwiftUI uygulamasının güncel ana akışı, rota kartı, Salon oyunu ve hesap ekranı.", fill=MUTED, font_key="body")
-    home(canvas, 62, 150)
-    route(canvas, 420, 150)
-    lounge(canvas, 778, 150)
-    account(canvas, 1136, 150)
+    text(draw, (54, 88), "Python tarafındaki beyaz/neon arayüzle hizalanan SwiftUI giriş, sürüş profili ve rota akışı.", fill=MUTED, font_key="body")
+    account(canvas, 62, 150)
+    home(canvas, 420, 150)
+    suggestion(canvas, 778, 150)
+    route(canvas, 1136, 150)
     canvas.convert("RGB").save(OUT, quality=94)
     print(OUT)
 

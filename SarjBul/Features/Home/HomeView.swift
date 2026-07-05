@@ -10,19 +10,30 @@ struct HomeView: View {
     @State private var selectedPreset: ManualLocationPreset?
     @State private var didRequestDeviceLocation = false
     @State private var locationRequestTimedOut = false
+    @State private var settingsExpanded = false
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    quickActions
-                    locationSection
-                    drivingProfile
-                    routeAction
+            ZStack(alignment: .topLeading) {
+                SBScreenBackground()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 28) {
+                        topControls
+                        drivingProfile
+                        filtersAndSettings
+                        routeAction
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.top, 28)
                 }
-                .padding(22)
+
+                SBBackButton {
+                    appState.tab = .account
+                }
+                .padding(.leading, 18)
+                .padding(.top, 6)
             }
-            .background(SBColor.background.ignoresSafeArea())
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 appState.updateLocation(latitude: location.latitude, longitude: location.longitude, source: .device)
@@ -34,12 +45,13 @@ struct HomeView: View {
         }
     }
 
-    private var quickActions: some View {
-        HStack(spacing: 10) {
+    private var topControls: some View {
+        HStack(spacing: 16) {
             preferenceButton(.nearest, icon: "location.north.line")
             preferenceButton(.fastest, icon: "bolt.fill")
-            preferenceButton(.economical, icon: "creditcard")
+            preferenceButton(.economical, icon: "fuelpump")
         }
+        .padding(.leading, 34)
         .padding(.top, 10)
     }
 
@@ -101,18 +113,21 @@ struct HomeView: View {
     private var drivingProfile: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Sürüş Profili")
-                .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.accent)
+                .font(.headline.weight(.heavy))
+                .foregroundStyle(SBColor.primaryDeep)
+                .textCase(.uppercase)
                 .padding(.horizontal, 4)
 
             SBPanel {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 16) {
                     HStack {
                         Text("Şarj %")
-                            .font(.headline.weight(.bold))
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(SBColor.muted)
                         Spacer()
-                        Text("%\(appState.profile.chargePercent)")
+                        Text("\(appState.profile.chargePercent)")
                             .font(.title2.weight(.heavy))
+                            .foregroundStyle(SBColor.muted)
                     }
                     Slider(
                         value: Binding(
@@ -126,6 +141,9 @@ struct HomeView: View {
                 }
 
                 ChargeVisual(percent: appState.profile.chargePercent)
+
+                Divider()
+                    .overlay(SBColor.line)
 
                 HStack(spacing: 12) {
                     MetricInput(
@@ -149,39 +167,94 @@ struct HomeView: View {
                         step: 0.1
                     )
                 }
-
-                Text("\(Int(appState.profile.safeRangeKm.rounded())) km güvenli menzille yola hazırsın")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(SBColor.ink)
-                    .contentTransition(.numericText())
-                    .animation(.spring(response: 0.45, dampingFraction: 0.85), value: appState.profile.safeRangeKm)
             }
         }
     }
 
-    private var routeAction: some View {
-        SBPanel {
+    private var filtersAndSettings: some View {
+        DisclosureGroup(isExpanded: $settingsExpanded) {
             VStack(alignment: .leading, spacing: 14) {
-                Text("\(Int(appState.profile.safeRangeKm.rounded())) km güvenli menzille hazırsın")
-                    .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
-                Text(appState.canSearch ? "En uygun istasyonu hesaplayalım." : "Rota için konum ve istasyon verisi gerekli.")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(SBColor.muted)
+                locationSection
+                Toggle("Menzil dışını gizle", isOn: Binding(
+                    get: { appState.filters.rangeFilterEnabled },
+                    set: { appState.filters.rangeFilterEnabled = $0 }
+                ))
+                .font(.headline.weight(.semibold))
+                .tint(SBColor.accent)
+            }
+            .padding(.top, 16)
+        } label: {
+            Label("Filtreler ve sürüş ayarları", systemImage: "chevron.right")
+                .font(.title3.weight(.heavy))
+                .foregroundStyle(SBColor.muted)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .background(SBColor.glassStrong)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
+        )
+        .sbSoftShadow()
+    }
 
-                SBPrimaryButton(title: appState.isSearching ? "Hesaplanıyor..." : "Şarj Bul", systemImage: "arrow.right") {
-                    Haptic.tap()
-                    Task {
-                        await appState.findStations()
-                        if !appState.routeCandidates.isEmpty {
-                            Haptic.success()
-                        }
+    private var routeAction: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 18) {
+                Image(systemName: "bolt.fill")
+                    .font(.title2.weight(.heavy))
+                    .foregroundStyle(SBColor.accent)
+                    .frame(width: 72, height: 72)
+                    .background(SBColor.electricBlue)
+                    .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("Akıllı menzil önerisi")
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(SBColor.muted)
+                    Text("\(Int(appState.profile.safeRangeKm.rounded())) km güvenli menzille yola hazırsın")
+                        .font(.title3.weight(.heavy))
+                        .foregroundStyle(SBColor.ink)
+                        .lineLimit(2)
+                    Text("%\(appState.profile.chargePercent) · \(Int(appState.profile.safeRangeKm.rounded())) km güvenli menzil")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(SBColor.muted)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(22)
+            .background(SBColor.surface)
+
+            Button {
+                guard appState.canSearch else { return }
+                Haptic.tap()
+                Task {
+                    await appState.findStations()
+                    if !appState.routeCandidates.isEmpty {
+                        Haptic.success()
                     }
                 }
-                .disabled(!appState.canSearch)
-                .opacity(appState.canSearch ? 1 : 0.55)
+            } label: {
+                Text(appState.isSearching ? "Hesaplanıyor..." : "En Uygun İstasyonu Bul")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 76)
+                    .background(SBColor.electricBlue)
+                    .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             }
+            .buttonStyle(.plain)
+            .disabled(!appState.canSearch)
+            .opacity(appState.canSearch ? 1 : 0.62)
         }
+        .background(SBColor.surface)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
+                .stroke(SBColor.accent, lineWidth: 10)
+        )
+        .sbGlowShadow()
     }
 
     private var manualLocationEntryVisible: Bool {
@@ -277,13 +350,15 @@ private struct QuickActionStyle: ButtonStyle {
         configuration.label
             .font(.subheadline.weight(.bold))
             .foregroundStyle(active ? SBColor.ink : SBColor.muted)
-            .frame(height: 68)
-            .background(active ? SBColor.accent : SBColor.glass)
+            .frame(maxWidth: .infinity)
+            .frame(height: 104)
+            .background(SBColor.glassStrong)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .stroke(active ? SBColor.lineStrong : SBColor.line, lineWidth: 1)
+                    .stroke(active ? SBColor.lineStrong : SBColor.line, lineWidth: active ? 2 : 1)
             )
+            .sbSoftShadow()
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }

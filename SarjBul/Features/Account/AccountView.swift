@@ -6,24 +6,90 @@ struct AccountView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var isWorking = false
+    @State private var language = "TR"
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    Text("Hesap")
-                        .font(SBFont.display(size: 46, weight: .bold))
-                        .foregroundStyle(SBColor.ink)
+            ZStack {
+                SBScreenBackground()
 
-                    if appState.isAuthenticated {
-                        signedInPanel
-                    } else {
-                        authPanel
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 28) {
+                        HStack {
+                            Spacer()
+                            SBLanguageSwitch(selectedLanguage: $language)
+                        }
+
+                        heroPanel
+                        guestPanel
+
+                        if appState.isAuthenticated {
+                            signedInPanel
+                        } else {
+                            authPanel
+                        }
                     }
+                    .padding(22)
                 }
-                .padding(22)
             }
-            .background(SBColor.background.ignoresSafeArea())
+        }
+    }
+
+    private var heroPanel: some View {
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
+                .fill(SBColor.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
+                        .stroke(SBColor.line, lineWidth: 1)
+                )
+                .sbSoftShadow()
+
+            VStack(alignment: .leading, spacing: 56) {
+                SBBrandMark()
+
+                VStack(alignment: .leading, spacing: -10) {
+                    Text("Akımı")
+                        .font(SBFont.display(size: 72, weight: .heavy))
+                        .foregroundStyle(SBColor.muted)
+                    Text("yakala.")
+                        .font(SBFont.display(size: 72, weight: .heavy))
+                        .foregroundStyle(SBColor.ink)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 4)
+                        .background(SBColor.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                }
+                .minimumScaleFactor(0.72)
+
+                HStack {
+                    Spacer()
+                    Capsule()
+                        .fill(SBColor.accent)
+                        .frame(width: 210, height: 18)
+                        .offset(x: 76)
+                }
+            }
+            .padding(28)
+        }
+        .frame(minHeight: 360)
+    }
+
+    private var guestPanel: some View {
+        SBSecondaryPanel {
+            VStack(alignment: .leading, spacing: 22) {
+                Text("En yakın şarjı hemen bul")
+                    .font(SBFont.display(size: 30, weight: .heavy))
+                    .foregroundStyle(SBColor.ink)
+                Text("Üyelik gerekmez. Konumunu seçip rotanı oluşturabilirsin.")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(SBColor.muted)
+
+                SBPrimaryButton(title: "Hemen başla", systemImage: nil) {
+                    Haptic.tap()
+                    appState.tab = .home
+                }
+            }
         }
     }
 
@@ -52,14 +118,35 @@ struct AccountView: View {
     }
 
     private var authPanel: some View {
-        SBPanel {
+        SBSecondaryPanel {
             VStack(alignment: .leading, spacing: 18) {
-                Picker("Hesap işlemi", selection: $mode) {
-                    ForEach(AuthMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
+                Rectangle()
+                    .fill(SBColor.line)
+                    .frame(height: 3)
+                    .clipShape(Capsule())
+
+                Text("Hesabınla devam et")
+                    .font(SBFont.display(size: 30, weight: .heavy))
+                    .foregroundStyle(SBColor.ink)
+                Text("Favoriler ve bildirimler hesabına kaydedilir.")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(SBColor.muted)
+
+                if mode == .reset {
+                    Text("Şifre sıfırlama bağlantısı e-postana gönderilir.")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(SBColor.muted)
+                } else {
+                    Picker("Hesap işlemi", selection: $mode) {
+                        ForEach([AuthMode.signIn, AuthMode.signUp]) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: mode) { _, _ in
+                        password = ""
                     }
                 }
-                .pickerStyle(.segmented)
 
                 TextField("E-posta", text: $email)
                     .sbEmailInput()
@@ -92,16 +179,25 @@ struct AccountView: View {
                 .disabled(isWorking || !formIsValid)
                 .opacity(formIsValid ? 1 : 0.55)
 
-                Button {
-                    Haptic.tap()
-                    mode = .reset
-                } label: {
-                    Text("Şifremi unuttum")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(SBColor.electricBlue)
+                if mode == .reset {
+                    Button {
+                        Haptic.tap()
+                        mode = .signIn
+                    } label: {
+                        Text("Girişe dön")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(SBColor.electricBlue)
+                    }
+                } else {
+                    Button {
+                        Haptic.tap()
+                        mode = .reset
+                    } label: {
+                        Text("Şifremi unuttum")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(SBColor.electricBlue)
+                    }
                 }
-                .opacity(mode == .reset ? 0 : 1)
-                .disabled(mode == .reset)
 
                 if !appState.isFirebaseConfigured {
                     Text("Firebase ayarları için AppConfig.plist eklenmeli.")
