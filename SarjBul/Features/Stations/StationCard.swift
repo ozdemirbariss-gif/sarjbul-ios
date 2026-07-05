@@ -13,12 +13,12 @@ struct StationCard: View {
             details
         }
         .background(SBColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(.black.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.12), radius: 24, x: 0, y: 16)
+        .sbCardShadow()
     }
 
     private var mapPreview: some View {
@@ -32,9 +32,9 @@ struct StationCard: View {
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
-                    .background(SBColor.navy)
+                    .background(SBColor.electricBlue)
                     .clipShape(Circle())
-                    .shadow(radius: 12)
+                    .sbGlowShadow()
             }
             .accessibilityLabel("Rotayı Haritalar'da aç")
             .padding(16)
@@ -49,8 +49,12 @@ struct StationCard: View {
             .foregroundStyle(SBColor.ink)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(SBColor.glassStrong)
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                    .stroke(SBColor.line, lineWidth: 1)
+            )
             .padding(16)
         }
     }
@@ -60,7 +64,7 @@ struct StationCard: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(String(format: "%.1f km", candidate.distanceKm))
-                        .font(.system(size: 42, weight: .heavy, design: .rounded))
+                        .font(SBFont.display(size: 42, weight: .heavy))
                     Text("\(candidate.estimatedMinutes) dk · varış %\(Int(candidate.arrivalChargePercent.rounded()))")
                         .font(.headline)
                         .foregroundStyle(SBColor.muted)
@@ -68,7 +72,7 @@ struct StationCard: View {
                 Spacer()
                 Text(String(format: "%02d", rank))
                     .font(.title3.weight(.heavy))
-                    .foregroundStyle(SBColor.navy)
+                    .foregroundStyle(SBColor.electricBlue)
             }
 
             HStack(alignment: .top, spacing: 12) {
@@ -97,7 +101,7 @@ struct StationCard: View {
                         .foregroundStyle(badgeColor(badge.tone))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
-                        .background(.white.opacity(0.72))
+                        .background(SBColor.glass)
                         .clipShape(Capsule())
                 }
             }
@@ -127,9 +131,9 @@ struct StationCard: View {
         } label: {
             Image(systemName: appState.isFavorite(stationKey) ? "heart.fill" : "heart")
                 .font(.headline.weight(.bold))
-                .foregroundStyle(appState.isFavorite(stationKey) ? .red : SBColor.navy)
+                .foregroundStyle(appState.isFavorite(stationKey) ? SBColor.danger : SBColor.electricBlue)
                 .frame(width: 42, height: 42)
-                .background(.white.opacity(0.72))
+                .background(SBColor.glass)
                 .clipShape(Circle())
         }
         .accessibilityLabel(appState.isFavorite(stationKey) ? "Favoriden çıkar" : "Favoriye ekle")
@@ -153,7 +157,7 @@ struct StationCard: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(.white.opacity(0.72))
+                .background(SBColor.glass)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -162,11 +166,11 @@ struct StationCard: View {
     private func badgeColor(_ tone: StationBadge.Tone) -> Color {
         switch tone {
         case .good, .info:
-            SBColor.navy
+            SBColor.electricBlue
         case .warning:
-            .orange
+            SBColor.warning
         case .risk:
-            .red
+            SBColor.danger
         }
     }
 
@@ -182,8 +186,12 @@ struct StationCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(.white.opacity(0.70))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(SBColor.glass)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
+        )
     }
 
     private func openInAppleMaps() {

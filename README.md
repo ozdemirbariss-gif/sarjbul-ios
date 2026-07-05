@@ -21,6 +21,8 @@ Tasarim degisikligi yapildiginda bu README gorseli ayni degisiklikle birlikte gu
 python3 Scripts/render_readme_preview.py
 ```
 
+Uygulama renkleri, radius degerleri, golge token'lari ve README preview gorseli `SarjBul/Resources/design-tokens.json` dosyasindan beslenir. Web tarafindaki `style.css` beyaz/neon paleti bu dosyada tek kaynak olarak tutulur.
+
 ## Mimari
 
 ```text

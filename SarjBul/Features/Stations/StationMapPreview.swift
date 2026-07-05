@@ -50,14 +50,14 @@ struct StationMapPreview: View {
                     .fill(.quaternary)
                     .overlay {
                         ProgressView()
-                            .tint(SBColor.navy)
+                            .tint(SBColor.accent)
                     }
             }
 
             Image(systemName: "bolt.circle.fill")
                 .font(.system(size: 40, weight: .bold))
-                .foregroundStyle(.white, SBColor.navy)
-                .shadow(color: .black.opacity(0.22), radius: 12, x: 0, y: 7)
+                .foregroundStyle(.white, SBColor.electricBlue)
+                .sbGlowShadow()
         }
         .frame(height: 210)
         .clipped()

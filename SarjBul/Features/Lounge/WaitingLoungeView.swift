@@ -20,7 +20,7 @@ struct WaitingLoungeView: View {
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(SBColor.accent)
                 Text("Salon")
-                    .font(.system(size: 54, weight: .bold, design: .rounded))
+                    .font(SBFont.display(size: 54, weight: .bold))
                 Text("Aracın dolarken reflekslerini açık tutan kısa ve sürprizli bir oyun.")
                     .font(.headline)
                     .foregroundStyle(SBColor.muted)
@@ -32,7 +32,7 @@ struct WaitingLoungeView: View {
                         VStack(alignment: .leading) {
                             Text("VOLT DASH")
                                 .font(.caption.weight(.heavy))
-                                .foregroundStyle(SBColor.navy)
+                                .foregroundStyle(SBColor.electricBlue)
                             Text(crashed ? "Çarptın" : running ? "Koşuyor" : "Hazır")
                                 .font(.largeTitle.weight(.heavy))
                         }
@@ -48,17 +48,17 @@ struct WaitingLoungeView: View {
 
                     GeometryReader { proxy in
                         ZStack(alignment: .bottomLeading) {
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
                                 .fill(SBColor.background)
 
                             Capsule()
                                 .fill(LinearGradient.sbPrimary)
                                 .frame(width: 44, height: 44)
                                 .offset(x: 44, y: -max(0, playerY))
-                                .shadow(color: SBColor.accent.opacity(0.4), radius: 16)
+                                .sbGlowShadow()
 
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(SBColor.purple)
+                            RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous)
+                                .fill(SBColor.electricBlue)
                                 .frame(width: 34, height: 72)
                                 .offset(x: obstacleX, y: 0)
                         }

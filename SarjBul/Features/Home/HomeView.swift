@@ -64,7 +64,7 @@ struct HomeView: View {
                             .font(.title2)
                             .foregroundStyle(.white)
                             .frame(width: 52, height: 52)
-                            .background(SBColor.navy)
+                            .background(SBColor.electricBlue)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Nereden başlıyorsun?")
@@ -228,8 +228,12 @@ struct HomeView: View {
             }
             .pickerStyle(.menu)
             .padding(14)
-            .background(.white.opacity(0.72))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(SBColor.glass)
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                    .stroke(SBColor.line, lineWidth: 1)
+            )
             .onChange(of: selectedPreset) { _, preset in
                 guard let preset else { return }
                 manualLatitude = preset.latitude
@@ -245,8 +249,12 @@ struct HomeView: View {
             }
             .textFieldStyle(.plain)
             .padding(14)
-            .background(.white.opacity(0.72))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(SBColor.glass)
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                    .stroke(SBColor.line, lineWidth: 1)
+            )
 
             Button {
                 Haptic.tap()
@@ -257,7 +265,7 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(SBColor.navy)
+            .tint(SBColor.electricBlue)
         }
     }
 }
@@ -270,8 +278,12 @@ private struct QuickActionStyle: ButtonStyle {
             .font(.subheadline.weight(.bold))
             .foregroundStyle(active ? SBColor.ink : SBColor.muted)
             .frame(height: 68)
-            .background(active ? SBColor.accent.opacity(0.95) : .white.opacity(0.72))
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .background(active ? SBColor.accent : SBColor.glass)
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                    .stroke(active ? SBColor.lineStrong : SBColor.line, lineWidth: 1)
+            )
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
@@ -294,7 +306,7 @@ private struct ChargeVisual: View {
         HStack(spacing: 18) {
             ZStack {
                 Circle()
-                    .stroke(.black.opacity(0.07), lineWidth: 14)
+                    .stroke(SBColor.line, lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: Double(clampedPercent) / 100)
                     .stroke(SBColor.accent, style: StrokeStyle(lineWidth: 14, lineCap: .round))
@@ -320,8 +332,12 @@ private struct ChargeVisual: View {
             }
         }
         .padding(16)
-        .background(.white.opacity(0.58))
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(SBColor.glass)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
+        )
     }
 }
 
@@ -333,18 +349,18 @@ private struct BatteryBar: View {
             let fillWidth = max(18, proxy.size.width * CGFloat(percent) / 100)
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(.black.opacity(0.08))
+                    .fill(SBColor.line)
                 Capsule()
                     .fill(LinearGradient.sbPrimary)
                     .frame(width: fillWidth)
                 Capsule()
-                    .stroke(.black.opacity(0.14), lineWidth: 1)
+                    .stroke(SBColor.line, lineWidth: 1)
             }
         }
         .frame(height: 30)
         .overlay(alignment: .trailing) {
             Capsule()
-                .fill(.black.opacity(0.18))
+                .fill(SBColor.textSoft)
                 .frame(width: 8, height: 18)
                 .offset(x: 6)
         }

@@ -11,12 +11,12 @@ struct SBPanel<Content: View>: View {
         content
             .padding(20)
             .background(SBColor.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(.black.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
+                    .stroke(SBColor.line, lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.08), radius: 24, x: 0, y: 14)
+            .sbSoftShadow()
     }
 }
 
@@ -38,8 +38,8 @@ struct SBPrimaryButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 58)
             .background(LinearGradient.sbPrimary)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: SBColor.accent.opacity(0.28), radius: 22, x: 0, y: 12)
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+            .sbGlowShadow()
         }
         .buttonStyle(.plain)
     }
@@ -72,8 +72,12 @@ struct MetricInput: View {
             }
             .padding(.horizontal, 14)
             .frame(height: 54)
-            .background(.white.opacity(0.72))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(SBColor.glass)
+            .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                    .stroke(SBColor.line, lineWidth: 1)
+            )
         }
     }
 }

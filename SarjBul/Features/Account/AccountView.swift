@@ -12,7 +12,7 @@ struct AccountView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     Text("Hesap")
-                        .font(.system(size: 46, weight: .bold, design: .rounded))
+                        .font(SBFont.display(size: 46, weight: .bold))
                         .foregroundStyle(SBColor.ink)
 
                     if appState.isAuthenticated {
@@ -65,8 +65,12 @@ struct AccountView: View {
                     .sbEmailInput()
                     .textFieldStyle(.plain)
                     .padding(16)
-                    .background(.white.opacity(0.72))
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(SBColor.glass)
+                    .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                            .stroke(SBColor.line, lineWidth: 1)
+                    )
 
                 if mode != .reset {
                     SecureField("Şifre", text: $password)
@@ -74,8 +78,12 @@ struct AccountView: View {
                         .onSubmit { Task { await submit() } }
                         .textFieldStyle(.plain)
                         .padding(16)
-                        .background(.white.opacity(0.72))
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .background(SBColor.glass)
+                        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                                .stroke(SBColor.line, lineWidth: 1)
+                        )
                 }
 
                 SBPrimaryButton(title: isWorking ? "İşleniyor..." : mode.actionTitle, systemImage: mode.icon) {
@@ -90,7 +98,7 @@ struct AccountView: View {
                 } label: {
                     Text("Şifremi unuttum")
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(SBColor.navy)
+                        .foregroundStyle(SBColor.electricBlue)
                 }
                 .opacity(mode == .reset ? 0 : 1)
                 .disabled(mode == .reset)

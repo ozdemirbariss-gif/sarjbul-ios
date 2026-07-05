@@ -144,7 +144,7 @@ private struct StationFilterSheet: View {
                                     .font(.subheadline.weight(.bold))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
-                                    .background(filters.socketFilters.contains(socket) ? SBColor.accent : .white.opacity(0.7))
+                                    .background(filters.socketFilters.contains(socket) ? SBColor.accent : SBColor.glass)
                                     .clipShape(Capsule())
                             }
                             .buttonStyle(.plain)
