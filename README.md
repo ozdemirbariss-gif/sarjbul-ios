@@ -11,6 +11,16 @@ SwiftUI tabanli SarjBul iOS mimarisi. Bu repo, mevcut Streamlit projesindeki ana
 - sarj beklerken oynanacak mini "Salon" oyunu
 - Firebase REST istemcisi icin guvenli konfigurasyon noktasi
 
+## Ekran Goruntuleri
+
+![SarjBul iOS ekranlari](Docs/screenshots/sarjbul-ios-preview.png)
+
+Tasarim degisikligi yapildiginda bu README gorseli ayni degisiklikle birlikte guncellenir. Gorseli yeniden uretmek icin:
+
+```bash
+python3 Scripts/render_readme_preview.py
+```
+
 ## Mimari
 
 ```text
