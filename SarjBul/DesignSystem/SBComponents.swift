@@ -89,6 +89,29 @@ extension View {
     }
 
     @ViewBuilder
+    func sbEmailInput() -> some View {
+        #if os(iOS)
+        textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .keyboardType(.emailAddress)
+            .textContentType(.emailAddress)
+            .submitLabel(.next)
+        #else
+        autocorrectionDisabled()
+        #endif
+    }
+
+    @ViewBuilder
+    func sbPasswordInput(isNewPassword: Bool) -> some View {
+        #if os(iOS)
+        textContentType(isNewPassword ? .newPassword : .password)
+            .submitLabel(.go)
+        #else
+        self
+        #endif
+    }
+
+    @ViewBuilder
     func sbInlineNavigationTitle() -> some View {
         #if os(iOS)
         navigationBarTitleDisplayMode(.inline)

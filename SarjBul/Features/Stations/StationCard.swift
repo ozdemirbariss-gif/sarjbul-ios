@@ -3,6 +3,7 @@ import SarjBulCore
 import SwiftUI
 
 struct StationCard: View {
+    @Environment(AppState.self) private var appState
     var candidate: StationCandidate
     var rank: Int
 
@@ -70,13 +71,17 @@ struct StationCard: View {
                     .foregroundStyle(SBColor.navy)
             }
 
-            VStack(alignment: .leading, spacing: 5) {
-                Text(candidate.station.name)
-                    .font(.title3.weight(.bold))
-                    .lineLimit(2)
-                Text(candidate.station.operatorName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(SBColor.muted)
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(candidate.station.name)
+                        .font(.title3.weight(.bold))
+                        .lineLimit(2)
+                    Text(candidate.station.operatorName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(SBColor.muted)
+                }
+                Spacer(minLength: 8)
+                favoriteButton
             }
 
             HStack(spacing: 8) {
@@ -89,7 +94,7 @@ struct StationCard: View {
                 ForEach(candidate.badges, id: \.self) { badge in
                     Text(badge.title)
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(badge.tone == .warning ? .orange : SBColor.navy)
+                        .foregroundStyle(badgeColor(badge.tone))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
                         .background(.white.opacity(0.72))
@@ -102,12 +107,67 @@ struct StationCard: View {
                 openInAppleMaps()
             }
 
+            if appState.isAuthenticated {
+                statusActions
+            }
+
             Text(candidate.station.address)
                 .font(.footnote)
                 .foregroundStyle(SBColor.muted)
                 .lineLimit(3)
         }
         .padding(20)
+    }
+
+    private var favoriteButton: some View {
+        let stationKey = candidate.station.statusKey
+        return Button {
+            Haptic.tap()
+            Task { await appState.toggleFavorite(stationKey) }
+        } label: {
+            Image(systemName: appState.isFavorite(stationKey) ? "heart.fill" : "heart")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(appState.isFavorite(stationKey) ? .red : SBColor.navy)
+                .frame(width: 42, height: 42)
+                .background(.white.opacity(0.72))
+                .clipShape(Circle())
+        }
+        .accessibilityLabel(appState.isFavorite(stationKey) ? "Favoriden çıkar" : "Favoriye ekle")
+    }
+
+    private var statusActions: some View {
+        HStack(spacing: 8) {
+            reportButton("Uygun", icon: "checkmark.circle.fill")
+            reportButton("Sorun var", icon: "exclamationmark.triangle.fill")
+            reportButton("Sıra var", icon: "clock.fill")
+        }
+    }
+
+    private func reportButton(_ title: String, icon: String) -> some View {
+        Button {
+            Haptic.tap()
+            Task { await appState.reportStatus(stationKey: candidate.station.statusKey, status: title) }
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.caption.weight(.heavy))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(.white.opacity(0.72))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func badgeColor(_ tone: StationBadge.Tone) -> Color {
+        switch tone {
+        case .good, .info:
+            SBColor.navy
+        case .warning:
+            .orange
+        case .risk:
+            .red
+        }
     }
 
     private func metric(_ title: String, _ value: String) -> some View {

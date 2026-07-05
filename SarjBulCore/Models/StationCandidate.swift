@@ -2,6 +2,7 @@ import Foundation
 
 public struct StationCandidate: Identifiable, Hashable, Sendable {
     public var station: Station
+    public var status: StationStatusSummary?
     public var distanceKm: Double
     public var straightLineDistanceKm: Double
     public var estimatedMinutes: Int
@@ -14,6 +15,7 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
 
     public init(
         station: Station,
+        status: StationStatusSummary? = nil,
         distanceKm: Double,
         straightLineDistanceKm: Double,
         estimatedMinutes: Int,
@@ -23,6 +25,7 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         badges: [StationBadge]
     ) {
         self.station = station
+        self.status = status
         self.distanceKm = distanceKm
         self.straightLineDistanceKm = straightLineDistanceKm
         self.estimatedMinutes = estimatedMinutes
@@ -30,6 +33,10 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         self.remainingSafeRangeKm = remainingSafeRangeKm
         self.score = score
         self.badges = badges
+    }
+
+    public var hasRiskyStatus: Bool {
+        status?.durum == "riskli"
     }
 }
 
@@ -49,4 +56,3 @@ public struct StationBadge: Hashable, Sendable {
         self.tone = tone
     }
 }
-

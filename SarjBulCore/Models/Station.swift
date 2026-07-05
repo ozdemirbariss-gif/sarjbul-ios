@@ -108,6 +108,21 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
 }
 
 public extension Station {
+    var statusKey: String {
+        let folded = id.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+        let allowed = folded.unicodeScalars.map { scalar -> Character in
+            if CharacterSet.alphanumerics.contains(scalar)
+                || scalar == " "
+                || scalar == "_"
+                || scalar == "-" {
+                return Character(scalar)
+            }
+            return " "
+        }
+        let key = String(allowed).split(separator: " ").joined(separator: "_")
+        return key.isEmpty ? id : String(key.prefix(80))
+    }
+
     var powerKW: Double {
         NumberParser.firstDecimal(in: power) ?? 0
     }

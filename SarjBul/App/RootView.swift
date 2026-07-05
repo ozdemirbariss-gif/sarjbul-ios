@@ -27,5 +27,13 @@ struct RootView: View {
         .tint(SBColor.accent)
         .preferredColorScheme(.light)
         .task { await appState.load() }
+        .alert(appState.messageTitle, isPresented: Binding(
+            get: { appState.message != nil },
+            set: { if !$0 { appState.dismissMessage() } }
+        )) {
+            Button("Tamam", role: .cancel) {}
+        } message: {
+            Text(appState.message ?? "")
+        }
     }
 }

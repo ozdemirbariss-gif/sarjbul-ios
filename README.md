@@ -4,9 +4,10 @@ SwiftUI tabanli SarjBul iOS mimarisi. Bu repo, mevcut Streamlit projesindeki ana
 
 - konum izni ve manuel konum akisi
 - batarya kapasitesi, sarj yuzdesi ve ortalama tuketim ile guvenli menzil hesabi
-- yakindaki istasyonlari filtreleme, skorlamaya ve siralama
+- Python projesindeki bounded aday arama, skorlamaya ve siralama mantigi
 - dikey istasyon kart akisi
 - Apple Maps ile rota acma
+- Firebase Auth, favoriler ve durum bildirimi icin REST entegrasyonu
 - sarj beklerken oynanacak mini "Salon" oyunu
 - Firebase REST istemcisi icin guvenli konfigurasyon noktasi
 
@@ -36,11 +37,13 @@ xcodegen generate
 open SarjBul.xcodeproj
 ```
 
-4. `SarjBul/Resources/AppConfig.sample.plist` dosyasini `AppConfig.plist` olarak kopyala ve Firebase/harita ayarlarini gir. Gizli anahtarlar repo'ya commit edilmemelidir.
+4. `SarjBul/Resources/AppConfig.sample.plist` dosyasini `AppConfig.plist` olarak kopyala ve Firebase ayarlarini gir. Gizli anahtarlar repo'ya commit edilmemelidir.
 
 ## Veri
 
-`SarjBul/Resources/stations.json` mevcut Python projesindeki istasyon verisi ile ayni semayi kullanir. Uygulama once bundled JSON'u okur; ileride ayni `StationRepository` protokolu uzerinden uzak API veya Firebase kaynagi eklenebilir.
+`SarjBul/Resources/stations.json` mevcut Python projesindeki istasyon verisi ile ayni semayi kullanir. iOS bundle'daki veri, Streamlit reposundaki guncel scrape ciktisindan minify edilerek uretilir.
+
+Arama motoru Python tarafiyla ayni ana yaklasimi izler: once konuma gore bounding-box adaylari daraltir, yalnizca ust adaylari skorlar, Firebase `station_status` ozetlerini risk/aktif durum olarak skora ve rozetlere katar.
 
 ## Test
 
@@ -51,4 +54,3 @@ swift test
 ```
 
 `xcodebuild` icin tam Xcode kurulumu gerekir.
-

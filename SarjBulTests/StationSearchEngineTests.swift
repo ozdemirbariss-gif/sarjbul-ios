@@ -44,10 +44,26 @@ struct StationSearchEngineTests {
         #expect(candidates.first?.station.id == "fast_dc")
     }
 
+    @Test
+    func riskyStatusIsDemotedBeforePreferenceSorting() throws {
+        let stations = try loadFixture()
+        let engine = StationSearchEngine()
+        let candidates = engine.candidates(
+            from: stations,
+            origin: UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual),
+            profile: DrivingProfile(chargePercent: 80),
+            filters: StationFilters(preference: .nearest),
+            stationStatuses: [
+                "near_ac": StationStatusSummary(durum: "riskli", etiket: "Sorun var", toplam: 1)
+            ]
+        )
+
+        #expect(candidates.first?.station.id == "fast_dc")
+    }
+
     private func loadFixture() throws -> [Station] {
         let url = try #require(Bundle.module.url(forResource: "stations.fixture", withExtension: "json", subdirectory: "Fixtures"))
         let data = try Data(contentsOf: url)
         return try JSONDecoder().decode([Station].self, from: data)
     }
 }
-

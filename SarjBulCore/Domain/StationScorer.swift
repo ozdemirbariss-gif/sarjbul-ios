@@ -5,6 +5,7 @@ public enum StationScorer {
         let total = distanceScore(candidate.distanceKm)
             + powerScore(candidate.station.powerKW)
             + arrivalChargeScore(candidate.arrivalChargePercent)
+            + statusScore(candidate.status)
             + priceScore(candidate.station.priceValue)
             + dataScore(candidate.station)
         return min(100, max(1, total))
@@ -12,6 +13,14 @@ public enum StationScorer {
 
     public static func badges(for candidate: StationCandidate) -> [StationBadge] {
         var badges: [StationBadge] = []
+
+        if candidate.status?.durum == "riskli" {
+            badges.append(.init(title: "Risk bildirildi", tone: .risk))
+        } else if candidate.status?.durum == "aktif" {
+            badges.append(.init(title: "Son bildirim olumlu", tone: .good))
+        } else {
+            badges.append(.init(title: "Canlı veri yok", tone: .warning))
+        }
 
         if candidate.arrivalChargePercent >= 15 {
             badges.append(.init(title: "Varış güvenli", tone: .good))
@@ -29,8 +38,6 @@ public enum StationScorer {
             badges.append(.init(title: "\(Set(candidate.station.sources).count) kaynak", tone: .good))
         } else if candidate.station.confidenceScore >= 0.8 {
             badges.append(.init(title: "Yüksek veri güveni", tone: .good))
-        } else {
-            badges.append(.init(title: "Canlı veri yok", tone: .warning))
         }
 
         return Array(badges.prefix(5))
@@ -59,6 +66,17 @@ public enum StationScorer {
         return 2
     }
 
+    private static func statusScore(_ status: StationStatusSummary?) -> Int {
+        switch status?.durum {
+        case "riskli":
+            return 0
+        case "aktif":
+            return 14
+        default:
+            return 8
+        }
+    }
+
     private static func priceScore(_ price: Double) -> Int {
         if price >= 9999 { return 4 }
         if price <= 8 { return 9 }
@@ -72,4 +90,3 @@ public enum StationScorer {
         return min(15, Int((station.confidenceScore * 9).rounded()) + sourceBonus)
     }
 }
-
