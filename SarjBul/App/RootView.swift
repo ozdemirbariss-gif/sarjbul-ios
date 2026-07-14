@@ -23,11 +23,11 @@ struct RootView: View {
             set: { if !$0 { appState.dismissMessage() } }
         )) {
             if appState.canRetryStationLoad {
-                Button("Tekrar dene") {
+                Button(appState.t("data.refresh")) {
                     Task { await appState.retryLoad() }
                 }
             }
-            Button("Tamam", role: .cancel) {}
+            Button(appState.t("status.ok"), role: .cancel) {}
         } message: {
             Text(appState.message ?? "")
         }
@@ -49,10 +49,10 @@ struct RootView: View {
 
     private var bottomNavigation: some View {
         HStack(spacing: 8) {
-            tabButton(.home, title: "Ana Sayfa", icon: "house")
-            tabButton(.lounge, title: "Salon", icon: "gamecontroller")
-            tabButton(.routes, title: "Rotalar", icon: "point.topleft.down.curvedto.point.bottomright.up")
-            tabButton(.account, title: "Hesap", icon: "person")
+            tabButton(.home, title: appState.t("bottom.home"), icon: "house")
+            tabButton(.lounge, title: appState.t("bottom.map"), icon: "gamecontroller")
+            tabButton(.routes, title: appState.t("bottom.routes"), icon: "point.topleft.down.curvedto.point.bottomright.up")
+            tabButton(.account, title: appState.t("bottom.account"), icon: "person")
         }
         .padding(10)
         .background(SBColor.electricBlue.opacity(0.92))

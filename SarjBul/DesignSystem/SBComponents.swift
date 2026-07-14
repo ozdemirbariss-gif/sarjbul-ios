@@ -22,6 +22,7 @@ struct SBScreenBackground: View {
 }
 
 struct SBBackButton: View {
+    var accessibilityLabel = "Geri"
     var action: () -> Void
 
     var body: some View {
@@ -42,7 +43,7 @@ struct SBBackButton: View {
                 .shadow(color: SBColor.accent.opacity(0.28), radius: 28, x: 0, y: 12)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Geri")
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 

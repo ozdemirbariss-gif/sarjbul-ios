@@ -32,10 +32,14 @@ final class AppState {
 
     private static let profileDefaultsKey = "drivingProfile"
     private static let authSessionDefaultsKey = "firebaseAuthSession"
+    private static let languageDefaultsKey = "appLanguage"
 
     var tab: Tab = .account
     private(set) var stations: [Station] = []
     private(set) var stationStatuses: [String: StationStatusSummary] = [:]
+    var language: AppLanguage = .tr {
+        didSet { persistLanguage() }
+    }
     var profile = DrivingProfile() {
         didSet { persistProfile() }
     }
@@ -59,37 +63,50 @@ final class AppState {
         repository: any StationRepository,
         firebaseClient: FirebaseRESTClient? = nil,
         profile: DrivingProfile = DrivingProfile(),
-        authSession: FirebaseAuthSession? = nil
+        authSession: FirebaseAuthSession? = nil,
+        language: AppLanguage = .tr
     ) {
         self.repository = repository
         self.firebaseClient = firebaseClient
         self.profile = profile
         self.authSession = authSession
+        self.language = language
     }
 
     static func bootstrap() -> AppState {
         let restoredProfile = restoreProfile()
         let restoredSession = restoreAuthSession()
+        let restoredLanguage = restoreLanguage()
         let config = AppConfiguration.load()
         if let url = Bundle.main.url(forResource: "stations", withExtension: "json") {
             return AppState(
                 repository: LocalStationRepository(fileURL: url),
                 firebaseClient: config.firebaseClient,
                 profile: restoredProfile,
-                authSession: restoredSession
+                authSession: restoredSession,
+                language: restoredLanguage
             )
         }
         return AppState(
             repository: EmptyStationRepository(),
             firebaseClient: config.firebaseClient,
             profile: restoredProfile,
-            authSession: restoredSession
+            authSession: restoredSession,
+            language: restoredLanguage
         )
+    }
+
+    func t(_ key: String, _ replacements: [String: String] = [:]) -> String {
+        AppLocalization.text(key, language: language, replacements: replacements)
+    }
+
+    func setLanguage(code: String) {
+        language = AppLanguage(code: code)
     }
 
     func load() async {
         guard stations.isEmpty else { return }
-        loadingMessage = "İstasyonlar hazırlanıyor"
+        loadingMessage = t("data.loading")
         errorMessage = nil
         let repository = repository
 
@@ -119,7 +136,7 @@ final class AppState {
 
     func findStations() async {
         guard let userLocation else {
-            search = .failed("Rota için konum seçmelisin.")
+            search = .failed(t("route.location_required"))
             return
         }
 
@@ -165,12 +182,14 @@ final class AppState {
     }
 
     var messageTitle: String {
-        successMessage == nil ? "İşlem tamamlanamadı" : "Tamamlandı"
+        successMessage == nil ? t("status.error") : t("status.ok")
     }
 
     var stationLoadChipText: String {
         if let loadingMessage { return loadingMessage }
-        return stations.isEmpty ? "İstasyonlar hazırlanıyor" : "\(stations.count) istasyon hazır"
+        return stations.isEmpty
+            ? t("data.loading")
+            : t("data.ready", ["count": "\(stations.count)"])
     }
 
     var canRetryStationLoad: Bool {
@@ -201,7 +220,7 @@ final class AppState {
 
     func signIn(email: String, password: String) async {
         guard let firebaseClient else {
-            errorMessage = "Firebase ayarları AppConfig.plist içinde tanımlı değil."
+            errorMessage = t("service.firebase_missing")
             return
         }
 
@@ -215,7 +234,7 @@ final class AppState {
 
     func signUp(email: String, password: String) async {
         guard let firebaseClient else {
-            errorMessage = "Firebase ayarları AppConfig.plist içinde tanımlı değil."
+            errorMessage = t("service.firebase_missing")
             return
         }
 
@@ -229,13 +248,13 @@ final class AppState {
 
     func resetPassword(email: String) async {
         guard let firebaseClient else {
-            errorMessage = "Firebase ayarları AppConfig.plist içinde tanımlı değil."
+            errorMessage = t("service.firebase_missing")
             return
         }
 
         do {
             try await firebaseClient.sendPasswordReset(email: email)
-            successMessage = "Şifre sıfırlama bağlantısı gönderildi."
+            successMessage = t("service.reset_sent")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -253,7 +272,7 @@ final class AppState {
 
     func toggleFavorite(_ stationKey: String) async {
         guard let firebaseClient else {
-            errorMessage = "Kaydetmek için giriş yapmalısın."
+            errorMessage = t("service.favorite_login_required")
             return
         }
         guard !pendingFavoriteKeys.contains(stationKey) else { return }
@@ -288,7 +307,7 @@ final class AppState {
 
     func reportStatus(stationKey: String, status: String) async {
         guard let firebaseClient else {
-            errorMessage = "Durum bildirmek için giriş yapmalısın."
+            errorMessage = t("service.report_login_required")
             return
         }
 
@@ -345,7 +364,7 @@ final class AppState {
 
     private func validToken() async throws -> FirebaseAuthSession {
         guard authSession != nil else {
-            throw FirebaseRESTError.requestFailed("Oturum yok.")
+            throw FirebaseRESTError.requestFailed(t("service.no_session"))
         }
         if authSession?.isExpired == true {
             return try await forceRefreshToken()
@@ -355,10 +374,10 @@ final class AppState {
 
     private func forceRefreshToken() async throws -> FirebaseAuthSession {
         guard let firebaseClient else {
-            throw FirebaseRESTError.requestFailed("Firebase ayarları AppConfig.plist içinde tanımlı değil.")
+            throw FirebaseRESTError.requestFailed(t("service.firebase_missing"))
         }
         guard let current = authSession else {
-            throw FirebaseRESTError.requestFailed("Oturum yok.")
+            throw FirebaseRESTError.requestFailed(t("service.no_session"))
         }
 
         var refreshed = try await firebaseClient.refreshSession(refreshToken: current.refreshToken)
@@ -403,10 +422,18 @@ final class AppState {
         return nil
     }
 
+    private static func restoreLanguage() -> AppLanguage {
+        AppLanguage(code: UserDefaults.standard.string(forKey: languageDefaultsKey) ?? AppLanguage.tr.rawValue)
+    }
+
     private func persistProfile() {
         if let data = try? JSONEncoder().encode(profile) {
             UserDefaults.standard.set(data, forKey: Self.profileDefaultsKey)
         }
+    }
+
+    private func persistLanguage() {
+        UserDefaults.standard.set(language.rawValue, forKey: Self.languageDefaultsKey)
     }
 
     private func persistAuthSession() {

@@ -6,7 +6,6 @@ struct AccountView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var isWorking = false
-    @State private var language = "TR"
 
     var body: some View {
         NavigationStack {
@@ -17,7 +16,10 @@ struct AccountView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         HStack {
                             Spacer()
-                            SBLanguageSwitch(selectedLanguage: $language)
+                            SBLanguageSwitch(selectedLanguage: Binding(
+                                get: { appState.language.displayCode },
+                                set: { appState.setLanguage(code: $0) }
+                            ))
                         }
 
                         heroPanel
@@ -49,10 +51,10 @@ struct AccountView: View {
                 SBBrandMark()
 
                 VStack(alignment: .leading, spacing: -10) {
-                    Text("Akımı")
+                    Text(appState.t("auth.hero_line1"))
                         .font(SBFont.display(size: 72, weight: .heavy))
                         .foregroundStyle(SBColor.muted)
-                    Text("yakala.")
+                    Text(appState.t("auth.hero_line2"))
                         .font(SBFont.display(size: 72, weight: .heavy))
                         .foregroundStyle(SBColor.ink)
                         .padding(.horizontal, 16)
@@ -78,14 +80,14 @@ struct AccountView: View {
     private var guestPanel: some View {
         SBSecondaryPanel {
             VStack(alignment: .leading, spacing: 22) {
-                Text("En yakın şarjı hemen bul")
+                Text(appState.t("auth.guest_primary_title"))
                     .font(SBFont.display(size: 30, weight: .heavy))
                     .foregroundStyle(SBColor.ink)
-                Text("Üyelik gerekmez. Konumunu seçip rotanı oluşturabilirsin.")
+                Text(appState.t("auth.guest_primary_hint"))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(SBColor.muted)
 
-                SBPrimaryButton(title: "Hemen başla", systemImage: nil) {
+                SBPrimaryButton(title: appState.t("auth.guest_primary_action"), systemImage: nil) {
                     Haptic.tap()
                     appState.tab = .home
                 }
@@ -96,11 +98,11 @@ struct AccountView: View {
     private var signedInPanel: some View {
         SBPanel {
             VStack(alignment: .leading, spacing: 16) {
-                Label(appState.authSession?.email ?? "Doğrulanmış sürücü", systemImage: "person.crop.circle.badge.checkmark")
+                Label(appState.authSession?.email ?? appState.t("auth.verified_driver"), systemImage: "person.crop.circle.badge.checkmark")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(SBColor.ink)
 
-                Text("Favoriler ve durum bildirimleri bu hesapla senkronize edilir.")
+                Text(appState.t("auth.signed_in_hint"))
                     .font(.subheadline)
                     .foregroundStyle(SBColor.muted)
 
@@ -108,7 +110,7 @@ struct AccountView: View {
                     Haptic.tap()
                     appState.signOut()
                 } label: {
-                    Label("Çıkış yap", systemImage: "rectangle.portrait.and.arrow.right")
+                    Label(appState.t("auth.logout"), systemImage: "rectangle.portrait.and.arrow.right")
                         .font(.headline.weight(.bold))
                         .frame(maxWidth: .infinity)
                 }
@@ -125,21 +127,21 @@ struct AccountView: View {
                     .frame(height: 3)
                     .clipShape(Capsule())
 
-                Text("Hesabınla devam et")
+                Text(appState.t("auth.card_title"))
                     .font(SBFont.display(size: 30, weight: .heavy))
                     .foregroundStyle(SBColor.ink)
-                Text("Favoriler ve bildirimler hesabına kaydedilir.")
+                Text(appState.t("auth.card_hint"))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(SBColor.muted)
 
                 if mode == .reset {
-                    Text("Şifre sıfırlama bağlantısı e-postana gönderilir.")
+                    Text(appState.t("auth.reset_hint"))
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(SBColor.muted)
                 } else {
-                    Picker("Hesap işlemi", selection: $mode) {
+                    Picker(appState.t("auth.mode_label"), selection: $mode) {
                         ForEach([AuthMode.signIn, AuthMode.signUp]) { mode in
-                            Text(mode.title).tag(mode)
+                            Text(mode.title(appState)).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -148,7 +150,7 @@ struct AccountView: View {
                     }
                 }
 
-                TextField("E-posta", text: $email)
+                TextField(appState.t("auth.email"), text: $email)
                     .sbEmailInput()
                     .textFieldStyle(.plain)
                     .padding(16)
@@ -160,7 +162,7 @@ struct AccountView: View {
                     )
 
                 if mode != .reset {
-                    SecureField("Şifre", text: $password)
+                    SecureField(appState.t("auth.password"), text: $password)
                         .sbPasswordInput(isNewPassword: mode == .signUp)
                         .onSubmit { Task { await submit() } }
                         .textFieldStyle(.plain)
@@ -173,7 +175,7 @@ struct AccountView: View {
                         )
                 }
 
-                SBPrimaryButton(title: isWorking ? "İşleniyor..." : mode.actionTitle, systemImage: mode.icon) {
+                SBPrimaryButton(title: isWorking ? mode.loadingTitle(appState) : mode.actionTitle(appState), systemImage: mode.icon) {
                     Task { await submit() }
                 }
                 .disabled(isWorking || !formIsValid)
@@ -184,7 +186,7 @@ struct AccountView: View {
                         Haptic.tap()
                         mode = .signIn
                     } label: {
-                        Text("Girişe dön")
+                        Text(appState.t("auth.back_to_login"))
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(SBColor.electricBlue)
                     }
@@ -193,14 +195,14 @@ struct AccountView: View {
                         Haptic.tap()
                         mode = .reset
                     } label: {
-                        Text("Şifremi unuttum")
+                        Text(appState.t("auth.forgot_password"))
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(SBColor.electricBlue)
                     }
                 }
 
                 if !appState.isFirebaseConfigured {
-                    Text("Firebase ayarları için AppConfig.plist eklenmeli.")
+                    Text(appState.t("auth.firebase_config_required"))
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(SBColor.muted)
                 }
@@ -238,19 +240,30 @@ private enum AuthMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    @MainActor
+    func title(_ appState: AppState) -> String {
         switch self {
-        case .signIn: "Giriş"
-        case .signUp: "Kayıt"
-        case .reset: "Sıfırla"
+        case .signIn: appState.t("auth.login")
+        case .signUp: appState.t("auth.register")
+        case .reset: appState.t("auth.reset")
         }
     }
 
-    var actionTitle: String {
+    @MainActor
+    func actionTitle(_ appState: AppState) -> String {
         switch self {
-        case .signIn: "Giriş yap"
-        case .signUp: "Kayıt ol"
-        case .reset: "Sıfırlama bağlantısı gönder"
+        case .signIn: appState.t("auth.login_action")
+        case .signUp: appState.t("auth.register_action")
+        case .reset: appState.t("auth.reset_action")
+        }
+    }
+
+    @MainActor
+    func loadingTitle(_ appState: AppState) -> String {
+        switch self {
+        case .signIn: appState.t("auth.login_loading")
+        case .signUp: appState.t("auth.register_loading")
+        case .reset: appState.t("auth.reset_loading")
         }
     }
 

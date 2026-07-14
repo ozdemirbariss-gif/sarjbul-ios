@@ -28,7 +28,7 @@ struct HomeView: View {
                     .padding(.top, 28)
                 }
 
-                SBBackButton {
+                SBBackButton(accessibilityLabel: appState.t("nav.back")) {
                     appState.tab = .account
                 }
                 .padding(.leading, 18)
@@ -63,7 +63,7 @@ struct HomeView: View {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.headline.weight(.heavy))
-                Text(preference.title)
+                Text(preferenceTitle(preference))
                     .font(.caption.weight(.heavy))
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
@@ -86,7 +86,7 @@ struct HomeView: View {
                             .background(SBColor.electricBlue)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Nereden başlıyorsun?")
+                            Text(appState.t("home.search_title"))
                                 .font(.title3.weight(.bold))
                             Text(locationLabel)
                                 .font(.subheadline.weight(.semibold))
@@ -95,7 +95,7 @@ struct HomeView: View {
                         Spacer()
                     }
 
-                    SBPrimaryButton(title: "Konumumu kullan", systemImage: "location.fill") {
+                    SBPrimaryButton(title: appState.t("home.use_location"), systemImage: "location.fill") {
                         Haptic.tap()
                         requestDeviceLocation()
                     }
@@ -113,13 +113,13 @@ struct HomeView: View {
     }
 
     private var locationLabel: String {
-        guard let location = appState.userLocation else { return "Konum seçilmedi" }
+        guard let location = appState.userLocation else { return appState.t("home.location_selected") }
         return String(format: "%.4f, %.4f", location.latitude, location.longitude)
     }
 
     private var drivingProfile: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Sürüş Profili")
+            Text(appState.t("catalog.kicker"))
                 .font(.headline.weight(.heavy))
                 .foregroundStyle(SBColor.primaryDeep)
                 .textCase(.uppercase)
@@ -128,7 +128,7 @@ struct HomeView: View {
             SBPanel {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
-                        Text("Şarj %")
+                        Text(appState.t("catalog.charge_percent"))
                             .font(.title3.weight(.bold))
                             .foregroundStyle(SBColor.muted)
                         Spacer()
@@ -147,14 +147,19 @@ struct HomeView: View {
                     .tint(SBColor.accent)
                 }
 
-                ChargeVisual(percent: appState.profile.chargePercent)
+                ChargeVisual(
+                    percent: appState.profile.chargePercent,
+                    statusText: chargeStatusText,
+                    chargeLabel: appState.t("charge.label"),
+                    selectedLevelText: appState.t("charge.selected_level")
+                )
 
                 Divider()
                     .overlay(SBColor.line)
 
                 HStack(spacing: 12) {
                     MetricInput(
-                        title: "Batarya kapasitesi",
+                        title: appState.t("catalog.capacity"),
                         unit: "kWh",
                         value: Binding(
                             get: { appState.profile.batteryKWh },
@@ -164,7 +169,7 @@ struct HomeView: View {
                         step: 1
                     )
                     MetricInput(
-                        title: "Ortalama tüketim",
+                        title: appState.t("catalog.consumption"),
                         unit: "kWh",
                         value: Binding(
                             get: { appState.profile.consumptionKWhPer100Km },
@@ -182,7 +187,7 @@ struct HomeView: View {
         DisclosureGroup(isExpanded: $settingsExpanded) {
             VStack(alignment: .leading, spacing: 14) {
                 locationSection
-                Toggle("Menzil dışını gizle", isOn: Binding(
+                Toggle(appState.t("filters.range"), isOn: Binding(
                     get: { appState.filters.rangeFilterEnabled },
                     set: { appState.filters.rangeFilterEnabled = $0 }
                 ))
@@ -191,7 +196,7 @@ struct HomeView: View {
             }
             .padding(.top, 16)
         } label: {
-            Label("Filtreler ve sürüş ayarları", systemImage: "chevron.right")
+            Label(appState.t("filters.title"), systemImage: "chevron.right")
                 .font(.title3.weight(.heavy))
                 .foregroundStyle(SBColor.muted)
         }
@@ -217,14 +222,17 @@ struct HomeView: View {
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("Akıllı menzil önerisi")
+                    Text(appState.t("home.insight_kicker"))
                         .font(.subheadline.weight(.heavy))
                         .foregroundStyle(SBColor.muted)
-                    Text("\(Int(appState.profile.safeRangeKm.rounded())) km güvenli menzille yola hazırsın")
+                    Text(appState.t("home.insight_title", ["range": "\(safeRangeKm)"]))
                         .font(.title3.weight(.heavy))
                         .foregroundStyle(SBColor.ink)
                         .lineLimit(2)
-                    Text("%\(appState.profile.chargePercent) · \(Int(appState.profile.safeRangeKm.rounded())) km güvenli menzil")
+                    Text(appState.t("summary.safe_range_value", [
+                        "percent": "\(appState.profile.chargePercent)",
+                        "range": "\(safeRangeKm)"
+                    ]))
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(SBColor.muted)
                 }
@@ -243,7 +251,7 @@ struct HomeView: View {
                     }
                 }
             } label: {
-                Text(appState.isSearching ? "Hesaplanıyor..." : "En Uygun İstasyonu Bul")
+                Text(appState.isSearching ? appState.t("location.calculating") : appState.t("location.find_charger"))
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -264,6 +272,30 @@ struct HomeView: View {
         .sbGlowShadow()
     }
 
+    private var safeRangeKm: Int {
+        Int(appState.profile.safeRangeKm.rounded())
+    }
+
+    private var chargeStatusText: String {
+        let percent = min(100, max(1, appState.profile.chargePercent))
+        if percent < 25 { return appState.t("charge.low") }
+        if percent < 75 { return appState.t("charge.ready") }
+        return appState.t("charge.long_range")
+    }
+
+    private func preferenceTitle(_ preference: RoutePreference) -> String {
+        switch preference {
+        case .balanced:
+            appState.t("intent.balanced")
+        case .nearest:
+            appState.t("home.quick_near")
+        case .fastest:
+            appState.t("home.quick_fast")
+        case .economical:
+            appState.t("home.quick_value")
+        }
+    }
+
     private var manualLocationEntryVisible: Bool {
         if appState.userLocation?.source == .manual { return true }
         if locationManager.lastError != nil || locationRequestTimedOut { return true }
@@ -278,11 +310,11 @@ struct HomeView: View {
     private var locationWaitingText: String {
         switch locationManager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
-            "Konum alınıyor. Sinyal gelmezse şehir veya koordinat girişi açılır."
+            appState.t("home.location_waiting_authorized")
         case .notDetermined:
-            "Konum izni bekleniyor. İzin vermezsen şehir veya koordinat girişi açılır."
+            appState.t("home.location_waiting_pending")
         default:
-            "Konuma erişilemiyor. Şehir veya koordinatla devam edebilirsin."
+            appState.t("home.location_waiting_failed")
         }
     }
 
@@ -300,8 +332,8 @@ struct HomeView: View {
 
     private var manualLocationForm: some View {
         VStack(spacing: 12) {
-            Picker("Şehir veya bölge seç", selection: $selectedPreset) {
-                Text("Şehir veya bölge seç").tag(Optional<ManualLocationPreset>.none)
+            Picker(appState.t("home.location_pick"), selection: $selectedPreset) {
+                Text(appState.t("home.location_pick")).tag(Optional<ManualLocationPreset>.none)
                 ForEach(ManualLocationPreset.allCases) { preset in
                     Text(preset.title).tag(Optional(preset))
                 }
@@ -322,9 +354,9 @@ struct HomeView: View {
             }
 
             HStack {
-                TextField("Enlem", value: $manualLatitude, format: .number.precision(.fractionLength(4)))
+                TextField(appState.t("home.latitude"), value: $manualLatitude, format: .number.precision(.fractionLength(4)))
                     .sbDecimalKeyboard()
-                TextField("Boylam", value: $manualLongitude, format: .number.precision(.fractionLength(4)))
+                TextField(appState.t("home.longitude"), value: $manualLongitude, format: .number.precision(.fractionLength(4)))
                     .sbDecimalKeyboard()
             }
             .textFieldStyle(.plain)
@@ -340,7 +372,7 @@ struct HomeView: View {
                 Haptic.tap()
                 appState.updateLocation(latitude: manualLatitude, longitude: manualLongitude, source: .manual)
             } label: {
-                Label("Manuel konumu kullan", systemImage: "mappin.and.ellipse")
+                Label(appState.t("home.use_manual_location"), systemImage: "mappin.and.ellipse")
                     .font(.headline.weight(.bold))
                     .frame(maxWidth: .infinity)
             }
@@ -373,15 +405,12 @@ private struct QuickActionStyle: ButtonStyle {
 
 private struct ChargeVisual: View {
     var percent: Int
+    var statusText: String
+    var chargeLabel: String
+    var selectedLevelText: String
 
     private var clampedPercent: Int {
         min(100, max(1, percent))
-    }
-
-    private var statusText: String {
-        if clampedPercent < 25 { return "Düşük şarj" }
-        if clampedPercent < 75 { return "Yola hazır" }
-        return "Uzun menzil"
     }
 
     var body: some View {
@@ -396,7 +425,7 @@ private struct ChargeVisual: View {
                 VStack(spacing: 2) {
                     Text("%\(clampedPercent)")
                         .font(.title.weight(.heavy))
-                    Text("Şarj")
+                    Text(chargeLabel)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(SBColor.muted)
                 }
@@ -404,7 +433,7 @@ private struct ChargeVisual: View {
             .frame(width: 108, height: 108)
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Seçili batarya seviyesi")
+                Text(selectedLevelText)
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(SBColor.muted)
                 Text(statusText)

@@ -10,7 +10,7 @@ struct StationFeedView: View {
             SBScreenBackground()
             content
 
-            SBBackButton {
+            SBBackButton(accessibilityLabel: appState.t("nav.back")) {
                 appState.tab = .home
             }
             .padding(.leading, 18)
@@ -21,7 +21,8 @@ struct StationFeedView: View {
                 filters: Binding(
                     get: { appState.filters },
                     set: { appState.filters = $0 }
-                )
+                ),
+                language: appState.language
             ) {
                 Haptic.tap()
                 filterSheetPresented = false
@@ -36,35 +37,35 @@ struct StationFeedView: View {
         switch appState.search {
         case .idle:
             emptyState(
-                "Rota hazır değil",
+                appState.t("route.idle"),
                 icon: "bolt.car",
-                message: "Ana sayfadan konumunu seçip En Uygun İstasyonu Bul'a bas."
+                message: appState.t("route.idle_hint")
             )
         case .searching:
             VStack(spacing: 18) {
                 ProgressView()
                     .tint(SBColor.accent)
                     .scaleEffect(1.2)
-                Text("En iyi duraklar hesaplanıyor")
+                Text(appState.t("route.searching"))
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.muted)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed(let message):
-            emptyState("Rota hesaplanamadı", icon: "exclamationmark.triangle", message: message)
+            emptyState(appState.t("route.failed"), icon: "exclamationmark.triangle", message: message)
         case .results(let candidates):
             if candidates.isEmpty {
                 emptyState(
-                    "Uygun istasyon bulunamadı",
+                    appState.t("route.empty"),
                     icon: "magnifyingglass",
-                    message: "Filtreleri gevşetip tekrar deneyebilirsin."
+                    message: appState.t("route.empty_hint")
                 )
             } else {
                 ScrollView {
                     LazyVStack(spacing: 24) {
                         Color.clear.frame(height: 84)
                         ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                            StationCard(candidate: candidate, rank: index + 1)
+                            StationCard(candidate: candidate, rank: index + 1, total: candidates.count)
                                 .containerRelativeFrame(.vertical, count: 1, spacing: 22)
                                 .scrollTransition { content, phase in
                                     content
@@ -96,7 +97,7 @@ struct StationFeedView: View {
                         .font(.headline.weight(.bold))
                         .foregroundStyle(SBColor.muted)
                         .multilineTextAlignment(.center)
-                    SBDarkButton(title: "Ana Sayfaya Dön", systemImage: "house") {
+                    SBDarkButton(title: appState.t("route.back_home"), systemImage: "house") {
                         appState.tab = .home
                     }
                 }
@@ -109,6 +110,7 @@ struct StationFeedView: View {
 
 private struct StationFilterSheet: View {
     @Binding var filters: StationFilters
+    var language: AppLanguage
     var apply: () -> Void
 
     private let sockets = ["CCS", "Type 2", "CHAdeMO", "Schuko"]
@@ -116,25 +118,25 @@ private struct StationFilterSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Öncelik") {
-                    Picker("Öncelik", selection: $filters.preference) {
+                Section(t("filters.preference")) {
+                    Picker(t("filters.preference"), selection: $filters.preference) {
                         ForEach(RoutePreference.allCases) { preference in
-                            Text(preference.title).tag(preference)
+                            Text(preferenceTitle(preference)).tag(preference)
                         }
                     }
                     .pickerStyle(.segmented)
                 }
 
-                Section("Güç") {
+                Section(t("filters.power")) {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Minimum \(Int(filters.minimumPowerKW)) kW")
+                        Text(t("filters.minimum_power", ["power": "\(Int(filters.minimumPowerKW))"]))
                             .font(.headline)
                         Slider(value: $filters.minimumPowerKW, in: 0...180, step: 10)
                             .tint(SBColor.accent)
                     }
                 }
 
-                Section("Soket") {
+                Section(t("filters.socket")) {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 10)], spacing: 10) {
                         ForEach(sockets, id: \.self) { socket in
                             Button {
@@ -157,15 +159,32 @@ private struct StationFilterSheet: View {
                 }
 
                 Section {
-                    Toggle("Menzil dışını gizle", isOn: $filters.rangeFilterEnabled)
+                    Toggle(t("filters.range"), isOn: $filters.rangeFilterEnabled)
                 }
             }
-            .navigationTitle("Filtreler")
+            .navigationTitle(t("filters.title"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Uygula", action: apply)
+                    Button(t("filters.apply"), action: apply)
                 }
             }
+        }
+    }
+
+    private func t(_ key: String, _ replacements: [String: String] = [:]) -> String {
+        AppLocalization.text(key, language: language, replacements: replacements)
+    }
+
+    private func preferenceTitle(_ preference: RoutePreference) -> String {
+        switch preference {
+        case .balanced:
+            t("intent.balanced")
+        case .nearest:
+            t("intent.near")
+        case .fastest:
+            t("intent.fast")
+        case .economical:
+            t("intent.economic")
         }
     }
 }

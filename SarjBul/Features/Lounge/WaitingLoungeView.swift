@@ -28,7 +28,7 @@ struct WaitingLoungeView: View {
                 .padding(.bottom, 28)
             }
 
-            SBBackButton {
+            SBBackButton(accessibilityLabel: appState.t("nav.back")) {
                 appState.tab = .home
             }
             .padding(.leading, 18)
@@ -41,16 +41,16 @@ struct WaitingLoungeView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("ŞARJ ARASI")
+            Text(appState.t("lounge.kicker"))
                 .font(.caption.weight(.heavy))
                 .foregroundStyle(SBColor.primaryDeep)
                 .textCase(.uppercase)
-            Text("Salon")
+            Text(appState.t("lounge.title"))
                 .font(SBFont.display(size: 52, weight: .heavy))
                 .foregroundStyle(SBColor.muted)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
-            Text("Aracın dolarken reflekslerini açık tutan kısa ve sürprizli bir oyun.")
+            Text(appState.t("lounge.subtitle"))
                 .font(.headline.weight(.bold))
                 .foregroundStyle(SBColor.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -63,10 +63,10 @@ struct WaitingLoungeView: View {
             VStack(spacing: 18) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("VOLT DASH")
+                        Text(appState.t("lounge.game_title"))
                             .font(.caption.weight(.heavy))
                             .foregroundStyle(SBColor.primaryDeep)
-                        Text(crashed ? "Çarptın" : running ? "Koşuyor" : "Hazır")
+                        Text(gameStatusText)
                             .font(SBFont.display(size: 36, weight: .heavy))
                             .foregroundStyle(SBColor.ink)
                             .lineLimit(1)
@@ -74,9 +74,9 @@ struct WaitingLoungeView: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 6) {
-                        Text("SKOR \(score)")
+                        Text("\(appState.t("lounge.score")) \(score)")
                             .font(.headline.weight(.heavy))
-                        Text("EN İYİ \(best)")
+                        Text("\(appState.t("lounge.best")) \(best)")
                             .font(.caption.weight(.heavy))
                             .foregroundStyle(SBColor.muted)
                     }
@@ -118,11 +118,17 @@ struct WaitingLoungeView: View {
                 }
                 .frame(height: 330)
 
-                SBPrimaryButton(title: running ? "Zıpla" : "Başlat", systemImage: "bolt.fill") {
+                SBPrimaryButton(title: running ? appState.t("lounge.jump") : appState.t("lounge.start"), systemImage: "bolt.fill") {
                     running ? jump() : start()
                 }
             }
         }
+    }
+
+    private var gameStatusText: String {
+        if crashed { return appState.t("lounge.crashed") }
+        if running { return appState.t("lounge.running") }
+        return appState.t("lounge.ready")
     }
 
     private func start() {

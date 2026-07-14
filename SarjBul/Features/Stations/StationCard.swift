@@ -7,6 +7,7 @@ struct StationCard: View {
     @Environment(\.openURL) private var openURL
     var candidate: StationCandidate
     var rank: Int
+    var total: Int
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,7 +30,7 @@ struct StationCard: View {
                     HStack(spacing: 6) {
                         Text("\(candidate.score)")
                             .font(.title2.weight(.heavy))
-                        Text("SKOR")
+                        Text(appState.t("feed.score"))
                             .font(.headline.weight(.heavy))
                             .foregroundStyle(SBColor.muted)
                     }
@@ -39,7 +40,7 @@ struct StationCard: View {
             .overlay(alignment: .topTrailing) {
                 VStack(spacing: 16) {
                     routePill {
-                        Text(String(format: "%02d / 80", rank))
+                        Text(String(format: "%02d / %02d", rank, total))
                             .font(.title2.weight(.heavy))
                     }
 
@@ -55,13 +56,13 @@ struct StationCard: View {
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Rotayı Haritalar'da aç")
+                    .accessibilityLabel(appState.t("feed.open_in_maps"))
                 }
                 .padding(22)
             }
             .overlay(alignment: .bottomLeading) {
                 routePill {
-                    Text("YAKLAŞIK ROTA")
+                    Text(appState.t("feed.route_approximate"))
                         .font(.headline.weight(.heavy))
                         .foregroundStyle(SBColor.electricBlue)
                 }
@@ -77,26 +78,26 @@ struct StationCard: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
-            Text("\(candidate.estimatedMinutes) dk · varış %\(Int(candidate.arrivalChargePercent.rounded()))")
+            Text("\(candidate.estimatedMinutes) \(appState.t("feed.minute")) · \(appState.t("feed.arrival")) %\(Int(candidate.arrivalChargePercent.rounded()))")
                 .font(.title3.weight(.heavy))
                 .foregroundStyle(SBColor.textSoft)
 
             HStack(spacing: 10) {
-                chip("Varış şarjı %\(Int(candidate.arrivalChargePercent.rounded()))")
-                chip(String(format: "Sapma +%.1f km", max(0, candidate.distanceKm - candidate.straightLineDistanceKm)))
+                chip("\(appState.t("feed.arrival_charge")) %\(Int(candidate.arrivalChargePercent.rounded()))")
+                chip(String(format: "\(appState.t("feed.deviation")) +%.1f km", max(0, candidate.distanceKm - candidate.straightLineDistanceKm)))
             }
 
             stationPanel
 
             HStack(spacing: 10) {
-                metric("GÜÇ", candidate.station.power)
-                metric("SOKET", candidate.station.socket)
-                metric("FİYAT", candidate.station.price)
+                metric(appState.t("feed.power"), candidate.station.power)
+                metric(appState.t("feed.socket"), candidate.station.socket)
+                metric(appState.t("feed.price"), candidate.station.price)
             }
 
             HStack(alignment: .center, spacing: 8) {
                 ForEach(candidate.badges.prefix(3), id: \.self) { badge in
-                    Text(badge.title)
+                    Text(localizedBadgeTitle(badge))
                         .font(.caption.weight(.heavy))
                         .foregroundStyle(badgeColor(badge.tone))
                         .lineLimit(1)
@@ -132,7 +133,7 @@ struct StationCard: View {
     private var stationPanel: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
-                Text("ŞARJ NOKTASI")
+                Text(appState.t("feed.detail_card"))
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(SBColor.muted)
                 Text(candidate.station.name)
@@ -170,20 +171,20 @@ struct StationCard: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(appState.isFavorite(stationKey) ? "Favoriden çıkar" : "Favoriye ekle")
+        .accessibilityLabel(appState.isFavorite(stationKey) ? appState.t("feed.favorite_remove") : appState.t("feed.favorite_add"))
     }
 
     private var routeButtons: some View {
         HStack(spacing: 10) {
-            Text("Rotayı Aç")
+            Text(appState.t("feed.open_route"))
                 .font(.title3.weight(.heavy))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
 
-            routeMapButton("Apple Maps", action: openInAppleMaps)
-            routeMapButton("Google Maps", action: openInGoogleMaps)
+            routeMapButton(appState.t("feed.apple_maps"), action: openInAppleMaps)
+            routeMapButton(appState.t("feed.google_maps"), action: openInGoogleMaps)
         }
         .padding(.horizontal, 22)
         .frame(height: 76)
@@ -193,9 +194,9 @@ struct StationCard: View {
 
     private var statusActions: some View {
         HStack(spacing: 8) {
-            reportButton("Uygun", icon: "checkmark.circle.fill")
-            reportButton("Sorun var", icon: "exclamationmark.triangle.fill")
-            reportButton("Sıra var", icon: "clock.fill")
+            reportButton(appState.t("actions.available"), status: "Uygun", icon: "checkmark.circle.fill")
+            reportButton(appState.t("actions.issue_value"), status: "Sorun var", icon: "exclamationmark.triangle.fill")
+            reportButton(appState.t("actions.queue_value"), status: "Sıra var", icon: "clock.fill")
         }
     }
 
@@ -247,10 +248,10 @@ struct StationCard: View {
             )
     }
 
-    private func reportButton(_ title: String, icon: String) -> some View {
+    private func reportButton(_ title: String, status: String, icon: String) -> some View {
         Button {
             Haptic.tap()
-            Task { await appState.reportStatus(stationKey: candidate.station.statusKey, status: title) }
+            Task { await appState.reportStatus(stationKey: candidate.station.statusKey, status: status) }
         } label: {
             Label(title, systemImage: icon)
                 .font(.caption.weight(.heavy))
@@ -293,6 +294,33 @@ struct StationCard: View {
             RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
                 .stroke(SBColor.line, lineWidth: 1)
         )
+    }
+
+    private func localizedBadgeTitle(_ badge: StationBadge) -> String {
+        switch badge.title {
+        case "Risk bildirildi":
+            return appState.t("badge.risk")
+        case "Son bildirim olumlu":
+            return appState.t("badge.last_positive")
+        case "Canlı veri yok":
+            return appState.t("badge.no_live")
+        case "Varış güvenli":
+            return appState.t("badge.arrival_safe")
+        case "Varış düşük":
+            return appState.t("badge.arrival_low")
+        case "Hızlı DC":
+            return appState.t("badge.fast_dc")
+        case "DC":
+            return appState.t("badge.dc")
+        case "Yüksek veri güveni":
+            return appState.t("badge.high_confidence")
+        default:
+            if badge.title.hasSuffix(" kaynak"),
+               let count = badge.title.split(separator: " ").first {
+                return appState.t("badge.sources", ["count": String(count)])
+            }
+            return badge.title
+        }
     }
 
     private func openInAppleMaps() {
