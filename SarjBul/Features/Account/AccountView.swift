@@ -40,39 +40,73 @@ struct AccountView: View {
     private var heroPanel: some View {
         ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                .fill(SBColor.surface)
+                .fill(LinearGradient.sbSoftPanel)
                 .overlay(
                     RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
                         .stroke(SBColor.line, lineWidth: 1)
                 )
                 .sbSoftShadow()
 
-            VStack(alignment: .leading, spacing: 56) {
-                SBBrandMark()
-
-                VStack(alignment: .leading, spacing: -10) {
-                    Text(appState.t("auth.hero_line1"))
-                        .font(SBFont.display(size: 72, weight: .heavy))
-                        .foregroundStyle(SBColor.muted)
-                    Text(appState.t("auth.hero_line2"))
-                        .font(SBFont.display(size: 72, weight: .heavy))
-                        .foregroundStyle(SBColor.ink)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 4)
-                        .background(SBColor.accent)
-                        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+            VStack(alignment: .leading, spacing: 34) {
+                HStack(spacing: 10) {
+                    Circle()
+                        .fill(LinearGradient.sbPrimary)
+                        .frame(width: 34, height: 34)
+                        .overlay(alignment: .trailing) {
+                            Circle()
+                                .fill(SBColor.accent)
+                                .frame(width: 38, height: 38)
+                                .opacity(0.2)
+                                .offset(x: 22)
+                        }
+                    Circle()
+                        .fill(SBColor.accent)
+                        .frame(width: 12, height: 12)
+                        .padding(.leading, 8)
                 }
-                .minimumScaleFactor(0.72)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                .background(SBColor.glassStrong)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(SBColor.line, lineWidth: 1)
+                )
+                .sbSoftShadow()
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(appState.t("auth.hero_line1"))
+                        .font(SBFont.display(size: 82, weight: .heavy))
+                        .foregroundStyle(SBColor.ink.opacity(0.46))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                    Text(appState.t("auth.hero_line2"))
+                        .font(SBFont.display(size: 86, weight: .heavy))
+                        .foregroundStyle(SBColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 8)
+                        .background(
+                            LinearGradient(
+                                colors: [SBColor.accent, SBColor.primaryDeep.opacity(0.78)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .shadow(color: SBColor.accent.opacity(0.26), radius: 24, x: 0, y: 14)
+                }
 
                 HStack {
                     Spacer()
                     Capsule()
-                        .fill(SBColor.accent)
-                        .frame(width: 210, height: 18)
-                        .offset(x: 76)
+                        .fill(LinearGradient.sbNeon)
+                        .frame(width: 230, height: 14)
+                        .offset(x: 88)
                 }
             }
-            .padding(28)
+            .padding(30)
         }
         .frame(minHeight: 360)
     }

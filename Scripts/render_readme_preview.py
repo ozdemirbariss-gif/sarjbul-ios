@@ -141,13 +141,11 @@ def primary(canvas, box, label):
 
 def bottom_nav(canvas, ax, ay, active="home"):
     draw = ImageDraw.Draw(canvas)
-    nav = (ax - 4, ay + 576, ax + 280, ay + 646)
-    rounded(draw, nav, radius=34, fill=ELECTRIC, outline=LINE, width=1)
-    tabs = [("home", "Ana", ax + 8), ("lounge", "Salon", ax + 76), ("routes", "Rotalar", ax + 144), ("account", "Hesap", ax + 212)]
-    for key, label, tx in tabs:
-        fill = SURFACE if key == active else SURFACE_SOFT
-        rounded(draw, (tx, ay + 586, tx + 58, ay + 636), radius=25, fill=fill, outline=LINE)
-        text(draw, (tx + 29, ay + 611), label, fill=INK if key == active else MUTED, font_key="tiny", anchor="mm")
+    labels = {"home": "Ana Sayfa", "lounge": "Salon", "routes": "Rotalar", "account": "Hesap"}
+    nav = (ax + 66, ay + 592, ax + 210, ay + 640)
+    rounded(draw, nav, radius=24, fill=SURFACE, outline=LINE, width=1)
+    text(draw, (ax + 120, ay + 616), labels.get(active, "Menü"), fill=INK, font_key="small_b", anchor="mm")
+    text(draw, (ax + 184, ay + 616), "^", fill=MUTED, font_key="body_b", anchor="mm")
 
 
 def account(canvas, x, y):
@@ -158,14 +156,13 @@ def account(canvas, x, y):
     pill(canvas, (ax + 224, ay - 44, ax + 276, ay - 6), "EN")
     hero = (ax, ay + 28, ax + 276, ay + 294)
     rounded(draw, hero, radius=RADII["card"], fill=SURFACE)
-    rounded(draw, (ax + 22, ay + 56, ax + 156, ay + 102), radius=23, fill=SURFACE, outline=LINE)
-    draw.ellipse((ax + 42, ay + 70, ax + 66, ay + 94), fill=gradient((24, 24)).getpixel((8, 8)))
-    draw.ellipse((ax + 78, ay + 77, ax + 92, ay + 91), fill=ACCENT)
-    text(draw, (ax + 104, ay + 68), "ŞarjBul", font_key="h2")
-    text(draw, (ax + 20, ay + 146), "Akımı", fill=MUTED, font_key="title")
-    rounded(draw, (ax + 20, ay + 198, ax + 210, ay + 252), radius=RADII["md"], fill=ACCENT, outline=None)
-    text(draw, (ax + 34, ay + 202), "yakala.", font_key="title")
-    draw.rounded_rectangle((ax + 198, ay + 242, ax + 302, ay + 252), radius=5, fill=ACCENT)
+    rounded(draw, (ax + 22, ay + 56, ax + 104, ay + 102), radius=23, fill=SURFACE, outline=LINE)
+    draw.ellipse((ax + 42, ay + 66, ax + 76, ay + 100), fill=gradient((34, 34)).getpixel((11, 11)))
+    draw.ellipse((ax + 84, ay + 76, ax + 96, ay + 88), fill=ACCENT)
+    text(draw, (ax + 20, ay + 144), "Akımı", fill=blend(INK, BG, 0.46), font_key="title")
+    rounded(draw, (ax + 20, ay + 198, ax + 222, ay + 258), radius=24, fill=ACCENT, outline=None)
+    text(draw, (ax + 36, ay + 204), "yakala.", font_key="title")
+    draw.rounded_rectangle((ax + 198, ay + 242, ax + 318, ay + 254), radius=6, fill=ACCENT)
 
     guest = (ax, ay + 318, ax + 276, ay + 446)
     rounded(draw, guest, radius=RADII["xl"])
