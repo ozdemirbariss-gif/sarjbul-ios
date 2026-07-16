@@ -33,6 +33,8 @@ struct AccountView: View {
                     }
                     .padding(22)
                 }
+                .scrollIndicators(.hidden)
+                .sensoryFeedback(.selection, trigger: appState.language)
             }
         }
     }

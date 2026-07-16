@@ -89,12 +89,7 @@ struct SBLanguageSwitch: View {
             languageButton("EN")
         }
         .padding(6)
-        .background(SBColor.surface)
-        .clipShape(Capsule())
-        .overlay(
-            Capsule()
-                .stroke(SBColor.line, lineWidth: 1)
-        )
+        .sbPremiumGlass(radius: 34, interactive: true)
     }
 
     private func languageButton(_ language: String) -> some View {
@@ -109,7 +104,7 @@ struct SBLanguageSwitch: View {
                 .background(selectedLanguage == language ? SBColor.electricBlue : .clear)
                 .clipShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
     }
 }
 
@@ -123,12 +118,7 @@ struct SBPanel<Content: View>: View {
     var body: some View {
         content
             .padding(20)
-            .background(LinearGradient.sbSoftPanel)
-            .clipShape(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
-                    .stroke(SBColor.line, lineWidth: 1)
-            )
+            .sbPremiumGlass(radius: SBRadius.xl)
             .sbSoftShadow()
     }
 }
@@ -143,12 +133,7 @@ struct SBSecondaryPanel<Content: View>: View {
     var body: some View {
         content
             .padding(20)
-            .background(LinearGradient.sbSoftPanel)
-            .clipShape(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
-                    .stroke(SBColor.line, lineWidth: 1)
-            )
+            .sbPremiumGlass(radius: SBRadius.xl)
             .sbSoftShadow()
     }
 }
@@ -163,18 +148,25 @@ struct SBPrimaryButton: View {
             HStack(spacing: 10) {
                 if let systemImage {
                     Image(systemName: systemImage)
+                        .symbolEffect(.pulse, options: .speed(0.6), value: title)
                 }
                 Text(title)
                     .font(.headline.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
             }
             .foregroundStyle(SBColor.ink)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
             .background(LinearGradient.sbNeon)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                    .stroke(.white.opacity(0.55), lineWidth: 1)
+            )
             .sbGlowShadow()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
     }
 }
 
@@ -235,14 +227,18 @@ struct MetricInput: View {
             }
             .padding(.horizontal, 14)
             .frame(height: 72)
-            .background(SBColor.glassStrong)
-            .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .stroke(SBColor.line, lineWidth: 1)
-            )
+            .sbPremiumGlass(radius: SBRadius.lg, interactive: true)
             .sbSoftShadow()
         }
+    }
+}
+
+struct SBPremiumButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.965 : 1)
+            .brightness(configuration.isPressed ? -0.03 : 0)
+            .animation(.spring(response: 0.24, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }
 

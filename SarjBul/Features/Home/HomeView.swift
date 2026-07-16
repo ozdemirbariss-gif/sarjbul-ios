@@ -27,6 +27,8 @@ struct HomeView: View {
                     .padding(.horizontal, 22)
                     .padding(.top, 28)
                 }
+                .scrollIndicators(.hidden)
+                .sensoryFeedback(.selection, trigger: appState.filters.preference)
 
                 SBBackButton(accessibilityLabel: appState.t("nav.back")) {
                     appState.tab = .account
@@ -63,6 +65,7 @@ struct HomeView: View {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.headline.weight(.heavy))
+                    .symbolEffect(.bounce, value: appState.filters.preference == preference)
                 Text(preferenceTitle(preference))
                     .font(.caption.weight(.heavy))
                     .lineLimit(1)
@@ -202,12 +205,7 @@ struct HomeView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
-        .background(SBColor.glassStrong)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
-        )
+        .sbPremiumGlass(radius: SBRadius.lg, interactive: true)
         .sbSoftShadow()
     }
 
@@ -259,12 +257,11 @@ struct HomeView: View {
                     .background(SBColor.electricBlue)
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SBPremiumButtonStyle())
             .disabled(!appState.canSearch)
             .opacity(appState.canSearch ? 1 : 0.62)
         }
-        .background(SBColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
+        .sbPremiumGlass(radius: SBRadius.card)
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
                 .stroke(SBColor.accent, lineWidth: 10)
@@ -391,8 +388,9 @@ private struct QuickActionStyle: ButtonStyle {
             .foregroundStyle(active ? SBColor.accent : SBColor.muted)
             .frame(maxWidth: .infinity)
             .frame(height: 68)
-            .background(active ? SBColor.electricBlue : SBColor.glassStrong)
+            .background(active ? SBColor.electricBlue : SBColor.glassStrong.opacity(0.54))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .sbPremiumGlass(radius: 22, interactive: true)
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .stroke(active ? SBColor.lineStrong : SBColor.line, lineWidth: active ? 2 : 1)
@@ -425,6 +423,7 @@ private struct ChargeVisual: View {
                 VStack(spacing: 2) {
                     Text("%\(clampedPercent)")
                         .font(.title.weight(.heavy))
+                        .contentTransition(.numericText())
                     Text(chargeLabel)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(SBColor.muted)
@@ -443,12 +442,8 @@ private struct ChargeVisual: View {
             }
         }
         .padding(16)
-        .background(SBColor.glass)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
-        )
+        .sbPremiumGlass(radius: SBRadius.lg)
+        .animation(.spring(response: 0.42, dampingFraction: 0.82), value: clampedPercent)
     }
 }
 
@@ -469,6 +464,7 @@ private struct BatteryBar: View {
             }
         }
         .frame(height: 30)
+        .animation(.spring(response: 0.38, dampingFraction: 0.8), value: percent)
         .overlay(alignment: .trailing) {
             Capsule()
                 .fill(SBColor.textSoft)

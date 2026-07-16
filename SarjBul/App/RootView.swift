@@ -19,6 +19,7 @@ struct RootView: View {
         .tint(SBColor.accent)
         .preferredColorScheme(.light)
         .task { await appState.load() }
+        .sensoryFeedback(.selection, trigger: appState.tab)
         .onChange(of: appState.tab) { _, tab in
             guard tab != .account else { return }
             bottomNavigationExpanded = false
@@ -76,14 +77,7 @@ struct RootView: View {
             tabButton(.account)
         }
         .padding(8)
-        .background(
-            Capsule()
-                .fill(SBColor.glassStrong.opacity(0.96))
-                .overlay(
-                    Capsule()
-                        .stroke(SBColor.line, lineWidth: 1)
-                )
-        )
+        .sbPremiumGlass(radius: 36, interactive: true)
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .shadow(color: SBColor.electricBlue.opacity(0.16), radius: 24, x: 0, y: 16)
@@ -99,6 +93,7 @@ struct RootView: View {
             HStack(spacing: 10) {
                 Image(systemName: currentTabIcon)
                     .font(.headline.weight(.heavy))
+                    .symbolEffect(.bounce, value: currentTabIcon)
                 Text(currentTabTitle)
                     .font(.subheadline.weight(.heavy))
                     .lineLimit(1)
@@ -110,15 +105,10 @@ struct RootView: View {
             .foregroundStyle(SBColor.ink)
             .padding(.horizontal, 18)
             .frame(height: 54)
-            .background(SBColor.glassStrong.opacity(0.98))
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(SBColor.line, lineWidth: 1)
-            )
+            .sbPremiumGlass(radius: 27, interactive: true)
             .shadow(color: SBColor.electricBlue.opacity(0.14), radius: 18, x: 0, y: 10)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
         .padding(.bottom, 14)
     }
 
@@ -135,6 +125,7 @@ struct RootView: View {
                 Image(systemName: tabIcon(tab))
                     .font(.headline.weight(.heavy))
                     .frame(height: 18)
+                    .symbolEffect(.bounce, value: isSelected)
                 Text(tabTitle(tab))
                     .font(.caption2.weight(.heavy))
                     .lineLimit(1)
@@ -144,14 +135,14 @@ struct RootView: View {
             .foregroundStyle(isSelected ? .white : SBColor.muted)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(isSelected ? SBColor.electricBlue : SBColor.surface.opacity(0.86))
+            .background(isSelected ? SBColor.electricBlue : SBColor.surface.opacity(0.58))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .stroke(isSelected ? SBColor.lineStrong : SBColor.line, lineWidth: 1)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
     }
 
     private var currentTabTitle: String {

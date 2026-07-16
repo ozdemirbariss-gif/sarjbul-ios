@@ -14,7 +14,13 @@ struct StationCard: View {
             mapPreview
             details
         }
-        .background(SBColor.accent)
+        .background(
+            LinearGradient(
+                colors: [SBColor.accent, SBColor.primaryDeep.opacity(0.88)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 36, style: .continuous)
@@ -52,10 +58,9 @@ struct StationCard: View {
                             .font(.title2.weight(.heavy))
                             .foregroundStyle(SBColor.ink)
                             .frame(width: 58, height: 58)
-                            .background(SBColor.glassStrong)
-                            .clipShape(Circle())
+                            .sbPremiumGlass(radius: 29, interactive: true)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SBPremiumButtonStyle())
                     .accessibilityLabel(appState.t("feed.open_in_maps"))
                 }
                 .padding(22)
@@ -149,12 +154,7 @@ struct StationCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SBColor.glass)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
-        )
+        .sbPremiumGlass(radius: SBRadius.lg)
     }
 
     private var favoriteButton: some View {
@@ -167,10 +167,9 @@ struct StationCard: View {
                 .font(.headline.weight(.bold))
                 .foregroundStyle(appState.isFavorite(stationKey) ? SBColor.danger : SBColor.electricBlue)
                 .frame(width: 44, height: 44)
-                .background(SBColor.glassStrong)
-                .clipShape(Circle())
+                .sbPremiumGlass(radius: 22, interactive: true)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
         .accessibilityLabel(appState.isFavorite(stationKey) ? appState.t("feed.favorite_remove") : appState.t("feed.favorite_add"))
     }
 
@@ -190,6 +189,10 @@ struct StationCard: View {
         .frame(height: 76)
         .background(SBColor.electricBlue)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                .stroke(.white.opacity(0.14), lineWidth: 1)
+        )
     }
 
     private var statusActions: some View {
@@ -213,10 +216,9 @@ struct StationCard: View {
                 .padding(.horizontal, 14)
                 .frame(minWidth: 86)
                 .frame(height: 42)
-                .background(SBColor.glassStrong)
-                .clipShape(Capsule())
+                .sbPremiumGlass(radius: 21, interactive: true)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
     }
 
     private func routePill<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -224,12 +226,7 @@ struct StationCard: View {
             .foregroundStyle(SBColor.ink)
             .padding(.horizontal, 18)
             .frame(height: 52)
-            .background(SBColor.glassStrong)
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(SBColor.line, lineWidth: 1)
-            )
+            .sbPremiumGlass(radius: 26)
     }
 
     private func chip(_ title: String) -> some View {
@@ -240,12 +237,7 @@ struct StationCard: View {
             .minimumScaleFactor(0.78)
             .padding(.horizontal, 14)
             .frame(height: 42)
-            .background(SBColor.glass.opacity(0.62))
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(SBColor.lineStrong, lineWidth: 1)
-            )
+            .sbPremiumGlass(radius: 21)
     }
 
     private func reportButton(_ title: String, status: String, icon: String) -> some View {
@@ -258,10 +250,9 @@ struct StationCard: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(SBColor.glass)
-                .clipShape(Capsule())
+                .sbPremiumGlass(radius: 20, interactive: true)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
     }
 
     private func badgeColor(_ tone: StationBadge.Tone) -> Color {
@@ -288,12 +279,7 @@ struct StationCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(SBColor.glass)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
-        )
+        .sbPremiumGlass(radius: SBRadius.lg)
     }
 
     private func localizedBadgeTitle(_ badge: StationBadge) -> String {

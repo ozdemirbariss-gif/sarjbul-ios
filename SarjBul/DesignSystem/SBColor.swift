@@ -196,6 +196,10 @@ enum SBFont {
 }
 
 extension View {
+    func sbPremiumGlass(radius: CGFloat, interactive: Bool = false) -> some View {
+        modifier(SBPremiumGlassModifier(radius: radius, interactive: interactive))
+    }
+
     func sbSoftShadow() -> some View {
         let shadow = SBShadow.soft
         return self.shadow(
@@ -224,6 +228,33 @@ extension View {
             x: CGFloat(shadow.x),
             y: CGFloat(shadow.y)
         )
+    }
+}
+
+private struct SBPremiumGlassModifier: ViewModifier {
+    var radius: CGFloat
+    var interactive: Bool
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+
+        if #available(iOS 26.0, *) {
+            content
+                .background(LinearGradient.sbSoftPanel.opacity(0.72), in: shape)
+                .glassEffect(.regular.tint(SBColor.glassStrong).interactive(interactive), in: shape)
+                .overlay(
+                    shape
+                        .stroke(SBColor.line, lineWidth: 1)
+                )
+        } else {
+            content
+                .background(.ultraThinMaterial, in: shape)
+                .background(LinearGradient.sbSoftPanel, in: shape)
+                .overlay(
+                    shape
+                        .stroke(SBColor.line, lineWidth: 1)
+                )
+        }
     }
 }
 
