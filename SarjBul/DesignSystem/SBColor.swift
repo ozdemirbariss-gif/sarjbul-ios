@@ -210,6 +210,7 @@ private struct SBPremiumGlassModifier: ViewModifier {
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
 
+        #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             content
                 .background(LinearGradient.sbSoftPanel.opacity(0.72), in: shape)
@@ -227,6 +228,15 @@ private struct SBPremiumGlassModifier: ViewModifier {
                         .stroke(SBColor.line, lineWidth: 1)
                 )
         }
+        #else
+        content
+            .background(.ultraThinMaterial, in: shape)
+            .background(LinearGradient.sbSoftPanel, in: shape)
+            .overlay(
+                shape
+                    .stroke(SBColor.line, lineWidth: 1)
+            )
+        #endif
     }
 }
 

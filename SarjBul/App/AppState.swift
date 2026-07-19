@@ -582,7 +582,9 @@ final class AppState {
         }
     }
 
-    private func authenticatedRequest<T>(_ operation: (FirebaseAuthSession) async throws -> T) async throws -> T {
+    private func authenticatedRequest<T: Sendable>(
+        _ operation: @MainActor (FirebaseAuthSession) async throws -> T
+    ) async throws -> T {
         do {
             return try await operation(try await validToken())
         } catch let error as FirebaseRESTError where error.isUnauthorized {
