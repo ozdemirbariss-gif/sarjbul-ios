@@ -25,6 +25,10 @@ jobs:
           plutil -lint SarjBul/Resources/Info.plist SarjBul/Resources/PrivacyInfo.xcprivacy SarjBul/Resources/AppConfig.sample.plist
           python3 -m json.tool SarjBul/Resources/design-tokens.json >/dev/null
           python3 -m json.tool database.rules.json >/dev/null
+      - name: Validate generated design tokens
+        run: |
+          python3 Scripts/generate_design_tokens.py
+          git diff --exit-code -- SarjBul/Generated/DesignTokens.generated.swift
       - name: Validate Firebase backend
         working-directory: firebase/functions
         run: |
