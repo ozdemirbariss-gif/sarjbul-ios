@@ -157,6 +157,57 @@ struct StationSearchEngineTests {
         #expect(station.statusKey == "sarj_istasyonu_42")
     }
 
+    @Test
+    func spatialIndexReturnsOnlyStationsInsideRequestedArea() throws {
+        let stations = try loadFixture()
+        let origin = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        let index = SpatialIndex(stations: stations, cellSizeDegrees: 0.05)
+
+        let nearby = index.stations(near: origin, radiusKm: 1)
+
+        #expect(!nearby.isEmpty)
+        #expect(nearby.count < stations.count)
+        #expect(nearby.contains { $0.id == "near_ac" })
+    }
+
+    @Test
+    func indexedRangeSearchKeepsResultsWhenFewerThanRichLimitExist() throws {
+        let stations = try loadFixture()
+        let origin = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        let engine = StationSearchEngine()
+
+        let candidates = engine.candidates(
+            in: SpatialIndex(stations: stations),
+            origin: origin,
+            profile: DrivingProfile(chargePercent: 80),
+            filters: StationFilters(preference: .nearest, rangeFilterEnabled: true)
+        )
+
+        #expect(!candidates.isEmpty)
+        #expect(candidates.first?.station.id == "near_ac")
+    }
+
+    @Test
+    func deepLinkParserReturnsTypedStationRoute() throws {
+        let url = try #require(URL(string: "sarjbul://station/near_ac"))
+
+        #expect(DeepLinkRouteParser.parse(url) == .station(key: "near_ac"))
+        #expect(DeepLinkRouteParser.parse(URL(string: "https://example.com/station/near_ac")!) == nil)
+    }
+
+    @Test
+    func firebaseErrorsAreMappedInsideClientBoundary() {
+        let invalidCredentials = AuthError.map(
+            FirebaseRESTError.requestFailed("INVALID_LOGIN_CREDENTIALS", statusCode: 400)
+        )
+        let existingEmail = AuthError.map(
+            FirebaseRESTError.requestFailed("EMAIL_EXISTS", statusCode: 400)
+        )
+
+        #expect(invalidCredentials == .invalidCredentials)
+        #expect(existingEmail == .emailAlreadyExists)
+    }
+
     private func loadFixture() throws -> [Station] {
         let url = try #require(Bundle.module.url(forResource: "stations.fixture", withExtension: "json", subdirectory: "Fixtures"))
         let data = try Data(contentsOf: url)

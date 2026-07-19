@@ -44,6 +44,18 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
 }
 
 public struct StationBadge: Hashable, Sendable {
+    public enum Kind: Hashable, Sendable {
+        case risk
+        case lastPositive
+        case noLiveData
+        case arrivalSafe
+        case arrivalLow
+        case fastDC
+        case dc
+        case sources(Int)
+        case highConfidence
+    }
+
     public enum Tone: String, Sendable {
         case good
         case warning
@@ -51,11 +63,11 @@ public struct StationBadge: Hashable, Sendable {
         case risk
     }
 
-    public var title: String
+    public var kind: Kind
     public var tone: Tone
 
-    public init(title: String, tone: Tone) {
-        self.title = title
+    public init(kind: Kind, tone: Tone) {
+        self.kind = kind
         self.tone = tone
     }
 }

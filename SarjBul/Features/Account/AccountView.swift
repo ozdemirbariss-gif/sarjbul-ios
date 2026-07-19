@@ -2,7 +2,12 @@ import SarjBulCore
 import SwiftUI
 
 struct AccountView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(AuthStore.self) private var auth
+    @Environment(FavoritesStore.self) private var favorites
+    @Environment(SearchCoordinator.self) private var search
+    @Environment(NavigationCoordinator.self) private var navigation
+    @Environment(AppMessagePresenter.self) private var messages
     @State private var mode: AuthMode = .signIn
     @State private var email = ""
     @State private var password = ""
@@ -26,15 +31,15 @@ struct AccountView: View {
                         HStack {
                             Spacer()
                             SBLanguageSwitch(selectedLanguage: Binding(
-                                get: { appState.language.displayCode },
-                                set: { appState.setLanguage(code: $0) }
+                                get: { settings.language.displayCode },
+                                set: { settings.setLanguage(code: $0) }
                             ))
                         }
 
                         heroPanel
                         guestPanel
 
-                        if appState.isAuthenticated {
+                        if auth.isAuthenticated {
                             signedInPanel
                             stationLibraryPanel
                         } else {
@@ -48,23 +53,23 @@ struct AccountView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .scrollIndicators(.hidden)
-                .sensoryFeedback(.selection, trigger: appState.language)
+                .sensoryFeedback(.selection, trigger: settings.language)
             }
             .sheet(item: $legalDocument) { document in
                 LegalView(document: document)
-                    .environment(appState)
+                    .environment(settings)
             }
             .confirmationDialog(
-                appState.t("auth.delete_title"),
+                settings.t("auth.delete_title"),
                 isPresented: $deleteConfirmationPresented,
                 titleVisibility: .visible
             ) {
-                Button(appState.t("auth.delete_confirm"), role: .destructive) {
+                Button(settings.t("auth.delete_confirm"), role: .destructive) {
                     Task { await deleteAccount() }
                 }
-                Button(appState.t("auth.delete_cancel"), role: .cancel) {}
+                Button(settings.t("auth.delete_cancel"), role: .cancel) {}
             } message: {
-                Text(appState.t("auth.delete_message"))
+                Text(settings.t("auth.delete_message"))
             }
         }
     }
@@ -107,12 +112,12 @@ struct AccountView: View {
                 .sbSoftShadow()
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(appState.t("auth.hero_line1"))
+                    Text(settings.t("auth.hero_line1"))
                         .font(SBFont.display(size: min(heroLineOneSize, 112), weight: .heavy))
                         .foregroundStyle(SBColor.ink.opacity(0.46))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
-                    Text(appState.t("auth.hero_line2"))
+                    Text(settings.t("auth.hero_line2"))
                         .font(SBFont.display(size: min(heroLineTwoSize, 116), weight: .heavy))
                         .foregroundStyle(SBColor.ink)
                         .lineLimit(1)
@@ -146,20 +151,20 @@ struct AccountView: View {
     private var guestPanel: some View {
         SBSecondaryPanel {
             VStack(alignment: .leading, spacing: 22) {
-                Text(appState.t("auth.guest_primary_title"))
+                Text(settings.t("auth.guest_primary_title"))
                     .font(SBFont.display(size: 30, weight: .heavy))
                     .foregroundStyle(SBColor.ink)
-                Text(appState.t("auth.guest_primary_hint"))
+                Text(settings.t("auth.guest_primary_hint"))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(SBColor.muted)
 
                 SBPrimaryButton(
-                    title: appState.t("auth.guest_primary_action"),
+                    title: settings.t("auth.guest_primary_action"),
                     systemImage: nil,
                     accessibilityIdentifier: "guest-start-button"
                 ) {
                     Haptic.tap()
-                    appState.tab = .home
+                    navigation.tab = .home
                 }
             }
         }
@@ -168,19 +173,19 @@ struct AccountView: View {
     private var signedInPanel: some View {
         SBPanel {
             VStack(alignment: .leading, spacing: 16) {
-                Label(appState.authSession?.email ?? appState.t("auth.verified_driver"), systemImage: "person.crop.circle.badge.checkmark")
+                Label(auth.session?.email ?? settings.t("auth.verified_driver"), systemImage: "person.crop.circle.badge.checkmark")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(SBColor.ink)
 
-                Text(appState.t("auth.signed_in_hint"))
+                Text(settings.t("auth.signed_in_hint"))
                     .font(.subheadline)
                     .foregroundStyle(SBColor.muted)
 
                 Button(role: .destructive) {
                     Haptic.tap()
-                    appState.signOut()
+                    auth.signOut()
                 } label: {
-                    Label(appState.t("auth.logout"), systemImage: "rectangle.portrait.and.arrow.right")
+                    Label(settings.t("auth.logout"), systemImage: "rectangle.portrait.and.arrow.right")
                         .font(.headline.weight(.bold))
                         .frame(maxWidth: .infinity)
                 }
@@ -191,7 +196,7 @@ struct AccountView: View {
                     deleteConfirmationPresented = true
                 } label: {
                     Label(
-                        isDeletingAccount ? appState.t("auth.delete_loading") : appState.t("auth.delete_account"),
+                        isDeletingAccount ? settings.t("auth.delete_loading") : settings.t("auth.delete_account"),
                         systemImage: "trash"
                     )
                     .font(.subheadline.weight(.bold))
@@ -206,12 +211,12 @@ struct AccountView: View {
     private var legalFooter: some View {
         VStack(spacing: 14) {
             HStack(spacing: 22) {
-                legalButton(appState.t("auth.privacy"), document: .privacy)
-                legalButton(appState.t("auth.terms"), document: .terms)
-                legalButton(appState.t("auth.support"), document: .support)
+                legalButton(settings.t("auth.privacy"), document: .privacy)
+                legalButton(settings.t("auth.terms"), document: .terms)
+                legalButton(settings.t("auth.support"), document: .support)
             }
 
-            Text(appState.t("auth.version", ["version": appVersion]))
+            Text(settings.t("auth.version", ["version": appVersion]))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(SBColor.muted)
         }
@@ -221,17 +226,17 @@ struct AccountView: View {
 
     @ViewBuilder
     private var stationLibraryPanel: some View {
-        let favorites = appState.favoriteStations
-        let recent = appState.recentStations
+        let favoriteStations = favorites.favoriteStations
+        let recent = favorites.recentStations
 
-        if !favorites.isEmpty || !recent.isEmpty {
+        if !favoriteStations.isEmpty || !recent.isEmpty {
             SBSecondaryPanel {
                 VStack(alignment: .leading, spacing: 20) {
-                    if !favorites.isEmpty {
-                        stationSection(title: appState.t("library.favorites"), stations: favorites)
+                    if !favoriteStations.isEmpty {
+                        stationSection(title: settings.t("library.favorites"), stations: favoriteStations)
                     }
                     if !recent.isEmpty {
-                        stationSection(title: appState.t("library.recent"), stations: recent)
+                        stationSection(title: settings.t("library.recent"), stations: recent)
                     }
                 }
             }
@@ -247,7 +252,7 @@ struct AccountView: View {
             ForEach(Array(stations.prefix(4))) { station in
                 Button {
                     Haptic.tap()
-                    Task { await appState.openStation(withKey: station.statusKey) }
+                    Task { await search.openStation(withKey: station.statusKey) }
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "bolt.fill")
@@ -274,7 +279,7 @@ struct AccountView: View {
                     .sbPremiumGlass(radius: SBRadius.md, interactive: true)
                 }
                 .buttonStyle(SBPremiumButtonStyle())
-                .accessibilityHint(appState.t("library.open_route"))
+                .accessibilityHint(settings.t("library.open_route"))
             }
         }
     }
@@ -296,7 +301,7 @@ struct AccountView: View {
         guard !isDeletingAccount else { return }
         isDeletingAccount = true
         defer { isDeletingAccount = false }
-        _ = await appState.deleteAccount()
+        _ = await auth.deleteAccount()
     }
 
     private var authPanel: some View {
@@ -307,21 +312,21 @@ struct AccountView: View {
                     .frame(height: 3)
                     .clipShape(Capsule())
 
-                Text(appState.t("auth.card_title"))
+                Text(settings.t("auth.card_title"))
                     .font(SBFont.display(size: 30, weight: .heavy))
                     .foregroundStyle(SBColor.ink)
-                Text(appState.t("auth.card_hint"))
+                Text(settings.t("auth.card_hint"))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(SBColor.muted)
 
                 if mode == .reset {
-                    Text(appState.t("auth.reset_hint"))
+                    Text(settings.t("auth.reset_hint"))
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(SBColor.muted)
                 } else {
-                    Picker(appState.t("auth.mode_label"), selection: $mode) {
+                    Picker(settings.t("auth.mode_label"), selection: $mode) {
                         ForEach([AuthMode.signIn, AuthMode.signUp]) { mode in
-                            Text(mode.title(appState)).tag(mode)
+                            Text(mode.title(settings)).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -334,7 +339,7 @@ struct AccountView: View {
                 authInputContainer(field: .email) {
                     Image(systemName: "envelope")
                         .foregroundStyle(SBColor.muted)
-                    TextField(appState.t("auth.email_placeholder"), text: $email)
+                    TextField(settings.t("auth.email_placeholder"), text: $email)
                         .sbEmailInput()
                         .focused($focusedField, equals: .email)
                         .submitLabel(mode == .reset ? .go : .next)
@@ -345,7 +350,7 @@ struct AccountView: View {
                                 focusedField = .password
                             }
                         }
-                        .accessibilityLabel(appState.t("auth.email"))
+                        .accessibilityLabel(settings.t("auth.email"))
                 }
 
                 if mode != .reset {
@@ -354,16 +359,16 @@ struct AccountView: View {
                             .foregroundStyle(SBColor.muted)
                         Group {
                             if passwordVisible {
-                                TextField(appState.t("auth.password_placeholder"), text: $password)
+                                TextField(settings.t("auth.password_placeholder"), text: $password)
                             } else {
-                                SecureField(appState.t("auth.password_placeholder"), text: $password)
+                                SecureField(settings.t("auth.password_placeholder"), text: $password)
                             }
                         }
                         .sbPasswordInput(isNewPassword: mode == .signUp)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.go)
                         .onSubmit { Task { await submit() } }
-                        .accessibilityLabel(appState.t("auth.password"))
+                        .accessibilityLabel(settings.t("auth.password"))
 
                         Button {
                             passwordVisible.toggle()
@@ -386,7 +391,7 @@ struct AccountView: View {
                 }
 
                 SBPrimaryButton(
-                    title: isWorking ? mode.loadingTitle(appState) : mode.actionTitle(appState),
+                    title: isWorking ? mode.loadingTitle(settings) : mode.actionTitle(settings),
                     systemImage: mode.icon,
                     accessibilityIdentifier: "auth-submit-button"
                 ) {
@@ -400,7 +405,7 @@ struct AccountView: View {
                         Haptic.tap()
                         mode = .signIn
                     } label: {
-                        Text(appState.t("auth.back_to_login"))
+                        Text(settings.t("auth.back_to_login"))
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(SBColor.electricBlue)
                     }
@@ -409,14 +414,14 @@ struct AccountView: View {
                         Haptic.tap()
                         mode = .reset
                     } label: {
-                        Text(appState.t("auth.forgot_password"))
+                        Text(settings.t("auth.forgot_password"))
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(SBColor.electricBlue)
                     }
                 }
 
-                if !appState.isFirebaseConfigured {
-                    Text(appState.t("auth.firebase_config_required"))
+                if !auth.isConfigured {
+                    Text(settings.t("auth.firebase_config_required"))
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(SBColor.muted)
                 }
@@ -458,13 +463,13 @@ struct AccountView: View {
 
         switch mode {
         case .signIn:
-            await appState.signIn(email: email, password: password)
+            await auth.signIn(email: email, password: password)
         case .signUp:
-            await appState.signUp(email: email, password: password)
+            await auth.signUp(email: email, password: password)
         case .reset:
-            await appState.resetPassword(email: email)
+            await auth.resetPassword(email: email)
         }
-        inlineError = appState.consumeErrorMessage()
+        inlineError = messages.consumeError(language: settings.language)
         if inlineError == nil {
             focusedField = nil
         }
@@ -484,29 +489,29 @@ private enum AuthMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     @MainActor
-    func title(_ appState: AppState) -> String {
+    func title(_ settings: UserSettingsStore) -> String {
         switch self {
-        case .signIn: appState.t("auth.login")
-        case .signUp: appState.t("auth.register")
-        case .reset: appState.t("auth.reset")
+        case .signIn: settings.t("auth.login")
+        case .signUp: settings.t("auth.register")
+        case .reset: settings.t("auth.reset")
         }
     }
 
     @MainActor
-    func actionTitle(_ appState: AppState) -> String {
+    func actionTitle(_ settings: UserSettingsStore) -> String {
         switch self {
-        case .signIn: appState.t("auth.login_action")
-        case .signUp: appState.t("auth.register_action")
-        case .reset: appState.t("auth.reset_action")
+        case .signIn: settings.t("auth.login_action")
+        case .signUp: settings.t("auth.register_action")
+        case .reset: settings.t("auth.reset_action")
         }
     }
 
     @MainActor
-    func loadingTitle(_ appState: AppState) -> String {
+    func loadingTitle(_ settings: UserSettingsStore) -> String {
         switch self {
-        case .signIn: appState.t("auth.login_loading")
-        case .signUp: appState.t("auth.register_loading")
-        case .reset: appState.t("auth.reset_loading")
+        case .signIn: settings.t("auth.login_loading")
+        case .signUp: settings.t("auth.register_loading")
+        case .reset: settings.t("auth.reset_loading")
         }
     }
 

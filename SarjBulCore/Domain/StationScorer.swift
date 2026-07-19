@@ -15,29 +15,29 @@ public enum StationScorer {
         var badges: [StationBadge] = []
 
         if candidate.status?.durum == "riskli" {
-            badges.append(.init(title: "Risk bildirildi", tone: .risk))
+            badges.append(.init(kind: .risk, tone: .risk))
         } else if candidate.status?.durum == "aktif" {
-            badges.append(.init(title: "Son bildirim olumlu", tone: .good))
+            badges.append(.init(kind: .lastPositive, tone: .good))
         } else {
-            badges.append(.init(title: "Canlı veri yok", tone: .warning))
+            badges.append(.init(kind: .noLiveData, tone: .warning))
         }
 
         if candidate.arrivalChargePercent >= 15 {
-            badges.append(.init(title: "Varış güvenli", tone: .good))
+            badges.append(.init(kind: .arrivalSafe, tone: .good))
         } else {
-            badges.append(.init(title: "Varış düşük", tone: .warning))
+            badges.append(.init(kind: .arrivalLow, tone: .warning))
         }
 
         if candidate.station.powerKW >= 150 {
-            badges.append(.init(title: "Hızlı DC", tone: .info))
+            badges.append(.init(kind: .fastDC, tone: .info))
         } else if candidate.station.powerKW >= 50 {
-            badges.append(.init(title: "DC", tone: .info))
+            badges.append(.init(kind: .dc, tone: .info))
         }
 
         if Set(candidate.station.sources).count > 1 {
-            badges.append(.init(title: "\(Set(candidate.station.sources).count) kaynak", tone: .good))
+            badges.append(.init(kind: .sources(Set(candidate.station.sources).count), tone: .good))
         } else if candidate.station.confidenceScore >= 0.8 {
-            badges.append(.init(title: "Yüksek veri güveni", tone: .good))
+            badges.append(.init(kind: .highConfidence, tone: .good))
         }
 
         return Array(badges.prefix(5))

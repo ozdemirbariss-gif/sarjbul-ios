@@ -9,7 +9,7 @@ enum LegalDocument: String, Identifiable {
 }
 
 struct LegalView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     let document: LegalDocument
@@ -38,13 +38,13 @@ struct LegalView: View {
                             .textSelection(.enabled)
 
                         if let webURL {
-                            linkButton(title: appState.t("legal.open_web"), icon: "safari") {
+                            linkButton(title: settings.t("legal.open_web"), icon: "safari") {
                                 openURL(webURL)
                             }
                         }
 
                         if document == .support, let emailURL {
-                            linkButton(title: appState.t("legal.email"), icon: "envelope") {
+                            linkButton(title: settings.t("legal.email"), icon: "envelope") {
                                 openURL(emailURL)
                             }
                         }
@@ -56,7 +56,7 @@ struct LegalView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(appState.t("status.ok")) { dismiss() }
+                    Button(settings.t("status.ok")) { dismiss() }
                         .fontWeight(.bold)
                 }
             }
@@ -65,17 +65,17 @@ struct LegalView: View {
 
     private var title: String {
         switch document {
-        case .privacy: appState.t("legal.privacy_title")
-        case .terms: appState.t("legal.terms_title")
-        case .support: appState.t("legal.support_title")
+        case .privacy: settings.t("legal.privacy_title")
+        case .terms: settings.t("legal.terms_title")
+        case .support: settings.t("legal.support_title")
         }
     }
 
     private var bodyText: String {
         switch document {
-        case .privacy: appState.t("legal.privacy_body")
-        case .terms: appState.t("legal.terms_body")
-        case .support: appState.t("legal.support_body")
+        case .privacy: settings.t("legal.privacy_body")
+        case .terms: settings.t("legal.terms_body")
+        case .support: settings.t("legal.support_body")
         }
     }
 
@@ -89,17 +89,17 @@ struct LegalView: View {
 
     private var webURL: URL? {
         switch document {
-        case .privacy: appState.externalLinks.privacyPolicyURL
-        case .terms: appState.externalLinks.termsOfUseURL
-        case .support: appState.externalLinks.supportURL
+        case .privacy: settings.externalLinks.privacyPolicyURL
+        case .terms: settings.externalLinks.termsOfUseURL
+        case .support: settings.externalLinks.supportURL
         }
     }
 
     private var emailURL: URL? {
-        guard !appState.externalLinks.supportEmail.isEmpty else { return nil }
+        guard !settings.externalLinks.supportEmail.isEmpty else { return nil }
         var components = URLComponents()
         components.scheme = "mailto"
-        components.path = appState.externalLinks.supportEmail
+        components.path = settings.externalLinks.supportEmail
         components.queryItems = [URLQueryItem(name: "subject", value: "SarjBul Support")]
         return components.url
     }

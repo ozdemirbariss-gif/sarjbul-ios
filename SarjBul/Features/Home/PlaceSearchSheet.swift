@@ -60,7 +60,7 @@ final class PlaceSearchModel: NSObject, ObservableObject, @preconcurrency MKLoca
 }
 
 struct PlaceSearchSheet: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model = PlaceSearchModel()
     let mode: PlaceSearchMode
@@ -71,7 +71,7 @@ struct PlaceSearchSheet: View {
             List {
                 if model.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     ContentUnavailableView(
-                        appState.t(mode == .origin ? "place.origin_hint" : "place.destination_hint"),
+                        settings.t(mode == .origin ? "place.origin_hint" : "place.destination_hint"),
                         systemImage: mode == .origin ? "location" : "flag.checkered"
                     )
                 } else if model.results.isEmpty && model.errorMessage == nil {
@@ -119,13 +119,13 @@ struct PlaceSearchSheet: View {
             .searchable(
                 text: $model.query,
                 placement: .navigationBarDrawer(displayMode: .always),
-                prompt: appState.t("place.search_prompt")
+                prompt: settings.t("place.search_prompt")
             )
-            .navigationTitle(appState.t(mode == .origin ? "place.origin_title" : "place.destination_title"))
+            .navigationTitle(settings.t(mode == .origin ? "place.origin_title" : "place.destination_title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(appState.t("auth.delete_cancel")) { dismiss() }
+                    Button(settings.t("auth.delete_cancel")) { dismiss() }
                 }
             }
         }

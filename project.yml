@@ -34,6 +34,15 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul
         INFOPLIST_FILE: SarjBul/Resources/Info.plist
         ENABLE_PREVIEWS: YES
+    preBuildScripts:
+      - name: Generate Design Tokens
+        script: |
+          python3 "$SRCROOT/Scripts/generate_design_tokens.py"
+        inputFiles:
+          - $(SRCROOT)/SarjBul/Resources/design-tokens.json
+          - $(SRCROOT)/Scripts/generate_design_tokens.py
+        outputFiles:
+          - $(SRCROOT)/SarjBul/Generated/DesignTokens.generated.swift
   SarjBulUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -46,6 +55,17 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul.uitests
         TEST_TARGET_NAME: SarjBul
         GENERATE_INFOPLIST_FILE: YES
+  SarjBulUnitTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - SarjBulUnitTests
+    dependencies:
+      - target: SarjBul
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul.unittests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   SarjBul:
     build:
@@ -56,4 +76,5 @@ schemes:
     test:
       config: Debug
       targets:
+        - SarjBulUnitTests
         - SarjBulUITests

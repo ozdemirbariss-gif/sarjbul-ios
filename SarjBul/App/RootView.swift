@@ -1,7 +1,12 @@
 import SwiftUI
 
 struct RootView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(AppMessagePresenter.self) private var messages
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(StationDataStore.self) private var stationData
+    @Environment(SearchCoordinator.self) private var search
+    @Environment(NavigationCoordinator.self) private var navigation
+    @Environment(DeepLinkRouter.self) private var deepLinks
     @Environment(NetworkMonitor.self) private var networkMonitor
     @State private var bottomNavigationExpanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -26,33 +31,33 @@ struct RootView: View {
         }
         .tint(SBColor.accent)
         .preferredColorScheme(.light)
-        .task { await appState.load() }
-        .sensoryFeedback(.selection, trigger: appState.tab)
-        .onChange(of: appState.tab) { _, tab in
+        .task { await search.prepare() }
+        .sensoryFeedback(.selection, trigger: navigation.tab)
+        .onChange(of: navigation.tab) { _, tab in
             guard tab != .account else { return }
             bottomNavigationExpanded = false
         }
         .onOpenURL { url in
-            Task { await appState.handleDeepLink(url) }
+            Task { await deepLinks.handle(url) }
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.24), value: networkMonitor.isConnected)
-        .alert(appState.messageTitle, isPresented: Binding(
-            get: { appState.message != nil },
-            set: { if !$0 { appState.dismissMessage() } }
+        .alert(messageTitle, isPresented: Binding(
+            get: { messages.current != nil },
+            set: { if !$0 { messages.dismiss() } }
         )) {
-            if appState.canRetryStationLoad {
-                Button(appState.t("data.refresh")) {
-                    Task { await appState.retryLoad() }
+            if stationData.canRetryLoad {
+                Button(settings.t("data.refresh")) {
+                    Task { await search.retryLoad() }
                 }
             }
-            Button(appState.t("status.ok"), role: .cancel) {}
+            Button(settings.t("status.ok"), role: .cancel) {}
         } message: {
-            Text(appState.message ?? "")
+            Text(messages.current?.text(language: settings.language) ?? "")
         }
     }
 
     private var offlineBanner: some View {
-        Label(appState.t("network.offline"), systemImage: "wifi.slash")
+        Label(settings.t("network.offline"), systemImage: "wifi.slash")
             .font(.caption.weight(.heavy))
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
@@ -67,12 +72,12 @@ struct RootView: View {
     }
 
     private var showsBottomNavigation: Bool {
-        appState.tab == .home || appState.tab == .lounge
+        navigation.tab == .home || navigation.tab == .lounge
     }
 
     @ViewBuilder
     private var currentScreen: some View {
-        switch appState.tab {
+        switch navigation.tab {
         case .home:
             HomeView()
         case .lounge:
@@ -122,29 +127,29 @@ struct RootView: View {
         } label: {
             Image(systemName: "square.grid.2x2.fill")
                 .font(.headline.weight(.heavy))
-                .symbolEffect(.bounce, value: appState.tab)
+                .symbolEffect(.bounce, value: navigation.tab)
             .foregroundStyle(SBColor.ink)
             .frame(width: 54, height: 54)
             .sbPremiumGlass(radius: 27, interactive: true)
             .shadow(color: SBColor.electricBlue.opacity(0.14), radius: 18, x: 0, y: 10)
         }
         .buttonStyle(SBPremiumButtonStyle())
-        .accessibilityLabel(appState.t("navigation.open"))
+        .accessibilityLabel(settings.t("navigation.open"))
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.trailing, 18)
         .padding(.bottom, 14)
     }
 
-    private func tabButton(_ tab: AppState.Tab) -> some View {
-        let isSelected = appState.tab == tab
+    private func tabButton(_ tab: AppTab) -> some View {
+        let isSelected = navigation.tab == tab
         return Button {
             Haptic.tap()
             if reduceMotion {
-                appState.tab = tab
+                navigation.tab = tab
                 bottomNavigationExpanded = false
             } else {
                 withAnimation(.spring(response: 0.36, dampingFraction: 0.82)) {
-                    appState.tab = tab
+                    navigation.tab = tab
                     bottomNavigationExpanded = false
                 }
             }
@@ -173,20 +178,20 @@ struct RootView: View {
         .buttonStyle(SBPremiumButtonStyle())
     }
 
-    private func tabTitle(_ tab: AppState.Tab) -> String {
+    private func tabTitle(_ tab: AppTab) -> String {
         switch tab {
         case .home:
-            appState.t("bottom.home")
+            settings.t("bottom.home")
         case .lounge:
-            appState.t("bottom.map")
+            settings.t("bottom.map")
         case .routes:
-            appState.t("bottom.routes")
+            settings.t("bottom.routes")
         case .account:
-            appState.t("bottom.account")
+            settings.t("bottom.account")
         }
     }
 
-    private func tabIcon(_ tab: AppState.Tab) -> String {
+    private func tabIcon(_ tab: AppTab) -> String {
         switch tab {
         case .home:
             "house"
@@ -197,5 +202,9 @@ struct RootView: View {
         case .account:
             "person"
         }
+    }
+
+    private var messageTitle: String {
+        messages.current?.kind == .success ? settings.t("status.ok") : settings.t("status.error")
     }
 }

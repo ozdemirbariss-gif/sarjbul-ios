@@ -3,7 +3,9 @@ import SarjBulCore
 import SwiftUI
 
 struct HomeView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(SearchCoordinator.self) private var search
+    @Environment(NavigationCoordinator.self) private var navigation
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -33,10 +35,10 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .scrollIndicators(.hidden)
-                .sensoryFeedback(.selection, trigger: appState.filters.preference)
+                .sensoryFeedback(.selection, trigger: settings.filters.preference)
 
-                SBBackButton(accessibilityLabel: appState.t("nav.back")) {
-                    appState.tab = .account
+                SBBackButton(accessibilityLabel: settings.t("nav.back")) {
+                    navigation.tab = .account
                 }
                 .padding(.leading, 18)
                 .padding(.top, 6)
@@ -44,27 +46,27 @@ struct HomeView: View {
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 guard !isDeterministicUITest else { return }
-                appState.updateLocation(latitude: location.latitude, longitude: location.longitude, source: .device)
+                search.updateLocation(latitude: location.latitude, longitude: location.longitude, source: .device)
             }
             .onAppear {
                 guard !isDeterministicUITest else { return }
-                guard !didRequestDeviceLocation, appState.userLocation == nil else { return }
+                guard !didRequestDeviceLocation, search.userLocation == nil else { return }
                 requestDeviceLocation()
             }
             .sheet(item: $placeSearchMode) { mode in
                 PlaceSearchSheet(mode: mode) { place in
                     switch mode {
                     case .origin:
-                        appState.updateLocation(
+                        search.updateLocation(
                             latitude: place.latitude,
                             longitude: place.longitude,
                             source: .manual
                         )
                     case .destination:
-                        appState.destination = place
+                        settings.destination = place
                     }
                 }
-                .environment(appState)
+                .environment(settings)
             }
         }
     }
@@ -82,12 +84,12 @@ struct HomeView: View {
     private func preferenceButton(_ preference: RoutePreference, icon: String) -> some View {
         Button {
             Haptic.tap()
-            appState.filters.preference = preference
+            settings.filters.preference = preference
         } label: {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.headline.weight(.heavy))
-                    .symbolEffect(.bounce, value: appState.filters.preference == preference)
+                    .symbolEffect(.bounce, value: settings.filters.preference == preference)
                 Text(preferenceTitle(preference))
                     .font(.caption.weight(.heavy))
                     .lineLimit(1)
@@ -95,7 +97,7 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(QuickActionStyle(active: appState.filters.preference == preference))
+        .buttonStyle(QuickActionStyle(active: settings.filters.preference == preference))
     }
 
     private var journeyInputs: some View {
@@ -115,10 +117,10 @@ struct HomeView: View {
 
     private var originJourneyButton: some View {
         journeyButton(
-                title: appState.userLocation?.source == .device
-                    ? appState.t("place.my_location")
-                    : appState.t("place.choose_origin"),
-                subtitle: appState.userLocation == nil ? appState.t("place.not_selected") : locationLabel,
+                title: search.userLocation?.source == .device
+                    ? settings.t("place.my_location")
+                    : settings.t("place.choose_origin"),
+                subtitle: search.userLocation == nil ? settings.t("place.not_selected") : locationLabel,
                 icon: "location.fill"
             ) {
                 placeSearchMode = .origin
@@ -127,20 +129,20 @@ struct HomeView: View {
 
     private var destinationJourneyButton: some View {
         journeyButton(
-                title: appState.destination?.name ?? appState.t("place.choose_destination"),
-                subtitle: appState.destination?.address.isEmpty == false
-                    ? appState.destination?.address ?? ""
-                    : appState.t("place.optional"),
+                title: settings.destination?.name ?? settings.t("place.choose_destination"),
+                subtitle: settings.destination?.address.isEmpty == false
+                    ? settings.destination?.address ?? ""
+                    : settings.t("place.optional"),
                 icon: "flag.checkered"
             ) {
                 placeSearchMode = .destination
             }
             .contextMenu {
-                if appState.destination != nil {
+                if settings.destination != nil {
                     Button(role: .destructive) {
-                        appState.destination = nil
+                        settings.destination = nil
                     } label: {
-                        Label(appState.t("place.clear_destination"), systemImage: "xmark")
+                        Label(settings.t("place.clear_destination"), systemImage: "xmark")
                     }
                 }
             }
@@ -185,7 +187,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private var locationSection: some View {
-        if appState.userLocation?.source != .device {
+        if search.userLocation?.source != .device {
             SBPanel {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
@@ -196,7 +198,7 @@ struct HomeView: View {
                             .background(SBColor.electricBlue)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(appState.t("home.search_title"))
+                            Text(settings.t("home.search_title"))
                                 .font(.title3.weight(.bold))
                             Text(locationLabel)
                                 .font(.subheadline.weight(.semibold))
@@ -205,7 +207,7 @@ struct HomeView: View {
                         Spacer()
                     }
 
-                    SBPrimaryButton(title: appState.t("home.use_location"), systemImage: "location.fill") {
+                    SBPrimaryButton(title: settings.t("home.use_location"), systemImage: "location.fill") {
                         Haptic.tap()
                         requestDeviceLocation()
                     }
@@ -217,7 +219,7 @@ struct HomeView: View {
                                 guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
                                 openURL(settingsURL)
                             } label: {
-                                Label(appState.t("home.open_settings"), systemImage: "gear")
+                                Label(settings.t("home.open_settings"), systemImage: "gear")
                                     .font(.subheadline.weight(.bold))
                             }
                             .buttonStyle(.bordered)
@@ -233,13 +235,13 @@ struct HomeView: View {
     }
 
     private var locationLabel: String {
-        guard let location = appState.userLocation else { return appState.t("home.location_selected") }
+        guard let location = search.userLocation else { return settings.t("home.location_selected") }
         return String(format: "%.4f, %.4f", location.latitude, location.longitude)
     }
 
     private var drivingProfile: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(appState.t("catalog.kicker"))
+            Text(settings.t("catalog.kicker"))
                 .font(.headline.weight(.heavy))
                 .foregroundStyle(SBColor.primaryDeep)
                 .textCase(.uppercase)
@@ -248,18 +250,18 @@ struct HomeView: View {
             SBPanel {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
-                        Text(appState.t("catalog.charge_percent"))
+                        Text(settings.t("catalog.charge_percent"))
                             .font(.title3.weight(.bold))
                             .foregroundStyle(SBColor.muted)
                         Spacer()
-                        Text("\(appState.profile.chargePercent)")
+                        Text("\(settings.profile.chargePercent)")
                             .font(.title2.weight(.heavy))
                             .foregroundStyle(SBColor.muted)
                     }
                     Slider(
                         value: Binding(
-                            get: { Double(appState.profile.chargePercent) },
-                            set: { appState.profile.chargePercent = Int($0.rounded()) }
+                            get: { Double(settings.profile.chargePercent) },
+                            set: { settings.profile.chargePercent = Int($0.rounded()) }
                         ),
                         in: 1...100,
                         step: 1
@@ -268,10 +270,10 @@ struct HomeView: View {
                 }
 
                 ChargeVisual(
-                    percent: appState.profile.chargePercent,
+                    percent: settings.profile.chargePercent,
                     statusText: chargeStatusText,
-                    chargeLabel: appState.t("charge.label"),
-                    selectedLevelText: appState.t("charge.selected_level")
+                    chargeLabel: settings.t("charge.label"),
+                    selectedLevelText: settings.t("charge.selected_level")
                 )
 
                 Divider()
@@ -279,21 +281,21 @@ struct HomeView: View {
 
                 HStack(spacing: 12) {
                     MetricInput(
-                        title: appState.t("catalog.capacity"),
+                        title: settings.t("catalog.capacity"),
                         unit: "kWh",
                         value: Binding(
-                            get: { appState.profile.batteryKWh },
-                            set: { appState.profile.batteryKWh = $0 }
+                            get: { settings.profile.batteryKWh },
+                            set: { settings.profile.batteryKWh = $0 }
                         ),
                         range: 1...250,
                         step: 1
                     )
                     MetricInput(
-                        title: appState.t("catalog.consumption"),
+                        title: settings.t("catalog.consumption"),
                         unit: "kWh",
                         value: Binding(
-                            get: { appState.profile.consumptionKWhPer100Km },
-                            set: { appState.profile.consumptionKWhPer100Km = $0 }
+                            get: { settings.profile.consumptionKWhPer100Km },
+                            set: { settings.profile.consumptionKWhPer100Km = $0 }
                         ),
                         range: 5...40,
                         step: 0.1
@@ -307,16 +309,16 @@ struct HomeView: View {
         DisclosureGroup(isExpanded: $settingsExpanded) {
             VStack(alignment: .leading, spacing: 14) {
                 locationSection
-                Toggle(appState.t("filters.range"), isOn: Binding(
-                    get: { appState.filters.rangeFilterEnabled },
-                    set: { appState.filters.rangeFilterEnabled = $0 }
+                Toggle(settings.t("filters.range"), isOn: Binding(
+                    get: { settings.filters.rangeFilterEnabled },
+                    set: { settings.filters.rangeFilterEnabled = $0 }
                 ))
                 .font(.headline.weight(.semibold))
                 .tint(SBColor.accent)
             }
             .padding(.top, 16)
         } label: {
-            Label(appState.t("filters.title"), systemImage: "chevron.right")
+            Label(settings.t("filters.title"), systemImage: "chevron.right")
                 .font(.title3.weight(.heavy))
                 .foregroundStyle(SBColor.muted)
         }
@@ -337,15 +339,15 @@ struct HomeView: View {
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 7) {
-                    Text(appState.t("home.insight_kicker"))
+                    Text(settings.t("home.insight_kicker"))
                         .font(.subheadline.weight(.heavy))
                         .foregroundStyle(SBColor.muted)
-                    Text(appState.t("home.insight_title", ["range": "\(safeRangeKm)"]))
+                    Text(settings.t("home.insight_title", ["range": "\(safeRangeKm)"]))
                         .font(.title3.weight(.heavy))
                         .foregroundStyle(SBColor.ink)
                         .lineLimit(2)
-                    Text(appState.t("summary.safe_range_value", [
-                        "percent": "\(appState.profile.chargePercent)",
+                    Text(settings.t("summary.safe_range_value", [
+                        "percent": "\(settings.profile.chargePercent)",
                         "range": "\(safeRangeKm)"
                     ]))
                         .font(.subheadline.weight(.bold))
@@ -357,16 +359,16 @@ struct HomeView: View {
             .background(LinearGradient.sbSoftPanel)
 
             Button {
-                guard appState.canSearch else { return }
+                guard search.canSearch else { return }
                 Haptic.tap()
                 Task {
-                    await appState.findStations()
-                    if !appState.routeCandidates.isEmpty {
+                    await search.findStations()
+                    if !search.routeCandidates.isEmpty {
                         Haptic.success()
                     }
                 }
             } label: {
-                Text(appState.isSearching ? appState.t("location.calculating") : appState.t("location.find_charger"))
+                Text(search.isSearching ? settings.t("location.calculating") : settings.t("location.find_charger"))
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -376,8 +378,8 @@ struct HomeView: View {
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("find-stations-button")
-            .disabled(!appState.canSearch)
-            .opacity(appState.canSearch ? 1 : 0.62)
+            .disabled(!search.canSearch)
+            .opacity(search.canSearch ? 1 : 0.62)
         }
         .sbPremiumGlass(radius: SBRadius.card)
         .overlay(
@@ -388,31 +390,31 @@ struct HomeView: View {
     }
 
     private var safeRangeKm: Int {
-        Int(appState.profile.safeRangeKm.rounded())
+        Int(settings.profile.safeRangeKm.rounded())
     }
 
     private var chargeStatusText: String {
-        let percent = min(100, max(1, appState.profile.chargePercent))
-        if percent < 25 { return appState.t("charge.low") }
-        if percent < 75 { return appState.t("charge.ready") }
-        return appState.t("charge.long_range")
+        let percent = min(100, max(1, settings.profile.chargePercent))
+        if percent < 25 { return settings.t("charge.low") }
+        if percent < 75 { return settings.t("charge.ready") }
+        return settings.t("charge.long_range")
     }
 
     private func preferenceTitle(_ preference: RoutePreference) -> String {
         switch preference {
         case .balanced:
-            appState.t("intent.balanced")
+            settings.t("intent.balanced")
         case .nearest:
-            appState.t("home.quick_near")
+            settings.t("home.quick_near")
         case .fastest:
-            appState.t("home.quick_fast")
+            settings.t("home.quick_fast")
         case .economical:
-            appState.t("home.quick_value")
+            settings.t("home.quick_value")
         }
     }
 
     private var manualLocationEntryVisible: Bool {
-        if appState.userLocation?.source == .manual { return true }
+        if search.userLocation?.source == .manual { return true }
         if locationManager.lastError != nil || locationRequestTimedOut { return true }
         switch locationManager.authorizationStatus {
         case .denied, .restricted:
@@ -425,11 +427,11 @@ struct HomeView: View {
     private var locationWaitingText: String {
         switch locationManager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
-            appState.t("home.location_waiting_authorized")
+            settings.t("home.location_waiting_authorized")
         case .notDetermined:
-            appState.t("home.location_waiting_pending")
+            settings.t("home.location_waiting_pending")
         default:
-            appState.t("home.location_waiting_failed")
+            settings.t("home.location_waiting_failed")
         }
     }
 
@@ -439,7 +441,7 @@ struct HomeView: View {
         locationManager.requestLocation()
         Task {
             try? await Task.sleep(for: .seconds(4))
-            if appState.userLocation?.source != .device {
+            if search.userLocation?.source != .device {
                 locationRequestTimedOut = true
             }
         }
@@ -456,8 +458,8 @@ struct HomeView: View {
 
     private var manualLocationForm: some View {
         VStack(spacing: 12) {
-            Picker(appState.t("home.location_pick"), selection: $selectedPreset) {
-                Text(appState.t("home.location_pick")).tag(Optional<ManualLocationPreset>.none)
+            Picker(settings.t("home.location_pick"), selection: $selectedPreset) {
+                Text(settings.t("home.location_pick")).tag(Optional<ManualLocationPreset>.none)
                 ForEach(ManualLocationPreset.allCases) { preset in
                     Text(preset.title).tag(Optional(preset))
                 }
@@ -474,13 +476,13 @@ struct HomeView: View {
                 guard let preset else { return }
                 manualLatitude = preset.latitude
                 manualLongitude = preset.longitude
-                appState.updateLocation(latitude: preset.latitude, longitude: preset.longitude, source: .manual)
+                search.updateLocation(latitude: preset.latitude, longitude: preset.longitude, source: .manual)
             }
 
             HStack {
-                TextField(appState.t("home.latitude"), value: $manualLatitude, format: .number.precision(.fractionLength(4)))
+                TextField(settings.t("home.latitude"), value: $manualLatitude, format: .number.precision(.fractionLength(4)))
                     .sbDecimalKeyboard()
-                TextField(appState.t("home.longitude"), value: $manualLongitude, format: .number.precision(.fractionLength(4)))
+                TextField(settings.t("home.longitude"), value: $manualLongitude, format: .number.precision(.fractionLength(4)))
                     .sbDecimalKeyboard()
             }
             .textFieldStyle(.plain)
@@ -494,9 +496,9 @@ struct HomeView: View {
 
             Button {
                 Haptic.tap()
-                appState.updateLocation(latitude: manualLatitude, longitude: manualLongitude, source: .manual)
+                search.updateLocation(latitude: manualLatitude, longitude: manualLongitude, source: .manual)
             } label: {
-                Label(appState.t("home.use_manual_location"), systemImage: "mappin.and.ellipse")
+                Label(settings.t("home.use_manual_location"), systemImage: "mappin.and.ellipse")
                     .font(.headline.weight(.bold))
                     .frame(maxWidth: .infinity)
             }
