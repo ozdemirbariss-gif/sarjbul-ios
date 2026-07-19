@@ -1,87 +1,12 @@
-import Foundation
 import SwiftUI
 
-struct SBDesignTokens: Decodable {
-    struct ColorToken: Decodable {
-        let hex: String
-        let opacity: Double
-    }
-
-    struct Colors: Decodable {
-        let background: ColorToken
-        let surface: ColorToken
-        let surfaceSoft: ColorToken
-        let line: ColorToken
-        let lineStrong: ColorToken
-        let text: ColorToken
-        let textSoft: ColorToken
-        let textMuted: ColorToken
-        let primary: ColorToken
-        let primaryDeep: ColorToken
-        let danger: ColorToken
-        let warning: ColorToken
-        let electricBlue: ColorToken
-        let glass: ColorToken
-        let glassStrong: ColorToken
-    }
-
-    struct Radius: Decodable {
-        let sm: Double
-        let md: Double
-        let lg: Double
-        let xl: Double
-        let card: Double
-        let screen: Double
-        let pill: Double
-    }
-
-    struct ShadowToken: Decodable {
-        let color: String
-        let opacity: Double
-        let radius: Double
-        let x: Double
-        let y: Double
-    }
-
-    struct Shadows: Decodable {
-        let soft: ShadowToken
-        let glow: ShadowToken
-        let card: ShadowToken
-    }
-
-    struct Fonts: Decodable {
-        let display: String
-        let body: String
-        let iosDisplayDesign: String
-    }
-
-    let source: String
-    let colors: Colors
-    let radius: Radius
-    let shadows: Shadows
-    let fonts: Fonts
-
-    static let shared = load()
-
-    private static func load() -> SBDesignTokens {
-        guard
-            let url = Bundle.main.url(forResource: "design-tokens", withExtension: "json"),
-            let data = try? Data(contentsOf: url),
-            let tokens = try? JSONDecoder().decode(SBDesignTokens.self, from: data)
-        else {
-            preconditionFailure("Required design-tokens.json is missing or invalid.")
-        }
-        return tokens
-    }
-}
-
-private extension SBDesignTokens.ColorToken {
+private extension SBGeneratedColorToken {
     var color: Color {
         Color(hex: hex, opacity: opacity)
     }
 }
 
-private extension SBDesignTokens.ShadowToken {
+private extension SBGeneratedShadowToken {
     var shadowColor: Color {
         Color(hex: color, opacity: opacity)
     }
@@ -101,60 +26,52 @@ private extension Color {
 }
 
 enum SBColor {
-    private static let tokens = SBDesignTokens.shared.colors
-
-    static let background = tokens.background.color
-    static let surface = tokens.surfaceSoft.color
-    static let surfaceSolid = tokens.surface.color
-    static let line = tokens.line.color
-    static let lineStrong = tokens.lineStrong.color
-    static let ink = tokens.text.color
-    static let muted = tokens.textMuted.color
-    static let textSoft = tokens.textSoft.color
-    static let accent = tokens.primary.color
-    static let primaryDeep = tokens.primaryDeep.color
-    static let danger = tokens.danger.color
-    static let warning = tokens.warning.color
-    static let electricBlue = tokens.electricBlue.color
-    static let glass = tokens.glass.color
-    static let glassStrong = tokens.glassStrong.color
+    static let background = SBGeneratedTokens.background.color
+    static let surface = SBGeneratedTokens.surfaceSoft.color
+    static let surfaceSolid = SBGeneratedTokens.surface.color
+    static let line = SBGeneratedTokens.line.color
+    static let lineStrong = SBGeneratedTokens.lineStrong.color
+    static let ink = SBGeneratedTokens.text.color
+    static let muted = SBGeneratedTokens.textMuted.color
+    static let textSoft = SBGeneratedTokens.textSoft.color
+    static let accent = SBGeneratedTokens.primary.color
+    static let primaryDeep = SBGeneratedTokens.primaryDeep.color
+    static let danger = SBGeneratedTokens.danger.color
+    static let warning = SBGeneratedTokens.warning.color
+    static let electricBlue = SBGeneratedTokens.electricBlue.color
+    static let glass = SBGeneratedTokens.glass.color
+    static let glassStrong = SBGeneratedTokens.glassStrong.color
 
     static let navy = electricBlue
     static let purple = primaryDeep
 }
 
 enum SBRadius {
-    private static let tokens = SBDesignTokens.shared.radius
-
-    static let sm = CGFloat(tokens.sm)
-    static let md = CGFloat(tokens.md)
-    static let lg = CGFloat(tokens.lg)
-    static let xl = CGFloat(tokens.xl)
-    static let card = CGFloat(tokens.card)
-    static let screen = CGFloat(tokens.screen)
-    static let pill = CGFloat(tokens.pill)
+    static let sm = CGFloat(SBGeneratedTokens.radiusSm)
+    static let md = CGFloat(SBGeneratedTokens.radiusMd)
+    static let lg = CGFloat(SBGeneratedTokens.radiusLg)
+    static let xl = CGFloat(SBGeneratedTokens.radiusXl)
+    static let card = CGFloat(SBGeneratedTokens.radiusCard)
+    static let screen = CGFloat(SBGeneratedTokens.radiusScreen)
+    static let pill = CGFloat(SBGeneratedTokens.radiusPill)
 }
 
 enum SBShadow {
-    private static let tokens = SBDesignTokens.shared.shadows
-
-    static let soft = tokens.soft
-    static let glow = tokens.glow
-    static let card = tokens.card
+    static let soft = SBGeneratedTokens.shadowSoft
+    static let glow = SBGeneratedTokens.shadowGlow
+    static let card = SBGeneratedTokens.shadowCard
 }
 
 enum SBFont {
-    private static let tokens = SBDesignTokens.shared.fonts
-
-    static let displayName = tokens.display
-    static let bodyName = tokens.body
+    static let displayName = SBGeneratedTokens.displayFont
+    static let bodyName = SBGeneratedTokens.bodyFont
 
     static func display(size: CGFloat, weight: Font.Weight) -> Font {
         .system(size: size, weight: weight, design: displayDesign)
     }
 
     private static var displayDesign: Font.Design {
-        switch tokens.iosDisplayDesign {
+        switch SBGeneratedTokens.iosDisplayDesign {
         case "rounded":
             .rounded
         case "serif":

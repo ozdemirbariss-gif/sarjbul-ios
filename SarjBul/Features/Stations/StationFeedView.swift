@@ -2,7 +2,9 @@ import SarjBulCore
 import SwiftUI
 
 struct StationFeedView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(SearchCoordinator.self) private var search
+    @Environment(NavigationCoordinator.self) private var navigation
     @State private var filterSheetPresented = false
     @State private var mode: FeedMode = .cards
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -13,16 +15,16 @@ struct StationFeedView: View {
             content
 
             HStack(spacing: 10) {
-                SBBackButton(accessibilityLabel: appState.t("nav.back")) {
-                    appState.tab = .home
+                SBBackButton(accessibilityLabel: settings.t("nav.back")) {
+                    navigation.tab = .home
                 }
 
                 Spacer()
 
-                if !appState.routeCandidates.isEmpty {
-                    Picker(appState.t("feed.view_mode"), selection: $mode) {
-                        Label(appState.t("feed.cards"), systemImage: "rectangle.stack").tag(FeedMode.cards)
-                        Label(appState.t("feed.map"), systemImage: "map").tag(FeedMode.map)
+                if !search.routeCandidates.isEmpty {
+                    Picker(settings.t("feed.view_mode"), selection: $mode) {
+                        Label(settings.t("feed.cards"), systemImage: "rectangle.stack").tag(FeedMode.cards)
+                        Label(settings.t("feed.map"), systemImage: "map").tag(FeedMode.map)
                     }
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 210)
@@ -38,7 +40,7 @@ struct StationFeedView: View {
                             .sbPremiumGlass(radius: 26, interactive: true)
                     }
                     .buttonStyle(SBPremiumButtonStyle())
-                    .accessibilityLabel(appState.t("feed.filters"))
+                    .accessibilityLabel(settings.t("feed.filters"))
                 }
             }
             .padding(.horizontal, 18)
@@ -47,14 +49,14 @@ struct StationFeedView: View {
         .sheet(isPresented: $filterSheetPresented) {
             StationFilterSheet(
                 filters: Binding(
-                    get: { appState.filters },
-                    set: { appState.filters = $0 }
+                    get: { settings.filters },
+                    set: { settings.filters = $0 }
                 ),
-                language: appState.language
+                language: settings.language
             ) {
                 Haptic.tap()
                 filterSheetPresented = false
-                Task { await appState.findStations() }
+                Task { await search.findStations() }
             }
             .sbMediumSheet()
         }
@@ -62,31 +64,35 @@ struct StationFeedView: View {
 
     @ViewBuilder
     private var content: some View {
-        switch appState.search {
+        switch search.state {
         case .idle:
             emptyState(
-                appState.t("route.idle"),
+                settings.t("route.idle"),
                 icon: "bolt.car",
-                message: appState.t("route.idle_hint")
+                message: settings.t("route.idle_hint")
             )
         case .searching:
             VStack(spacing: 18) {
                 ProgressView()
                     .tint(SBColor.accent)
                     .scaleEffect(1.2)
-                Text(appState.t("route.searching"))
+                Text(settings.t("route.searching"))
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.muted)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed(let message):
-            emptyState(appState.t("route.failed"), icon: "exclamationmark.triangle", message: message)
+            emptyState(
+                settings.t("route.failed"),
+                icon: "exclamationmark.triangle",
+                message: message.text(language: settings.language)
+            )
         case .results(let candidates):
             if candidates.isEmpty {
                 emptyState(
-                    appState.t("route.empty"),
+                    settings.t("route.empty"),
                     icon: "magnifyingglass",
-                    message: appState.t("route.empty_hint")
+                    message: settings.t("route.empty_hint")
                 )
             } else {
                 let shouldReduceMotion = reduceMotion
@@ -134,8 +140,8 @@ struct StationFeedView: View {
                         .font(.headline.weight(.bold))
                         .foregroundStyle(SBColor.muted)
                         .multilineTextAlignment(.center)
-                    SBDarkButton(title: appState.t("route.back_home"), systemImage: "house") {
-                        appState.tab = .home
+                    SBDarkButton(title: settings.t("route.back_home"), systemImage: "house") {
+                        navigation.tab = .home
                     }
                 }
             }

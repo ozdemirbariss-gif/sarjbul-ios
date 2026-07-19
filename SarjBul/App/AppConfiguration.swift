@@ -58,8 +58,15 @@ struct AppConfiguration {
     }
 
     @MainActor
-    var firebaseClient: FirebaseRESTClient? {
-        guard let firebaseDatabaseURL, !firebaseAPIKey.isEmpty else { return nil }
+    var serviceClients: AppServiceClients {
+        guard let firebaseDatabaseURL, !firebaseAPIKey.isEmpty else {
+            return AppServiceClients(
+                auth: UnavailableAuthClient(),
+                favorites: UnavailableFavoritesClient(),
+                status: UnavailableStatusClient(),
+                isConfigured: false
+            )
+        }
         let tokenProvider: (@Sendable () async throws -> String?)?
         if FirebaseBootstrap.isConfigured {
             tokenProvider = { @Sendable in
@@ -68,10 +75,16 @@ struct AppConfiguration {
         } else {
             tokenProvider = nil
         }
-        return FirebaseRESTClient(
+        let client = FirebaseRESTClient(
             databaseURL: firebaseDatabaseURL,
             apiKey: firebaseAPIKey,
             appCheckTokenProvider: tokenProvider
+        )
+        return AppServiceClients(
+            auth: client,
+            favorites: client,
+            status: client,
+            isConfigured: true
         )
     }
 
@@ -99,4 +112,11 @@ struct AppConfiguration {
             cacheDirectory: cacheRoot.appending(path: "SarjBul", directoryHint: .isDirectory)
         )
     }
+}
+
+struct AppServiceClients {
+    let auth: any AuthClient
+    let favorites: any FavoritesClient
+    let status: any StatusClient
+    let isConfigured: Bool
 }

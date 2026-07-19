@@ -80,7 +80,8 @@ struct StationMapPreview: View {
 }
 
 struct FullRouteMapView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(SearchCoordinator.self) private var search
     @Environment(\.dismiss) private var dismiss
     let candidate: StationCandidate
     let route: StationRoute?
@@ -89,7 +90,7 @@ struct FullRouteMapView: View {
         NavigationStack {
             StationMapPreview(
                 station: candidate.station,
-                origin: appState.userLocation,
+                origin: search.userLocation,
                 route: route,
                 interactive: true
             )
@@ -98,7 +99,7 @@ struct FullRouteMapView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(appState.t("status.ok")) { dismiss() }
+                    Button(settings.t("status.ok")) { dismiss() }
                 }
             }
         }

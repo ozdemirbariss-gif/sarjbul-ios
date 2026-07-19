@@ -32,31 +32,47 @@ public struct FirebaseRESTClient: Sendable {
     }
 
     public func signIn(email: String, password: String) async throws -> FirebaseAuthSession {
-        try await authRequest(
-            endpoint: "accounts:signInWithPassword",
-            body: ["email": email, "password": password, "returnSecureToken": true]
-        )
+        do {
+            return try await authRequest(
+                endpoint: "accounts:signInWithPassword",
+                body: ["email": email, "password": password, "returnSecureToken": true]
+            )
+        } catch {
+            throw AuthError.map(error)
+        }
     }
 
     public func signUp(email: String, password: String) async throws -> FirebaseAuthSession {
-        try await authRequest(
-            endpoint: "accounts:signUp",
-            body: ["email": email, "password": password, "returnSecureToken": true]
-        )
+        do {
+            return try await authRequest(
+                endpoint: "accounts:signUp",
+                body: ["email": email, "password": password, "returnSecureToken": true]
+            )
+        } catch {
+            throw AuthError.map(error)
+        }
     }
 
     public func sendPasswordReset(email: String) async throws {
-        _ = try await authRequestData(
-            endpoint: "accounts:sendOobCode",
-            body: ["requestType": "PASSWORD_RESET", "email": email]
-        )
+        do {
+            _ = try await authRequestData(
+                endpoint: "accounts:sendOobCode",
+                body: ["requestType": "PASSWORD_RESET", "email": email]
+            )
+        } catch {
+            throw AuthError.map(error)
+        }
     }
 
     public func sendEmailVerification(idToken: String) async throws {
-        _ = try await authRequestData(
-            endpoint: "accounts:sendOobCode",
-            body: ["requestType": "VERIFY_EMAIL", "idToken": idToken]
-        )
+        do {
+            _ = try await authRequestData(
+                endpoint: "accounts:sendOobCode",
+                body: ["requestType": "VERIFY_EMAIL", "idToken": idToken]
+            )
+        } catch {
+            throw AuthError.map(error)
+        }
     }
 
     public func initiateAccountDeletion(uid: String, idToken: String) async throws {
@@ -82,6 +98,14 @@ public struct FirebaseRESTClient: Sendable {
     }
 
     public func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession {
+        do {
+            return try await refreshSessionRequest(refreshToken: refreshToken)
+        } catch {
+            throw AuthError.map(error)
+        }
+    }
+
+    private func refreshSessionRequest(refreshToken: String) async throws -> FirebaseAuthSession {
         var components = URLComponents(string: "https://securetoken.googleapis.com/v1/token")
         components?.queryItems = [URLQueryItem(name: "key", value: apiKey)]
         guard let url = components?.url else {

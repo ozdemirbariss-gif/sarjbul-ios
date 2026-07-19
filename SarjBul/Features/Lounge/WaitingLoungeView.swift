@@ -2,13 +2,14 @@ import Combine
 import SwiftUI
 
 struct WaitingLoungeView: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(NavigationCoordinator.self) private var navigation
+    @Environment(LoungeStore.self) private var lounge
     @State private var playerY: CGFloat = 0
     @State private var jumpVelocity: CGFloat = 0
     @State private var obstacleX: CGFloat = 260
     @State private var running = false
     @State private var score = 0
-    @State private var best = UserDefaults.standard.integer(forKey: "voltDashBest")
     @State private var crashed = false
     @State private var timerConnection: (any Cancellable)?
     @State private var reminderMinutes = 30
@@ -36,8 +37,8 @@ struct WaitingLoungeView: View {
                 .frame(maxWidth: .infinity)
             }
 
-            SBBackButton(accessibilityLabel: appState.t("nav.back")) {
-                appState.tab = .home
+            SBBackButton(accessibilityLabel: settings.t("nav.back")) {
+                navigation.tab = .home
             }
             .padding(.leading, 18)
             .padding(.top, 6)
@@ -50,16 +51,16 @@ struct WaitingLoungeView: View {
     private var reminderPanel: some View {
         SBSecondaryPanel {
             VStack(alignment: .leading, spacing: 16) {
-                Label(appState.t("reminder.title"), systemImage: "bell.badge")
+                Label(settings.t("reminder.title"), systemImage: "bell.badge")
                     .font(.title3.weight(.heavy))
                     .foregroundStyle(SBColor.ink)
-                Text(appState.t("reminder.hint"))
+                Text(settings.t("reminder.hint"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(SBColor.muted)
 
-                Picker(appState.t("reminder.title"), selection: $reminderMinutes) {
+                Picker(settings.t("reminder.title"), selection: $reminderMinutes) {
                     ForEach([15, 30, 45], id: \.self) { minutes in
-                        Text(appState.t("reminder.minutes", ["minutes": "\(minutes)"]))
+                        Text(settings.t("reminder.minutes", ["minutes": "\(minutes)"]))
                             .tag(minutes)
                     }
                 }
@@ -70,7 +71,7 @@ struct WaitingLoungeView: View {
                     Task { await toggleReminder() }
                 } label: {
                     Label(
-                        appState.t(reminderScheduled ? "reminder.cancel" : "reminder.set"),
+                        settings.t(reminderScheduled ? "reminder.cancel" : "reminder.set"),
                         systemImage: reminderScheduled ? "bell.slash.fill" : "bell.fill"
                     )
                     .font(.headline.weight(.heavy))
@@ -92,16 +93,16 @@ struct WaitingLoungeView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(appState.t("lounge.kicker"))
+            Text(settings.t("lounge.kicker"))
                 .font(.caption.weight(.heavy))
                 .foregroundStyle(SBColor.primaryDeep)
                 .textCase(.uppercase)
-            Text(appState.t("lounge.title"))
+            Text(settings.t("lounge.title"))
                 .font(SBFont.display(size: min(titleSize, 72), weight: .heavy))
                 .foregroundStyle(SBColor.muted)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
-            Text(appState.t("lounge.subtitle"))
+            Text(settings.t("lounge.subtitle"))
                 .font(.headline.weight(.bold))
                 .foregroundStyle(SBColor.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -114,7 +115,7 @@ struct WaitingLoungeView: View {
             VStack(spacing: 18) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(appState.t("lounge.game_title"))
+                        Text(settings.t("lounge.game_title"))
                             .font(.caption.weight(.heavy))
                             .foregroundStyle(SBColor.primaryDeep)
                         Text(gameStatusText)
@@ -125,9 +126,9 @@ struct WaitingLoungeView: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 6) {
-                        Text("\(appState.t("lounge.score")) \(score)")
+                        Text("\(settings.t("lounge.score")) \(score)")
                             .font(.headline.weight(.heavy))
-                        Text("\(appState.t("lounge.best")) \(best)")
+                        Text("\(settings.t("lounge.best")) \(lounge.bestScore)")
                             .font(.caption.weight(.heavy))
                             .foregroundStyle(SBColor.muted)
                     }
@@ -169,7 +170,7 @@ struct WaitingLoungeView: View {
                 }
                 .frame(height: 330)
 
-                SBPrimaryButton(title: running ? appState.t("lounge.jump") : appState.t("lounge.start"), systemImage: "bolt.fill") {
+                SBPrimaryButton(title: running ? settings.t("lounge.jump") : settings.t("lounge.start"), systemImage: "bolt.fill") {
                     running ? jump() : start()
                 }
             }
@@ -177,9 +178,9 @@ struct WaitingLoungeView: View {
     }
 
     private var gameStatusText: String {
-        if crashed { return appState.t("lounge.crashed") }
-        if running { return appState.t("lounge.running") }
-        return appState.t("lounge.ready")
+        if crashed { return settings.t("lounge.crashed") }
+        if running { return settings.t("lounge.running") }
+        return settings.t("lounge.ready")
     }
 
     private func start() {
@@ -219,8 +220,7 @@ struct WaitingLoungeView: View {
             running = false
             crashed = true
             stopTimer()
-            best = max(best, score)
-            UserDefaults.standard.set(best, forKey: "voltDashBest")
+            lounge.bestScore = max(lounge.bestScore, score)
         }
     }
 
@@ -242,22 +242,22 @@ struct WaitingLoungeView: View {
         if reminderScheduled {
             await ChargingReminderService.shared.cancel()
             reminderScheduled = false
-            reminderMessage = appState.t("reminder.cancelled")
+            reminderMessage = settings.t("reminder.cancelled")
             return
         }
 
         do {
             try await ChargingReminderService.shared.schedule(
                 afterMinutes: reminderMinutes,
-                title: appState.t("reminder.notification_title"),
-                body: appState.t("reminder.notification_body")
+                title: settings.t("reminder.notification_title"),
+                body: settings.t("reminder.notification_body")
             )
             reminderScheduled = true
-            reminderMessage = appState.t("reminder.scheduled", ["minutes": "\(reminderMinutes)"])
+            reminderMessage = settings.t("reminder.scheduled", ["minutes": "\(reminderMinutes)"])
             Haptic.success()
         } catch {
             reminderScheduled = false
-            reminderMessage = appState.t("reminder.denied")
+            reminderMessage = settings.t("reminder.denied")
         }
     }
 }

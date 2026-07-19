@@ -3,7 +3,8 @@ import SarjBulCore
 import SwiftUI
 
 struct StationOverviewMap: View {
-    @Environment(AppState.self) private var appState
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(SearchCoordinator.self) private var search
     let candidates: [StationCandidate]
 
     @State private var position: MapCameraPosition = .automatic
@@ -12,8 +13,8 @@ struct StationOverviewMap: View {
 
     var body: some View {
         Map(position: $position, selection: $selectedID) {
-            if let origin = appState.userLocation {
-                Annotation(appState.t("map.current_location"), coordinate: CLLocationCoordinate2D(
+            if let origin = search.userLocation {
+                Annotation(settings.t("map.current_location"), coordinate: CLLocationCoordinate2D(
                     latitude: origin.latitude,
                     longitude: origin.longitude
                 )) {
@@ -110,13 +111,13 @@ struct StationOverviewMap: View {
             .sbCardShadow()
         }
         .buttonStyle(SBPremiumButtonStyle())
-        .accessibilityHint(appState.t("map.open_detail"))
+        .accessibilityHint(settings.t("map.open_detail"))
     }
 
     private func frameCandidates() {
         let points = candidates.prefix(80).map {
             MKMapPoint(CLLocationCoordinate2D(latitude: $0.station.latitude, longitude: $0.station.longitude))
-        } + (appState.userLocation.map {
+        } + (search.userLocation.map {
             [MKMapPoint(CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude))]
         } ?? [])
         guard let first = points.first else { return }

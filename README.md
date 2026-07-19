@@ -26,11 +26,13 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 ## Mimari
 
 ```text
-SarjBul/App/              Uygulama durumu, konum, rota, ağ ve entegrasyon başlangıcı
+SarjBul/App/              Composition root, Observable store'lar, router, persistence ve cihaz servisleri
 SarjBul/Features/         SwiftUI özellik ekranları
-SarjBul/DesignSystem/     Ortak native bileşenler ve token tüketimi
-SarjBulCore/              UI'dan bağımsız model, skor, arama ve servisler
+SarjBul/DesignSystem/     Ortak native bileşenler ve üretilmiş token tüketimi
+SarjBul/Generated/        design-tokens.json kaynağından üretilen Swift değerleri
+SarjBulCore/              UI'dan bağımsız model, skor, spatial index, veri pipeline actor'ü ve client protokolleri
 SarjBulTests/             Domain testleri
+SarjBulUnitTests/         Auth state-machine ve persistence migrasyon testleri
 SarjBulUITests/           Kritik misafir akışı smoke testi
 firebase/functions/       Güvenilir durum özeti ve hesap verisi temizleme işleri
 database.rules.json       auth.uid tabanlı Realtime Database izolasyonu
@@ -54,7 +56,11 @@ Ayrıntılı kurulum ve deploy sırası: [Docs/FIREBASE_SETUP.md](Docs/FIREBASE_
 
 Uygulama önce geçerli cache'i, sonra bundle içindeki `stations.json` dosyasını açar. Arka planda web reposundaki güncel `stations.json` ETag ile sorgulanır. Yeni veri 1.000 kaydın veya bundle sayısının yüzde 70'inin altındaysa cache'e yazılmaz.
 
-Arama motoru önce enlem/boylam bounding box ile 12 bin üzeri kaydı daraltır; haversine, skor, tahmin ve rozet hesaplarını yalnızca aday kümesinde çalıştırır. Hedef seçilmişse adaylar yolculuk koridoru ve sapma maliyetine göre değerlendirilir.
+Veri pipeline actor'ü yükleme sırasında 12 bin üzeri istasyon için hücre tabanlı bir spatial index'i bir kez kurar. Arama motoru yalnızca ilgili hücrelerdeki adaylar için haversine, skor ve rozet hesaplarını çalıştırır. Hedef seçilmişse adaylar yolculuk koridoru ve sapma maliyetine göre değerlendirilir.
+
+`AppState` yalnızca bağımlılıkları kuran composition root'tur. Auth, favoriler, istasyon verisi, arama ve deep link akışları ayrı `@Observable` store/router nesnelerindedir. Firebase REST istemcisi `AuthClient`, `FavoritesClient` ve `StatusClient` protokollerinin arkasındadır; oturum `.guest`, `.signedIn` ve `.refreshing` durumlarıyla yönetilir.
+
+Tasarım tokenları için `SarjBul/Resources/design-tokens.json` tek kaynaktır. Xcode build phase `Scripts/generate_design_tokens.py` ile `SarjBul/Generated/DesignTokens.generated.swift` dosyasını üretir.
 
 ## Doğrulama
 

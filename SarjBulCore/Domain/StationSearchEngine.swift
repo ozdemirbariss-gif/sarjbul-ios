@@ -9,12 +9,59 @@ public struct StationSearchEngine: Sendable {
     public init() {}
 
     public func candidates(
+        in index: SpatialIndex,
+        origin: UserLocation,
+        profile: DrivingProfile,
+        filters: StationFilters,
+        stationStatuses: [String: StationStatusSummary] = [:],
+        limit: Int = 80
+    ) -> [StationCandidate] {
+        var latestResult: [StationCandidate] = []
+        for radiusKm in radiusSteps(rangeFilterEnabled: filters.rangeFilterEnabled, safeRangeKm: profile.safeRangeKm) {
+            let result = candidates(
+                from: index.stations(near: origin, radiusKm: radiusKm),
+                origin: origin,
+                profile: profile,
+                filters: filters,
+                stationStatuses: stationStatuses,
+                limit: limit,
+                radiusSteps: [radiusKm]
+            )
+            latestResult = result
+            if result.count >= richCandidateLimit || radiusKm >= maxCandidateRadiusKm {
+                return result
+            }
+        }
+        return latestResult
+    }
+
+    public func candidates(
         from stations: [Station],
         origin: UserLocation,
         profile: DrivingProfile,
         filters: StationFilters,
         stationStatuses: [String: StationStatusSummary] = [:],
         limit: Int = 80
+    ) -> [StationCandidate] {
+        candidates(
+            from: stations,
+            origin: origin,
+            profile: profile,
+            filters: filters,
+            stationStatuses: stationStatuses,
+            limit: limit,
+            radiusSteps: radiusSteps(rangeFilterEnabled: filters.rangeFilterEnabled, safeRangeKm: profile.safeRangeKm)
+        )
+    }
+
+    private func candidates(
+        from stations: [Station],
+        origin: UserLocation,
+        profile: DrivingProfile,
+        filters: StationFilters,
+        stationStatuses: [String: StationStatusSummary],
+        limit: Int,
+        radiusSteps: [Double]
     ) -> [StationCandidate] {
         let normalizedSearch = filters.searchText.folding(
             options: [.diacriticInsensitive, .caseInsensitive],
@@ -24,7 +71,7 @@ public struct StationSearchEngine: Sendable {
         var candidates: [StationCandidate] = []
         candidates.reserveCapacity(min(stations.count, rawCandidateLimit))
 
-        for radiusKm in radiusSteps(rangeFilterEnabled: filters.rangeFilterEnabled, safeRangeKm: profile.safeRangeKm) {
+        for radiusKm in radiusSteps {
             candidates.removeAll(keepingCapacity: true)
 
             for station in stations {
