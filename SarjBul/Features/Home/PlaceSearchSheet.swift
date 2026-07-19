@@ -1,5 +1,5 @@
 import Combine
-import MapKit
+@preconcurrency import MapKit
 import SarjBulCore
 import SwiftUI
 

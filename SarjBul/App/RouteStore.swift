@@ -1,4 +1,4 @@
-import MapKit
+@preconcurrency import MapKit
 import Observation
 import SarjBulCore
 
