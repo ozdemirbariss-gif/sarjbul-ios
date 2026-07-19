@@ -6,5 +6,15 @@
     <string></string>
     <key>firebaseAPIKey</key>
     <string></string>
+    <key>stationDataURL</key>
+    <string>https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json</string>
+    <key>privacyPolicyURL</key>
+    <string>https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md</string>
+    <key>termsOfUseURL</key>
+    <string>https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/TERMS_OF_USE.md</string>
+    <key>supportURL</key>
+    <string>https://github.com/ozdemirbariss-gif/elektriklisarj-ios/issues</string>
+    <key>supportEmail</key>
+    <string></string>
 </dict>
 </plist>

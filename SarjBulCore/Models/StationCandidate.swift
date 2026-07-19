@@ -8,6 +8,7 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
     public var estimatedMinutes: Int
     public var arrivalChargePercent: Double
     public var remainingSafeRangeKm: Double
+    public var routeDeviationKm: Double
     public var score: Int
     public var badges: [StationBadge]
 
@@ -21,6 +22,7 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         estimatedMinutes: Int,
         arrivalChargePercent: Double,
         remainingSafeRangeKm: Double,
+        routeDeviationKm: Double = 0,
         score: Int,
         badges: [StationBadge]
     ) {
@@ -31,6 +33,7 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         self.estimatedMinutes = estimatedMinutes
         self.arrivalChargePercent = arrivalChargePercent
         self.remainingSafeRangeKm = remainingSafeRangeKm
+        self.routeDeviationKm = routeDeviationKm
         self.score = score
         self.badges = badges
     }

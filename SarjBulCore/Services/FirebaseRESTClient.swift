@@ -4,11 +4,18 @@ public struct FirebaseRESTClient: Sendable {
     public var databaseURL: URL
     public var apiKey: String
     public var session: URLSession
+    public var appCheckTokenProvider: (@Sendable () async throws -> String?)?
 
-    public init(databaseURL: URL, apiKey: String, session: URLSession = .shared) {
+    public init(
+        databaseURL: URL,
+        apiKey: String,
+        session: URLSession = .shared,
+        appCheckTokenProvider: (@Sendable () async throws -> String?)? = nil
+    ) {
         self.databaseURL = databaseURL
         self.apiKey = apiKey
         self.session = session
+        self.appCheckTokenProvider = appCheckTokenProvider
     }
 
     public func stationStatuses(idToken: String? = nil) async throws -> [String: StationStatusSummary] {
@@ -17,7 +24,8 @@ public struct FirebaseRESTClient: Sendable {
             components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
         }
         guard let url = components?.url else { return [:] }
-        let (data, response) = try await session.data(from: url)
+        let request = try await databaseRequest(url: url)
+        let (data, response) = try await session.data(for: request)
         try validate(response: response, data: data)
         guard !data.isEmpty, String(data: data, encoding: .utf8) != "null" else { return [:] }
         return try JSONDecoder().decode([String: StationStatusSummary].self, from: data)
@@ -42,6 +50,35 @@ public struct FirebaseRESTClient: Sendable {
             endpoint: "accounts:sendOobCode",
             body: ["requestType": "PASSWORD_RESET", "email": email]
         )
+    }
+
+    public func sendEmailVerification(idToken: String) async throws {
+        _ = try await authRequestData(
+            endpoint: "accounts:sendOobCode",
+            body: ["requestType": "VERIFY_EMAIL", "idToken": idToken]
+        )
+    }
+
+    public func initiateAccountDeletion(uid: String, idToken: String) async throws {
+        let requestedAt = ISO8601DateFormatter().string(from: Date())
+        try await delete(path: "favoriler/\(uid).json", idToken: idToken)
+        try await delete(path: "kullanici_yorum_meta/\(uid).json", idToken: idToken)
+        try await putJSON(
+            path: "account_deletion_requests/\(uid).json",
+            idToken: idToken,
+            body: AccountDeletionRequest(uid: uid, requestedAt: requestedAt, source: "ios")
+        )
+    }
+
+    public func deleteAccount(idToken: String) async throws {
+        do {
+            _ = try await authRequestData(
+                endpoint: "accounts:delete",
+                body: ["idToken": idToken]
+            )
+        } catch FirebaseRESTError.requestFailed(let message, _) where message.contains("USER_NOT_FOUND") {
+            return
+        }
     }
 
     public func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession {
@@ -71,7 +108,8 @@ public struct FirebaseRESTClient: Sendable {
         components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
         guard let url = components?.url else { return [] }
 
-        let (data, response) = try await session.data(from: url)
+        let request = try await databaseRequest(url: url)
+        let (data, response) = try await session.data(for: request)
         try validate(response: response, data: data)
         guard !data.isEmpty, String(data: data, encoding: .utf8) != "null" else { return [] }
 
@@ -92,6 +130,7 @@ public struct FirebaseRESTClient: Sendable {
         if isFavorite {
             request.httpBody = try JSONEncoder().encode(true)
         }
+        try await attachAppCheck(to: &request)
 
         let (data, response) = try await session.data(for: request)
         try validate(response: response, data: data)
@@ -115,19 +154,19 @@ public struct FirebaseRESTClient: Sendable {
             tarih: now,
             uid: uid
         )
-
-        try await postJSON(path: "yorumlar/\(stationKey).json", idToken: idToken, body: report)
-        try await patchJSON(
-            path: "kullanici_yorum_meta/\(uid).json",
-            idToken: idToken,
-            body: ["son_yorum_zamani": now]
+        let reportID = UUID().uuidString.lowercased()
+        let metadata = StationReportMetadata(
+            lastReportAt: now,
+            lastReportAtMilliseconds: Int64(Date().timeIntervalSince1970 * 1_000)
         )
         try await patchJSON(
-            path: "station_status/\(stationKey).json",
+            path: ".json",
             idToken: idToken,
-            body: StationStatusSummary(
-                durum: Self.statusSummaryState(forStatusClass: statusClass),
-                etiket: status
+            body: AtomicStationReportWrite(
+                reportPath: "yorumlar/\(stationKey)/\(reportID)",
+                metadataPath: "kullanici_yorum_meta/\(uid)",
+                report: report,
+                metadata: metadata
             )
         )
     }
@@ -154,8 +193,8 @@ public struct FirebaseRESTClient: Sendable {
         return data
     }
 
-    private func postJSON<T: Encodable>(path: String, idToken: String, body: T) async throws {
-        try await sendJSON(method: "POST", path: path, idToken: idToken, body: body)
+    private func putJSON<T: Encodable>(path: String, idToken: String, body: T) async throws {
+        try await sendJSON(method: "PUT", path: path, idToken: idToken, body: body)
     }
 
     private func patchJSON<T: Encodable>(path: String, idToken: String, body: T) async throws {
@@ -173,9 +212,33 @@ public struct FirebaseRESTClient: Sendable {
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
+        try await attachAppCheck(to: &request)
 
         let (data, response) = try await session.data(for: request)
         try validate(response: response, data: data)
+    }
+
+    private func delete(path: String, idToken: String) async throws {
+        var components = URLComponents(url: databaseURL.appending(path: path), resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
+        guard let url = components?.url else { throw FirebaseRESTError.invalidURL }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        try await attachAppCheck(to: &request)
+        let (data, response) = try await session.data(for: request)
+        try validate(response: response, data: data)
+    }
+
+    private func databaseRequest(url: URL) async throws -> URLRequest {
+        var request = URLRequest(url: url)
+        try await attachAppCheck(to: &request)
+        return request
+    }
+
+    private func attachAppCheck(to request: inout URLRequest) async throws {
+        guard let token = try await appCheckTokenProvider?(), !token.isEmpty else { return }
+        request.setValue(token, forHTTPHeaderField: "X-Firebase-AppCheck")
     }
 
     private func validate(response: URLResponse, data: Data) throws {
@@ -331,4 +394,50 @@ private struct StationReportPayload: Encodable {
     var sinif_kaynagi: String
     var tarih: String
     var uid: String
+}
+
+private struct StationReportMetadata: Encodable {
+    var lastReportAt: String
+    var lastReportAtMilliseconds: Int64
+
+    private enum CodingKeys: String, CodingKey {
+        case lastReportAt = "son_yorum_zamani"
+        case lastReportAtMilliseconds = "son_yorum_zamani_ms"
+    }
+}
+
+private struct AtomicStationReportWrite: Encodable {
+    var reportPath: String
+    var metadataPath: String
+    var report: StationReportPayload
+    var metadata: StationReportMetadata
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: DynamicCodingKey.self)
+        try container.encode(report, forKey: DynamicCodingKey(reportPath))
+        try container.encode(metadata, forKey: DynamicCodingKey(metadataPath))
+    }
+}
+
+private struct DynamicCodingKey: CodingKey {
+    var stringValue: String
+    var intValue: Int? { nil }
+
+    init(_ stringValue: String) {
+        self.stringValue = stringValue
+    }
+
+    init?(stringValue: String) {
+        self.init(stringValue)
+    }
+
+    init?(intValue: Int) {
+        return nil
+    }
+}
+
+private struct AccountDeletionRequest: Encodable {
+    var uid: String
+    var requestedAt: String
+    var source: String
 }

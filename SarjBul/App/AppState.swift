@@ -33,6 +33,10 @@ final class AppState {
     private static let profileDefaultsKey = "drivingProfile"
     private static let authSessionDefaultsKey = "firebaseAuthSession"
     private static let languageDefaultsKey = "appLanguage"
+    private static let destinationDefaultsKey = "journeyDestination"
+    private static let recentRoutesDefaultsKey = "recentStationRoutes"
+    private static let reportCooldownsDefaultsKey = "stationReportCooldowns"
+    private static let reportCooldown: TimeInterval = 60
 
     var tab: Tab = .account
     private(set) var stations: [Station] = []
@@ -45,55 +49,85 @@ final class AppState {
     }
     var filters = StationFilters()
     var userLocation: UserLocation?
+    var destination: JourneyDestination? {
+        didSet {
+            persistDestination()
+            search = .idle
+        }
+    }
     var search: SearchState = .idle
     var authSession: FirebaseAuthSession? {
         didSet { persistAuthSession() }
     }
     private(set) var favorites: Set<String> = []
+    private(set) var recentRoutes = AppState.restoreRecentRoutes()
+    let externalLinks: AppExternalLinks
     var loadingMessage: String?
     var errorMessage: String?
     var successMessage: String?
     private var pendingFavoriteKeys: Set<String> = []
+    private var reportCooldowns = AppState.restoreReportCooldowns()
+    private var pendingStationKey: String?
 
     private let repository: any StationRepository
     private let firebaseClient: FirebaseRESTClient?
     private let searchEngine = StationSearchEngine()
+    private let journeyRouteService = JourneyRouteService()
 
     init(
         repository: any StationRepository,
         firebaseClient: FirebaseRESTClient? = nil,
         profile: DrivingProfile = DrivingProfile(),
         authSession: FirebaseAuthSession? = nil,
-        language: AppLanguage = .tr
+        language: AppLanguage = .tr,
+        externalLinks: AppExternalLinks = .empty,
+        destination: JourneyDestination? = nil
     ) {
         self.repository = repository
         self.firebaseClient = firebaseClient
         self.profile = profile
         self.authSession = authSession
         self.language = language
+        self.externalLinks = externalLinks
+        self.destination = destination
     }
 
     static func bootstrap() -> AppState {
         let restoredProfile = restoreProfile()
         let restoredSession = restoreAuthSession()
         let restoredLanguage = restoreLanguage()
+        let restoredDestination = restoreDestination()
         let config = AppConfiguration.load()
-        if let url = Bundle.main.url(forResource: "stations", withExtension: "json") {
-            return AppState(
-                repository: LocalStationRepository(fileURL: url),
+        let links = AppExternalLinks(
+            privacyPolicyURL: config.privacyPolicyURL,
+            termsOfUseURL: config.termsOfUseURL,
+            supportURL: config.supportURL,
+            supportEmail: config.supportEmail
+        )
+        let state: AppState
+        if let repository = config.stationRepository() {
+            state = AppState(
+                repository: repository,
                 firebaseClient: config.firebaseClient,
                 profile: restoredProfile,
                 authSession: restoredSession,
-                language: restoredLanguage
+                language: restoredLanguage,
+                externalLinks: links,
+                destination: restoredDestination
+            )
+        } else {
+            state = AppState(
+                repository: EmptyStationRepository(),
+                firebaseClient: config.firebaseClient,
+                profile: restoredProfile,
+                authSession: restoredSession,
+                language: restoredLanguage,
+                externalLinks: links,
+                destination: restoredDestination
             )
         }
-        return AppState(
-            repository: EmptyStationRepository(),
-            firebaseClient: config.firebaseClient,
-            profile: restoredProfile,
-            authSession: restoredSession,
-            language: restoredLanguage
-        )
+        state.applyDebugLaunchMode()
+        return state
     }
 
     func t(_ key: String, _ replacements: [String: String] = [:]) -> String {
@@ -119,9 +153,16 @@ final class AppState {
             if authSession != nil {
                 await loadFavorites()
             }
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes") {
+                await findStations()
+            }
+            #endif
+            await refreshStationDataIfAvailable()
         } catch {
             loadingMessage = nil
             errorMessage = error.localizedDescription
+            AppLogger.data.error("Station load failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -132,6 +173,10 @@ final class AppState {
     func updateLocation(latitude: Double, longitude: Double, source: UserLocation.Source) {
         userLocation = UserLocation(latitude: latitude, longitude: longitude, source: source)
         search = .idle
+        if let pendingStationKey {
+            self.pendingStationKey = nil
+            Task { await openStation(withKey: pendingStationKey) }
+        }
     }
 
     func findStations() async {
@@ -145,17 +190,45 @@ final class AppState {
         let profile = profile
         let filters = filters
         let stationStatuses = stationStatuses
+        let destination = destination
         let searchEngine = searchEngine
+        let routePoints: [UserLocation]
+        if let destination {
+            do {
+                routePoints = try await journeyRouteService.corridorPoints(
+                    origin: userLocation,
+                    destination: destination
+                )
+            } catch {
+                routePoints = []
+                AppLogger.routing.warning("Journey corridor route failed: \(error.localizedDescription, privacy: .public)")
+            }
+        } else {
+            routePoints = []
+        }
 
         let result = await Task.detached(priority: .userInitiated) {
-            searchEngine.candidates(
-                from: stations,
-                origin: userLocation,
-                profile: profile,
-                filters: filters,
-                stationStatuses: stationStatuses,
-                limit: 80
-            )
+            if let destination {
+                searchEngine.candidatesAlongJourney(
+                    from: stations,
+                    origin: userLocation,
+                    destination: destination,
+                    routePoints: routePoints,
+                    profile: profile,
+                    filters: filters,
+                    stationStatuses: stationStatuses,
+                    limit: 80
+                )
+            } else {
+                searchEngine.candidates(
+                    from: stations,
+                    origin: userLocation,
+                    profile: profile,
+                    filters: filters,
+                    stationStatuses: stationStatuses,
+                    limit: 80
+                )
+            }
         }.value
 
         withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
@@ -212,6 +285,11 @@ final class AppState {
         }
     }
 
+    func consumeErrorMessage() -> String? {
+        defer { errorMessage = nil }
+        return errorMessage
+    }
+
     func applyFilters(_ filters: StationFilters) async {
         self.filters = filters
         guard userLocation != nil else { return }
@@ -225,10 +303,11 @@ final class AppState {
         }
 
         do {
+            errorMessage = nil
             authSession = try await firebaseClient.signIn(email: email, password: password)
             await loadFavorites()
         } catch {
-            errorMessage = error.localizedDescription
+            setServiceError(error)
         }
     }
 
@@ -239,10 +318,21 @@ final class AppState {
         }
 
         do {
+            errorMessage = nil
             authSession = try await firebaseClient.signUp(email: email, password: password)
+            var verificationSent = false
+            if let idToken = authSession?.idToken {
+                do {
+                    try await firebaseClient.sendEmailVerification(idToken: idToken)
+                    verificationSent = true
+                } catch {
+                    AppLogger.account.warning("Verification email failed: \(error.localizedDescription, privacy: .public)")
+                }
+            }
             await loadFavorites()
+            successMessage = t(verificationSent ? "service.verification_sent" : "service.verification_pending")
         } catch {
-            errorMessage = error.localizedDescription
+            setServiceError(error)
         }
     }
 
@@ -253,10 +343,11 @@ final class AppState {
         }
 
         do {
+            errorMessage = nil
             try await firebaseClient.sendPasswordReset(email: email)
             successMessage = t("service.reset_sent")
         } catch {
-            errorMessage = error.localizedDescription
+            setServiceError(error)
         }
     }
 
@@ -264,6 +355,30 @@ final class AppState {
         authSession = nil
         favorites = []
         stationStatuses = [:]
+        Task { await loadStationStatuses() }
+    }
+
+    func deleteAccount() async -> Bool {
+        guard let firebaseClient else {
+            errorMessage = t("service.firebase_missing")
+            return false
+        }
+
+        do {
+            let session = try await validToken()
+            try await firebaseClient.initiateAccountDeletion(
+                uid: session.uid,
+                idToken: session.idToken
+            )
+            try await firebaseClient.deleteAccount(idToken: session.idToken)
+            signOut()
+            successMessage = t("service.account_deleted")
+            return true
+        } catch {
+            AppLogger.account.error("Account deletion failed: \(error.localizedDescription, privacy: .public)")
+            setServiceError(error)
+            return false
+        }
     }
 
     func isFavorite(_ stationKey: String) -> Bool {
@@ -301,13 +416,50 @@ final class AppState {
             } else {
                 favorites.insert(stationKey)
             }
-            errorMessage = error.localizedDescription
+            setServiceError(error)
         }
+    }
+
+    var favoriteStations: [Station] {
+        stations.filter { favorites.contains($0.statusKey) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    var recentStations: [Station] {
+        recentRoutes.compactMap { recent in
+            stations.first { $0.id == recent.stationID || $0.statusKey == recent.stationKey }
+        }
+    }
+
+    func recordRouteOpened(_ station: Station) {
+        recentRoutes.removeAll { $0.stationID == station.id || $0.stationKey == station.statusKey }
+        recentRoutes.insert(
+            RecentStationRoute(stationID: station.id, stationKey: station.statusKey, openedAt: Date()),
+            at: 0
+        )
+        recentRoutes = Array(recentRoutes.prefix(12))
+        persistRecentRoutes()
+    }
+
+    func canReportStatus(for stationKey: String, now: Date = Date()) -> Bool {
+        guard let lastReport = reportCooldowns[stationKey] else { return true }
+        return now.timeIntervalSince(lastReport) >= Self.reportCooldown
+    }
+
+    func reportCooldownRemaining(for stationKey: String, now: Date = Date()) -> Int {
+        guard let lastReport = reportCooldowns[stationKey] else { return 0 }
+        return max(0, Int(ceil(Self.reportCooldown - now.timeIntervalSince(lastReport))))
     }
 
     func reportStatus(stationKey: String, status: String) async {
         guard let firebaseClient else {
             errorMessage = t("service.report_login_required")
+            return
+        }
+        guard canReportStatus(for: stationKey) else {
+            errorMessage = t("service.report_cooldown", [
+                "seconds": "\(reportCooldownRemaining(for: stationKey))"
+            ])
             return
         }
 
@@ -321,10 +473,13 @@ final class AppState {
                     idToken: session.idToken
                 )
             }
+            reportCooldowns[stationKey] = Date()
+            persistReportCooldowns()
             await loadStationStatuses()
             await findStations()
+            successMessage = t("service.report_sent")
         } catch {
-            errorMessage = error.localizedDescription
+            setServiceError(error)
         }
     }
 
@@ -339,6 +494,7 @@ final class AppState {
                 stationStatuses = try await firebaseClient.stationStatuses()
             }
         } catch {
+            AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
             stationStatuses = [:]
         }
     }
@@ -350,6 +506,78 @@ final class AppState {
                 try await firebaseClient.favoriteIDs(uid: session.uid, idToken: session.idToken)
             }
         } catch {
+            AppLogger.account.error("Favorites failed: \(error.localizedDescription, privacy: .public)")
+            setServiceError(error)
+        }
+    }
+
+    private func refreshStationDataIfAvailable() async {
+        guard let repository = repository as? any RefreshableStationRepository else { return }
+        do {
+            guard let refreshed = try await repository.refreshStations(), !refreshed.isEmpty else { return }
+            stations = refreshed
+        } catch {
+            AppLogger.data.warning("Remote station refresh skipped: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    func handleDeepLink(_ url: URL) async {
+        guard url.scheme?.lowercased() == "sarjbul", url.host?.lowercased() == "station" else { return }
+        guard let encodedKey = url.pathComponents.dropFirst().first,
+              let key = encodedKey.removingPercentEncoding,
+              !key.isEmpty else { return }
+        await openStation(withKey: key)
+    }
+
+    func openStation(withKey key: String) async {
+        guard let station = stations.first(where: { $0.statusKey == key || $0.id == key }) else {
+            errorMessage = t("deep_link.not_found")
+            return
+        }
+        guard let origin = userLocation else {
+            pendingStationKey = key
+            tab = .home
+            successMessage = t("deep_link.location_needed")
+            return
+        }
+
+        await findStations()
+        var candidates = routeCandidates
+        if let index = candidates.firstIndex(where: { $0.station.id == station.id }) {
+            let candidate = candidates.remove(at: index)
+            candidates.insert(candidate, at: 0)
+        } else {
+            var relaxedFilters = filters
+            relaxedFilters.rangeFilterEnabled = false
+            relaxedFilters.minimumPowerKW = 0
+            relaxedFilters.socketFilters = []
+            let direct = searchEngine.candidates(
+                from: [station],
+                origin: origin,
+                profile: profile,
+                filters: relaxedFilters,
+                stationStatuses: stationStatuses,
+                limit: 1
+            )
+            candidates.insert(contentsOf: direct, at: 0)
+        }
+        search = .results(candidates)
+        tab = .routes
+    }
+
+    private func setServiceError(_ error: Error) {
+        let message = error.localizedDescription.uppercased()
+        if message.contains("INVALID_LOGIN_CREDENTIALS") || message.contains("INVALID_PASSWORD") {
+            errorMessage = t("service.invalid_credentials")
+        } else if message.contains("EMAIL_EXISTS") {
+            errorMessage = t("service.email_exists")
+        } else if message.contains("WEAK_PASSWORD") {
+            errorMessage = t("service.weak_password")
+        } else if message.contains("TOO_MANY_ATTEMPTS") {
+            errorMessage = t("service.too_many_attempts")
+        } else if message.contains("NETWORK") || message.contains("OFFLINE") {
+            errorMessage = t("service.network_error")
+        } else {
             errorMessage = error.localizedDescription
         }
     }
@@ -426,6 +654,21 @@ final class AppState {
         AppLanguage(code: UserDefaults.standard.string(forKey: languageDefaultsKey) ?? AppLanguage.tr.rawValue)
     }
 
+    private static func restoreDestination() -> JourneyDestination? {
+        guard let data = UserDefaults.standard.data(forKey: destinationDefaultsKey) else { return nil }
+        return try? JSONDecoder().decode(JourneyDestination.self, from: data)
+    }
+
+    private static func restoreRecentRoutes() -> [RecentStationRoute] {
+        guard let data = UserDefaults.standard.data(forKey: recentRoutesDefaultsKey) else { return [] }
+        return (try? JSONDecoder().decode([RecentStationRoute].self, from: data)) ?? []
+    }
+
+    private static func restoreReportCooldowns() -> [String: Date] {
+        guard let data = UserDefaults.standard.data(forKey: reportCooldownsDefaultsKey) else { return [:] }
+        return (try? JSONDecoder().decode([String: Date].self, from: data)) ?? [:]
+    }
+
     private func persistProfile() {
         if let data = try? JSONEncoder().encode(profile) {
             UserDefaults.standard.set(data, forKey: Self.profileDefaultsKey)
@@ -434,6 +677,31 @@ final class AppState {
 
     private func persistLanguage() {
         UserDefaults.standard.set(language.rawValue, forKey: Self.languageDefaultsKey)
+    }
+
+    private func persistDestination() {
+        guard let destination else {
+            UserDefaults.standard.removeObject(forKey: Self.destinationDefaultsKey)
+            return
+        }
+        if let data = try? JSONEncoder().encode(destination) {
+            UserDefaults.standard.set(data, forKey: Self.destinationDefaultsKey)
+        }
+    }
+
+    private func persistRecentRoutes() {
+        if let data = try? JSONEncoder().encode(recentRoutes) {
+            UserDefaults.standard.set(data, forKey: Self.recentRoutesDefaultsKey)
+        }
+    }
+
+    private func persistReportCooldowns() {
+        reportCooldowns = reportCooldowns.filter {
+            Date().timeIntervalSince($0.value) < 24 * 60 * 60
+        }
+        if let data = try? JSONEncoder().encode(reportCooldowns) {
+            UserDefaults.standard.set(data, forKey: Self.reportCooldownsDefaultsKey)
+        }
     }
 
     private func persistAuthSession() {
@@ -448,6 +716,26 @@ final class AppState {
             UserDefaults.standard.removeObject(forKey: Self.authSessionDefaultsKey)
         }
     }
+
+    private func applyDebugLaunchMode() {
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--ui-testing-home") || arguments.contains("--ui-testing-routes") {
+            tab = .home
+            userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        } else if arguments.contains("--ui-testing-lounge") {
+            tab = .lounge
+        }
+        #endif
+    }
+}
+
+struct RecentStationRoute: Codable, Hashable, Identifiable {
+    var stationID: String
+    var stationKey: String
+    var openedAt: Date
+
+    var id: String { stationID }
 }
 
 private struct EmptyStationRepository: StationRepository {

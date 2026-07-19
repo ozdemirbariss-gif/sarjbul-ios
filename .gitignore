@@ -11,3 +11,9 @@ xcuserdata/
 *.dSYM
 SarjBul.xcodeproj/
 SarjBul/Resources/AppConfig.plist
+SarjBul/Resources/GoogleService-Info.plist
+firebase/functions/node_modules/
+.firebase/
+firebase-debug.log
+__pycache__/
+*.pyc

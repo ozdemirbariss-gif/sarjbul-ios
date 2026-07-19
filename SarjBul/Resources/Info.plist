@@ -16,9 +16,27 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>CFBundleURLName</key>
+            <string>com.ozdemirbaris.sarjbul.station</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>sarjbul</string>
+            </array>
+        </dict>
+    </array>
     <key>UILaunchScreen</key>
-    <dict/>
+    <dict>
+        <key>UIColorName</key>
+        <string>LaunchBackground</string>
+    </dict>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Yakindaki sarj istasyonlarini bulmak ve varis sarjini hesaplamak icin konumun kullanilir.</string>
+    <string>Yakındaki şarj istasyonlarını bulmak ve varış şarjını hesaplamak için konumun kullanılır.</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
 </dict>
 </plist>

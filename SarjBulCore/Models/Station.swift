@@ -109,7 +109,9 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
 
 public extension Station {
     var statusKey: String {
-        let folded = id.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+        let folded = id
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .replacingOccurrences(of: "ı", with: "i")
         let allowed = folded.unicodeScalars.map { scalar -> Character in
             if CharacterSet.alphanumerics.contains(scalar)
                 || scalar == " "

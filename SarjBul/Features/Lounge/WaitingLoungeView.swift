@@ -11,6 +11,11 @@ struct WaitingLoungeView: View {
     @State private var best = UserDefaults.standard.integer(forKey: "voltDashBest")
     @State private var crashed = false
     @State private var timerConnection: (any Cancellable)?
+    @State private var reminderMinutes = 30
+    @State private var reminderMessage: String?
+    @State private var reminderScheduled = false
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 52
+    @ScaledMetric(relativeTo: .title) private var statusSize = 36
 
     private let timer = Timer.publish(every: 0.025, on: .main, in: .common)
 
@@ -21,11 +26,14 @@ struct WaitingLoungeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     header
+                    reminderPanel
                     gamePanel
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 94)
                 .padding(.bottom, 28)
+                .frame(maxWidth: 720)
+                .frame(maxWidth: .infinity)
             }
 
             SBBackButton(accessibilityLabel: appState.t("nav.back")) {
@@ -39,6 +47,49 @@ struct WaitingLoungeView: View {
         }
     }
 
+    private var reminderPanel: some View {
+        SBSecondaryPanel {
+            VStack(alignment: .leading, spacing: 16) {
+                Label(appState.t("reminder.title"), systemImage: "bell.badge")
+                    .font(.title3.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+                Text(appState.t("reminder.hint"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(SBColor.muted)
+
+                Picker(appState.t("reminder.title"), selection: $reminderMinutes) {
+                    ForEach([15, 30, 45], id: \.self) { minutes in
+                        Text(appState.t("reminder.minutes", ["minutes": "\(minutes)"]))
+                            .tag(minutes)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Button {
+                    Haptic.tap()
+                    Task { await toggleReminder() }
+                } label: {
+                    Label(
+                        appState.t(reminderScheduled ? "reminder.cancel" : "reminder.set"),
+                        systemImage: reminderScheduled ? "bell.slash.fill" : "bell.fill"
+                    )
+                    .font(.headline.weight(.heavy))
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(reminderScheduled ? SBColor.muted : SBColor.electricBlue)
+
+                if let reminderMessage {
+                    Text(reminderMessage)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(reminderScheduled ? SBColor.electricBlue : SBColor.muted)
+                        .accessibilityAddTraits(.isStaticText)
+                }
+            }
+        }
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(appState.t("lounge.kicker"))
@@ -46,7 +97,7 @@ struct WaitingLoungeView: View {
                 .foregroundStyle(SBColor.primaryDeep)
                 .textCase(.uppercase)
             Text(appState.t("lounge.title"))
-                .font(SBFont.display(size: 52, weight: .heavy))
+                .font(SBFont.display(size: min(titleSize, 72), weight: .heavy))
                 .foregroundStyle(SBColor.muted)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
@@ -67,7 +118,7 @@ struct WaitingLoungeView: View {
                             .font(.caption.weight(.heavy))
                             .foregroundStyle(SBColor.primaryDeep)
                         Text(gameStatusText)
-                            .font(SBFont.display(size: 36, weight: .heavy))
+                            .font(SBFont.display(size: min(statusSize, 50), weight: .heavy))
                             .foregroundStyle(SBColor.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.78)
@@ -185,5 +236,28 @@ struct WaitingLoungeView: View {
     private func stopTimer() {
         timerConnection?.cancel()
         timerConnection = nil
+    }
+
+    private func toggleReminder() async {
+        if reminderScheduled {
+            await ChargingReminderService.shared.cancel()
+            reminderScheduled = false
+            reminderMessage = appState.t("reminder.cancelled")
+            return
+        }
+
+        do {
+            try await ChargingReminderService.shared.schedule(
+                afterMinutes: reminderMinutes,
+                title: appState.t("reminder.notification_title"),
+                body: appState.t("reminder.notification_body")
+            )
+            reminderScheduled = true
+            reminderMessage = appState.t("reminder.scheduled", ["minutes": "\(reminderMinutes)"])
+            Haptic.success()
+        } catch {
+            reminderScheduled = false
+            reminderMessage = appState.t("reminder.denied")
+        }
     }
 }

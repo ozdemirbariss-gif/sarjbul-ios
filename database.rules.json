@@ -1,0 +1,86 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "station_status": {
+      ".read": true,
+      ".write": false
+    },
+    "yorumlar": {
+      "$stationKey": {
+          "$reportId": {
+            ".read": "auth != null && data.child('uid').val() === auth.uid",
+            ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').exists() || root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').val() <= now - 60000)) || (!newData.exists() && data.child('uid').val() === auth.uid))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['kullanici', 'yorum', 'durum', 'durum_sinifi', 'sinif_kaynagi', 'tarih', 'uid']) && newData.child('uid').isString() && newData.child('uid').val() === auth.uid && newData.child('yorum').isString() && newData.child('yorum').val().length <= 240 && newData.child('durum').isString() && newData.child('durum').val().length <= 40 && (newData.child('durum_sinifi').val() === 'bos' || newData.child('durum_sinifi').val() === 'mesgul' || newData.child('durum_sinifi').val() === 'belirsiz'))",
+            "kullanici": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+            },
+            "yorum": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 240"
+            },
+            "durum": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+            },
+            "durum_sinifi": {
+              ".validate": "newData.val() === 'bos' || newData.val() === 'mesgul' || newData.val() === 'belirsiz'"
+            },
+            "sinif_kaynagi": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+            },
+            "tarih": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+            },
+            "uid": {
+              ".validate": "newData.isString() && newData.val() === auth.uid"
+            },
+            "$other": {
+              ".validate": false
+            }
+        }
+      }
+    },
+    "favoriler": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "$stationKey": {
+          ".validate": "!newData.exists() || (newData.isBoolean() && newData.val() === true)"
+        }
+      }
+    },
+    "kullanici_yorum_meta": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "son_yorum_zamani": {
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 40)"
+        },
+        "son_yorum_zamani_ms": {
+          ".validate": "!newData.exists() || (newData.isNumber() && newData.val() <= now + 5000)"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "account_deletion_requests": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.child('uid').val() === auth.uid",
+        ".validate": "newData.hasChildren(['uid', 'requestedAt', 'source']) && newData.child('requestedAt').isString() && newData.child('source').val() === 'ios'",
+        "uid": {
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        },
+        "requestedAt": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+        },
+        "source": {
+          ".validate": "newData.val() === 'ios'"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

@@ -116,7 +116,10 @@ struct SBPanel<Content: View>: View {
     }
 
     var body: some View {
-        content
+        VStack(alignment: .leading, spacing: 16) {
+            content
+        }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
             .sbPremiumGlass(radius: SBRadius.xl)
             .sbSoftShadow()
@@ -131,7 +134,10 @@ struct SBSecondaryPanel<Content: View>: View {
     }
 
     var body: some View {
-        content
+        VStack(alignment: .leading, spacing: 16) {
+            content
+        }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
             .sbPremiumGlass(radius: SBRadius.xl)
             .sbSoftShadow()
@@ -141,6 +147,7 @@ struct SBSecondaryPanel<Content: View>: View {
 struct SBPrimaryButton: View {
     var title: String
     var systemImage: String?
+    var accessibilityIdentifier: String? = nil
     var action: () -> Void
 
     var body: some View {
@@ -167,6 +174,7 @@ struct SBPrimaryButton: View {
             .sbGlowShadow()
         }
         .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityIdentifier(accessibilityIdentifier ?? "")
     }
 }
 

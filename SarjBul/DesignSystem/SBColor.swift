@@ -69,38 +69,10 @@ struct SBDesignTokens: Decodable {
             let data = try? Data(contentsOf: url),
             let tokens = try? JSONDecoder().decode(SBDesignTokens.self, from: data)
         else {
-            return fallback
+            preconditionFailure("Required design-tokens.json is missing or invalid.")
         }
         return tokens
     }
-
-    private static let fallback = SBDesignTokens(
-        source: "fallback",
-        colors: Colors(
-            background: ColorToken(hex: "#FFFFFF", opacity: 1.0),
-            surface: ColorToken(hex: "#F4F5F2", opacity: 1.0),
-            surfaceSoft: ColorToken(hex: "#F4F5F2", opacity: 0.86),
-            line: ColorToken(hex: "#0E1012", opacity: 0.10),
-            lineStrong: ColorToken(hex: "#9FE000", opacity: 0.34),
-            text: ColorToken(hex: "#0E1012", opacity: 1.0),
-            textSoft: ColorToken(hex: "#0E1012", opacity: 0.68),
-            textMuted: ColorToken(hex: "#0E1012", opacity: 0.52),
-            primary: ColorToken(hex: "#C8FF2E", opacity: 1.0),
-            primaryDeep: ColorToken(hex: "#9FE000", opacity: 1.0),
-            danger: ColorToken(hex: "#E68484", opacity: 1.0),
-            warning: ColorToken(hex: "#D8B46A", opacity: 1.0),
-            electricBlue: ColorToken(hex: "#0E1012", opacity: 1.0),
-            glass: ColorToken(hex: "#FFFFFF", opacity: 0.82),
-            glassStrong: ColorToken(hex: "#FFFFFF", opacity: 0.94)
-        ),
-        radius: Radius(sm: 8, md: 18, lg: 24, xl: 28, card: 30, screen: 42, pill: 999),
-        shadows: Shadows(
-            soft: ShadowToken(color: "#0E1012", opacity: 0.08, radius: 24, x: 0, y: 14),
-            glow: ShadowToken(color: "#C8FF2E", opacity: 0.22, radius: 22, x: 0, y: 12),
-            card: ShadowToken(color: "#0E1012", opacity: 0.12, radius: 24, x: 0, y: 16)
-        ),
-        fonts: Fonts(display: "Space Grotesk", body: "Inter", iosDisplayDesign: "rounded")
-    )
 }
 
 private extension SBDesignTokens.ColorToken {

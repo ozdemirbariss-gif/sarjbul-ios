@@ -4,16 +4,44 @@ import SwiftUI
 struct StationFeedView: View {
     @Environment(AppState.self) private var appState
     @State private var filterSheetPresented = false
+    @State private var mode: FeedMode = .cards
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             SBScreenBackground()
             content
 
-            SBBackButton(accessibilityLabel: appState.t("nav.back")) {
-                appState.tab = .home
+            HStack(spacing: 10) {
+                SBBackButton(accessibilityLabel: appState.t("nav.back")) {
+                    appState.tab = .home
+                }
+
+                Spacer()
+
+                if !appState.routeCandidates.isEmpty {
+                    Picker(appState.t("feed.view_mode"), selection: $mode) {
+                        Label(appState.t("feed.cards"), systemImage: "rectangle.stack").tag(FeedMode.cards)
+                        Label(appState.t("feed.map"), systemImage: "map").tag(FeedMode.map)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 210)
+
+                    Button {
+                        Haptic.tap()
+                        filterSheetPresented = true
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .font(.headline.weight(.heavy))
+                            .foregroundStyle(SBColor.ink)
+                            .frame(width: 52, height: 52)
+                            .sbPremiumGlass(radius: 26, interactive: true)
+                    }
+                    .buttonStyle(SBPremiumButtonStyle())
+                    .accessibilityLabel(appState.t("feed.filters"))
+                }
             }
-            .padding(.leading, 18)
+            .padding(.horizontal, 18)
             .padding(.top, 6)
         }
         .sheet(isPresented: $filterSheetPresented) {
@@ -61,23 +89,32 @@ struct StationFeedView: View {
                     message: appState.t("route.empty_hint")
                 )
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 24) {
-                        Color.clear.frame(height: 84)
-                        ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                            StationCard(candidate: candidate, rank: index + 1, total: candidates.count)
-                                .containerRelativeFrame(.vertical, count: 1, spacing: 22)
-                                .scrollTransition { content, phase in
-                                    content
-                                        .opacity(phase.isIdentity ? 1 : 0.72)
-                                        .scaleEffect(phase.isIdentity ? 1 : 0.92)
+                let shouldReduceMotion = reduceMotion
+                Group {
+                    if mode == .cards {
+                        ScrollView {
+                            LazyVStack(spacing: 24) {
+                                Color.clear.frame(height: 84)
+                                ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
+                                    StationCard(candidate: candidate, rank: index + 1, total: candidates.count)
+                                        .frame(maxWidth: 680)
+                                        .containerRelativeFrame(.vertical, count: 1, spacing: 22)
+                                        .scrollTransition { content, phase in
+                                            content
+                                                .opacity(shouldReduceMotion || phase.isIdentity ? 1 : 0.72)
+                                                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.92)
+                                        }
                                 }
+                            }
+                            .scrollTargetLayout()
+                            .padding(.horizontal, 18)
                         }
+                        .scrollTargetBehavior(.viewAligned)
+                    } else {
+                        StationOverviewMap(candidates: candidates)
+                            .padding(.top, 82)
                     }
-                    .scrollTargetLayout()
-                    .padding(.horizontal, 18)
                 }
-                .scrollTargetBehavior(.viewAligned)
             }
         }
     }
@@ -106,6 +143,11 @@ struct StationFeedView: View {
             Spacer()
         }
     }
+}
+
+private enum FeedMode: Hashable {
+    case cards
+    case map
 }
 
 private struct StationFilterSheet: View {

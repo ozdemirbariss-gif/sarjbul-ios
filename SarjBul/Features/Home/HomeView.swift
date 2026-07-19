@@ -11,6 +11,8 @@ struct HomeView: View {
     @State private var didRequestDeviceLocation = false
     @State private var locationRequestTimedOut = false
     @State private var settingsExpanded = false
+    @State private var placeSearchMode: PlaceSearchMode?
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         NavigationStack {
@@ -20,12 +22,15 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
                         topControls
+                        journeyInputs
                         drivingProfile
                         filtersAndSettings
                         routeAction
                     }
                     .padding(.horizontal, 22)
                     .padding(.top, 28)
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
                 }
                 .scrollIndicators(.hidden)
                 .sensoryFeedback(.selection, trigger: appState.filters.preference)
@@ -38,11 +43,28 @@ struct HomeView: View {
             }
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
+                guard !isDeterministicUITest else { return }
                 appState.updateLocation(latitude: location.latitude, longitude: location.longitude, source: .device)
             }
             .onAppear {
+                guard !isDeterministicUITest else { return }
                 guard !didRequestDeviceLocation, appState.userLocation == nil else { return }
                 requestDeviceLocation()
+            }
+            .sheet(item: $placeSearchMode) { mode in
+                PlaceSearchSheet(mode: mode) { place in
+                    switch mode {
+                    case .origin:
+                        appState.updateLocation(
+                            latitude: place.latitude,
+                            longitude: place.longitude,
+                            source: .manual
+                        )
+                    case .destination:
+                        appState.destination = place
+                    }
+                }
+                .environment(appState)
             }
         }
     }
@@ -53,7 +75,7 @@ struct HomeView: View {
             preferenceButton(.fastest, icon: "bolt.fill")
             preferenceButton(.economical, icon: "fuelpump")
         }
-        .padding(.leading, 34)
+        .padding(.leading, 94)
         .padding(.top, 10)
     }
 
@@ -74,6 +96,91 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(QuickActionStyle(active: appState.filters.preference == preference))
+    }
+
+    private var journeyInputs: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                originJourneyButton
+                destinationJourneyButton
+            }
+
+            VStack(spacing: 10) {
+                originJourneyButton
+                destinationJourneyButton
+            }
+        }
+        .padding(.leading, 34)
+    }
+
+    private var originJourneyButton: some View {
+        journeyButton(
+                title: appState.userLocation?.source == .device
+                    ? appState.t("place.my_location")
+                    : appState.t("place.choose_origin"),
+                subtitle: appState.userLocation == nil ? appState.t("place.not_selected") : locationLabel,
+                icon: "location.fill"
+            ) {
+                placeSearchMode = .origin
+            }
+    }
+
+    private var destinationJourneyButton: some View {
+        journeyButton(
+                title: appState.destination?.name ?? appState.t("place.choose_destination"),
+                subtitle: appState.destination?.address.isEmpty == false
+                    ? appState.destination?.address ?? ""
+                    : appState.t("place.optional"),
+                icon: "flag.checkered"
+            ) {
+                placeSearchMode = .destination
+            }
+            .contextMenu {
+                if appState.destination != nil {
+                    Button(role: .destructive) {
+                        appState.destination = nil
+                    } label: {
+                        Label(appState.t("place.clear_destination"), systemImage: "xmark")
+                    }
+                }
+            }
+    }
+
+    private func journeyButton(
+        title: String,
+        subtitle: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            Haptic.tap()
+            action()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(SBColor.accent)
+                    .frame(width: 38, height: 38)
+                    .background(SBColor.electricBlue)
+                    .clipShape(Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(SBColor.ink)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(SBColor.muted)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity)
+            .frame(height: 68)
+            .sbPremiumGlass(radius: SBRadius.lg, interactive: true)
+        }
+        .buttonStyle(SBPremiumButtonStyle())
     }
 
     @ViewBuilder
@@ -105,6 +212,16 @@ struct HomeView: View {
 
                     if manualLocationEntryVisible {
                         manualLocationForm
+                        if locationManager.authorizationStatus == .denied {
+                            Button {
+                                guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+                                openURL(settingsURL)
+                            } label: {
+                                Label(appState.t("home.open_settings"), systemImage: "gear")
+                                    .font(.subheadline.weight(.bold))
+                            }
+                            .buttonStyle(.bordered)
+                        }
                     } else {
                         Text(locationWaitingText)
                             .font(.footnote.weight(.semibold))
@@ -258,6 +375,7 @@ struct HomeView: View {
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
+            .accessibilityIdentifier("find-stations-button")
             .disabled(!appState.canSearch)
             .opacity(appState.canSearch ? 1 : 0.62)
         }
@@ -325,6 +443,15 @@ struct HomeView: View {
                 locationRequestTimedOut = true
             }
         }
+    }
+
+    private var isDeterministicUITest: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--ui-testing-home")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
+        #else
+        false
+        #endif
     }
 
     private var manualLocationForm: some View {

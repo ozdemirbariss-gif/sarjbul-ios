@@ -2,16 +2,24 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppState.self) private var appState
+    @Environment(NetworkMonitor.self) private var networkMonitor
     @State private var bottomNavigationExpanded = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack(alignment: .bottom) {
             currentScreen
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    if !networkMonitor.isConnected {
+                        offlineBanner
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
                 .safeAreaInset(edge: .bottom) {
                     Color.clear.frame(height: bottomInsetHeight)
                 }
 
-            if appState.tab != .account {
+            if showsBottomNavigation {
                 bottomNavigation
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -24,6 +32,10 @@ struct RootView: View {
             guard tab != .account else { return }
             bottomNavigationExpanded = false
         }
+        .onOpenURL { url in
+            Task { await appState.handleDeepLink(url) }
+        }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.24), value: networkMonitor.isConnected)
         .alert(appState.messageTitle, isPresented: Binding(
             get: { appState.message != nil },
             set: { if !$0 { appState.dismissMessage() } }
@@ -39,9 +51,23 @@ struct RootView: View {
         }
     }
 
+    private var offlineBanner: some View {
+        Label(appState.t("network.offline"), systemImage: "wifi.slash")
+            .font(.caption.weight(.heavy))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 34)
+            .background(SBColor.electricBlue)
+            .accessibilityAddTraits(.isStaticText)
+    }
+
     private var bottomInsetHeight: CGFloat {
-        guard appState.tab != .account else { return 0 }
-        return bottomNavigationExpanded ? 118 : 76
+        guard showsBottomNavigation else { return 0 }
+        return bottomNavigationExpanded ? 118 : 28
+    }
+
+    private var showsBottomNavigation: Bool {
+        appState.tab == .home || appState.tab == .lounge
     }
 
     @ViewBuilder
@@ -86,29 +112,26 @@ struct RootView: View {
     private var collapsedBottomNavigation: some View {
         Button {
             Haptic.tap()
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+            if reduceMotion {
                 bottomNavigationExpanded = true
+            } else {
+                withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+                    bottomNavigationExpanded = true
+                }
             }
         } label: {
-            HStack(spacing: 10) {
-                Image(systemName: currentTabIcon)
-                    .font(.headline.weight(.heavy))
-                    .symbolEffect(.bounce, value: currentTabIcon)
-                Text(currentTabTitle)
-                    .font(.subheadline.weight(.heavy))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.76)
-                Image(systemName: "chevron.up")
-                    .font(.caption.weight(.heavy))
-                    .foregroundStyle(SBColor.muted)
-            }
+            Image(systemName: "square.grid.2x2.fill")
+                .font(.headline.weight(.heavy))
+                .symbolEffect(.bounce, value: appState.tab)
             .foregroundStyle(SBColor.ink)
-            .padding(.horizontal, 18)
-            .frame(height: 54)
+            .frame(width: 54, height: 54)
             .sbPremiumGlass(radius: 27, interactive: true)
             .shadow(color: SBColor.electricBlue.opacity(0.14), radius: 18, x: 0, y: 10)
         }
         .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityLabel(appState.t("navigation.open"))
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.trailing, 18)
         .padding(.bottom, 14)
     }
 
@@ -116,9 +139,14 @@ struct RootView: View {
         let isSelected = appState.tab == tab
         return Button {
             Haptic.tap()
-            withAnimation(.spring(response: 0.36, dampingFraction: 0.82)) {
+            if reduceMotion {
                 appState.tab = tab
                 bottomNavigationExpanded = false
+            } else {
+                withAnimation(.spring(response: 0.36, dampingFraction: 0.82)) {
+                    appState.tab = tab
+                    bottomNavigationExpanded = false
+                }
             }
         } label: {
             VStack(spacing: 5) {
@@ -143,14 +171,6 @@ struct RootView: View {
             )
         }
         .buttonStyle(SBPremiumButtonStyle())
-    }
-
-    private var currentTabTitle: String {
-        tabTitle(appState.tab)
-    }
-
-    private var currentTabIcon: String {
-        tabIcon(appState.tab)
     }
 
     private func tabTitle(_ tab: AppState.Tab) -> String {
