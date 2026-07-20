@@ -1,0 +1,1695 @@
+{
+  "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
+  "generated_at": "2026-07-19T21:01:27+00:00",
+  "license_count": 183,
+  "licenses": [
+    {
+      "brands": [
+        "RSŞARJ"
+      ],
+      "holder": "2M ELEKTRİKLİ ARAÇ ŞARJ AĞI VE İSTASYON İŞLETMECİLİĞİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12007-1/00135",
+      "valid_from": "2023-08-10T00:00:00Z",
+      "valid_until": "2072-08-10T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ŞARJEN"
+      ],
+      "holder": "3 SM ŞARJ İSTASYONLARI SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12533/00191",
+      "valid_from": "2024-03-28T00:00:00Z",
+      "valid_until": "2073-03-28T00:00:00Z"
+    },
+    {
+      "brands": [
+        "360° ENERJİ"
+      ],
+      "holder": "360 ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11365/00055",
+      "valid_from": "2022-11-03T00:00:00Z",
+      "valid_until": "2071-11-03T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MYPOWER"
+      ],
+      "holder": "AKDEN GEMİ İŞLETMECİLİĞİ VE DENİZCİLİK TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12326-1/00174",
+      "valid_from": "2024-01-04T00:00:00Z",
+      "valid_until": "2073-01-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Akköprülü",
+        "Greendrive"
+      ],
+      "holder": "AKKÖPRÜLÜ OTOMOTİV İNŞAAT SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12126-3/00143",
+      "valid_from": "2023-10-12T00:00:00Z",
+      "valid_until": "2072-10-12T00:00:00Z"
+    },
+    {
+      "brands": [
+        "akmcharge"
+      ],
+      "holder": "AKMERCAN ELEKTRİK DOĞAL GAZ YATIRIMLARI ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12825-1/00198",
+      "valid_from": "2024-08-22T00:00:00Z",
+      "valid_until": "2073-08-22T00:00:00Z"
+    },
+    {
+      "brands": [
+        "AKSA ŞARJ"
+      ],
+      "holder": "AKSA MÜŞTERİ ÇÖZÜMLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11124-5/00030",
+      "valid_from": "2022-08-18T00:00:00Z",
+      "valid_until": "2071-08-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ADZE"
+      ],
+      "holder": "ALFAMET ENERJİ VE ŞARJ TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11615-1/00096",
+      "valid_from": "2023-02-02T00:00:00Z",
+      "valid_until": "2072-02-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Petroo",
+        "VOLTUP"
+      ],
+      "holder": "ANTTECH BİLİŞİM VE AKARYAKIT ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11206-1/00037",
+      "valid_from": "2022-09-15T00:00:00Z",
+      "valid_until": "2071-09-15T00:00:00Z"
+    },
+    {
+      "brands": [
+        "AARCONA",
+        "Arcona Consultancy"
+      ],
+      "holder": "ARCONA TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11392-1/00058",
+      "valid_from": "2022-11-17T00:00:00Z",
+      "valid_until": "2071-11-17T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ARSİMA"
+      ],
+      "holder": "ARSİMA YENİLENEBİLİR ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11577-1/00086",
+      "valid_from": "2023-01-19T00:00:00Z",
+      "valid_until": "2072-01-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ART-IN SYSTEMS",
+        "XŞARJ"
+      ],
+      "holder": "ART IN SYSTEMS BİLİŞİM TEKNOLOJİLERİ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11719-1/00120",
+      "valid_from": "2023-03-16T00:00:00Z",
+      "valid_until": "2072-03-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "efish"
+      ],
+      "holder": "ARTAŞ ENERJİ YATIRIMLARI SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11554-2/00083",
+      "valid_from": "2023-01-12T00:00:00Z",
+      "valid_until": "2072-01-12T00:00:00Z"
+    },
+    {
+      "brands": [
+        "KRNENERJİ ŞARJ İSTASYONLARI"
+      ],
+      "holder": "ARTI KURUMSAL KART VE PETROL HİZMETLERİ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12675-1/00196",
+      "valid_from": "2024-06-06T00:00:00Z",
+      "valid_until": "2073-06-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "önizşarj"
+      ],
+      "holder": "ASM DEKORASYON MOBİLYA  GRANİT MERMER İNŞAAT SANAYİ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11630-1/00102",
+      "valid_from": "2023-02-09T00:00:00Z",
+      "valid_until": "2072-02-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ASPLUS"
+      ],
+      "holder": "ASPLUS ŞARJ İSTASYONLARI İŞLETMELERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12273-1/00160",
+      "valid_from": "2023-12-21T00:00:00Z",
+      "valid_until": "2072-12-21T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ASTOR"
+      ],
+      "holder": "ASTOR ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11032-3/00013",
+      "valid_from": "2022-06-23T00:00:00Z",
+      "valid_until": "2071-06-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "astorşarj"
+      ],
+      "holder": "ASTOR ŞARJ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14712/00225",
+      "valid_from": "2026-07-02T00:00:00Z",
+      "valid_until": "2075-07-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ECOBOX"
+      ],
+      "holder": "ATAY GÜÇ VE ENERJİ SİSTEMLERİ İMALAT SANAYİ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11448-1/00069",
+      "valid_from": "2022-12-15T00:00:00Z",
+      "valid_until": "2071-12-15T00:00:00Z"
+    },
+    {
+      "brands": [
+        "AUTOVOLT"
+      ],
+      "holder": "AUTOVOLT ENERJİ TEKNOLOJİ SİSTEMLERİ İTHALAT İHRACAT SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/13001/00200",
+      "valid_from": "2024-11-14T00:00:00Z",
+      "valid_until": "2073-11-14T00:00:00Z"
+    },
+    {
+      "brands": [
+        "AVRUPA ŞARJ",
+        "GLADSOME"
+      ],
+      "holder": "AVEL ENERJİ ÜRETİM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12342-2/00182",
+      "valid_from": "2024-01-11T00:00:00Z",
+      "valid_until": "2073-01-11T00:00:00Z"
+    },
+    {
+      "brands": [
+        "otoWATT"
+      ],
+      "holder": "AYDEM PLUS ENERJİ ÇÖZÜMLERİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11554-3/00084",
+      "valid_from": "2023-01-12T00:00:00Z",
+      "valid_until": "2072-01-12T00:00:00Z"
+    },
+    {
+      "brands": [
+        "AOSTECHNOLOGY"
+      ],
+      "holder": "AYHAN TEKNOLOJİ VE OTOMASYON ÇÖZÜMLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11590-2/00091",
+      "valid_from": "2023-01-26T00:00:00Z",
+      "valid_until": "2072-01-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "AKTİF ŞARJ"
+      ],
+      "holder": "BAŞARI GLOBAL SAVUNMA SANAYİ TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12496-1/00188",
+      "valid_from": "2024-03-14T00:00:00Z",
+      "valid_until": "2073-03-14T00:00:00Z"
+    },
+    {
+      "brands": [
+        "B-FORCE",
+        "BAŞER ENERJİ"
+      ],
+      "holder": "BAŞER OTOMOTİV PETROL İNŞAAT KİRALAMA ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12298-1/00165",
+      "valid_from": "2023-12-28T00:00:00Z",
+      "valid_until": "2072-12-28T00:00:00Z"
+    },
+    {
+      "brands": [
+        "beefull"
+      ],
+      "holder": "BEEFULL ENERJİ TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11124-1/00026",
+      "valid_from": "2022-08-18T00:00:00Z",
+      "valid_until": "2071-08-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ODEON ŞARJ"
+      ],
+      "holder": "BEPET PETROL ÜRÜNLERİ TURİZM TAŞIMACILIK MÜHENDİSLİK HİZMETLERİ İNŞAAT TAAHHÜT YAPI MALZEMELERİ GIDA TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/13622-2/00213",
+      "valid_from": "2025-07-10T00:00:00Z",
+      "valid_until": "2074-07-10T00:00:00Z"
+    },
+    {
+      "brands": [
+        "fixcharge"
+      ],
+      "holder": "BEYTTÜRK ENERJİ ÜRETİM VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12023/00137",
+      "valid_from": "2023-08-17T00:00:00Z",
+      "valid_until": "2072-08-17T00:00:00Z"
+    },
+    {
+      "brands": [
+        "BLADECO"
+      ],
+      "holder": "BLADECO ALÜMİNYUM SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11474-1/00072",
+      "valid_from": "2022-12-22T00:00:00Z",
+      "valid_until": "2071-12-22T00:00:00Z"
+    },
+    {
+      "brands": [
+        "5 şarj",
+        "Borenco"
+      ],
+      "holder": "BORENCO ŞARJ TEKNOLOJİ YATIRIMLARI TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11504-1/00074",
+      "valid_from": "2022-12-29T00:00:00Z",
+      "valid_until": "2071-12-29T00:00:00Z"
+    },
+    {
+      "brands": [
+        "windmark"
+      ],
+      "holder": "BSX ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14040-1/00217",
+      "valid_from": "2025-12-18T00:00:00Z",
+      "valid_until": "2074-12-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "BÖLGEM mobilite",
+        "bölgem plus mühendislik"
+      ],
+      "holder": "BÖLGEM MÜHENDİSLİK İNŞAAT ELEKTRİK MAKİNE SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11474-2/00073",
+      "valid_from": "2022-12-22T00:00:00Z",
+      "valid_until": "2071-12-22T00:00:00Z"
+    },
+    {
+      "brands": [
+        "B-CHARGE"
+      ],
+      "holder": "CHARGE LABORATORY MOBİLİTY TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11392-2/00059",
+      "valid_from": "2022-11-17T00:00:00Z",
+      "valid_until": "2071-11-17T00:00:00Z"
+    },
+    {
+      "brands": [
+        "QC QUIKŞARJ"
+      ],
+      "holder": "CHARGE MAHAL ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13092-1/00203",
+      "valid_from": "2024-12-19T00:00:00Z",
+      "valid_until": "2073-12-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Electrise"
+      ],
+      "holder": "CHARGE TEKNOLOJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11938/00131",
+      "valid_from": "2023-07-06T00:00:00Z",
+      "valid_until": "2072-07-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "CheckPoint"
+      ],
+      "holder": "CHECKPOİNT ŞARJ İSTASYONLARI İŞLETMECİLİĞİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12126-2/00144",
+      "valid_from": "2023-10-12T00:00:00Z",
+      "valid_until": "2072-10-12T00:00:00Z"
+    },
+    {
+      "brands": [
+        "CNS Solar ŞARJ"
+      ],
+      "holder": "CNS SOLAR TAAHHÜT ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14183-2/00220",
+      "valid_from": "2025-12-30T00:00:00Z",
+      "valid_until": "2074-12-30T00:00:00Z"
+    },
+    {
+      "brands": [
+        "CTG ELEKTRİK ANONİM ŞİRKETİ"
+      ],
+      "holder": "CTG ELEKTRİK ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12723-1/00197",
+      "valid_from": "2024-07-04T00:00:00Z",
+      "valid_until": "2073-07-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "CHARGING VEHICLES CV",
+        "CV ENERJİ"
+      ],
+      "holder": "CW ENERJİ MÜHENDİSLİK TİCARET VE SANAYİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11009-1/00009",
+      "valid_from": "2022-06-09T00:00:00Z",
+      "valid_until": "2071-06-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "DESA ENERJİ",
+        "varr TM"
+      ],
+      "holder": "DESA ENERJİ ELEKTRİK ÜRETİM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12273-2/00161",
+      "valid_from": "2023-12-21T00:00:00Z",
+      "valid_until": "2072-12-21T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Otopriz"
+      ],
+      "holder": "DİCLE KÖK ENERJİ YATIRIM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11615-2/00097",
+      "valid_from": "2023-02-02T00:00:00Z",
+      "valid_until": "2072-02-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "dgdoğuşgıda"
+      ],
+      "holder": "DOĞUŞ DİJİTAL ENERJİ LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11653-1/00106",
+      "valid_from": "2023-02-16T00:00:00Z",
+      "valid_until": "2072-02-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "D-Charge"
+      ],
+      "holder": "DOĞUŞ ŞARJ SİSTEMLERİ PAZARLAMA VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12126-1/00145",
+      "valid_from": "2023-10-12T00:00:00Z",
+      "valid_until": "2072-10-12T00:00:00Z"
+    },
+    {
+      "brands": [
+        "SWAPP"
+      ],
+      "holder": "DUMANOĞLU ENERJİ YATIRIM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11099-1/00019",
+      "valid_from": "2022-08-04T00:00:00Z",
+      "valid_until": "2071-08-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ACONE CONSTRUCTION EQUIPMENT"
+      ],
+      "holder": "EGE ŞARJ ENERJİ VE İHRACAT İTHALAT SANAYİ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/14214/00221",
+      "valid_from": "2025-12-30T00:00:00Z",
+      "valid_until": "2074-12-30T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EKA ENERJİ"
+      ],
+      "holder": "EKA ENERJİ VE TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13514/00211",
+      "valid_from": "2025-05-15T00:00:00Z",
+      "valid_until": "2074-05-15T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EKOS"
+      ],
+      "holder": "EKOS MOBİLİTE ÇÖZÜMLERİ TEKNOLOJİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11686-1/00114",
+      "valid_from": "2023-03-02T00:00:00Z",
+      "valid_until": "2072-03-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Elaris Elektrikli Araç Şarj Hizmetleri"
+      ],
+      "holder": "ELARİS ENERJİ YATIRIMLARI ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11116-2/00025",
+      "valid_from": "2022-08-11T00:00:00Z",
+      "valid_until": "2071-08-11T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EKA -EMLAK KONUT ASANSÖR SİSTEMLERİ SAN. VE TİC. A.Ş.- EMLAK KONUT GYO A.Ş. KURULUŞUDUR"
+      ],
+      "holder": "EMLAK KONUT ASANSÖR SİSTEMLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13210/00208",
+      "valid_from": "2025-01-16T00:00:00Z",
+      "valid_until": "2074-01-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EN YAKIT"
+      ],
+      "holder": "EN YAKIT ANONİM ŞİRKETİ",
+      "license_number": "ŞH/10985-2/00001",
+      "valid_from": "2022-05-26T00:00:00Z",
+      "valid_until": "2071-05-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "biogreen"
+      ],
+      "holder": "ENAY ENERJİ GIDA ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12613/00194",
+      "valid_from": "2024-05-09T00:00:00Z",
+      "valid_until": "2073-05-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "energy enerjik"
+      ],
+      "holder": "ENERGY ŞARJ İSTASYON İŞLETMECİLİĞİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11653-2/00107",
+      "valid_from": "2023-02-16T00:00:00Z",
+      "valid_until": "2072-02-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "TÜRKŞARJ"
+      ],
+      "holder": "ENERJİTURK ENERJİ YATIRIM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11672-1/00111",
+      "valid_from": "2023-02-23T00:00:00Z",
+      "valid_until": "2072-02-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "CLIXOLAR"
+      ],
+      "holder": "ENH ŞARJ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11333-2/00054",
+      "valid_from": "2022-10-27T00:00:00Z",
+      "valid_until": "2071-10-27T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GEL DOL"
+      ],
+      "holder": "ER ELEKTRONİK SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11893/00130",
+      "valid_from": "2023-06-08T00:00:00Z",
+      "valid_until": "2072-06-08T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ERC SİSTEM"
+      ],
+      "holder": "ERC SİSTEM ELEKTRİK MAKİNA İMALAT TAAHHÜT SANAYİ  VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11277-3/00046",
+      "valid_from": "2022-10-06T00:00:00Z",
+      "valid_until": "2071-10-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "eee Eskişehir Endüstriyel Enerji Elektrik Üretim A.Ş."
+      ],
+      "holder": "ESKİŞEHİR ENDÜSTRİYEL ENERJİ ELEKTRİK ÜRETİM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11448-2/00070",
+      "valid_from": "2022-12-15T00:00:00Z",
+      "valid_until": "2071-12-15T00:00:00Z"
+    },
+    {
+      "brands": [
+        "evbee"
+      ],
+      "holder": "EVBEE ELEKTRİKLİ ARAÇ VE ŞARJ SİSTEMLERİ ENERJİ MÜHENDİSLİK ARGE SANAYİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12464-1/00186",
+      "valid_from": "2024-02-29T00:00:00Z",
+      "valid_until": "2073-02-28T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EVC CHARGE"
+      ],
+      "holder": "EVCİL YATIRIM MÜHENDİSLİK MİMARLIK LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11206-3/00038",
+      "valid_from": "2022-09-15T00:00:00Z",
+      "valid_until": "2071-09-15T00:00:00Z"
+    },
+    {
+      "brands": [
+        "SHARZ.NET"
+      ],
+      "holder": "EVS ELEKTRİKLİ ŞARJ SİSTEMLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11009-2/00010",
+      "valid_from": "2022-06-09T00:00:00Z",
+      "valid_until": "2071-06-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "eşarj"
+      ],
+      "holder": "EŞARJ ELEKTRİKLİ ARAÇLAR ŞARJ SİSTEMLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11032-4/00014",
+      "valid_from": "2022-06-23T00:00:00Z",
+      "valid_until": "2071-06-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "fastin energy"
+      ],
+      "holder": "FASTİN ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14371/00223",
+      "valid_from": "2026-03-05T00:00:00Z",
+      "valid_until": "2075-03-05T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ECOCONNECT"
+      ],
+      "holder": "FCTR ELEKTRİKLİ ARAÇLAR ENERJİ TEKNOLOJİLERİ VE HİZMETLERİ A.Ş",
+      "license_number": "ŞH/10985-3/00002",
+      "valid_from": "2022-05-26T00:00:00Z",
+      "valid_until": "2071-05-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ROYAL"
+      ],
+      "holder": "FEDERAL ELEKTRİK YATIRIM VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12326-2/00171",
+      "valid_from": "2024-01-04T00:00:00Z",
+      "valid_until": "2073-01-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "onLIFE"
+      ],
+      "holder": "FİLOPORT ARAÇ KİRALAMA VE SERVİS ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11615-3/00098",
+      "valid_from": "2023-02-02T00:00:00Z",
+      "valid_until": "2072-02-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Cavalier"
+      ],
+      "holder": "FOKS ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11864/00128",
+      "valid_from": "2023-05-25T00:00:00Z",
+      "valid_until": "2072-05-25T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EPSIS"
+      ],
+      "holder": "FORM ELEKTRİK İNŞAAT MÜHENDİSLİK ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11301-2/00049",
+      "valid_from": "2022-10-20T00:00:00Z",
+      "valid_until": "2071-10-20T00:00:00Z"
+    },
+    {
+      "brands": [
+        "FORTIS ENERJİ"
+      ],
+      "holder": "FORTİS ENERJİ ELEKTRİK ÜRETİM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11590-4/00093",
+      "valid_from": "2023-01-26T00:00:00Z",
+      "valid_until": "2072-01-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "fotec"
+      ],
+      "holder": "FOTEC ENERJİ TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11413-1/00064",
+      "valid_from": "2022-11-24T00:00:00Z",
+      "valid_until": "2071-11-24T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MULTI FORCE"
+      ],
+      "holder": "FULL ELEKTRİKLİ ARAÇLAR ŞARJ AĞI İSTASYONLARI İŞLETMECİLİĞİ ENERJİ TİCARET VE SANAYİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11255/00043",
+      "valid_from": "2022-09-29T00:00:00Z",
+      "valid_until": "2071-09-29T00:00:00Z"
+    },
+    {
+      "brands": [
+        "FZYENERGY"
+      ],
+      "holder": "FZY ENERJİ ŞARJ SİSTEMLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11392-3/00060",
+      "valid_from": "2022-11-17T00:00:00Z",
+      "valid_until": "2071-11-17T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GERİLİM ENERJİ"
+      ],
+      "holder": "GERİLİM YENİLENEBİLİR ENERJİ VE TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13325-1/00210",
+      "valid_from": "2025-02-27T00:00:00Z",
+      "valid_until": "2074-02-27T00:00:00Z"
+    },
+    {
+      "brands": [
+        "E365",
+        "G-Charge",
+        "G-Şarj"
+      ],
+      "holder": "GERSAN ŞARJ SİSTEMLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11392-4/00061",
+      "valid_from": "2022-11-17T00:00:00Z",
+      "valid_until": "2071-11-17T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GezCar"
+      ],
+      "holder": "GEZCAR TURİZM OTOMOTİV SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12273-3/00163",
+      "valid_from": "2023-12-21T00:00:00Z",
+      "valid_until": "2072-12-21T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GIOEV"
+      ],
+      "holder": "GİOEV ŞARJ İSTASYONLARI İŞLETMELERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11239-1/00040",
+      "valid_from": "2022-09-22T00:00:00Z",
+      "valid_until": "2071-09-22T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ENERGY CHARGING OPERATOR NETWORK ECON"
+      ],
+      "holder": "GLOBAL İNOVATİF ENERJİ TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11808-1/00125",
+      "valid_from": "2023-04-19T00:00:00Z",
+      "valid_until": "2072-04-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GREENWATT"
+      ],
+      "holder": "GREEN WATT ENERJİ ÜRETİM İNŞAAT SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11099-2/00020",
+      "valid_from": "2022-08-04T00:00:00Z",
+      "valid_until": "2071-08-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GREEN ŞARJ İSTASYONLARI"
+      ],
+      "holder": "GREEN ŞARJ İSTASYONLARI KURULUM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11615-4/00099",
+      "valid_from": "2023-02-02T00:00:00Z",
+      "valid_until": "2072-02-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ACROPOL"
+      ],
+      "holder": "GREENLEAF YENİLENEBİLİR ENERJİ SİSTEMLERİ SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12244-1/00155",
+      "valid_from": "2023-12-14T00:00:00Z",
+      "valid_until": "2072-12-14T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GSM CHARGE"
+      ],
+      "holder": "GS MAR ELEKTRİK VE ELEKTRONİK CİHAZLAR SANAYİ DIŞ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11615-5/00101",
+      "valid_from": "2023-02-02T00:00:00Z",
+      "valid_until": "2072-02-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GÜLAN"
+      ],
+      "holder": "GÜLAN OTOMOTİV SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14183-1/00219",
+      "valid_from": "2025-12-30T00:00:00Z",
+      "valid_until": "2074-12-30T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ekoşarj en ekonomik, en ekolojik şekil",
+        "HES GROUP"
+      ],
+      "holder": "HES GROUP ENERJİ İNŞAATVE SANAYİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12185-2/00146",
+      "valid_from": "2023-11-09T00:00:00Z",
+      "valid_until": "2072-11-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "K-ŞARJ"
+      ],
+      "holder": "HUNAT ENERJİ YATIRIM VE DANIŞMANLIK SANAYİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11780-1/00124",
+      "valid_from": "2023-04-06T00:00:00Z",
+      "valid_until": "2072-04-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "INTERDATA"
+      ],
+      "holder": "INTERDATA VERİ MERKEZİ VE ENTEGRASYON HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11392-5/00062",
+      "valid_from": "2022-11-17T00:00:00Z",
+      "valid_until": "2071-11-17T00:00:00Z"
+    },
+    {
+      "brands": [
+        "INTERENERGY electric charging unit şekil"
+      ],
+      "holder": "INTEREN ENERJİ ŞARJ HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14672/00224",
+      "valid_from": "2026-06-18T00:00:00Z",
+      "valid_until": "2075-06-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Incharge ELECTRIC VEHICLE CHARGING SYSTEMS"
+      ],
+      "holder": "İNCHARGE ELEKTRİKLİ ARAÇLAR HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11719-2/00121",
+      "valid_from": "2023-03-16T00:00:00Z",
+      "valid_until": "2072-03-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "i-şarj",
+        "İSPİRLİ"
+      ],
+      "holder": "İSPİRLİ ŞARJ HİZMETLERİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11541-2/00079",
+      "valid_from": "2023-01-05T00:00:00Z",
+      "valid_until": "2072-01-05T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ŞARJPARK PARK EDİN ŞARJ EDİN"
+      ],
+      "holder": "İSTANBUL ENERJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13092-2/00202",
+      "valid_from": "2024-12-19T00:00:00Z",
+      "valid_until": "2073-12-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ESTASYON"
+      ],
+      "holder": "İSTASYON ŞARJ HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11277-4/00047",
+      "valid_from": "2022-10-06T00:00:00Z",
+      "valid_until": "2071-10-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "HIZZLAN Charge N'Drive"
+      ],
+      "holder": "JETCO ELEKTRİK ELEKTRONİK YÜKSEK TEKNOLOJİ HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12512-2/00189",
+      "valid_from": "2024-03-21T00:00:00Z",
+      "valid_until": "2073-03-21T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Kalyon",
+        "oncharge"
+      ],
+      "holder": "KALYON ELECTRICAL VEHICLE ENERJİ YATIRIM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/10985-5/00003",
+      "valid_from": "2022-05-26T00:00:00Z",
+      "valid_until": "2071-05-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ŞS ŞARJSTOP Güvenli Şarj Noktası"
+      ],
+      "holder": "KARAKUŞLAR HALI TEKSTİL SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11206-2/00039",
+      "valid_from": "2022-09-15T00:00:00Z",
+      "valid_until": "2071-09-15T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ACROBAT"
+      ],
+      "holder": "KARKIN ENERJİ TİCARET VE SANAYİ LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12342-3/00183",
+      "valid_from": "2024-01-11T00:00:00Z",
+      "valid_until": "2073-01-11T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Karbon Nötr Konya",
+        "SPARKEV"
+      ],
+      "holder": "KKS KARBON SERTİFİKASYON VE MOBİLİTE HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11577-2/00087",
+      "valid_from": "2023-01-19T00:00:00Z",
+      "valid_until": "2072-01-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "KES"
+      ],
+      "holder": "KLR ENERJİ SİSTEMLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12220-1/00152",
+      "valid_from": "2023-11-30T00:00:00Z",
+      "valid_until": "2072-11-30T00:00:00Z"
+    },
+    {
+      "brands": [
+        "al alırmısın",
+        "ŞARJSTART"
+      ],
+      "holder": "KOÇASLANLAR AKARYAKIT ENERJİ PETROL ÜRÜNLERİ SANAYİ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12565-1/00192",
+      "valid_from": "2024-04-18T00:00:00Z",
+      "valid_until": "2073-04-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "KÖFTECİ YUSUF"
+      ],
+      "holder": "KÖFTECİ YUSUF HAZIR YEMEK TEMİZLİK CANLI HAYVAN ET MAMÜLLERİ ENTEGRE GIDA İTHALAT İHRACAT SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11630-3/00104",
+      "valid_from": "2023-02-09T00:00:00Z",
+      "valid_until": "2072-02-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "LUMHOUSE",
+        "LUMİCLE"
+      ],
+      "holder": "LUMHOUSE ENERJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11420-2/00067",
+      "valid_from": "2022-12-01T00:00:00Z",
+      "valid_until": "2071-12-01T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MAGIC LINE"
+      ],
+      "holder": "MAGİCLİNE ENERJİ SİSTEMLERİ SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11615-6/00100",
+      "valid_from": "2023-02-02T00:00:00Z",
+      "valid_until": "2072-02-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MAKSEM ELEKTRO",
+        "MKS-ŞARJ"
+      ],
+      "holder": "MAKSEM ELEKTRO ŞARJ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12007-2/00136",
+      "valid_from": "2023-08-10T00:00:00Z",
+      "valid_until": "2072-08-10T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MYCHARGE"
+      ],
+      "holder": "MANAS İPLİK SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11430/00068",
+      "valid_from": "2022-12-08T00:00:00Z",
+      "valid_until": "2071-12-08T00:00:00Z"
+    },
+    {
+      "brands": [
+        "3a"
+      ],
+      "holder": "MAS SINAİ VE TİCARİ YATIRIMLAR ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12194-1/00148",
+      "valid_from": "2023-11-16T00:00:00Z",
+      "valid_until": "2072-11-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MEHMETÇİK ENERJİ GRUBU"
+      ],
+      "holder": "MEHMETÇİK ENERJİ GRUBU ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12580-1/00193",
+      "valid_from": "2024-04-25T00:00:00Z",
+      "valid_until": "2073-04-25T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MEIS CHARGE"
+      ],
+      "holder": "MEİS CHARGE TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11686-2/00115",
+      "valid_from": "2023-03-02T00:00:00Z",
+      "valid_until": "2072-03-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MERCURY"
+      ],
+      "holder": "MERCURY ŞARJ HİZMETLERİ SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12273-5/00164",
+      "valid_from": "2023-12-21T00:00:00Z",
+      "valid_until": "2072-12-21T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Q Charge"
+      ],
+      "holder": "META MOBİLİTE ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11124-2/00027",
+      "valid_from": "2022-08-18T00:00:00Z",
+      "valid_until": "2076-08-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "powerpay by metropolcard"
+      ],
+      "holder": "METROPOL ŞARJ ENERJİ VE TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13923/00215",
+      "valid_from": "2025-11-06T00:00:00Z",
+      "valid_until": "2074-11-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MINUS ENERGY"
+      ],
+      "holder": "MINUS ENERGY ENERJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11719-3/00122",
+      "valid_from": "2023-03-16T00:00:00Z",
+      "valid_until": "2072-03-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EVERSTART",
+        "MİGGO"
+      ],
+      "holder": "MİGEN ENERJİ VE ELEKTRİKLİ ARAÇ ŞARJ HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11577-3/00088",
+      "valid_from": "2023-01-19T00:00:00Z",
+      "valid_until": "2072-01-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "TOGER"
+      ],
+      "holder": "MİONTİ ENERJİ VE TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11590-6/00095",
+      "valid_from": "2023-01-26T00:00:00Z",
+      "valid_until": "2072-01-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MITHRA POD"
+      ],
+      "holder": "MİTHRA POD ELEKTRİK VE ELEKTRONİK OTOMASYON SİSTEMLERİ İMALAT SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11133-1/00031",
+      "valid_from": "2022-08-25T00:00:00Z",
+      "valid_until": "2071-08-25T00:00:00Z"
+    },
+    {
+      "brands": [
+        "E-mod Mobil Şarj İstasyonu"
+      ],
+      "holder": "MOD MALKARLAR OTOMOTİV SANAYİ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11808-2/00126",
+      "valid_from": "2023-04-19T00:00:00Z",
+      "valid_until": "2082-04-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Monokon elektrik"
+      ],
+      "holder": "MONOKON ELEKTRİK SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11301-3/00050",
+      "valid_from": "2022-10-20T00:00:00Z",
+      "valid_until": "2071-10-20T00:00:00Z"
+    },
+    {
+      "brands": [
+        "sunlight"
+      ],
+      "holder": "MYWEST İNŞAAT TURİZM GIDA TARIM HAYVANCILIK REKLAM EĞİTİM TEKSTİL MEDİKAL SANAYİ VE TİCARET LTD.ŞTİ.",
+      "license_number": "ŞH/12326-3/00173",
+      "valid_from": "2024-01-04T00:00:00Z",
+      "valid_until": "2073-01-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "MYZCO"
+      ],
+      "holder": "MYZ BİLGİSAYAR OTOMOTİV İNŞAAT PETROL SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12229-1/00154",
+      "valid_from": "2023-12-07T00:00:00Z",
+      "valid_until": "2072-12-07T00:00:00Z"
+    },
+    {
+      "brands": [
+        "NEVA ŞARJ"
+      ],
+      "holder": "NEVA İÇ VE DIŞ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11059-1/00015",
+      "valid_from": "2022-07-06T00:00:00Z",
+      "valid_until": "2071-07-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Obişarj"
+      ],
+      "holder": "OBİŞARJ ELEKTRİKLİ ARAÇ ŞARJ SİSTEMLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12034/00138",
+      "valid_from": "2023-08-24T00:00:00Z",
+      "valid_until": "2072-08-24T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ORBİT ENERJİ HAB. TEK. SAN. VE TİC. A.Ş."
+      ],
+      "holder": "ORBİT ENERJİ HABERLEŞME TEKNOLOJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12342-4/00179",
+      "valid_from": "2024-01-11T00:00:00Z",
+      "valid_until": "2073-01-11T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Otojet",
+        "Otojet Güzel Enerji",
+        "Şarjet"
+      ],
+      "holder": "OTOJET ENERJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11009-5/00006",
+      "valid_from": "2022-06-09T00:00:00Z",
+      "valid_until": "2071-06-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "oğultürk PANO",
+        "TR CHARGE"
+      ],
+      "holder": "OTP OĞULTÜRK PANO İMALAT İTHALAT İHRACAT SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11653-4/00109",
+      "valid_from": "2023-02-16T00:00:00Z",
+      "valid_until": "2072-02-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ovolt",
+        "öztürk enerji"
+      ],
+      "holder": "OVOLT ŞARJ TEKNOLOJİLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12298-2/00168",
+      "valid_from": "2023-12-28T00:00:00Z",
+      "valid_until": "2072-12-28T00:00:00Z"
+    },
+    {
+      "brands": [
+        "e-POwer"
+      ],
+      "holder": "PETROL OFİSİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11068-2/00018",
+      "valid_from": "2022-07-21T00:00:00Z",
+      "valid_until": "2071-07-21T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Plug&drive"
+      ],
+      "holder": "PGD ENERJİ YATIRIMLARI SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12298-3/00169",
+      "valid_from": "2023-12-28T00:00:00Z",
+      "valid_until": "2072-12-28T00:00:00Z"
+    },
+    {
+      "brands": [
+        "PİRİM GIDA VE MEŞRUBAT SAN. ve TİC. LTD. ŞTİ."
+      ],
+      "holder": "PİRİM GIDA VE MEŞRUBAT SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11333-1/00053",
+      "valid_from": "2022-10-27T00:00:00Z",
+      "valid_until": "2071-10-27T00:00:00Z"
+    },
+    {
+      "brands": [
+        "pluginn"
+      ],
+      "holder": "PLUGİNN ELEKTRİKLİ TAŞITLAR ŞARJ SİSTEMLERİ VE YAZILIM HİZMETLERİ SANAYİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12244-2/00156",
+      "valid_from": "2023-12-14T00:00:00Z",
+      "valid_until": "2072-12-14T00:00:00Z"
+    },
+    {
+      "brands": [
+        "porty"
+      ],
+      "holder": "PORTY SMART TECH TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12326-5/00175",
+      "valid_from": "2024-01-04T00:00:00Z",
+      "valid_until": "2073-01-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "POWER ELEKTRONİK SANAYİ VE TİCARET LİMİTED ŞİRKETİ"
+      ],
+      "holder": "POWER ELEKTRONİK SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11672-2/00112",
+      "valid_from": "2023-02-23T00:00:00Z",
+      "valid_until": "2072-02-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "PROMASTER",
+        "TECH CARE"
+      ],
+      "holder": "PROMASTER ELEKTRONİK ELEKTRİK ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11504-3/00076",
+      "valid_from": "2022-12-29T00:00:00Z",
+      "valid_until": "2071-12-29T00:00:00Z"
+    },
+    {
+      "brands": [
+        "getacharge",
+        "GETASOLAR"
+      ],
+      "holder": "PROŞARJ ARAÇ ŞARJ SİSTEMLERİ ENERJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11301-4/00051",
+      "valid_from": "2022-10-20T00:00:00Z",
+      "valid_until": "2071-10-20T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ecomobil",
+        "TELLİGRUP"
+      ],
+      "holder": "QUICK ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12298-4/00170",
+      "valid_from": "2023-12-28T00:00:00Z",
+      "valid_until": "2072-12-28T00:00:00Z"
+    },
+    {
+      "brands": [
+        "PİLSTOP"
+      ],
+      "holder": "RDS GAYRİMENKUL DANIŞMANLIK ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11277-2/00045",
+      "valid_from": "2022-10-06T00:00:00Z",
+      "valid_until": "2071-10-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "enertürk rhg enerji"
+      ],
+      "holder": "RHG ENERTÜRK ENERJİ ÜRETİM VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/10985-4/00004",
+      "valid_from": "2022-05-26T00:00:00Z",
+      "valid_until": "2071-05-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Rst ChargePoint"
+      ],
+      "holder": "RST TEKNOLOJİ HİZMETLERİ VE ENERJİ SANAYİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11392-6/00063",
+      "valid_from": "2022-11-17T00:00:00Z",
+      "valid_until": "2071-11-17T00:00:00Z"
+    },
+    {
+      "brands": [
+        "RÖNESANS CHARGER"
+      ],
+      "holder": "RÖNESANS ŞARJ İSTASYON ENERJİ YATIRIMLARI ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11653-5/00110",
+      "valid_from": "2023-02-16T00:00:00Z",
+      "valid_until": "2072-02-16T00:00:00Z"
+    },
+    {
+      "brands": [
+        "WATTREISE",
+        "WATTREISE BATTERIE"
+      ],
+      "holder": "SANTA SOLAR ENERJİ LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12273-4/00162",
+      "valid_from": "2023-12-21T00:00:00Z",
+      "valid_until": "2072-12-21T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Qopuz Energy proton neutron"
+      ],
+      "holder": "SENA GÜNEŞ PANEL SANAYİ ENERJİ VE İNŞAAT ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13138-1/00205",
+      "valid_from": "2024-12-26T00:00:00Z",
+      "valid_until": "2073-12-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Sepaş Akıllı Çözümler Anonim Şirketi"
+      ],
+      "holder": "SEPAŞ AKILLI ÇÖZÜMLER ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13092-3/00204",
+      "valid_from": "2024-12-19T00:00:00Z",
+      "valid_until": "2073-12-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "SHELL"
+      ],
+      "holder": "SHELL & TURCAS PETROL ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11828/00127",
+      "valid_from": "2023-05-04T00:00:00Z",
+      "valid_until": "2072-05-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ag azra galvaniz",
+        "Sky World Solar Enerji"
+      ],
+      "holder": "SKY WORLD SOLAR ENERJİ ANONIM ŞİRKETİ",
+      "license_number": "ŞH/12342-5/00180",
+      "valid_from": "2024-01-11T00:00:00Z",
+      "valid_until": "2073-01-11T00:00:00Z"
+    },
+    {
+      "brands": [
+        "SOLARGIZE"
+      ],
+      "holder": "SMART SOLARGİZE YEŞİL MOBİLİTE ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11672-3/00113",
+      "valid_from": "2023-02-23T00:00:00Z",
+      "valid_until": "2072-02-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "solarşarj"
+      ],
+      "holder": "SOLAR ARAÇ ŞARJ HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11554-4/00085",
+      "valid_from": "2023-01-12T00:00:00Z",
+      "valid_until": "2072-01-12T00:00:00Z"
+    },
+    {
+      "brands": [
+        "solinved"
+      ],
+      "holder": "SOLİNVED GÜNEŞ VE BATARYA TEKNOLOJİLERİ \r\nANONİM ŞİRKETİ",
+      "license_number": "ŞH/13622-1/00212",
+      "valid_from": "2025-07-10T00:00:00Z",
+      "valid_until": "2074-07-10T00:00:00Z"
+    },
+    {
+      "brands": [
+        "spectrum girişimcilik"
+      ],
+      "holder": "SPECTRUM GİRİŞİMCİLİK YATIRIMCILIK YAZILIM DANIŞMANLIK ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12639-1/00195",
+      "valid_from": "2024-05-23T00:00:00Z",
+      "valid_until": "2073-05-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "carbonage"
+      ],
+      "holder": "SPUR ENERJİ YATIRIMLARI SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11181-2/00036",
+      "valid_from": "2022-09-08T00:00:00Z",
+      "valid_until": "2071-09-08T00:00:00Z"
+    },
+    {
+      "brands": [
+        "EVSolt"
+      ],
+      "holder": "STL SOLAR ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11116-1/00024",
+      "valid_from": "2022-08-11T00:00:00Z",
+      "valid_until": "2071-08-11T00:00:00Z"
+    },
+    {
+      "brands": [
+        "TAYRAN A.Ş.",
+        "ŞARJTAK"
+      ],
+      "holder": "TAYRAN GRUP İNŞAAT ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12326-4/00172",
+      "valid_from": "2024-01-04T00:00:00Z",
+      "valid_until": "2073-01-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "U-ŞARJ"
+      ],
+      "holder": "TCDD TEKNİK MÜHENDİSLİK VE MÜŞAVİRLİK ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12204-1/00150",
+      "valid_from": "2023-11-23T00:00:00Z",
+      "valid_until": "2072-11-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "gotedygo"
+      ],
+      "holder": "TEDY ENERJİ VE TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12048-1/00140",
+      "valid_from": "2023-08-29T00:00:00Z",
+      "valid_until": "2072-08-29T00:00:00Z"
+    },
+    {
+      "brands": [
+        "TAMŞARJ"
+      ],
+      "holder": "TEKNO METAL ÜRÜNLERİ İMALAT SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/13067-1/00201",
+      "valid_from": "2024-12-12T00:00:00Z",
+      "valid_until": "2073-12-12T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Teknus"
+      ],
+      "holder": "TEKNUS MÜHENDİSLİK SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14221/00222",
+      "valid_from": "2026-01-08T00:00:00Z",
+      "valid_until": "2075-01-08T00:00:00Z"
+    },
+    {
+      "brands": [
+        "TESLA"
+      ],
+      "holder": "TESLA MOTORLARI SATIŞ VE HİZMETLERİ LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11699-1/00117",
+      "valid_from": "2023-03-09T00:00:00Z",
+      "valid_until": "2043-03-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "TORA"
+      ],
+      "holder": "TORA TEKNİK HİZMETLER İŞLETME ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11124-4/00029",
+      "valid_from": "2022-08-18T00:00:00Z",
+      "valid_until": "2071-08-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Tripy",
+        "Waygo"
+      ],
+      "holder": "TRİPY MOBİLİTY TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11541-3/00080",
+      "valid_from": "2023-01-05T00:00:00Z",
+      "valid_until": "2072-01-05T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Trugo"
+      ],
+      "holder": "TRUGO AKILLI ŞARJ ÇÖZÜMLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11009-3/00007",
+      "valid_from": "2022-06-09T00:00:00Z",
+      "valid_until": "2071-06-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "E4 ŞARJ",
+        "The Giftad"
+      ],
+      "holder": "TT VENTURES PROJE GELİŞTİRME ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11504-4/00077",
+      "valid_from": "2022-12-29T00:00:00Z",
+      "valid_until": "2071-12-29T00:00:00Z"
+    },
+    {
+      "brands": [
+        "tunçmatik"
+      ],
+      "holder": "TUNÇMATİK ŞARJ TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11373-2/00057",
+      "valid_from": "2022-11-10T00:00:00Z",
+      "valid_until": "2071-11-10T00:00:00Z"
+    },
+    {
+      "brands": [
+        "turuncu mühendislik"
+      ],
+      "holder": "TURUNCU MÜHENDİSLİK ELEKTRİK TAAH.SAN.VE DIŞ TİC. LTD. ŞTİ.",
+      "license_number": "ŞH/11099-4/00022",
+      "valid_from": "2022-08-04T00:00:00Z",
+      "valid_until": "2071-08-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Güven verir. Değer katar.",
+        "TÜVTURK",
+        "TÜVTURK Araç Muayene"
+      ],
+      "holder": "TÜVTURK KUZEY TAŞIT MUAYENE İSTASYONLARI YAPIM VE İŞLETİM ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11699-3/00119",
+      "valid_from": "2023-03-09T00:00:00Z",
+      "valid_until": "2072-03-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "VALE"
+      ],
+      "holder": "ULTRAMETRİK ENERJİ BİLGİSAYAR İNŞAAT KUYUMCULUK GIDA SANAYİ VE DIŞ TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11630-4/00105",
+      "valid_from": "2023-02-09T00:00:00Z",
+      "valid_until": "2072-02-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ar armaksis ar verdepunto"
+      ],
+      "holder": "VERDEPUNTO ENERJİ SİSTEMLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11163-2/00034",
+      "valid_from": "2022-09-01T00:00:00Z",
+      "valid_until": "2071-09-01T00:00:00Z"
+    },
+    {
+      "brands": [
+        "vilampo",
+        "VİTALEN"
+      ],
+      "holder": "VİTALEN ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11277-1/00044",
+      "valid_from": "2022-10-06T00:00:00Z",
+      "valid_until": "2071-10-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "VİZYONEKS"
+      ],
+      "holder": "VİZYONEKS BİLGİ TEKNOLOJİLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11124-3/00028",
+      "valid_from": "2022-08-18T00:00:00Z",
+      "valid_until": "2071-08-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "volti"
+      ],
+      "holder": "VOLNET ENERJİ SİSTEMLERİ SANAYİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11504-2/00075",
+      "valid_from": "2022-12-29T00:00:00Z",
+      "valid_until": "2071-12-29T00:00:00Z"
+    },
+    {
+      "brands": [
+        "VOLTGO"
+      ],
+      "holder": "VOLTGO ŞARJ HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11541-4/00081",
+      "valid_from": "2023-01-05T00:00:00Z",
+      "valid_until": "2072-01-05T00:00:00Z"
+    },
+    {
+      "brands": [
+        "VOLTRUN"
+      ],
+      "holder": "VOLTRUN ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12048-2/00139",
+      "valid_from": "2023-08-29T00:00:00Z",
+      "valid_until": "2072-08-29T00:00:00Z"
+    },
+    {
+      "brands": [
+        "wat mobilite"
+      ],
+      "holder": "WAT MOBİLİTE ÇÖZÜMLERİ TEKNOLOJİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11032-2/00012",
+      "valid_from": "2022-06-23T00:00:00Z",
+      "valid_until": "2071-06-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Wattarya"
+      ],
+      "holder": "WATTARYA ENERJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13192-1/00207",
+      "valid_from": "2025-01-09T00:00:00Z",
+      "valid_until": "2074-01-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "POWERŞARJ",
+        "white rose"
+      ],
+      "holder": "WHITE ROSE MOTOR SANAYİ VE OTOMASYON TİCARET LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11099-5/00023",
+      "valid_from": "2022-08-04T00:00:00Z",
+      "valid_until": "2071-08-04T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Fast-Go"
+      ],
+      "holder": "YENİ MODEL YAPAY ZEKA VE ROBOTİK TEKNOLOJİ HİZMETLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11181-1/00035",
+      "valid_from": "2022-09-08T00:00:00Z",
+      "valid_until": "2071-09-08T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ecojet",
+        "Ecojet",
+        "ekojet",
+        "EVE"
+      ],
+      "holder": "YENİ SÜRDÜRÜLEBİLİR ENERJİ TEKNOLOJİLERİ VE ÜRETİMLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12342-6/00181",
+      "valid_from": "2024-01-11T00:00:00Z",
+      "valid_until": "2073-01-11T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ZEPLİN CAR rental"
+      ],
+      "holder": "ZEPLİN TURİZM ARAÇ KİRALAMA MOBİLİTE VE ENERJİ YATIRIMLARI ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11577-4/00089",
+      "valid_from": "2023-01-19T00:00:00Z",
+      "valid_until": "2072-01-19T00:00:00Z"
+    },
+    {
+      "brands": [
+        "zes"
+      ],
+      "holder": "ZES DİJİTAL TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11009-4/00008",
+      "valid_from": "2022-06-09T00:00:00Z",
+      "valid_until": "2071-06-09T00:00:00Z"
+    },
+    {
+      "brands": [
+        "GREEN SCIENCE"
+      ],
+      "holder": "ZEY ENERJİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11059-2/00016",
+      "valid_from": "2022-07-06T00:00:00Z",
+      "valid_until": "2071-07-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Z-Şarj",
+        "Ziraat İYGG"
+      ],
+      "holder": "ZİRAAT FİLO YÖNETİMİ VE MOBİLİTE ÇÖZÜMLER ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13622-3/00214",
+      "valid_from": "2025-07-10T00:00:00Z",
+      "valid_until": "2074-07-10T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ÇELİKLER ENERJİ"
+      ],
+      "holder": "ÇELİKLER GLOBAL ENERJİ ŞARJ SİSTEMLERİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13263/00209",
+      "valid_from": "2025-02-06T00:00:00Z",
+      "valid_until": "2074-02-06T00:00:00Z"
+    },
+    {
+      "brands": [
+        "PLECO advertise.charge."
+      ],
+      "holder": "ÖZKA ENERJİ YATIRIMLARI ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11133-2/00032",
+      "valid_from": "2022-08-25T00:00:00Z",
+      "valid_until": "2071-08-25T00:00:00Z"
+    },
+    {
+      "brands": [
+        "şarjed Park"
+      ],
+      "holder": "ŞARJED ELEKTRİKLİ ARAÇLAR ŞARJ SİSTEMLERİ LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/13138-2/00206",
+      "valid_from": "2024-12-26T00:00:00Z",
+      "valid_until": "2073-12-26T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ŞARJLAN"
+      ],
+      "holder": "ŞARJLAN TEKNOLOJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14040-2/00218",
+      "valid_from": "2025-12-18T00:00:00Z",
+      "valid_until": "2074-12-18T00:00:00Z"
+    },
+    {
+      "brands": [
+        "AUTOLL"
+      ],
+      "holder": "ŞARJLI ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/13954/00216",
+      "valid_from": "2025-11-20T00:00:00Z",
+      "valid_until": "2074-11-20T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ŞarjMatik"
+      ],
+      "holder": "ŞARJMATİK ENERJİ BİLİŞİM LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/12007-3/00134",
+      "valid_from": "2023-08-10T00:00:00Z",
+      "valid_until": "2072-08-10T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ŞARJON"
+      ],
+      "holder": "ŞARJON YENİLENEBİLİR ENERJİ VE ELEKTRİKLİ ARAÇ ŞARJ SİSTEMLERİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/11032-1/00011",
+      "valid_from": "2022-06-23T00:00:00Z",
+      "valid_until": "2071-06-23T00:00:00Z"
+    },
+    {
+      "brands": [
+        "ŞARJPLUS"
+      ],
+      "holder": "ŞARJPLUS ELEKTRİKLİ ARAÇ ŞARJ SİSTEMLERİ LİMİTED ŞİRKETİ",
+      "license_number": "ŞH/11448-3/00071",
+      "valid_from": "2022-12-15T00:00:00Z",
+      "valid_until": "2071-12-15T00:00:00Z"
+    },
+    {
+      "brands": [
+        "evroad"
+      ],
+      "holder": "ŞARJZONE ENERJİ VE ELEKTRİKLİ ARAÇ ŞARJ SİSTEMLERİ SANAYİ TİCARET ANONİM ŞİRKETİ",
+      "license_number": "ŞH/12434-1/00184",
+      "valid_from": "2024-02-15T00:00:00Z",
+      "valid_until": "2073-02-15T00:00:00Z"
+    }
+  ],
+  "source": "https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler"
+}

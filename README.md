@@ -20,6 +20,15 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Firebase Auth token yenileme, favori senkronizasyonu, durum bildirimi ve uygulama içi hesap silme
 - Firebase App Check/App Attest, Crashlytics, sıkı Realtime Database kuralları ve sunucu tarafı özetleme
 - Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları
+- Doğrusal olmayan şarj eğrisi, rakım etkisi ve toplam süre optimizasyonlu uzun yol planı
+- Yol ağına göre 16 yönlü erişilebilir menzil poligonu; dairesel menzil yanılsaması yok
+- Fiyat/soket/adres doğrulama, zamanla azalan güven ve gece güvenliği katkıları
+- Varsayılan kapalı, kaba hücreli anonim arama talebi toplama altyapısı
+- EPDK'nin resmi lisans servisinden üretilen çevrimdışı operatör/lisans doğrulama snapshot'ı
+- Saatlik durum örneklerinden açıkça etiketlenmiş yoğunluk tahmini
+- Vision tabanlı cihaz içi fiş OCR, şarj günlüğü, yıllık özet ve 81 il koleksiyonu
+- WidgetKit, App Intent, Live Activity ve Dynamic Island şarj geri sayımı
+- Şarj molasında 400 metre içindeki kahve, market, park ve diğer yürüyüş noktaları
 - Şarj hatırlatıcısı ve kısa Salon oyunu
 - Türkçe/İngilizce, Dynamic Type, Reduce Motion, VoiceOver etiketleri ve çevrimdışı durum
 
@@ -30,11 +39,12 @@ SarjBul/App/              Composition root, Observable store'lar, router, persis
 SarjBul/Features/         SwiftUI özellik ekranları
 SarjBul/DesignSystem/     Ortak native bileşenler ve üretilmiş token tüketimi
 SarjBul/Generated/        design-tokens.json kaynağından üretilen Swift değerleri
-SarjBulCore/              UI'dan bağımsız model, skor, spatial index, veri pipeline actor'ü ve client protokolleri
+SarjBulCore/              UI'dan bağımsız skor, planlayıcı, güven/yoğunluk motoru, spatial index ve client protokolleri
+SarjBulWidgets/           Ana ekran/kilit ekranı widget'ı, Live Activity ve Dynamic Island sunumu
 SarjBulTests/             Domain testleri
 SarjBulUnitTests/         Auth state-machine ve persistence migrasyon testleri
 SarjBulUITests/           Kritik misafir akışı smoke testi
-firebase/functions/       Güvenilir durum özeti ve hesap verisi temizleme işleri
+firebase/functions/       Durum/veri/talep özetleri ve hesap verisi temizleme işleri
 database.rules.json       auth.uid tabanlı Realtime Database izolasyonu
 ```
 
@@ -54,11 +64,13 @@ Ayrıntılı kurulum ve deploy sırası: [Docs/FIREBASE_SETUP.md](Docs/FIREBASE_
 
 ## Veri
 
-Uygulama önce geçerli cache'i, sonra bundle içindeki `stations.json` dosyasını açar. Arka planda web reposundaki güncel `stations.json` ETag ile sorgulanır. Yeni veri 1.000 kaydın veya bundle sayısının yüzde 70'inin altındaysa cache'e yazılmaz.
+Uygulama 12.936 istasyonu tek bir JSON yerine 63 geohash döşemesi ve bir manifestten yükler. Uzak manifest ETag ile sorgulanır; yalnızca SHA-256 değeri değişen hücreler indirilir. Yeni manifest 1.000 kaydın veya bundle sayısının yüzde 70'inin altındaysa cache'e yazılmaz.
+
+`Scripts/update_epdk_operators.py`, EPDK'nin yürürlükteki şarj ağı işletmeci lisanslarını resmi REST servisinden yeniler ve `epdk-licensed-operators.json` snapshot'ını üretir. İstasyon kartındaki lisans eşleşmesi bu snapshot'a dayanır; birkaç elle yazılmış marka adına güvenmez.
 
 Veri pipeline actor'ü yükleme sırasında 12 bin üzeri istasyon için hücre tabanlı bir spatial index'i bir kez kurar. Arama motoru yalnızca ilgili hücrelerdeki adaylar için haversine, skor ve rozet hesaplarını çalıştırır. Hedef seçilmişse adaylar yolculuk koridoru ve sapma maliyetine göre değerlendirilir.
 
-`AppState` yalnızca bağımlılıkları kuran composition root'tur. Auth, favoriler, istasyon verisi, arama ve deep link akışları ayrı `@Observable` store/router nesnelerindedir. Firebase REST istemcisi `AuthClient`, `FavoritesClient` ve `StatusClient` protokollerinin arkasındadır; oturum `.guest`, `.signedIn` ve `.refreshing` durumlarıyla yönetilir.
+`AppState` yalnızca bağımlılıkları kuran composition root'tur. Auth, favoriler, istasyon verisi, arama ve deep link akışları ayrı `@Observable` store/router nesnelerindedir. Firebase REST istemcisi `AuthClient`, `FavoritesClient`, `StatusClient` ve `DemandAnalyticsClient` protokollerinin arkasındadır; oturum `.guest`, `.signedIn` ve `.refreshing` durumlarıyla yönetilir.
 
 Tasarım tokenları için `SarjBul/Resources/design-tokens.json` tek kaynaktır. Xcode build phase `Scripts/generate_design_tokens.py` ile `SarjBul/Generated/DesignTokens.generated.swift` dosyasını üretir.
 
@@ -71,7 +83,7 @@ xcodebuild -project SarjBul.xcodeproj -scheme SarjBul -destination 'generic/plat
 cd firebase/functions && npm ci --ignore-scripts && npm run lint && npm audit --audit-level=moderate
 ```
 
-GitHub Actions aynı çekirdek testleri, plist/privacy manifest doğrulamasını, bağımlılık denetimini, uygulama derlemesini ve UI smoke testini çalıştırır.
+GitHub Actions aynı çekirdek testleri, SwiftLint'i, plist/privacy manifest doğrulamasını, bağımlılık denetimini, uygulama + widget derlemesini ve UI smoke testini çalıştırır.
 
 ## Yayın
 

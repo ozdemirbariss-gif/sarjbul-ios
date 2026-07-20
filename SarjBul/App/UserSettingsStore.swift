@@ -16,6 +16,9 @@ final class UserSettingsStore {
     var destination: JourneyDestination? {
         didSet { persistence.destination = destination }
     }
+    var demandAnalyticsEnabled: Bool {
+        didSet { persistence.demandAnalyticsEnabled = demandAnalyticsEnabled }
+    }
     let externalLinks: AppExternalLinks
 
     init(persistence: any AppPersistence, externalLinks: AppExternalLinks) {
@@ -23,6 +26,7 @@ final class UserSettingsStore {
         language = persistence.language
         profile = persistence.profile
         destination = persistence.destination
+        demandAnalyticsEnabled = persistence.demandAnalyticsEnabled
         self.externalLinks = externalLinks
     }
 

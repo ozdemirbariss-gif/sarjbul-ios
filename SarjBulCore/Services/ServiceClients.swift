@@ -17,10 +17,25 @@ public protocol FavoritesClient: Sendable {
 
 public protocol StatusClient: Sendable {
     func stationStatuses(idToken: String?) async throws -> [String: StationStatusSummary]
+    func stationCommunityInsights(idToken: String?) async throws -> [String: StationCommunityInsight]
     func sendStationReport(
         stationKey: String,
         status: String,
         comment: String,
+        uid: String,
+        idToken: String
+    ) async throws
+    func sendStationContribution(
+        stationKey: String,
+        contribution: StationContribution,
+        uid: String,
+        idToken: String
+    ) async throws
+}
+
+public protocol DemandAnalyticsClient: Sendable {
+    func recordSearchDemand(
+        event: SearchDemandEvent,
         uid: String,
         idToken: String
     ) async throws
@@ -60,6 +75,7 @@ public struct UnavailableStatusClient: StatusClient {
     public init() {}
 
     public func stationStatuses(idToken: String?) async throws -> [String: StationStatusSummary] { [:] }
+    public func stationCommunityInsights(idToken: String?) async throws -> [String: StationCommunityInsight] { [:] }
 
     public func sendStationReport(
         stationKey: String,
@@ -70,6 +86,25 @@ public struct UnavailableStatusClient: StatusClient {
     ) async throws {
         throw ServiceClientError.notConfigured
     }
+
+    public func sendStationContribution(
+        stationKey: String,
+        contribution: StationContribution,
+        uid: String,
+        idToken: String
+    ) async throws {
+        throw ServiceClientError.notConfigured
+    }
+}
+
+public struct UnavailableDemandAnalyticsClient: DemandAnalyticsClient {
+    public init() {}
+
+    public func recordSearchDemand(
+        event: SearchDemandEvent,
+        uid: String,
+        idToken: String
+    ) async throws {}
 }
 
 public enum AuthError: LocalizedError, Equatable, Sendable {
@@ -122,4 +157,4 @@ public enum AuthError: LocalizedError, Equatable, Sendable {
     }
 }
 
-extension FirebaseRESTClient: AuthClient, FavoritesClient, StatusClient {}
+extension FirebaseRESTClient: AuthClient, FavoritesClient, StatusClient, DemandAnalyticsClient {}

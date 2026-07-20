@@ -13,6 +13,7 @@ enum StationLoadState: Sendable {
 @Observable
 final class StationDataStore {
     private static let reportCooldown: TimeInterval = 60
+    private static let contributionCooldown: TimeInterval = 30
 
     private let pipeline: StationDataPipeline
     private let statusClient: any StatusClient
@@ -22,6 +23,7 @@ final class StationDataStore {
 
     private(set) var stations: [Station] = []
     private(set) var stationStatuses: [String: StationStatusSummary] = [:]
+    private(set) var communityInsights: [String: StationCommunityInsight] = [:]
     private(set) var loadState: StationLoadState = .idle
 
     init(
@@ -48,7 +50,7 @@ final class StationDataStore {
         do {
             stations = try await pipeline.loadStations()
             loadState = .loaded
-            await reloadStatuses(idToken: statusIDToken)
+            await reloadCommunityData(idToken: statusIDToken)
             await refreshStations()
         } catch {
             let message = AppMessage.raw(error.localizedDescription, kind: .error)
@@ -72,19 +74,42 @@ final class StationDataStore {
         }
     }
 
+    func reloadCommunityData(idToken: String? = nil) async {
+        async let statusesTask = pipeline.reloadStatuses(idToken: idToken)
+        async let insightsTask = pipeline.reloadCommunityInsights(idToken: idToken)
+        do {
+            stationStatuses = try await statusesTask
+        } catch {
+            stationStatuses = [:]
+            AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
+        }
+        do {
+            communityInsights = try await insightsTask
+        } catch {
+            communityInsights = [:]
+            AppLogger.data.error("Station insights failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    func insight(for stationKey: String) -> StationCommunityInsight? {
+        communityInsights[stationKey]
+    }
+
     func candidates(
         origin: UserLocation,
         destination: JourneyDestination?,
         routePoints: [UserLocation],
         profile: DrivingProfile,
-        filters: StationFilters
+        filters: StationFilters,
+        limit: Int = 80
     ) async -> [StationCandidate] {
         await pipeline.search(
             origin: origin,
             destination: destination,
             routePoints: routePoints,
             profile: profile,
-            filters: filters
+            filters: filters,
+            limit: limit
         )
     }
 
@@ -145,6 +170,43 @@ final class StationDataStore {
             let session = try? await auth.validSession()
             await reloadStatuses(idToken: session?.idToken)
             messages.present(.localized(key: "service.report_sent", kind: .success))
+            return true
+        } catch {
+            messages.present(.auth(AuthError.map(error)))
+            return false
+        }
+    }
+
+    func canContribute(to stationKey: String, now: Date = Date()) -> Bool {
+        guard let last = reportCooldowns["contribution:\(stationKey)"] else { return true }
+        return now.timeIntervalSince(last) >= Self.contributionCooldown
+    }
+
+    func submitContribution(
+        stationKey: String,
+        contribution: StationContribution,
+        auth: AuthStore
+    ) async -> Bool {
+        guard auth.isAuthenticated else {
+            messages.present(.localized(key: "data_quality.login_required", kind: .error))
+            return false
+        }
+        guard !contribution.values.isEmpty, canContribute(to: stationKey) else { return false }
+
+        do {
+            try await auth.authenticatedRequest { session in
+                try await self.statusClient.sendStationContribution(
+                    stationKey: stationKey,
+                    contribution: contribution,
+                    uid: session.uid,
+                    idToken: session.idToken
+                )
+            }
+            reportCooldowns["contribution:\(stationKey)"] = Date()
+            persistReportCooldowns()
+            let session = try? await auth.validSession()
+            await reloadCommunityData(idToken: session?.idToken)
+            messages.present(.localized(key: "data_quality.thanks", kind: .success))
             return true
         } catch {
             messages.present(.auth(AuthError.map(error)))

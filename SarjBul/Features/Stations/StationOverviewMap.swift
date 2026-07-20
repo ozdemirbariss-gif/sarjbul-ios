@@ -10,9 +10,17 @@ struct StationOverviewMap: View {
     @State private var position: MapCameraPosition = .automatic
     @State private var selectedID: String?
     @State private var detailCandidate: StationCandidate?
+    @State private var isochrone: [CLLocationCoordinate2D] = []
+    private let isochroneService = RangeIsochroneService()
 
     var body: some View {
         Map(position: $position, selection: $selectedID) {
+            if isochrone.count >= 3 {
+                MapPolygon(coordinates: isochrone)
+                    .foregroundStyle(SBColor.accent.opacity(0.13))
+                    .stroke(SBColor.primaryDeep.opacity(0.65), lineWidth: 2)
+            }
+
             if let origin = search.userLocation {
                 Annotation(settings.t("map.current_location"), coordinate: CLLocationCoordinate2D(
                     latitude: origin.latitude,
@@ -50,6 +58,13 @@ struct StationOverviewMap: View {
             MapPitchToggle()
         }
         .onAppear(perform: frameCandidates)
+        .task(id: isochroneTaskID) {
+            guard let origin = search.userLocation else { return }
+            isochrone = await isochroneService.polygon(
+                origin: origin,
+                rangeKm: settings.profile.safeRangeKm
+            )
+        }
         .onChange(of: selectedID) { _, _ in Haptic.tap() }
         .safeAreaInset(edge: .bottom) {
             if let selectedCandidate {
@@ -133,5 +148,10 @@ struct StationOverviewMap: View {
         if candidate.station.powerKW >= 100 { return SBColor.accent }
         if candidate.station.powerKW >= 50 { return SBColor.primaryDeep }
         return SBColor.electricBlue
+    }
+
+    private var isochroneTaskID: String {
+        guard let location = search.userLocation else { return "none" }
+        return "\(location.latitude)-\(location.longitude)-\(Int(settings.profile.safeRangeKm))"
     }
 }

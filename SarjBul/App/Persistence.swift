@@ -18,6 +18,8 @@ protocol AppPersistence: AnyObject {
     var recentRoutes: [RecentStationRoute] { get set }
     var reportCooldowns: [String: Date] { get set }
     var loungeBestScore: Int { get set }
+    var chargingSessions: [ChargingSessionRecord] { get set }
+    var demandAnalyticsEnabled: Bool { get set }
 }
 
 protocol SecureStorage {
@@ -42,6 +44,8 @@ final class SystemAppPersistence: AppPersistence {
         static let recentRoutes = "recentStationRoutes"
         static let reportCooldowns = "stationReportCooldowns"
         static let loungeBest = "voltDashBest"
+        static let chargingSessions = "chargingSessions"
+        static let demandAnalyticsEnabled = "demandAnalyticsEnabled"
     }
 
     private let defaults: UserDefaults
@@ -109,6 +113,16 @@ final class SystemAppPersistence: AppPersistence {
     var loungeBestScore: Int {
         get { defaults.integer(forKey: Key.loungeBest) }
         set { defaults.set(newValue, forKey: Key.loungeBest) }
+    }
+
+    var chargingSessions: [ChargingSessionRecord] {
+        get { decode([ChargingSessionRecord].self, key: Key.chargingSessions) ?? [] }
+        set { encode(newValue, key: Key.chargingSessions) }
+    }
+
+    var demandAnalyticsEnabled: Bool {
+        get { defaults.bool(forKey: Key.demandAnalyticsEnabled) }
+        set { defaults.set(newValue, forKey: Key.demandAnalyticsEnabled) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

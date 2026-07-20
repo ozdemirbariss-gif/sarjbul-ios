@@ -7,6 +7,7 @@ struct StationFeedView: View {
     @Environment(NavigationCoordinator.self) private var navigation
     @State private var filterSheetPresented = false
     @State private var mode: FeedMode = .cards
+    @State private var tripPlanPresented = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -22,6 +23,21 @@ struct StationFeedView: View {
                 Spacer()
 
                 if !search.routeCandidates.isEmpty {
+                    if search.tripPlan != nil {
+                        Button {
+                            Haptic.tap()
+                            tripPlanPresented = true
+                        } label: {
+                            Image(systemName: "bolt.car.fill")
+                                .font(.headline.weight(.heavy))
+                                .foregroundStyle(SBColor.ink)
+                                .frame(width: 52, height: 52)
+                                .sbPremiumGlass(radius: 26, interactive: true)
+                        }
+                        .buttonStyle(SBPremiumButtonStyle())
+                        .accessibilityLabel(settings.t("planner.title"))
+                    }
+
                     Picker(settings.t("feed.view_mode"), selection: $mode) {
                         Label(settings.t("feed.cards"), systemImage: "rectangle.stack").tag(FeedMode.cards)
                         Label(settings.t("feed.map"), systemImage: "map").tag(FeedMode.map)
@@ -59,6 +75,12 @@ struct StationFeedView: View {
                 Task { await search.findStations() }
             }
             .sbMediumSheet()
+        }
+        .sheet(isPresented: $tripPlanPresented) {
+            if let plan = search.tripPlan {
+                TripPlanView(plan: plan)
+                    .environment(settings)
+            }
         }
     }
 
@@ -100,7 +122,7 @@ struct StationFeedView: View {
                     if mode == .cards {
                         ScrollView {
                             LazyVStack(spacing: 24) {
-                                Color.clear.frame(height: 84)
+                                Color.clear.frame(height: 30)
                                 ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
                                     StationCard(candidate: candidate, rank: index + 1, total: candidates.count)
                                         .frame(maxWidth: 680)

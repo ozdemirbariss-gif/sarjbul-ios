@@ -8,6 +8,7 @@ struct AccountView: View {
     @Environment(SearchCoordinator.self) private var search
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(AppMessagePresenter.self) private var messages
+    @Environment(ChargingHistoryStore.self) private var chargingHistory
     @State private var mode: AuthMode = .signIn
     @State private var email = ""
     @State private var password = ""
@@ -45,6 +46,12 @@ struct AccountView: View {
                         } else {
                             authPanel
                         }
+
+                        ChargingInsightsView()
+                            .environment(settings)
+                            .environment(chargingHistory)
+                            .environment(favorites)
+                            .environment(auth)
 
                         legalFooter
                     }
@@ -180,6 +187,22 @@ struct AccountView: View {
                 Text(settings.t("auth.signed_in_hint"))
                     .font(.subheadline)
                     .foregroundStyle(SBColor.muted)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle(settings.t("auth.demand_analytics"), isOn: Binding(
+                        get: { settings.demandAnalyticsEnabled },
+                        set: { settings.demandAnalyticsEnabled = $0 }
+                    ))
+                    .font(.subheadline.weight(.bold))
+                    .tint(SBColor.accent)
+
+                    Text(settings.t("auth.demand_analytics_hint"))
+                        .font(.caption)
+                        .foregroundStyle(SBColor.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(14)
+                .sbPremiumGlass(radius: SBRadius.md, interactive: true)
 
                 Button(role: .destructive) {
                     Haptic.tap()

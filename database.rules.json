@@ -6,6 +6,62 @@
       ".read": true,
       ".write": false
     },
+    "station_insights": {
+      ".read": true,
+      ".write": false
+    },
+    "search_demand_events": {
+      "$eventId": {
+        ".read": false,
+        ".write": "auth != null && !data.exists() && (!root.child('search_demand_meta').child(auth.uid).child('son_olay_zamani_ms').exists() || root.child('search_demand_meta').child(auth.uid).child('son_olay_zamani_ms').val() <= now - 300000)",
+        ".validate": "newData.hasChildren(['coarseCell', 'preference', 'radiusBucketKm', 'resultBucket', 'createdAtMilliseconds', 'source']) && newData.numChildren() === 6",
+        "coarseCell": { ".validate": "newData.isString() && newData.val().length >= 5 && newData.val().length <= 30" },
+        "preference": { ".validate": "newData.val() === 'balanced' || newData.val() === 'nearest' || newData.val() === 'fastest' || newData.val() === 'economical'" },
+        "radiusBucketKm": { ".validate": "newData.val() === 25 || newData.val() === 50 || newData.val() === 100 || newData.val() === 200 || newData.val() === 400 || newData.val() === 800" },
+        "resultBucket": { ".validate": "newData.val() === '0' || newData.val() === '1-5' || newData.val() === '6-20' || newData.val() === '21+'" },
+        "createdAtMilliseconds": { ".validate": "newData.isNumber() && newData.val() >= now - 5000 && newData.val() <= now + 5000" },
+        "source": { ".validate": "newData.val() === 'ios_opt_in'" },
+        "$other": { ".validate": false }
+      }
+    },
+    "search_demand_meta": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "son_olay_zamani_ms": {
+          ".validate": "newData.isNumber() && newData.val() >= now - 5000 && newData.val() <= now + 5000 && (!data.exists() || newData.val() >= data.val())"
+        },
+        "$other": { ".validate": false }
+      }
+    },
+    "demand_heatmap": {
+      ".read": false,
+      ".write": false
+    },
+    "station_contributions": {
+      "$stationKey": {
+        "$contributionId": {
+          ".read": "auth != null && data.child('uid').val() === auth.uid",
+          ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').exists() || root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').val() <= now - 30000)",
+          ".validate": "newData.hasChildren(['degerler', 'tarih', 'uid', 'kaynak']) && newData.child('uid').val() === auth.uid && newData.child('kaynak').val() === 'ios' && newData.child('tarih').isString() && newData.child('tarih').val().length <= 40",
+          "degerler": {
+            ".validate": "newData.hasChildren() && newData.numChildren() <= 7",
+            "price": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+            "socket": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+            "address": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 160" },
+            "operator": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+            "lighting": { ".validate": "newData.val() === 'yes' || newData.val() === 'no'" },
+            "camera": { ".validate": "newData.val() === 'yes' || newData.val() === 'no'" },
+            "open_24_hours": { ".validate": "newData.val() === 'yes' || newData.val() === 'no'" },
+            "$other": { ".validate": false }
+          },
+          "tarih": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+          "uid": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+          "kaynak": { ".validate": "newData.val() === 'ios'" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
     "yorumlar": {
       "$stationKey": {
           "$reportId": {
@@ -56,11 +112,24 @@
           ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 40)"
         },
         "son_yorum_zamani_ms": {
-          ".validate": "!newData.exists() || (newData.isNumber() && newData.val() <= now + 5000)"
+          ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= now - 5000 && newData.val() <= now + 5000 && (!data.exists() || newData.val() >= data.val()))"
         },
         "$other": {
           ".validate": false
         }
+      }
+    },
+    "kullanici_dogrulama_meta": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "son_dogrulama_zamani": {
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 40)"
+        },
+        "son_dogrulama_zamani_ms": {
+          ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= now - 5000 && newData.val() <= now + 5000 && (!data.exists() || newData.val() >= data.val()))"
+        },
+        "$other": { ".validate": false }
       }
     },
     "account_deletion_requests": {

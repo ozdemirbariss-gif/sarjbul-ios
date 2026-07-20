@@ -31,7 +31,13 @@ struct RootView: View {
         }
         .tint(SBColor.accent)
         .preferredColorScheme(.light)
-        .task { await search.prepare() }
+        .task {
+            await search.prepare()
+            guard PendingAppIntentStore.consume() == .nearestFast else { return }
+            settings.filters.preference = .fastest
+            navigation.select(.home)
+            if search.userLocation != nil { await search.findStations() }
+        }
         .sensoryFeedback(.selection, trigger: navigation.tab)
         .onChange(of: navigation.tab) { _, tab in
             guard tab != .account else { return }

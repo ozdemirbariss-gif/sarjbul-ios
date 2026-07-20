@@ -1,10 +1,12 @@
 import Combine
+import MapKit
 import SwiftUI
 
 struct WaitingLoungeView: View {
     @Environment(UserSettingsStore.self) private var settings
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(LoungeStore.self) private var lounge
+    @Environment(ChargingSessionStore.self) private var chargingSession
     @State private var playerY: CGFloat = 0
     @State private var jumpVelocity: CGFloat = 0
     @State private var obstacleX: CGFloat = 260
@@ -27,6 +29,9 @@ struct WaitingLoungeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     header
+                    if chargingSession.isActive {
+                        breakAssistantPanel
+                    }
                     reminderPanel
                     gamePanel
                 }
@@ -45,6 +50,71 @@ struct WaitingLoungeView: View {
         }
         .onDisappear {
             stopTimer()
+        }
+    }
+
+    private var breakAssistantPanel: some View {
+        SBPanel {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(settings.t("break.title"))
+                            .font(.title3.weight(.heavy))
+                        Text(chargingSession.station?.name ?? "")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(SBColor.muted)
+                            .lineLimit(1)
+                    }
+                    Spacer()
+                    if let endDate = chargingSession.endDate {
+                        Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
+                            .font(.headline.monospacedDigit().weight(.heavy))
+                            .foregroundStyle(SBColor.electricBlue)
+                    }
+                }
+
+                if chargingSession.isLoadingPlaces {
+                    ProgressView(settings.t("break.loading"))
+                } else if chargingSession.nearbyPlaces.isEmpty {
+                    Text(settings.t("break.empty"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(SBColor.muted)
+                } else {
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 10) {
+                            ForEach(chargingSession.nearbyPlaces) { place in
+                                Button {
+                                    open(place)
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Image(systemName: icon(for: place.category))
+                                            .font(.headline.weight(.heavy))
+                                            .foregroundStyle(SBColor.electricBlue)
+                                        Text(place.name)
+                                            .font(.subheadline.weight(.heavy))
+                                            .lineLimit(1)
+                                        Text("\(place.distanceMeters) m")
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(SBColor.muted)
+                                    }
+                                    .frame(width: 132, alignment: .leading)
+                                    .padding(12)
+                                    .sbPremiumGlass(radius: SBRadius.md, interactive: true)
+                                }
+                                .buttonStyle(SBPremiumButtonStyle())
+                            }
+                        }
+                    }
+                    .scrollIndicators(.hidden)
+                }
+
+                Button(role: .destructive) {
+                    Task { await chargingSession.stop() }
+                } label: {
+                    Label(settings.t("break.finish"), systemImage: "stop.circle")
+                        .font(.subheadline.weight(.bold))
+                }
+            }
         }
     }
 
@@ -259,5 +329,20 @@ struct WaitingLoungeView: View {
             reminderScheduled = false
             reminderMessage = settings.t("reminder.denied")
         }
+    }
+
+    private func open(_ place: ChargingBreakPlace) {
+        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: place.coordinate))
+        mapItem.name = place.name
+        mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking])
+    }
+
+    private func icon(for category: String) -> String {
+        let normalized = category.lowercased()
+        if normalized.contains("kahve") { return "cup.and.saucer.fill" }
+        if normalized.contains("market") { return "basket.fill" }
+        if normalized.contains("park") { return "leaf.fill" }
+        if normalized.contains("fırın") || normalized.contains("firin") { return "takeoutbag.and.cup.and.straw.fill" }
+        return "figure.walk"
     }
 }

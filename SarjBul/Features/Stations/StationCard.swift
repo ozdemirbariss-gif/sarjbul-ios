@@ -8,6 +8,8 @@ struct StationCard: View {
     @Environment(AuthStore.self) private var auth
     @Environment(FavoritesStore.self) private var favorites
     @Environment(StationDataStore.self) private var stationData
+    @Environment(ChargingSessionStore.self) private var chargingSession
+    @Environment(NavigationCoordinator.self) private var navigation
     @Environment(RouteStore.self) private var routeStore
     @Environment(\.openURL) private var openURL
     var candidate: StationCandidate
@@ -15,6 +17,7 @@ struct StationCard: View {
     var total: Int
     @State private var route: StationRoute?
     @State private var fullMapPresented = false
+    @State private var contributionPresented = false
     @ScaledMetric(relativeTo: .largeTitle) private var distanceTextSize = 56
     @ScaledMetric(relativeTo: .title) private var stationTitleSize = 24
 
@@ -45,6 +48,12 @@ struct StationCard: View {
                 .environment(settings)
                 .environment(search)
         }
+        .sheet(isPresented: $contributionPresented) {
+            StationContributionSheet(candidate: candidate)
+                .environment(settings)
+                .environment(auth)
+                .environment(stationData)
+        }
     }
 
     private var mapPreview: some View {
@@ -53,7 +62,7 @@ struct StationCard: View {
             origin: search.userLocation,
             route: route
         )
-            .frame(height: 184)
+            .frame(height: 164)
             .clipped()
             .overlay(alignment: .topLeading) {
                 routePill {
@@ -100,7 +109,7 @@ struct StationCard: View {
     }
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .lastTextBaseline, spacing: 14) {
                 Text(String(format: "%.1f km", displayDistanceKm))
                     .font(SBFont.display(size: min(distanceTextSize, 66), weight: .heavy))
@@ -127,9 +136,11 @@ struct StationCard: View {
                 spacing: 8
             ) {
                 metric(settings.t("feed.power"), candidate.station.power)
-                metric(settings.t("feed.socket"), candidate.station.socket)
-                metric(settings.t("feed.price"), candidate.station.price)
+                metric(settings.t("feed.socket"), effectiveSocket)
+                metric(settings.t("feed.price"), effectivePrice)
             }
+
+            stationIntelligence
 
             HStack(alignment: .center, spacing: 8) {
                 ForEach(candidate.badges.prefix(2), id: \.self) { badge in
@@ -156,15 +167,8 @@ struct StationCard: View {
                         .foregroundStyle(SBColor.textSoft)
                 }
             }
-
-            if hasUsefulAddress {
-                Text(candidate.station.address)
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(SBColor.textSoft)
-                    .lineLimit(1)
-            }
         }
-        .padding(14)
+        .padding(12)
     }
 
     private var stationPanel: some View {
@@ -174,6 +178,8 @@ struct StationCard: View {
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(SBColor.muted)
                 Spacer(minLength: 8)
+                stationToolsMenu
+
                 ShareLink(
                     item: shareURL,
                     subject: Text(candidate.station.name),
@@ -197,10 +203,99 @@ struct StationCard: View {
             Text(candidate.station.operatorName)
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(SBColor.textSoft)
+            if hasUsefulAddress {
+                Text(candidate.station.address)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SBColor.textSoft)
+                    .lineLimit(1)
+            }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .sbPremiumGlass(radius: SBRadius.lg)
+    }
+
+    private var stationIntelligence: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let availability = candidate.liveAvailability {
+                Label(
+                    settings.t("insight.live_availability", [
+                        "available": "\(availability.availableConnectors)",
+                        "total": "\(availability.totalConnectors)"
+                    ]),
+                    systemImage: availability.availableConnectors > 0 ? "bolt.circle.fill" : "clock.badge.exclamationmark"
+                )
+                .foregroundStyle(availability.availableConnectors > 0 ? SBColor.electricBlue : SBColor.warning)
+            } else {
+                let prediction = OccupancyPredictor.predict(
+                    station: candidate.station,
+                    insight: candidate.communityInsight
+                )
+                Label(
+                    settings.t("insight.busy_prediction", [
+                        "percent": "\(Int((prediction.busyProbability * 100).rounded()))"
+                    ]),
+                    systemImage: "chart.xyaxis.line"
+                )
+                .foregroundStyle(SBColor.muted)
+            }
+
+            HStack(spacing: 8) {
+                Label(
+                    settings.t("insight.data_confidence", [
+                        "percent": "\(Int((candidate.station.confidenceScore * 100).rounded()))"
+                    ]),
+                    systemImage: "checkmark.shield"
+                )
+                if LicensedOperatorRegistry.contains(candidate.station.operatorName) {
+                    Label(settings.t("insight.operator_match"), systemImage: "building.columns.fill")
+                }
+            }
+            .foregroundStyle(SBColor.textSoft)
+
+            if !nightSafetyText.isEmpty {
+                Label(nightSafetyText, systemImage: "moon.stars.fill")
+                    .foregroundStyle(SBColor.electricBlue)
+            }
+        }
+        .font(.caption.weight(.heavy))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .sbPremiumGlass(radius: SBRadius.md)
+    }
+
+    private var stationToolsMenu: some View {
+        Menu {
+            Button {
+                Task {
+                    await chargingSession.start(station: candidate.station)
+                    navigation.select(.lounge)
+                }
+            } label: {
+                Label(settings.t("break.start"), systemImage: "cup.and.saucer.fill")
+            }
+
+            Button {
+                if auth.isAuthenticated {
+                    contributionPresented = true
+                } else {
+                    navigation.select(.account)
+                }
+            } label: {
+                Label(
+                    settings.t(auth.isAuthenticated ? "data_quality.improve" : "data_quality.login_to_improve"),
+                    systemImage: "checkmark.seal"
+                )
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(SBColor.electricBlue)
+                .frame(width: 40, height: 40)
+                .sbPremiumGlass(radius: 20, interactive: true)
+        }
+        .accessibilityLabel(settings.t("actions.station_tools"))
     }
 
     private var favoriteButton: some View {
@@ -232,7 +327,7 @@ struct StationCard: View {
             routeMapButton(settings.t("feed.google_maps_short"), icon: "map", action: openInGoogleMaps)
         }
         .padding(.horizontal, 16)
-        .frame(height: 58)
+        .frame(height: 54)
         .background(SBColor.electricBlue)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         .overlay(
@@ -335,7 +430,7 @@ struct StationCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .frame(minHeight: 66)
+        .frame(minHeight: 58)
         .sbPremiumGlass(radius: SBRadius.lg)
     }
 
@@ -408,6 +503,38 @@ struct StationCard: View {
 
     private var reportCooldownRemaining: Int {
         stationData.reportCooldownRemaining(for: candidate.station.statusKey)
+    }
+
+    private var effectivePrice: String {
+        StationDataQuality.displayValue(
+            sourceValue: candidate.station.price,
+            field: .price,
+            insight: candidate.communityInsight
+        )
+    }
+
+    private var effectiveSocket: String {
+        StationDataQuality.displayValue(
+            sourceValue: candidate.station.socket,
+            field: .socket,
+            insight: candidate.communityInsight
+        )
+    }
+
+    private var nightSafetyText: String {
+        let fields: [(StationDataField, String)] = [
+            (.lighting, settings.t("data_quality.lighting")),
+            (.camera, settings.t("data_quality.camera")),
+            (.open24Hours, settings.t("data_quality.open_24h"))
+        ]
+        let positives = fields.compactMap { field, title -> String? in
+            guard candidate.communityInsight?.verification(for: field)?.verified == true,
+                  ["yes", "evet", "true"].contains(
+                    candidate.communityInsight?.verification(for: field)?.value.lowercased() ?? ""
+                  ) else { return nil }
+            return title
+        }
+        return positives.joined(separator: " · ")
     }
 
     private var shareURL: URL {

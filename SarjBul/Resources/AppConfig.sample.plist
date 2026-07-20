@@ -8,6 +8,10 @@
     <string></string>
     <key>stationDataURL</key>
     <string>https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json</string>
+    <key>stationTileManifestURL</key>
+    <string>https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json</string>
+    <key>liveAvailabilityURL</key>
+    <string></string>
     <key>privacyPolicyURL</key>
     <string>https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md</string>
     <key>termsOfUseURL</key>

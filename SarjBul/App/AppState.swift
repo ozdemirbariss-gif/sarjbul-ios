@@ -12,6 +12,8 @@ final class AppState {
     let navigation: NavigationCoordinator
     let deepLinks: DeepLinkRouter
     let lounge: LoungeStore
+    let chargingHistory: ChargingHistoryStore
+    let chargingSession: ChargingSessionStore
 
     init(
         repository: any StationRepository,
@@ -28,7 +30,11 @@ final class AppState {
             messages: messages,
             isConfigured: clients.isConfigured
         )
-        let pipeline = StationDataPipeline(repository: repository, statusClient: clients.status)
+        let pipeline = StationDataPipeline(
+            repository: repository,
+            statusClient: clients.status,
+            liveAvailabilityClient: clients.liveAvailability
+        )
         let stationData = StationDataStore(
             pipeline: pipeline,
             statusClient: clients.status,
@@ -48,7 +54,8 @@ final class AppState {
             favorites: favorites,
             auth: auth,
             navigation: navigation,
-            messages: messages
+            messages: messages,
+            demandAnalytics: clients.demandAnalytics
         )
 
         self.messages = messages
@@ -58,12 +65,14 @@ final class AppState {
         self.favorites = favorites
         self.search = search
         self.navigation = navigation
-        deepLinks = DeepLinkRouter(search: search)
+        deepLinks = DeepLinkRouter(search: search, navigation: navigation)
         lounge = LoungeStore(persistence: persistence)
+        chargingHistory = ChargingHistoryStore(persistence: persistence)
+        chargingSession = ChargingSessionStore()
 
         auth.onSessionChanged = { [weak favorites, weak stationData] session in
             await favorites?.handleSessionChanged(session)
-            await stationData?.reloadStatuses(idToken: session?.idToken)
+            await stationData?.reloadCommunityData(idToken: session?.idToken)
         }
         applyDebugLaunchMode()
     }

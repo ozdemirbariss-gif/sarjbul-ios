@@ -31,6 +31,22 @@ public struct FirebaseRESTClient: Sendable {
         return try JSONDecoder().decode([String: StationStatusSummary].self, from: data)
     }
 
+    public func stationCommunityInsights(idToken: String? = nil) async throws -> [String: StationCommunityInsight] {
+        var components = URLComponents(
+            url: databaseURL.appending(path: "station_insights.json"),
+            resolvingAgainstBaseURL: false
+        )
+        if let idToken, !idToken.isEmpty {
+            components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
+        }
+        guard let url = components?.url else { return [:] }
+        let request = try await databaseRequest(url: url)
+        let (data, response) = try await session.data(for: request)
+        try validate(response: response, data: data)
+        guard !data.isEmpty, String(data: data, encoding: .utf8) != "null" else { return [:] }
+        return try JSONDecoder().decode([String: StationCommunityInsight].self, from: data)
+    }
+
     public func signIn(email: String, password: String) async throws -> FirebaseAuthSession {
         do {
             return try await authRequest(
@@ -190,6 +206,53 @@ public struct FirebaseRESTClient: Sendable {
                 reportPath: "yorumlar/\(stationKey)/\(reportID)",
                 metadataPath: "kullanici_yorum_meta/\(uid)",
                 report: report,
+                metadata: metadata
+            )
+        )
+    }
+
+    public func sendStationContribution(
+        stationKey: String,
+        contribution: StationContribution,
+        uid: String,
+        idToken: String
+    ) async throws {
+        let now = ISO8601DateFormatter().string(from: Date())
+        let values = Dictionary(uniqueKeysWithValues: contribution.values.map { ($0.key.rawValue, $0.value) })
+        let payload = StationContributionPayload(values: values, date: now, uid: uid, source: "ios")
+        let contributionID = UUID().uuidString.lowercased()
+        let metadata = StationContributionMetadata(
+            lastContributionAt: now,
+            lastContributionAtMilliseconds: Int64(Date().timeIntervalSince1970 * 1_000)
+        )
+        try await patchJSON(
+            path: ".json",
+            idToken: idToken,
+            body: AtomicStationContributionWrite(
+                contributionPath: "station_contributions/\(stationKey)/\(contributionID)",
+                metadataPath: "kullanici_dogrulama_meta/\(uid)",
+                contribution: payload,
+                metadata: metadata
+            )
+        )
+    }
+
+    public func recordSearchDemand(
+        event: SearchDemandEvent,
+        uid: String,
+        idToken: String
+    ) async throws {
+        let eventID = UUID().uuidString.lowercased()
+        var payload = event
+        payload.createdAtMilliseconds = Int64(Date().timeIntervalSince1970 * 1_000)
+        let metadata = DemandAnalyticsMetadata(lastEventAtMilliseconds: payload.createdAtMilliseconds)
+        try await patchJSON(
+            path: ".json",
+            idToken: idToken,
+            body: AtomicDemandAnalyticsWrite(
+                eventPath: "search_demand_events/\(eventID)",
+                metadataPath: "search_demand_meta/\(uid)",
+                event: payload,
                 metadata: metadata
             )
         )
@@ -439,6 +502,64 @@ private struct AtomicStationReportWrite: Encodable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: DynamicCodingKey.self)
         try container.encode(report, forKey: DynamicCodingKey(reportPath))
+        try container.encode(metadata, forKey: DynamicCodingKey(metadataPath))
+    }
+}
+
+private struct StationContributionPayload: Encodable {
+    var values: [String: String]
+    var date: String
+    var uid: String
+    var source: String
+
+    private enum CodingKeys: String, CodingKey {
+        case values = "degerler"
+        case date = "tarih"
+        case uid
+        case source = "kaynak"
+    }
+}
+
+private struct StationContributionMetadata: Encodable {
+    var lastContributionAt: String
+    var lastContributionAtMilliseconds: Int64
+
+    private enum CodingKeys: String, CodingKey {
+        case lastContributionAt = "son_dogrulama_zamani"
+        case lastContributionAtMilliseconds = "son_dogrulama_zamani_ms"
+    }
+}
+
+private struct AtomicStationContributionWrite: Encodable {
+    var contributionPath: String
+    var metadataPath: String
+    var contribution: StationContributionPayload
+    var metadata: StationContributionMetadata
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: DynamicCodingKey.self)
+        try container.encode(contribution, forKey: DynamicCodingKey(contributionPath))
+        try container.encode(metadata, forKey: DynamicCodingKey(metadataPath))
+    }
+}
+
+private struct DemandAnalyticsMetadata: Encodable {
+    var lastEventAtMilliseconds: Int64
+
+    private enum CodingKeys: String, CodingKey {
+        case lastEventAtMilliseconds = "son_olay_zamani_ms"
+    }
+}
+
+private struct AtomicDemandAnalyticsWrite: Encodable {
+    var eventPath: String
+    var metadataPath: String
+    var event: SearchDemandEvent
+    var metadata: DemandAnalyticsMetadata
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: DynamicCodingKey.self)
+        try container.encode(event, forKey: DynamicCodingKey(eventPath))
         try container.encode(metadata, forKey: DynamicCodingKey(metadataPath))
     }
 }
