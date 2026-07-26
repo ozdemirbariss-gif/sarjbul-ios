@@ -3,18 +3,23 @@ import Foundation
 public actor StationDataPipeline {
     private let repository: any StationRepository
     private let statusClient: any StatusClient
+    private let liveAvailabilityClient: any LiveAvailabilityClient
     private let searchEngine: StationSearchEngine
     private var stations: [Station] = []
     private var statuses: [String: StationStatusSummary] = [:]
+    private var insights: [String: StationCommunityInsight] = [:]
+    private var liveAvailability: [String: LiveStationAvailability] = [:]
     private var spatialIndex = SpatialIndex(stations: [])
 
     public init(
         repository: any StationRepository,
         statusClient: any StatusClient,
+        liveAvailabilityClient: any LiveAvailabilityClient = UnavailableLiveAvailabilityClient(),
         searchEngine: StationSearchEngine = StationSearchEngine()
     ) {
         self.repository = repository
         self.statusClient = statusClient
+        self.liveAvailabilityClient = liveAvailabilityClient
         self.searchEngine = searchEngine
     }
 
@@ -38,8 +43,17 @@ public actor StationDataPipeline {
         return statuses
     }
 
-    public func snapshot() -> (stations: [Station], statuses: [String: StationStatusSummary]) {
-        (stations, statuses)
+    public func reloadCommunityInsights(idToken: String? = nil) async throws -> [String: StationCommunityInsight] {
+        insights = try await statusClient.stationCommunityInsights(idToken: idToken)
+        return insights
+    }
+
+    public func snapshot() -> (
+        stations: [Station],
+        statuses: [String: StationStatusSummary],
+        insights: [String: StationCommunityInsight]
+    ) {
+        (stations, statuses, insights)
     }
 
     public func station(withKey key: String) -> Station? {
@@ -53,7 +67,8 @@ public actor StationDataPipeline {
         profile: DrivingProfile,
         filters: StationFilters,
         limit: Int = 80
-    ) -> [StationCandidate] {
+    ) async -> [StationCandidate] {
+        let result: [StationCandidate]
         if let destination {
             let destinationLocation = UserLocation(
                 latitude: destination.latitude,
@@ -62,7 +77,7 @@ public actor StationDataPipeline {
             )
             let points = [origin] + routePoints + [destinationLocation]
             let candidates = spatialIndex.stations(along: points, paddingKm: 30)
-            return searchEngine.candidatesAlongJourney(
+            result = searchEngine.candidatesAlongJourney(
                 from: candidates,
                 origin: origin,
                 destination: destination,
@@ -72,16 +87,17 @@ public actor StationDataPipeline {
                 stationStatuses: statuses,
                 limit: limit
             )
+        } else {
+            result = searchEngine.candidates(
+                in: spatialIndex,
+                origin: origin,
+                profile: profile,
+                filters: filters,
+                stationStatuses: statuses,
+                limit: limit
+            )
         }
-
-        return searchEngine.candidates(
-            in: spatialIndex,
-            origin: origin,
-            profile: profile,
-            filters: filters,
-            stationStatuses: statuses,
-            limit: limit
-        )
+        return await enrich(result)
     }
 
     public func directCandidate(
@@ -89,19 +105,39 @@ public actor StationDataPipeline {
         origin: UserLocation,
         profile: DrivingProfile,
         filters: StationFilters
-    ) -> StationCandidate? {
-        searchEngine.candidates(
+    ) async -> StationCandidate? {
+        let result = searchEngine.candidates(
             from: [station],
             origin: origin,
             profile: profile,
             filters: filters,
             stationStatuses: statuses,
             limit: 1
-        ).first
+        )
+        return await enrich(result).first
     }
 
     private func replaceStations(_ newStations: [Station]) {
         stations = newStations
         spatialIndex = SpatialIndex(stations: newStations)
+    }
+
+    private func enrich(_ candidates: [StationCandidate]) async -> [StationCandidate] {
+        let keys = candidates.map { $0.station.statusKey }
+        if let fresh = try? await liveAvailabilityClient.availability(stationKeys: keys) {
+            liveAvailability.merge(fresh) { _, new in new }
+        }
+
+        return candidates.map { original in
+            var candidate = original
+            let key = candidate.station.statusKey
+            candidate.communityInsight = insights[key] ?? insights[candidate.station.id]
+            candidate.liveAvailability = liveAvailability[key] ?? liveAvailability[candidate.station.id]
+            candidate.station.confidenceScore = StationDataQuality.confidence(
+                station: candidate.station,
+                insight: candidate.communityInsight
+            )
+            return candidate
+        }
     }
 }

@@ -11,6 +11,8 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
     public var routeDeviationKm: Double
     public var score: Int
     public var badges: [StationBadge]
+    public var communityInsight: StationCommunityInsight?
+    public var liveAvailability: LiveStationAvailability?
 
     public var id: String { station.id }
 
@@ -24,7 +26,9 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         remainingSafeRangeKm: Double,
         routeDeviationKm: Double = 0,
         score: Int,
-        badges: [StationBadge]
+        badges: [StationBadge],
+        communityInsight: StationCommunityInsight? = nil,
+        liveAvailability: LiveStationAvailability? = nil
     ) {
         self.station = station
         self.status = status
@@ -36,6 +40,8 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         self.routeDeviationKm = routeDeviationKm
         self.score = score
         self.badges = badges
+        self.communityInsight = communityInsight
+        self.liveAvailability = liveAvailability
     }
 
     public var hasRiskyStatus: Bool {

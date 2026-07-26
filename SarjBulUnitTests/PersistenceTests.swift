@@ -25,7 +25,7 @@ final class PersistenceTests: XCTestCase {
         XCTAssertNotNil(secureStorage.data(for: "firebaseAuthSession"))
     }
 
-    func testAuthStoreUsesSignedInStateAfterClientSuccess() async throws {
+    func testAuthStoreCreatesAnonymousSessionWithoutUserInput() async throws {
         let suiteName = "AuthStoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -35,9 +35,8 @@ final class PersistenceTests: XCTestCase {
         )
         let expected = FirebaseAuthSession(
             idToken: "id-token",
-            email: "driver@example.com",
             refreshToken: "refresh-token",
-            localId: "driver"
+            localId: "anonymous-driver"
         )
         let store = AuthStore(
             client: StubAuthClient(session: expected),
@@ -46,9 +45,9 @@ final class PersistenceTests: XCTestCase {
             isConfigured: true
         )
 
-        await store.signIn(email: "driver@example.com", password: "secret")
+        await store.prepare()
 
-        XCTAssertEqual(store.state, .signedIn(expected))
+        XCTAssertEqual(store.state, .active(expected))
         XCTAssertEqual(persistence.authSession, expected)
     }
 }
@@ -64,10 +63,7 @@ private final class MemorySecureStorage: SecureStorage {
 private struct StubAuthClient: AuthClient {
     let session: FirebaseAuthSession
 
-    func signIn(email: String, password: String) async throws -> FirebaseAuthSession { session }
-    func signUp(email: String, password: String) async throws -> FirebaseAuthSession { session }
-    func sendPasswordReset(email: String) async throws {}
-    func sendEmailVerification(idToken: String) async throws {}
+    func signInAnonymously() async throws -> FirebaseAuthSession { session }
     func initiateAccountDeletion(uid: String, idToken: String) async throws {}
     func deleteAccount(idToken: String) async throws {}
     func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession { session }

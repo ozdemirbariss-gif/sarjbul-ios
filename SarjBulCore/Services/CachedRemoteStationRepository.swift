@@ -52,8 +52,10 @@ public actor CachedRemoteStationRepository: RefreshableStationRepository {
 
         let remoteStations = try decoder.decode([Station].self, from: data)
         let bundledCount = (try? decodeStations(at: bundledFileURL).count) ?? 1_000
-        let minimumAcceptedCount = max(1_000, Int(Double(bundledCount) * 0.70))
-        guard remoteStations.count >= minimumAcceptedCount else {
+        guard StationDatasetQualityGate.accepts(
+            candidateCount: remoteStations.count,
+            referenceCount: bundledCount
+        ) else {
             throw StationRepositoryError.invalidRemoteData
         }
 

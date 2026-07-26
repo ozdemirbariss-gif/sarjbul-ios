@@ -1,0 +1,12 @@
+only_rules:
+  - duplicate_imports
+  - empty_count
+  - trailing_whitespace
+
+excluded:
+  - .build
+  - SarjBul/Generated
+  - SarjBul/Resources
+  - SarjBul.xcodeproj
+
+reporter: xcode

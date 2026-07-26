@@ -6,20 +6,10 @@ struct AccountView: View {
     @Environment(AuthStore.self) private var auth
     @Environment(FavoritesStore.self) private var favorites
     @Environment(SearchCoordinator.self) private var search
-    @Environment(NavigationCoordinator.self) private var navigation
-    @Environment(AppMessagePresenter.self) private var messages
-    @State private var mode: AuthMode = .signIn
-    @State private var email = ""
-    @State private var password = ""
-    @State private var isWorking = false
-    @State private var isDeletingAccount = false
+    @Environment(ChargingHistoryStore.self) private var chargingHistory
+    @State private var isDeletingData = false
     @State private var deleteConfirmationPresented = false
     @State private var legalDocument: LegalDocument?
-    @State private var passwordVisible = false
-    @State private var inlineError: String?
-    @FocusState private var focusedField: AuthField?
-    @ScaledMetric(relativeTo: .largeTitle) private var heroLineOneSize = 82
-    @ScaledMetric(relativeTo: .largeTitle) private var heroLineTwoSize = 86
 
     var body: some View {
         NavigationStack {
@@ -28,27 +18,25 @@ struct AccountView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
-                        HStack {
-                            Spacer()
-                            SBLanguageSwitch(selectedLanguage: Binding(
-                                get: { settings.language.displayCode },
-                                set: { settings.setLanguage(code: $0) }
-                            ))
-                        }
+                        languageRow
+                        profileHeader
+                        stationLibraryPanel
 
-                        heroPanel
-                        guestPanel
+                        ChargingInsightsView()
+                            .environment(settings)
+                            .environment(chargingHistory)
+                            .environment(favorites)
+                            .environment(auth)
 
-                        if auth.isAuthenticated {
-                            signedInPanel
-                            stationLibraryPanel
-                        } else {
-                            authPanel
+                        if auth.isConfigured {
+                            privacyPanel
+                            dataPanel
                         }
 
                         legalFooter
                     }
-                    .padding(22)
+                    .padding(.horizontal, 22)
+                    .padding(.top, 18)
                     .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
                 }
@@ -60,168 +48,100 @@ struct AccountView: View {
                     .environment(settings)
             }
             .confirmationDialog(
-                settings.t("auth.delete_title"),
+                settings.t("profile.reset_title"),
                 isPresented: $deleteConfirmationPresented,
                 titleVisibility: .visible
             ) {
-                Button(settings.t("auth.delete_confirm"), role: .destructive) {
-                    Task { await deleteAccount() }
+                Button(settings.t("profile.reset_confirm"), role: .destructive) {
+                    Task { await resetCloudData() }
                 }
-                Button(settings.t("auth.delete_cancel"), role: .cancel) {}
+                Button(settings.t("status.cancel"), role: .cancel) {}
             } message: {
-                Text(settings.t("auth.delete_message"))
+                Text(settings.t("profile.reset_message"))
             }
         }
     }
 
-    private var heroPanel: some View {
-        ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                .fill(LinearGradient.sbSoftPanel)
-                .overlay(
-                    RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                        .stroke(SBColor.line, lineWidth: 1)
-                )
-                .sbSoftShadow()
-
-            VStack(alignment: .leading, spacing: 34) {
-                HStack(spacing: 10) {
-                    Circle()
-                        .fill(LinearGradient.sbPrimary)
-                        .frame(width: 34, height: 34)
-                        .overlay(alignment: .trailing) {
-                            Circle()
-                                .fill(SBColor.accent)
-                                .frame(width: 38, height: 38)
-                                .opacity(0.2)
-                                .offset(x: 22)
-                        }
-                    Circle()
-                        .fill(SBColor.accent)
-                        .frame(width: 12, height: 12)
-                        .padding(.leading, 8)
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .background(SBColor.glassStrong)
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(SBColor.line, lineWidth: 1)
-                )
-                .sbSoftShadow()
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(settings.t("auth.hero_line1"))
-                        .font(SBFont.display(size: min(heroLineOneSize, 112), weight: .heavy))
-                        .foregroundStyle(SBColor.ink.opacity(0.46))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
-                    Text(settings.t("auth.hero_line2"))
-                        .font(SBFont.display(size: min(heroLineTwoSize, 116), weight: .heavy))
-                        .foregroundStyle(SBColor.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 8)
-                        .background(
-                            LinearGradient(
-                                colors: [SBColor.accent, SBColor.primaryDeep.opacity(0.78)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                        .shadow(color: SBColor.accent.opacity(0.26), radius: 24, x: 0, y: 14)
-                }
-
-                HStack {
-                    Spacer()
-                    Capsule()
-                        .fill(LinearGradient.sbNeon)
-                        .frame(width: 230, height: 14)
-                        .offset(x: 88)
-                }
-            }
-            .padding(30)
+    private var languageRow: some View {
+        HStack {
+            Spacer()
+            SBLanguageSwitch(selectedLanguage: Binding(
+                get: { settings.language.displayCode },
+                set: { settings.setLanguage(code: $0) }
+            ))
         }
-        .frame(minHeight: 360)
     }
 
-    private var guestPanel: some View {
+    private var profileHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(settings.t("profile.eyebrow"))
+                .font(.caption.weight(.heavy))
+                .foregroundStyle(SBColor.accent)
+
+            Text(settings.t("profile.title"))
+                .font(SBFont.display(size: 48, weight: .heavy))
+                .foregroundStyle(SBColor.ink)
+                .minimumScaleFactor(0.72)
+
+            Text(settings.t("profile.subtitle"))
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(SBColor.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 12)
+    }
+
+    private var privacyPanel: some View {
         SBSecondaryPanel {
-            VStack(alignment: .leading, spacing: 22) {
-                Text(settings.t("auth.guest_primary_title"))
-                    .font(SBFont.display(size: 30, weight: .heavy))
+            VStack(alignment: .leading, spacing: 12) {
+                Label(settings.t("profile.privacy_title"), systemImage: "hand.raised.fill")
+                    .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.ink)
-                Text(settings.t("auth.guest_primary_hint"))
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(SBColor.muted)
 
-                SBPrimaryButton(
-                    title: settings.t("auth.guest_primary_action"),
-                    systemImage: nil,
-                    accessibilityIdentifier: "guest-start-button"
-                ) {
-                    Haptic.tap()
-                    navigation.tab = .home
-                }
+                Toggle(settings.t("auth.demand_analytics"), isOn: Binding(
+                    get: { settings.demandAnalyticsEnabled },
+                    set: { settings.demandAnalyticsEnabled = $0 }
+                ))
+                .font(.subheadline.weight(.bold))
+                .tint(SBColor.accent)
+
+                Text(settings.t("auth.demand_analytics_hint"))
+                    .font(.caption)
+                    .foregroundStyle(SBColor.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    private var signedInPanel: some View {
-        SBPanel {
-            VStack(alignment: .leading, spacing: 16) {
-                Label(auth.session?.email ?? settings.t("auth.verified_driver"), systemImage: "person.crop.circle.badge.checkmark")
-                    .font(.headline.weight(.bold))
+    private var dataPanel: some View {
+        SBSecondaryPanel {
+            VStack(alignment: .leading, spacing: 14) {
+                Label(settings.t("profile.data_title"), systemImage: "lock.shield.fill")
+                    .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.ink)
 
-                Text(settings.t("auth.signed_in_hint"))
+                Text(settings.t("profile.data_hint"))
                     .font(.subheadline)
                     .foregroundStyle(SBColor.muted)
-
-                Button(role: .destructive) {
-                    Haptic.tap()
-                    auth.signOut()
-                } label: {
-                    Label(settings.t("auth.logout"), systemImage: "rectangle.portrait.and.arrow.right")
-                        .font(.headline.weight(.bold))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Button(role: .destructive) {
                     Haptic.tap()
                     deleteConfirmationPresented = true
                 } label: {
                     Label(
-                        isDeletingAccount ? settings.t("auth.delete_loading") : settings.t("auth.delete_account"),
-                        systemImage: "trash"
+                        isDeletingData ? settings.t("profile.reset_loading") : settings.t("profile.reset_action"),
+                        systemImage: "arrow.counterclockwise"
                     )
                     .font(.subheadline.weight(.bold))
                     .frame(maxWidth: .infinity)
+                    .frame(minHeight: 44)
                 }
                 .buttonStyle(.bordered)
-                .disabled(isDeletingAccount)
+                .disabled(isDeletingData)
             }
         }
-    }
-
-    private var legalFooter: some View {
-        VStack(spacing: 14) {
-            HStack(spacing: 22) {
-                legalButton(settings.t("auth.privacy"), document: .privacy)
-                legalButton(settings.t("auth.terms"), document: .terms)
-                legalButton(settings.t("auth.support"), document: .support)
-            }
-
-            Text(settings.t("auth.version", ["version": appVersion]))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(SBColor.muted)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.bottom, 24)
     }
 
     @ViewBuilder
@@ -243,7 +163,7 @@ struct AccountView: View {
         }
     }
 
-    private func stationSection(title: String, stations: [SarjBulCore.Station]) -> some View {
+    private func stationSection(title: String, stations: [Station]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.headline.weight(.heavy))
@@ -284,6 +204,22 @@ struct AccountView: View {
         }
     }
 
+    private var legalFooter: some View {
+        VStack(spacing: 14) {
+            HStack(spacing: 22) {
+                legalButton(settings.t("auth.privacy"), document: .privacy)
+                legalButton(settings.t("auth.terms"), document: .terms)
+                legalButton(settings.t("auth.support"), document: .support)
+            }
+
+            Text(settings.t("auth.version", ["version": appVersion]))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(SBColor.muted)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 110)
+    }
+
     private func legalButton(_ title: String, document: LegalDocument) -> some View {
         Button(title) {
             Haptic.tap()
@@ -297,229 +233,10 @@ struct AccountView: View {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }
 
-    private func deleteAccount() async {
-        guard !isDeletingAccount else { return }
-        isDeletingAccount = true
-        defer { isDeletingAccount = false }
+    private func resetCloudData() async {
+        guard !isDeletingData else { return }
+        isDeletingData = true
+        defer { isDeletingData = false }
         _ = await auth.deleteAccount()
-    }
-
-    private var authPanel: some View {
-        SBSecondaryPanel {
-            VStack(alignment: .leading, spacing: 18) {
-                Rectangle()
-                    .fill(SBColor.line)
-                    .frame(height: 3)
-                    .clipShape(Capsule())
-
-                Text(settings.t("auth.card_title"))
-                    .font(SBFont.display(size: 30, weight: .heavy))
-                    .foregroundStyle(SBColor.ink)
-                Text(settings.t("auth.card_hint"))
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(SBColor.muted)
-
-                if mode == .reset {
-                    Text(settings.t("auth.reset_hint"))
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(SBColor.muted)
-                } else {
-                    Picker(settings.t("auth.mode_label"), selection: $mode) {
-                        ForEach([AuthMode.signIn, AuthMode.signUp]) { mode in
-                            Text(mode.title(settings)).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: mode) { _, _ in
-                        password = ""
-                        inlineError = nil
-                    }
-                }
-
-                authInputContainer(field: .email) {
-                    Image(systemName: "envelope")
-                        .foregroundStyle(SBColor.muted)
-                    TextField(settings.t("auth.email_placeholder"), text: $email)
-                        .sbEmailInput()
-                        .focused($focusedField, equals: .email)
-                        .submitLabel(mode == .reset ? .go : .next)
-                        .onSubmit {
-                            if mode == .reset {
-                                Task { await submit() }
-                            } else {
-                                focusedField = .password
-                            }
-                        }
-                        .accessibilityLabel(settings.t("auth.email"))
-                }
-
-                if mode != .reset {
-                    authInputContainer(field: .password) {
-                        Image(systemName: "lock")
-                            .foregroundStyle(SBColor.muted)
-                        Group {
-                            if passwordVisible {
-                                TextField(settings.t("auth.password_placeholder"), text: $password)
-                            } else {
-                                SecureField(settings.t("auth.password_placeholder"), text: $password)
-                            }
-                        }
-                        .sbPasswordInput(isNewPassword: mode == .signUp)
-                        .focused($focusedField, equals: .password)
-                        .submitLabel(.go)
-                        .onSubmit { Task { await submit() } }
-                        .accessibilityLabel(settings.t("auth.password"))
-
-                        Button {
-                            passwordVisible.toggle()
-                        } label: {
-                            Image(systemName: passwordVisible ? "eye.slash" : "eye")
-                                .foregroundStyle(SBColor.muted)
-                                .frame(width: 44, height: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(passwordVisible ? "Hide password" : "Show password")
-                    }
-                }
-
-                if let inlineError {
-                    Label(inlineError, systemImage: "exclamationmark.circle.fill")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(SBColor.danger)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityAddTraits(.isStaticText)
-                }
-
-                SBPrimaryButton(
-                    title: isWorking ? mode.loadingTitle(settings) : mode.actionTitle(settings),
-                    systemImage: mode.icon,
-                    accessibilityIdentifier: "auth-submit-button"
-                ) {
-                    Task { await submit() }
-                }
-                .disabled(isWorking || !formIsValid)
-                .opacity(formIsValid ? 1 : 0.55)
-
-                if mode == .reset {
-                    Button {
-                        Haptic.tap()
-                        mode = .signIn
-                    } label: {
-                        Text(settings.t("auth.back_to_login"))
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(SBColor.electricBlue)
-                    }
-                } else {
-                    Button {
-                        Haptic.tap()
-                        mode = .reset
-                    } label: {
-                        Text(settings.t("auth.forgot_password"))
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(SBColor.electricBlue)
-                    }
-                }
-
-                if !auth.isConfigured {
-                    Text(settings.t("auth.firebase_config_required"))
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(SBColor.muted)
-                }
-            }
-        }
-    }
-
-    private func authInputContainer<Content: View>(
-        field: AuthField,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        HStack(spacing: 10, content: content)
-            .textFieldStyle(.plain)
-            .padding(.horizontal, 14)
-            .frame(minHeight: 56)
-            .background(SBColor.glass)
-            .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
-                    .stroke(focusedField == field ? SBColor.electricBlue : SBColor.line, lineWidth: 1)
-            )
-            .shadow(
-                color: focusedField == field ? SBColor.electricBlue.opacity(0.14) : .clear,
-                radius: 10
-            )
-    }
-
-    private var formIsValid: Bool {
-        let hasEmail = email.contains("@") && email.contains(".")
-        if mode == .reset { return hasEmail }
-        return hasEmail && password.count >= 6
-    }
-
-    private func submit() async {
-        guard formIsValid, !isWorking else { return }
-        Haptic.tap()
-        isWorking = true
-        defer { isWorking = false }
-
-        switch mode {
-        case .signIn:
-            await auth.signIn(email: email, password: password)
-        case .signUp:
-            await auth.signUp(email: email, password: password)
-        case .reset:
-            await auth.resetPassword(email: email)
-        }
-        inlineError = messages.consumeError(language: settings.language)
-        if inlineError == nil {
-            focusedField = nil
-        }
-    }
-}
-
-private enum AuthField: Hashable {
-    case email
-    case password
-}
-
-private enum AuthMode: String, CaseIterable, Identifiable {
-    case signIn
-    case signUp
-    case reset
-
-    var id: String { rawValue }
-
-    @MainActor
-    func title(_ settings: UserSettingsStore) -> String {
-        switch self {
-        case .signIn: settings.t("auth.login")
-        case .signUp: settings.t("auth.register")
-        case .reset: settings.t("auth.reset")
-        }
-    }
-
-    @MainActor
-    func actionTitle(_ settings: UserSettingsStore) -> String {
-        switch self {
-        case .signIn: settings.t("auth.login_action")
-        case .signUp: settings.t("auth.register_action")
-        case .reset: settings.t("auth.reset_action")
-        }
-    }
-
-    @MainActor
-    func loadingTitle(_ settings: UserSettingsStore) -> String {
-        switch self {
-        case .signIn: settings.t("auth.login_loading")
-        case .signUp: settings.t("auth.register_loading")
-        case .reset: settings.t("auth.reset_loading")
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .signIn: "person.fill.checkmark"
-        case .signUp: "person.badge.plus"
-        case .reset: "envelope"
-        }
     }
 }

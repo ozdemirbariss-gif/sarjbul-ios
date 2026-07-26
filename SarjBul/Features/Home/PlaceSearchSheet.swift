@@ -125,7 +125,7 @@ struct PlaceSearchSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(settings.t("auth.delete_cancel")) { dismiss() }
+                    Button(settings.t("status.cancel")) { dismiss() }
                 }
             }
         }

@@ -36,9 +36,6 @@ enum AppMessage: Sendable {
 private extension AuthError {
     var localizationKey: String {
         switch self {
-        case .invalidCredentials: "service.invalid_credentials"
-        case .emailAlreadyExists: "service.email_exists"
-        case .weakPassword: "service.weak_password"
         case .tooManyAttempts: "service.too_many_attempts"
         case .network: "service.network_error"
         case .sessionExpired: "service.no_session"

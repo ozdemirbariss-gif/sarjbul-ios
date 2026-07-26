@@ -6,9 +6,11 @@ import SarjBulCore
 @Observable
 final class DeepLinkRouter {
     private let search: SearchCoordinator
+    private let navigation: NavigationCoordinator
 
-    init(search: SearchCoordinator) {
+    init(search: SearchCoordinator, navigation: NavigationCoordinator) {
         self.search = search
+        self.navigation = navigation
     }
 
     func handle(_ url: URL) async {
@@ -16,6 +18,10 @@ final class DeepLinkRouter {
         switch route {
         case .station(let key):
             await search.openStation(withKey: key)
+        case .nearestFast:
+            await search.openNearestFast()
+        case .lounge:
+            navigation.select(.lounge)
         }
     }
 }

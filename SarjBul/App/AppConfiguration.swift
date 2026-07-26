@@ -5,6 +5,9 @@ struct AppConfiguration {
     private static let defaultStationDataURL = URL(
         string: "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json"
     )
+    private static let defaultStationTileManifestURL = URL(
+        string: "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json"
+    )
     private static let defaultPrivacyPolicyURL = URL(
         string: "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md"
     )
@@ -17,6 +20,8 @@ struct AppConfiguration {
     var firebaseDatabaseURL: URL?
     var firebaseAPIKey: String
     var stationDataURL: URL?
+    var stationTileManifestURL: URL?
+    var liveAvailabilityURL: URL?
     var privacyPolicyURL: URL?
     var termsOfUseURL: URL?
     var supportURL: URL?
@@ -33,6 +38,8 @@ struct AppConfiguration {
                 firebaseDatabaseURL: nil,
                 firebaseAPIKey: "",
                 stationDataURL: defaultStationDataURL,
+                stationTileManifestURL: defaultStationTileManifestURL,
+                liveAvailabilityURL: nil,
                 privacyPolicyURL: defaultPrivacyPolicyURL,
                 termsOfUseURL: defaultTermsURL,
                 supportURL: defaultSupportURL,
@@ -49,6 +56,9 @@ struct AppConfiguration {
             firebaseDatabaseURL: databaseString.flatMap(Self.normalizedFirebaseURL),
             firebaseAPIKey: apiKey,
             stationDataURL: Self.urlValue(values["stationDataURL"]) ?? defaultStationDataURL,
+            stationTileManifestURL: Self.urlValue(values["stationTileManifestURL"])
+                ?? defaultStationTileManifestURL,
+            liveAvailabilityURL: Self.urlValue(values["liveAvailabilityURL"]),
             privacyPolicyURL: Self.urlValue(values["privacyPolicyURL"]) ?? defaultPrivacyPolicyURL,
             termsOfUseURL: Self.urlValue(values["termsOfUseURL"]) ?? defaultTermsURL,
             supportURL: Self.urlValue(values["supportURL"]) ?? defaultSupportURL,
@@ -64,6 +74,8 @@ struct AppConfiguration {
                 auth: UnavailableAuthClient(),
                 favorites: UnavailableFavoritesClient(),
                 status: UnavailableStatusClient(),
+                demandAnalytics: UnavailableDemandAnalyticsClient(),
+                liveAvailability: configuredLiveAvailabilityClient,
                 isConfigured: false
             )
         }
@@ -84,6 +96,8 @@ struct AppConfiguration {
             auth: client,
             favorites: client,
             status: client,
+            demandAnalytics: client,
+            liveAvailability: configuredLiveAvailabilityClient,
             isConfigured: true
         )
     }
@@ -94,6 +108,11 @@ struct AppConfiguration {
         return URL(string: normalized)
     }
 
+    private var configuredLiveAvailabilityClient: any LiveAvailabilityClient {
+        guard let liveAvailabilityURL else { return UnavailableLiveAvailabilityClient() }
+        return OCPIGatewayClient(endpoint: liveAvailabilityURL)
+    }
+
     private static func urlValue(_ value: Any?) -> URL? {
         guard let raw = (value as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
               !raw.isEmpty else { return nil }
@@ -101,11 +120,18 @@ struct AppConfiguration {
     }
 
     func stationRepository(bundle: Bundle = .main) -> (any StationRepository)? {
+        let cacheRoot = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        if let manifestURL = bundle.url(forResource: "station-tiles-manifest", withExtension: "json") {
+            return TiledStationRepository(
+                bundledManifestURL: manifestURL,
+                remoteManifestURL: stationTileManifestURL,
+                cacheDirectory: cacheRoot.appending(path: "SarjBul/StationTiles", directoryHint: .isDirectory)
+            )
+        }
         guard let bundledURL = bundle.url(forResource: "stations", withExtension: "json") else {
             return nil
         }
-        let cacheRoot = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
         return CachedRemoteStationRepository(
             bundledFileURL: bundledURL,
             remoteURL: stationDataURL,
@@ -118,5 +144,7 @@ struct AppServiceClients {
     let auth: any AuthClient
     let favorites: any FavoritesClient
     let status: any StatusClient
+    let demandAnalytics: any DemandAnalyticsClient
+    let liveAvailability: any LiveAvailabilityClient
     let isConfigured: Bool
 }

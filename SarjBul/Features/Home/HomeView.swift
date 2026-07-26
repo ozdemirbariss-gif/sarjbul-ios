@@ -43,6 +43,7 @@ struct HomeView: View {
                 .padding(.leading, 18)
                 .padding(.top, 6)
             }
+            .accessibilityIdentifier("home-screen")
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 guard !isDeterministicUITest else { return }

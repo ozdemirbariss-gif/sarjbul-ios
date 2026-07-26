@@ -29,10 +29,12 @@ targets:
         product: FirebaseAppCheck
       - package: Firebase
         product: FirebaseCrashlytics
+      - target: SarjBulWidgets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul
         INFOPLIST_FILE: SarjBul/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SarjBul/SarjBul.entitlements
         ENABLE_PREVIEWS: YES
     preBuildScripts:
       - name: Generate Design Tokens
@@ -43,6 +45,20 @@ targets:
           - $(SRCROOT)/Scripts/generate_design_tokens.py
         outputFiles:
           - $(SRCROOT)/SarjBul/Generated/DesignTokens.generated.swift
+  SarjBulWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - SarjBulWidgets
+      - SarjBul/App/ChargingActivityAttributes.swift
+      - SarjBul/App/WidgetSnapshot.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul.widgets
+        INFOPLIST_FILE: SarjBulWidgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SarjBulWidgets/SarjBulWidgets.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
   SarjBulUITests:
     type: bundle.ui-testing
     platform: iOS

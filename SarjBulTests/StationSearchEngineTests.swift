@@ -196,16 +196,16 @@ struct StationSearchEngineTests {
     }
 
     @Test
-    func firebaseErrorsAreMappedInsideClientBoundary() {
-        let invalidCredentials = AuthError.map(
-            FirebaseRESTError.requestFailed("INVALID_LOGIN_CREDENTIALS", statusCode: 400)
+    func anonymousAuthErrorsAreMappedInsideClientBoundary() {
+        let throttled = AuthError.map(
+            FirebaseRESTError.requestFailed("TOO_MANY_ATTEMPTS_TRY_LATER", statusCode: 400)
         )
-        let existingEmail = AuthError.map(
-            FirebaseRESTError.requestFailed("EMAIL_EXISTS", statusCode: 400)
+        let expired = AuthError.map(
+            FirebaseRESTError.requestFailed("TOKEN_EXPIRED", statusCode: 401)
         )
 
-        #expect(invalidCredentials == .invalidCredentials)
-        #expect(existingEmail == .emailAlreadyExists)
+        #expect(throttled == .tooManyAttempts)
+        #expect(expired == .sessionExpired)
     }
 
     private func loadFixture() throws -> [Station] {
