@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Install XcodeGen and SwiftLint
+        run: brew install xcodegen swiftlint
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -37,6 +37,8 @@ jobs:
           npm audit --audit-level=moderate
       - name: Core tests
         run: swift test
+      - name: SwiftLint
+        run: swiftlint lint --strict --no-cache
       - name: Generate project
         run: xcodegen generate
       - name: Build app
