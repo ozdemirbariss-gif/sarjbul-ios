@@ -11,7 +11,7 @@ SCREENSHOT_DIR = ROOT / "Docs" / "screenshots"
 OUTPUT = SCREENSHOT_DIR / "sarjbul-ios-preview.png"
 TOKENS_PATH = ROOT / "SarjBul" / "Resources" / "design-tokens.json"
 SCREENS = (
-    ("account.png", "Giriş"),
+    ("account.png", "Profil"),
     ("home.png", "Ana sayfa"),
     ("routes.png", "Rotalar"),
     ("lounge.png", "Salon"),

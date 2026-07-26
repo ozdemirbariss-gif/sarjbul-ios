@@ -142,10 +142,6 @@ final class StationDataStore {
     }
 
     func reportStatus(stationKey: String, status: String, auth: AuthStore) async -> Bool {
-        guard auth.isAuthenticated else {
-            messages.present(.localized(key: "service.report_login_required", kind: .error))
-            return false
-        }
         guard canReportStatus(for: stationKey) else {
             messages.present(.localized(
                 key: "service.report_cooldown",
@@ -187,10 +183,6 @@ final class StationDataStore {
         contribution: StationContribution,
         auth: AuthStore
     ) async -> Bool {
-        guard auth.isAuthenticated else {
-            messages.present(.localized(key: "data_quality.login_required", kind: .error))
-            return false
-        }
         guard !contribution.values.isEmpty, canContribute(to: stationKey) else { return false }
 
         do {

@@ -39,10 +39,6 @@ final class FavoritesStore {
     }
 
     func load() async {
-        guard auth.isAuthenticated else {
-            favorites = []
-            return
-        }
         do {
             favorites = try await auth.authenticatedRequest { session in
                 try await self.client.favoriteIDs(uid: session.uid, idToken: session.idToken)
@@ -58,10 +54,6 @@ final class FavoritesStore {
     }
 
     func toggle(_ stationKey: String) async {
-        guard auth.isAuthenticated else {
-            messages.present(.localized(key: "service.favorite_login_required", kind: .error))
-            return
-        }
         guard !pendingKeys.contains(stationKey) else { return }
 
         pendingKeys.insert(stationKey)

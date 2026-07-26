@@ -101,6 +101,8 @@ final class AppState {
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
         } else if arguments.contains("--ui-testing-lounge") {
             navigation.tab = .lounge
+        } else if arguments.contains("--ui-testing-profile") {
+            navigation.tab = .account
         }
         #endif
     }

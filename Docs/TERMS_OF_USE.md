@@ -8,4 +8,4 @@ Varış şarjı ve güvenli menzil değerleri kullanıcının girdiği batarya k
 
 Uygulama sürüş sırasında elle kullanılmamalıdır. Yol tarifi başlatıldıktan sonra güvenli kullanım için Apple Maps veya tercih edilen navigasyon uygulamasının sesli yönlendirmesi kullanılmalıdır.
 
-Yanlış, yanıltıcı veya otomatik durum bildirimi göndermek yasaktır. Kötüye kullanımı önlemek için bildirimler hız sınırına tabidir ve hesapla ilişkilendirilir.
+Yanlış, yanıltıcı veya otomatik durum bildirimi göndermek yasaktır. Kötüye kullanımı önlemek için bildirimler hız sınırına tabidir ve cihazda saklanan anonim Firebase kimliğiyle ilişkilendirilir.

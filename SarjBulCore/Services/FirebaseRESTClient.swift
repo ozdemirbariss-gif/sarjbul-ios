@@ -47,44 +47,11 @@ public struct FirebaseRESTClient: Sendable {
         return try JSONDecoder().decode([String: StationCommunityInsight].self, from: data)
     }
 
-    public func signIn(email: String, password: String) async throws -> FirebaseAuthSession {
-        do {
-            return try await authRequest(
-                endpoint: "accounts:signInWithPassword",
-                body: ["email": email, "password": password, "returnSecureToken": true]
-            )
-        } catch {
-            throw AuthError.map(error)
-        }
-    }
-
-    public func signUp(email: String, password: String) async throws -> FirebaseAuthSession {
+    public func signInAnonymously() async throws -> FirebaseAuthSession {
         do {
             return try await authRequest(
                 endpoint: "accounts:signUp",
-                body: ["email": email, "password": password, "returnSecureToken": true]
-            )
-        } catch {
-            throw AuthError.map(error)
-        }
-    }
-
-    public func sendPasswordReset(email: String) async throws {
-        do {
-            _ = try await authRequestData(
-                endpoint: "accounts:sendOobCode",
-                body: ["requestType": "PASSWORD_RESET", "email": email]
-            )
-        } catch {
-            throw AuthError.map(error)
-        }
-    }
-
-    public func sendEmailVerification(idToken: String) async throws {
-        do {
-            _ = try await authRequestData(
-                endpoint: "accounts:sendOobCode",
-                body: ["requestType": "VERIFY_EMAIL", "idToken": idToken]
+                body: ["returnSecureToken": true]
             )
         } catch {
             throw AuthError.map(error)

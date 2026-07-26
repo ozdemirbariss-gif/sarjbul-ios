@@ -6,15 +6,13 @@ final class AppSmokeUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testGuestCanReachHome() throws {
+    func testAppOpensDirectlyOnHomeWithoutAuthForm() throws {
         let app = XCUIApplication()
         app.launch()
 
-        let guestButton = app.buttons["guest-start-button"]
-        XCTAssertTrue(guestButton.waitForExistence(timeout: 8))
-        guestButton.tap()
-
         XCTAssertTrue(app.buttons["find-stations-button"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.buttons["auth-submit-button"].exists)
+        XCTAssertFalse(app.buttons["guest-start-button"].exists)
     }
 
     func testHomeLaunchModeLoadsStationData() throws {

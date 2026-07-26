@@ -256,7 +256,7 @@ struct ChargingInsightsView: View {
         receiptEditorPresented = false
         Haptic.success()
 
-        guard let station, let unitPrice, auth.isAuthenticated else { return }
+        guard let station, let unitPrice else { return }
         Task {
             _ = await stationData.submitContribution(
                 stationKey: station.statusKey,

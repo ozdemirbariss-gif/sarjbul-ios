@@ -2,19 +2,15 @@ import Observation
 import SarjBulCore
 
 enum AuthState: Equatable, Sendable {
-    case guest
-    case signedIn(FirebaseAuthSession)
+    case local
+    case active(FirebaseAuthSession)
     case refreshing(FirebaseAuthSession)
 
     var session: FirebaseAuthSession? {
         switch self {
-        case .guest: nil
-        case .signedIn(let session), .refreshing(let session): session
+        case .local: nil
+        case .active(let session), .refreshing(let session): session
         }
-    }
-
-    var isAuthenticated: Bool {
-        session?.uid.isEmpty == false
     }
 }
 
@@ -39,58 +35,27 @@ final class AuthStore {
         self.messages = messages
         self.isConfigured = isConfigured
         if let session = persistence.authSession, !session.uid.isEmpty {
-            state = .signedIn(session)
+            state = .active(session)
         } else {
-            state = .guest
+            state = .local
         }
     }
 
     var session: FirebaseAuthSession? { state.session }
-    var isAuthenticated: Bool { state.isAuthenticated }
 
-    func signIn(email: String, password: String) async {
+    func prepare() async {
+        guard isConfigured else { return }
         do {
-            try requireConfiguration()
-            let session = try await client.signIn(email: email, password: password)
-            await apply(session)
+            _ = try await validSession()
         } catch {
-            present(error)
+            AppLogger.account.warning(
+                "Anonymous session could not be prepared: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
-    func signUp(email: String, password: String) async {
-        do {
-            try requireConfiguration()
-            let session = try await client.signUp(email: email, password: password)
-            await apply(session)
-            var verificationSent = false
-            do {
-                try await client.sendEmailVerification(idToken: session.idToken)
-                verificationSent = true
-            } catch {
-                AppLogger.account.warning("Verification email failed: \(error.localizedDescription, privacy: .public)")
-            }
-            messages.present(.localized(
-                key: verificationSent ? "service.verification_sent" : "service.verification_pending",
-                kind: .success
-            ))
-        } catch {
-            present(error)
-        }
-    }
-
-    func resetPassword(email: String) async {
-        do {
-            try requireConfiguration()
-            try await client.sendPasswordReset(email: email)
-            messages.present(.localized(key: "service.reset_sent", kind: .success))
-        } catch {
-            present(error)
-        }
-    }
-
-    func signOut() {
-        state = .guest
+    private func clearSession() {
+        state = .local
         persistence.authSession = nil
         Task { await onSessionChanged?(nil) }
     }
@@ -101,7 +66,8 @@ final class AuthStore {
             let session = try await validSession()
             try await client.initiateAccountDeletion(uid: session.uid, idToken: session.idToken)
             try await client.deleteAccount(idToken: session.idToken)
-            signOut()
+            clearSession()
+            await prepare()
             messages.present(.localized(key: "service.account_deleted", kind: .success))
             return true
         } catch {
@@ -124,8 +90,17 @@ final class AuthStore {
     }
 
     func validSession() async throws -> FirebaseAuthSession {
-        guard let session = state.session else { throw AuthError.sessionExpired }
+        guard let session = state.session else {
+            return try await createAnonymousSession()
+        }
         if session.isExpired { return try await refreshSession() }
+        return session
+    }
+
+    private func createAnonymousSession() async throws -> FirebaseAuthSession {
+        try requireConfiguration()
+        let session = try await client.signInAnonymously()
+        await apply(session)
         return session
     }
 
@@ -140,15 +115,15 @@ final class AuthStore {
             await apply(refreshed)
             return refreshed
         } catch {
-            state = .guest
+            state = .local
             persistence.authSession = nil
             await onSessionChanged?(nil)
-            throw AuthError.map(error)
+            return try await createAnonymousSession()
         }
     }
 
     private func apply(_ session: FirebaseAuthSession) async {
-        state = .signedIn(session)
+        state = .active(session)
         persistence.authSession = session
         await onSessionChanged?(session)
     }

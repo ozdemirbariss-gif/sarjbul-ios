@@ -15,7 +15,7 @@ enum AppRoute: Hashable, Sendable {
 @MainActor
 @Observable
 final class NavigationCoordinator {
-    var tab: AppTab = .account
+    var tab: AppTab = .home
     var homePath = NavigationPath()
     var routesPath = NavigationPath()
     var loungePath = NavigationPath()

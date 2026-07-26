@@ -159,13 +159,11 @@ struct StationCard: View {
 
             routeButtons
 
-            if auth.isAuthenticated {
-                statusActions
-                if reportCooldownRemaining > 0 {
-                    Text(settings.t("service.report_cooldown", ["seconds": "\(reportCooldownRemaining)"]))
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(SBColor.textSoft)
-                }
+            statusActions
+            if reportCooldownRemaining > 0 {
+                Text(settings.t("service.report_cooldown", ["seconds": "\(reportCooldownRemaining)"]))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SBColor.textSoft)
             }
         }
         .padding(12)
@@ -277,14 +275,10 @@ struct StationCard: View {
             }
 
             Button {
-                if auth.isAuthenticated {
-                    contributionPresented = true
-                } else {
-                    navigation.select(.account)
-                }
+                contributionPresented = true
             } label: {
                 Label(
-                    settings.t(auth.isAuthenticated ? "data_quality.improve" : "data_quality.login_to_improve"),
+                    settings.t("data_quality.improve"),
                     systemImage: "checkmark.seal"
                 )
             }

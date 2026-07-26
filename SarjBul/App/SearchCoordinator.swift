@@ -64,9 +64,10 @@ final class SearchCoordinator {
     func prepare() async {
         guard !prepared else { return }
         prepared = true
+        await auth.prepare()
         let session = try? await auth.validSession()
         await stationData.load(statusIDToken: session?.idToken)
-        if auth.isAuthenticated { await favorites.load() }
+        if auth.isConfigured { await favorites.load() }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes") {
             await findStations()
@@ -174,7 +175,7 @@ final class SearchCoordinator {
     private var profileSafeRange: Double { settings.profile.safeRangeKm }
 
     private func recordDemandIfEnabled(origin: UserLocation, resultCount: Int) async {
-        guard settings.demandAnalyticsEnabled, auth.isAuthenticated else { return }
+        guard settings.demandAnalyticsEnabled else { return }
         let event = SearchDemandEvent(
             location: origin,
             preference: settings.filters.preference,

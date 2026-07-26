@@ -17,7 +17,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Gerçek `MKDirections` rotası, trafik katmanlı MapKit görünümü ve Apple/Google Maps aktarımı
 - Dikey snap kart akışı ile bütün istasyonları gösteren harita arasında geçiş
 - ETag destekli uzaktan istasyon verisi, kalite kapısı, yerel cache ve bundle fallback
-- Firebase Auth token yenileme, favori senkronizasyonu, durum bildirimi ve uygulama içi hesap silme
+- Form gerektirmeyen anonim Firebase oturumu, token yenileme, favori senkronizasyonu ve durum bildirimi
 - Firebase App Check/App Attest, Crashlytics, sıkı Realtime Database kuralları ve sunucu tarafı özetleme
 - Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları
 - Doğrusal olmayan şarj eğrisi, rakım etkisi ve toplam süre optimizasyonlu uzun yol planı
@@ -44,7 +44,7 @@ SarjBulWidgets/           Ana ekran/kilit ekranı widget'ı, Live Activity ve Dy
 SarjBulTests/             Domain testleri
 SarjBulUnitTests/         Auth state-machine ve persistence migrasyon testleri
 SarjBulUITests/           Kritik misafir akışı smoke testi
-firebase/functions/       Durum/veri/talep özetleri ve hesap verisi temizleme işleri
+firebase/functions/       Durum/veri/talep özetleri ve anonim kimlik verisi temizleme işleri
 database.rules.json       auth.uid tabanlı Realtime Database izolasyonu
 ```
 
