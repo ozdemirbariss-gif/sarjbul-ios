@@ -160,7 +160,7 @@ private struct SBPremiumGlassModifier: ViewModifier {
 extension LinearGradient {
     static var sbPrimary: LinearGradient {
         LinearGradient(
-            colors: [SBColor.accent, SBColor.electricBlue],
+            colors: [SBColor.primaryDeep, SBColor.electricBlue],
             startPoint: .leading,
             endPoint: .trailing
         )
@@ -168,7 +168,7 @@ extension LinearGradient {
 
     static var sbNeon: LinearGradient {
         LinearGradient(
-            colors: [SBColor.accent, SBColor.primaryDeep.opacity(0.92)],
+            colors: [SBColor.primaryDeep, SBColor.electricBlue],
             startPoint: .leading,
             endPoint: .trailing
         )

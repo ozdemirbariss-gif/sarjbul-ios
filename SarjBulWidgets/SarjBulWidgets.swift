@@ -16,7 +16,7 @@ struct SarjBulNearestWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: NearestStationProvider()) { entry in
             NearestStationWidgetView(entry: entry)
-                .containerBackground(for: .widget) { Color(red: 0.97, green: 0.98, blue: 0.94) }
+                .containerBackground(for: .widget) { Color(white: 0.96) }
         }
         .configurationDisplayName("SarjBul")
         .description("En yakın hızlı şarjı ve güvenli menzilini gösterir.")
@@ -63,7 +63,7 @@ private struct NearestStationWidgetView: View {
                 VStack(alignment: .leading, spacing: 7) {
                     Label("ŞarjBul", systemImage: "bolt.car.fill")
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(neon)
+                        .foregroundStyle(accent)
                     Text(snapshot.stationName)
                         .font(.headline.weight(.heavy))
                         .foregroundStyle(ink)
@@ -85,15 +85,15 @@ private struct NearestStationWidgetView: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 8) {
-                Image(systemName: "bolt.car.fill").foregroundStyle(neon)
+                Image(systemName: "bolt.car.fill").foregroundStyle(accent)
                 Text(emptyMessage)
                     .font(.headline.weight(.bold))
             }
         }
     }
 
-    private var neon: Color { Color(red: 0.76, green: 1, blue: 0.05) }
-    private var ink: Color { Color(red: 0.05, green: 0.07, blue: 0.05) }
+    private var accent: Color { .black }
+    private var ink: Color { .black }
     private var isEnglish: Bool { entry.snapshot?.languageCode == "en" }
     private var emptyMessage: String {
         isEnglish ? "Open SarjBul and search from your location." : "SarjBul'u açıp konumunla bir arama yap."
@@ -105,7 +105,7 @@ struct ChargingLiveActivityWidget: Widget {
         ActivityConfiguration(for: ChargingActivityAttributes.self) { context in
             HStack(spacing: 12) {
                 Image(systemName: "bolt.fill")
-                    .foregroundStyle(neon)
+                    .foregroundStyle(activityAccent)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(context.attributes.stationName)
                         .font(.headline.weight(.heavy))
@@ -123,7 +123,7 @@ struct ChargingLiveActivityWidget: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "bolt.fill").foregroundStyle(neon)
+                    Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     Text(context.attributes.stationName).lineLimit(1)
@@ -136,18 +136,18 @@ struct ChargingLiveActivityWidget: Widget {
                         .monospacedDigit()
                 }
             } compactLeading: {
-                Image(systemName: "bolt.fill").foregroundStyle(neon)
+                Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
             } compactTrailing: {
                 Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
                     .monospacedDigit()
                     .frame(width: 46)
             } minimal: {
-                Image(systemName: "bolt.fill").foregroundStyle(neon)
+                Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
             }
             .widgetURL(URL(string: "sarjbul://lounge"))
-            .keylineTint(neon)
+            .keylineTint(activityAccent)
         }
     }
 
-    private var neon: Color { Color(red: 0.76, green: 1, blue: 0.05) }
+    private var activityAccent: Color { .white }
 }

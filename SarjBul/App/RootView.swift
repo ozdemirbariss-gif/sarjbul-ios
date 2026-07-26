@@ -29,7 +29,7 @@ struct RootView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .tint(SBColor.accent)
+        .tint(SBColor.electricBlue)
         .preferredColorScheme(.light)
         .task {
             await search.prepare()

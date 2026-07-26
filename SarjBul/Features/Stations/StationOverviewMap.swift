@@ -17,8 +17,8 @@ struct StationOverviewMap: View {
         Map(position: $position, selection: $selectedID) {
             if isochrone.count >= 3 {
                 MapPolygon(coordinates: isochrone)
-                    .foregroundStyle(SBColor.accent.opacity(0.13))
-                    .stroke(SBColor.primaryDeep.opacity(0.65), lineWidth: 2)
+                    .foregroundStyle(SBColor.ink.opacity(0.08))
+                    .stroke(SBColor.ink.opacity(0.55), lineWidth: 2)
             }
 
             if let origin = search.userLocation {
@@ -28,10 +28,10 @@ struct StationOverviewMap: View {
                 )) {
                     ZStack {
                         Circle()
-                            .fill(SBColor.accent.opacity(0.22))
+                            .fill(SBColor.ink.opacity(0.16))
                             .frame(width: 38, height: 38)
                         Circle()
-                            .fill(SBColor.accent)
+                            .fill(SBColor.ink)
                             .frame(width: 16, height: 16)
                             .overlay(Circle().stroke(.white, lineWidth: 3))
                     }
@@ -52,6 +52,7 @@ struct StationOverviewMap: View {
             }
         }
         .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll, showsTraffic: true))
+        .saturation(0)
         .mapControls {
             MapCompass()
             MapScaleView()
@@ -145,7 +146,7 @@ struct StationOverviewMap: View {
     }
 
     private func pinColor(for candidate: StationCandidate) -> Color {
-        if candidate.station.powerKW >= 100 { return SBColor.accent }
+        if candidate.station.powerKW >= 100 { return SBColor.electricBlue }
         if candidate.station.powerKW >= 50 { return SBColor.primaryDeep }
         return SBColor.electricBlue
     }

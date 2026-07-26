@@ -96,7 +96,7 @@ struct StationFeedView: View {
         case .searching:
             VStack(spacing: 18) {
                 ProgressView()
-                    .tint(SBColor.accent)
+                    .tint(SBColor.electricBlue)
                     .scaleEffect(1.2)
                 Text(settings.t("route.searching"))
                     .font(.headline.weight(.heavy))
@@ -154,7 +154,7 @@ struct StationFeedView: View {
                 VStack(spacing: 16) {
                     Image(systemName: icon)
                         .font(.largeTitle.weight(.heavy))
-                        .foregroundStyle(SBColor.accent)
+                        .foregroundStyle(SBColor.primaryDeep)
                     Text(title)
                         .font(SBFont.display(size: 30, weight: .heavy))
                         .foregroundStyle(SBColor.ink)
@@ -202,7 +202,7 @@ private struct StationFilterSheet: View {
                         Text(t("filters.minimum_power", ["power": "\(Int(filters.minimumPowerKW))"]))
                             .font(.headline)
                         Slider(value: $filters.minimumPowerKW, in: 0...180, step: 10)
-                            .tint(SBColor.accent)
+                            .tint(SBColor.electricBlue)
                     }
                 }
 

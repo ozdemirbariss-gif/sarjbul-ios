@@ -28,7 +28,7 @@ struct StationCard: View {
         }
         .background(
             LinearGradient(
-                colors: [SBColor.accent, SBColor.primaryDeep.opacity(0.88)],
+                colors: [SBColor.surfaceSolid, SBColor.accent],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -36,7 +36,7 @@ struct StationCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(SBColor.accent, lineWidth: 8)
+                .stroke(SBColor.lineStrong, lineWidth: 1)
         )
         .sbCardShadow()
         .task(id: routeTaskID) {

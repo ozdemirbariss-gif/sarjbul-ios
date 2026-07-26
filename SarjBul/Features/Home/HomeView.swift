@@ -267,7 +267,7 @@ struct HomeView: View {
                         in: 1...100,
                         step: 1
                     )
-                    .tint(SBColor.accent)
+                    .tint(SBColor.electricBlue)
                 }
 
                 ChargeVisual(
@@ -315,7 +315,7 @@ struct HomeView: View {
                     set: { settings.filters.rangeFilterEnabled = $0 }
                 ))
                 .font(.headline.weight(.semibold))
-                .tint(SBColor.accent)
+                .tint(SBColor.electricBlue)
             }
             .padding(.top, 16)
         } label: {
@@ -385,7 +385,7 @@ struct HomeView: View {
         .sbPremiumGlass(radius: SBRadius.card)
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                .stroke(SBColor.accent, lineWidth: 10)
+                .stroke(SBColor.lineStrong, lineWidth: 1)
         )
         .sbGlowShadow()
     }
@@ -548,7 +548,7 @@ private struct ChargeVisual: View {
                     .stroke(SBColor.line, lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: Double(clampedPercent) / 100)
-                    .stroke(SBColor.accent, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .stroke(SBColor.electricBlue, style: StrokeStyle(lineWidth: 14, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 VStack(spacing: 2) {
                     Text("%\(clampedPercent)")

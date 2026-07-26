@@ -76,7 +76,7 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(settings.t("profile.eyebrow"))
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.accent)
+                .foregroundStyle(SBColor.primaryDeep)
 
             Text(settings.t("profile.title"))
                 .font(SBFont.display(size: 48, weight: .heavy))
@@ -104,7 +104,7 @@ struct AccountView: View {
                     set: { settings.demandAnalyticsEnabled = $0 }
                 ))
                 .font(.subheadline.weight(.bold))
-                .tint(SBColor.accent)
+                .tint(SBColor.electricBlue)
 
                 Text(settings.t("auth.demand_analytics_hint"))
                     .font(.caption)
