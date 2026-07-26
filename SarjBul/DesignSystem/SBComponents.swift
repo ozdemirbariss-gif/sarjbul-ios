@@ -2,21 +2,11 @@ import SwiftUI
 
 struct SBScreenBackground: View {
     var body: some View {
-        ZStack {
-            SBColor.background
-            RadialGradient(
-                colors: [SBColor.accent.opacity(0.18), .clear],
-                center: .top,
-                startRadius: 20,
-                endRadius: 460
-            )
-            RadialGradient(
-                colors: [SBColor.primaryDeep.opacity(0.12), .clear],
-                center: .bottomLeading,
-                startRadius: 20,
-                endRadius: 520
-            )
-        }
+        LinearGradient(
+            colors: [SBColor.surfaceSolid, SBColor.background, SBColor.surface],
+            startPoint: .top,
+            endPoint: .bottom
+        )
         .ignoresSafeArea()
     }
 }
@@ -40,7 +30,7 @@ struct SBBackButton: View {
                     Circle()
                         .stroke(SBColor.line, lineWidth: 1)
                 )
-                .shadow(color: SBColor.accent.opacity(0.28), radius: 28, x: 0, y: 12)
+                .shadow(color: SBColor.ink.opacity(0.14), radius: 28, x: 0, y: 12)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
@@ -61,7 +51,7 @@ struct SBBrandMark: View {
                         .offset(x: 22)
                 }
             Circle()
-                .fill(SBColor.accent)
+                .fill(SBColor.ink)
                 .frame(width: 14, height: 14)
                 .padding(.leading, 8)
             Text("ŞarjBul")
@@ -162,14 +152,14 @@ struct SBPrimaryButton: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
             }
-            .foregroundStyle(SBColor.ink)
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
             .background(LinearGradient.sbNeon)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .stroke(.white.opacity(0.55), lineWidth: 1)
+                    .stroke(.white.opacity(0.20), lineWidth: 1)
             )
             .sbGlowShadow()
         }

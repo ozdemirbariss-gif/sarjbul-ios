@@ -1,20 +1,20 @@
 {
   "source": "elektriklisarj/style.css",
   "colors": {
-    "background": { "hex": "#FFFFFF", "opacity": 1.0 },
-    "surface": { "hex": "#F4F5F2", "opacity": 1.0 },
-    "surfaceSoft": { "hex": "#F4F5F2", "opacity": 0.86 },
-    "line": { "hex": "#0E1012", "opacity": 0.10 },
-    "lineStrong": { "hex": "#9FE000", "opacity": 0.34 },
-    "text": { "hex": "#0E1012", "opacity": 1.0 },
-    "textSoft": { "hex": "#0E1012", "opacity": 0.68 },
-    "textMuted": { "hex": "#0E1012", "opacity": 0.52 },
-    "primary": { "hex": "#C8FF2E", "opacity": 1.0 },
-    "primaryDeep": { "hex": "#9FE000", "opacity": 1.0 },
-    "danger": { "hex": "#E68484", "opacity": 1.0 },
-    "warning": { "hex": "#D8B46A", "opacity": 1.0 },
-    "electricBlue": { "hex": "#0E1012", "opacity": 1.0 },
-    "glass": { "hex": "#FFFFFF", "opacity": 0.82 },
+    "background": { "hex": "#F3F3F3", "opacity": 1.0 },
+    "surface": { "hex": "#FFFFFF", "opacity": 1.0 },
+    "surfaceSoft": { "hex": "#E9E9E9", "opacity": 0.88 },
+    "line": { "hex": "#080808", "opacity": 0.10 },
+    "lineStrong": { "hex": "#080808", "opacity": 0.30 },
+    "text": { "hex": "#080808", "opacity": 1.0 },
+    "textSoft": { "hex": "#080808", "opacity": 0.68 },
+    "textMuted": { "hex": "#080808", "opacity": 0.50 },
+    "primary": { "hex": "#E8E8E8", "opacity": 1.0 },
+    "primaryDeep": { "hex": "#3A3A3A", "opacity": 1.0 },
+    "danger": { "hex": "#202020", "opacity": 1.0 },
+    "warning": { "hex": "#6B6B6B", "opacity": 1.0 },
+    "electricBlue": { "hex": "#080808", "opacity": 1.0 },
+    "glass": { "hex": "#FFFFFF", "opacity": 0.78 },
     "glassStrong": { "hex": "#FFFFFF", "opacity": 0.94 }
   },
   "radius": {
@@ -27,9 +27,9 @@
     "pill": 999
   },
   "shadows": {
-    "soft": { "color": "#0E1012", "opacity": 0.08, "radius": 24, "x": 0, "y": 14 },
-    "glow": { "color": "#C8FF2E", "opacity": 0.22, "radius": 22, "x": 0, "y": 12 },
-    "card": { "color": "#0E1012", "opacity": 0.12, "radius": 24, "x": 0, "y": 16 }
+    "soft": { "color": "#080808", "opacity": 0.09, "radius": 24, "x": 0, "y": 14 },
+    "glow": { "color": "#080808", "opacity": 0.16, "radius": 30, "x": 0, "y": 16 },
+    "card": { "color": "#080808", "opacity": 0.14, "radius": 26, "x": 0, "y": 18 }
   },
   "fonts": {
     "display": "Space Grotesk",

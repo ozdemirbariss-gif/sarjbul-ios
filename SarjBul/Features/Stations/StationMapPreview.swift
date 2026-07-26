@@ -18,10 +18,10 @@ struct StationMapPreview: View {
                     longitude: origin.longitude
                 )) {
                     Circle()
-                        .fill(SBColor.accent)
+                        .fill(SBColor.ink)
                         .frame(width: 18, height: 18)
                         .overlay(Circle().stroke(.white, lineWidth: 4))
-                        .shadow(color: SBColor.accent.opacity(0.45), radius: 12)
+                        .shadow(color: SBColor.ink.opacity(0.28), radius: 12)
                 }
             }
 
@@ -41,6 +41,7 @@ struct StationMapPreview: View {
             }
         }
         .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll, showsTraffic: true))
+        .saturation(0)
         .mapControls {
             if interactive {
                 MapCompass()

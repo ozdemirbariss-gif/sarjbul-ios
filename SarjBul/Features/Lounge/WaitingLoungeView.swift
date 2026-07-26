@@ -45,6 +45,7 @@ struct WaitingLoungeView: View {
             SBBackButton(accessibilityLabel: settings.t("nav.back")) {
                 navigation.tab = .home
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, 18)
             .padding(.top, 6)
         }
