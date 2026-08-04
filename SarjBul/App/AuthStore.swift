@@ -54,10 +54,10 @@ final class AuthStore {
         }
     }
 
-    private func clearSession() {
+    private func clearSession() async {
         state = .local
         persistence.authSession = nil
-        Task { await onSessionChanged?(nil) }
+        await onSessionChanged?(nil)
     }
 
     func deleteAccount() async -> Bool {
@@ -66,7 +66,7 @@ final class AuthStore {
             let session = try await validSession()
             try await client.initiateAccountDeletion(uid: session.uid, idToken: session.idToken)
             try await client.deleteAccount(idToken: session.idToken)
-            clearSession()
+            await clearSession()
             await prepare()
             messages.present(.localized(key: "service.account_deleted", kind: .success))
             return true
@@ -114,11 +114,12 @@ final class AuthStore {
             refreshed.userId = refreshed.userId ?? current.userId
             await apply(refreshed)
             return refreshed
-        } catch {
-            state = .local
-            persistence.authSession = nil
-            await onSessionChanged?(nil)
+        } catch let error as AuthError where error == .sessionInvalidated {
+            await clearSession()
             return try await createAnonymousSession()
+        } catch {
+            state = .active(current)
+            throw error
         }
     }
 

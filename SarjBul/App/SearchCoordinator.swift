@@ -22,6 +22,10 @@ enum SearchState: Sendable {
 @MainActor
 @Observable
 final class SearchCoordinator {
+    private enum PendingQuickAction {
+        case nearestFast
+    }
+
     private let stationData: StationDataStore
     private let settings: UserSettingsStore
     private let favorites: FavoritesStore
@@ -32,6 +36,7 @@ final class SearchCoordinator {
     private let journeyRouteService = JourneyRouteService()
     private let tripPlanner = ChargingTripPlanner()
     private var pendingStationKey: String?
+    private var pendingQuickAction: PendingQuickAction?
     private var prepared = false
 
     var userLocation: UserLocation?
@@ -88,6 +93,9 @@ final class SearchCoordinator {
         if let pendingStationKey {
             self.pendingStationKey = nil
             Task { await openStation(withKey: pendingStationKey) }
+        } else if pendingQuickAction == .nearestFast {
+            pendingQuickAction = nil
+            Task { await findStations() }
         }
     }
 
@@ -198,7 +206,12 @@ final class SearchCoordinator {
     func openNearestFast() async {
         settings.filters.preference = .fastest
         navigation.select(.home)
-        if userLocation != nil { await findStations() }
+        guard userLocation != nil else {
+            pendingQuickAction = .nearestFast
+            return
+        }
+        pendingQuickAction = nil
+        await findStations()
     }
 
     func openStation(withKey key: String) async {

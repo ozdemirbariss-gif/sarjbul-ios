@@ -34,8 +34,12 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul
         INFOPLIST_FILE: SarjBul/Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: SarjBul/SarjBul.entitlements
         ENABLE_PREVIEWS: YES
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: SarjBul/SarjBulDebug.entitlements
+        Release:
+          CODE_SIGN_ENTITLEMENTS: SarjBul/SarjBul.entitlements
     preBuildScripts:
       - name: Generate Design Tokens
         script: |

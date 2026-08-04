@@ -50,6 +50,95 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(store.state, .active(expected))
         XCTAssertEqual(persistence.authSession, expected)
     }
+
+    func testTransientRefreshFailurePreservesAnonymousIdentity() async throws {
+        let persistence = try makePersistence()
+        let current = expiredSession(uid: "stable-driver")
+        persistence.authSession = current
+        let store = AuthStore(
+            client: RefreshFailingAuthClient(error: .network, replacement: current),
+            persistence: persistence,
+            messages: AppMessagePresenter(),
+            isConfigured: true
+        )
+
+        do {
+            _ = try await store.validSession()
+            XCTFail("A transient refresh error should be surfaced to the caller")
+        } catch {
+            XCTAssertEqual(error as? AuthError, .network)
+        }
+        XCTAssertEqual(store.state, .active(current))
+        XCTAssertEqual(persistence.authSession?.uid, "stable-driver")
+    }
+
+    func testInvalidRefreshTokenCreatesReplacementAnonymousIdentity() async throws {
+        let persistence = try makePersistence()
+        let current = expiredSession(uid: "invalid-driver")
+        let replacement = FirebaseAuthSession(
+            idToken: "new-id-token",
+            refreshToken: "new-refresh-token",
+            localId: "replacement-driver"
+        )
+        persistence.authSession = current
+        let store = AuthStore(
+            client: RefreshFailingAuthClient(error: .sessionInvalidated, replacement: replacement),
+            persistence: persistence,
+            messages: AppMessagePresenter(),
+            isConfigured: true
+        )
+
+        let result = try await store.validSession()
+
+        XCTAssertEqual(result.uid, "replacement-driver")
+        XCTAssertEqual(persistence.authSession?.uid, "replacement-driver")
+    }
+
+    func testActiveChargingSessionRestoresFromPersistence() throws {
+        let persistence = try makePersistence()
+        let station = Station(
+            id: "station-1",
+            name: "Test Station",
+            address: "Izmir",
+            latitude: 38.4,
+            longitude: 27.1,
+            power: "150 kW",
+            operatorName: "Test",
+            socket: "CCS2",
+            price: "10 TL",
+            source: "test"
+        )
+        let saved = PersistedChargingSession(
+            station: station,
+            endDate: Date().addingTimeInterval(1_800),
+            targetPercent: 85
+        )
+        persistence.activeChargingSession = saved
+
+        let store = ChargingSessionStore(persistence: persistence)
+
+        XCTAssertTrue(store.isActive)
+        XCTAssertEqual(store.station?.id, station.id)
+        XCTAssertEqual(store.endDate, saved.endDate)
+        XCTAssertEqual(store.targetPercent, 85)
+    }
+
+    private func makePersistence() throws -> SystemAppPersistence {
+        let suiteName = "StoreTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        return SystemAppPersistence(defaults: defaults, secureStorage: MemorySecureStorage())
+    }
+
+    private func expiredSession(uid: String) -> FirebaseAuthSession {
+        FirebaseAuthSession(
+            idToken: "expired-id-token",
+            refreshToken: "refresh-token",
+            expiresIn: "60",
+            issuedAt: Date().addingTimeInterval(-120),
+            localId: uid
+        )
+    }
 }
 
 private final class MemorySecureStorage: SecureStorage {
@@ -67,4 +156,14 @@ private struct StubAuthClient: AuthClient {
     func initiateAccountDeletion(uid: String, idToken: String) async throws {}
     func deleteAccount(idToken: String) async throws {}
     func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession { session }
+}
+
+private struct RefreshFailingAuthClient: AuthClient {
+    let error: AuthError
+    let replacement: FirebaseAuthSession
+
+    func signInAnonymously() async throws -> FirebaseAuthSession { replacement }
+    func initiateAccountDeletion(uid: String, idToken: String) async throws {}
+    func deleteAccount(idToken: String) async throws {}
+    func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession { throw error }
 }

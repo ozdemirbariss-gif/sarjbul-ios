@@ -40,6 +40,7 @@
     },
     "station_contributions": {
       "$stationKey": {
+        ".indexOn": ["tarih"],
         "$contributionId": {
           ".read": "auth != null && data.child('uid').val() === auth.uid",
           ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').exists() || root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').val() <= now - 30000)",
@@ -64,6 +65,7 @@
     },
     "yorumlar": {
       "$stationKey": {
+          ".indexOn": ["tarih"],
           "$reportId": {
             ".read": "auth != null && data.child('uid').val() === auth.uid",
             ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').exists() || root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').val() <= now - 60000)) || (!newData.exists() && data.child('uid').val() === auth.uid))",

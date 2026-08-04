@@ -68,7 +68,7 @@ final class AppState {
         deepLinks = DeepLinkRouter(search: search, navigation: navigation)
         lounge = LoungeStore(persistence: persistence)
         chargingHistory = ChargingHistoryStore(persistence: persistence)
-        chargingSession = ChargingSessionStore()
+        chargingSession = ChargingSessionStore(persistence: persistence)
 
         auth.onSessionChanged = { [weak favorites, weak stationData] session in
             await favorites?.handleSessionChanged(session)

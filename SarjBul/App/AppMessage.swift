@@ -38,7 +38,7 @@ private extension AuthError {
         switch self {
         case .tooManyAttempts: "service.too_many_attempts"
         case .network: "service.network_error"
-        case .sessionExpired: "service.no_session"
+        case .sessionExpired, .sessionInvalidated: "service.no_session"
         case .serviceUnavailable: "service.firebase_missing"
         case .other: "status.error"
         }

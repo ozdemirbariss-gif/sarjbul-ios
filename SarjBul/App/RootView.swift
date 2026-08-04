@@ -8,6 +8,8 @@ struct RootView: View {
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(DeepLinkRouter.self) private var deepLinks
     @Environment(NetworkMonitor.self) private var networkMonitor
+    @Environment(RouteStore.self) private var routeStore
+    @Environment(ChargingSessionStore.self) private var chargingSession
     @State private var bottomNavigationExpanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -32,11 +34,13 @@ struct RootView: View {
         .tint(SBColor.electricBlue)
         .preferredColorScheme(.light)
         .task {
+            await chargingSession.prepare()
             await search.prepare()
             guard PendingAppIntentStore.consume() == .nearestFast else { return }
-            settings.filters.preference = .fastest
-            navigation.select(.home)
-            if search.userLocation != nil { await search.findStations() }
+            await search.openNearestFast()
+        }
+        .onChange(of: networkMonitor.isConnected) { wasConnected, isConnected in
+            if !wasConnected && isConnected { routeStore.invalidate() }
         }
         .sensoryFeedback(.selection, trigger: navigation.tab)
         .onChange(of: navigation.tab) { _, tab in

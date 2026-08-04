@@ -105,6 +105,7 @@ public enum AuthError: LocalizedError, Equatable, Sendable {
     case tooManyAttempts
     case network
     case sessionExpired
+    case sessionInvalidated
     case serviceUnavailable
     case other(String)
 
@@ -113,6 +114,7 @@ public enum AuthError: LocalizedError, Equatable, Sendable {
         case .tooManyAttempts: "Too many attempts."
         case .network: "Network connection failed."
         case .sessionExpired: "Authentication session expired."
+        case .sessionInvalidated: "Authentication session is no longer valid."
         case .serviceUnavailable: "Authentication service is unavailable."
         case .other(let message): message
         }
@@ -132,6 +134,10 @@ public enum AuthError: LocalizedError, Equatable, Sendable {
 
         let message = error.localizedDescription.uppercased()
         if message.contains("TOO_MANY_ATTEMPTS") { return .tooManyAttempts }
+        if message.contains("INVALID_REFRESH_TOKEN") || message.contains("USER_DISABLED") ||
+            message.contains("USER_NOT_FOUND") {
+            return .sessionInvalidated
+        }
         if message.contains("TOKEN_EXPIRED") || message.contains("INVALID_ID_TOKEN") { return .sessionExpired }
         if message.contains("NETWORK") || message.contains("OFFLINE") { return .network }
         return .other(error.localizedDescription)

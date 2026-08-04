@@ -8,10 +8,18 @@ final class ChargingActivityManager {
     private var activity: Activity<ChargingActivityAttributes>?
 
     func start(stationName: String, minutes: Int, targetPercent: Int) async {
+        await start(
+            stationName: stationName,
+            endDate: Date().addingTimeInterval(TimeInterval(minutes * 60)),
+            targetPercent: targetPercent
+        )
+    }
+
+    func start(stationName: String, endDate: Date, targetPercent: Int) async {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         await stop()
         let state = ChargingActivityAttributes.ContentState(
-            endDate: Date().addingTimeInterval(TimeInterval(minutes * 60)),
+            endDate: endDate,
             targetPercent: targetPercent
         )
         do {

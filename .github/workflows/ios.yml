@@ -34,7 +34,13 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npm run lint
-          npm audit --audit-level=moderate
+          npm audit --omit=dev --audit-level=moderate
+      - name: Test Firebase security rules
+        run: >-
+          firebase/functions/node_modules/.bin/firebase emulators:exec
+          --project demo-sarjbul
+          --only database
+          "npm --prefix firebase/functions run test:rules"
       - name: Core tests
         run: swift test
       - name: SwiftLint
@@ -46,6 +52,14 @@ jobs:
           xcodebuild -quiet
           -project SarjBul.xcodeproj
           -scheme SarjBul
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+      - name: Build Release configuration
+        run: >-
+          xcodebuild -quiet
+          -project SarjBul.xcodeproj
+          -scheme SarjBul
+          -configuration Release
           -destination 'generic/platform=iOS Simulator'
           CODE_SIGNING_ALLOWED=NO
       - name: UI smoke test

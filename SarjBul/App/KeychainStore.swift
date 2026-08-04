@@ -15,6 +15,9 @@ enum KeychainStore {
 
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            AppLogger.account.error("Keychain read failed with status \(status, privacy: .public)")
+        }
         guard status == errSecSuccess else { return nil }
         return item as? Data
     }
@@ -35,7 +38,12 @@ enum KeychainStore {
         if status == errSecItemNotFound {
             var item = query
             attributes.forEach { item[$0.key] = $0.value }
-            SecItemAdd(item as CFDictionary, nil)
+            let addStatus = SecItemAdd(item as CFDictionary, nil)
+            if addStatus != errSecSuccess {
+                AppLogger.account.error("Keychain insert failed with status \(addStatus, privacy: .public)")
+            }
+        } else if status != errSecSuccess {
+            AppLogger.account.error("Keychain update failed with status \(status, privacy: .public)")
         }
     }
 
@@ -45,6 +53,9 @@ enum KeychainStore {
             kSecAttrService as String: service,
             kSecAttrAccount as String: key
         ]
-        SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            AppLogger.account.error("Keychain delete failed with status \(status, privacy: .public)")
+        }
     }
 }

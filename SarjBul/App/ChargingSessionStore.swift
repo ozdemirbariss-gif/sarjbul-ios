@@ -14,27 +14,67 @@ struct ChargingBreakPlace: Identifiable, Hashable, Sendable {
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
+struct PersistedChargingSession: Codable, Equatable, Sendable {
+    var station: Station
+    var endDate: Date
+    var targetPercent: Int
+}
+
 @MainActor
 @Observable
 final class ChargingSessionStore {
     private let poiService = ChargingBreakPOIService()
+    private let persistence: any AppPersistence
+    private var prepared = false
 
     private(set) var station: Station?
     private(set) var endDate: Date?
     private(set) var nearbyPlaces: [ChargingBreakPlace] = []
     private(set) var isLoadingPlaces = false
+    private(set) var targetPercent = 80
+
+    init(persistence: any AppPersistence) {
+        self.persistence = persistence
+        guard let saved = persistence.activeChargingSession, saved.endDate > Date() else {
+            persistence.activeChargingSession = nil
+            return
+        }
+        station = saved.station
+        endDate = saved.endDate
+        targetPercent = saved.targetPercent
+    }
 
     var isActive: Bool { station != nil && endDate != nil }
 
-    func start(station: Station, minutes: Int = 30, targetPercent: Int = 80) async {
-        self.station = station
-        endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
-        isLoadingPlaces = true
-        nearbyPlaces = await poiService.places(near: station, radiusMeters: 400)
-        isLoadingPlaces = false
+    func prepare() async {
+        guard !prepared else { return }
+        prepared = true
+        guard let station, let endDate, endDate > Date() else {
+            persistence.activeChargingSession = nil
+            return
+        }
+        await loadPlaces(near: station)
         await ChargingActivityManager.shared.start(
             stationName: station.name,
-            minutes: minutes,
+            endDate: endDate,
+            targetPercent: targetPercent
+        )
+    }
+
+    func start(station: Station, minutes: Int = 30, targetPercent: Int = 80) async {
+        self.station = station
+        let endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        self.endDate = endDate
+        self.targetPercent = targetPercent
+        persistence.activeChargingSession = PersistedChargingSession(
+            station: station,
+            endDate: endDate,
+            targetPercent: targetPercent
+        )
+        await loadPlaces(near: station)
+        await ChargingActivityManager.shared.start(
+            stationName: station.name,
+            endDate: endDate,
             targetPercent: targetPercent
         )
     }
@@ -43,7 +83,14 @@ final class ChargingSessionStore {
         station = nil
         endDate = nil
         nearbyPlaces = []
+        persistence.activeChargingSession = nil
         await ChargingActivityManager.shared.stop()
+    }
+
+    private func loadPlaces(near station: Station) async {
+        isLoadingPlaces = true
+        nearbyPlaces = await poiService.places(near: station, radiusMeters: 400)
+        isLoadingPlaces = false
     }
 }
 

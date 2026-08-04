@@ -1,0 +1,65 @@
+name: Refresh station data
+
+on:
+  schedule:
+    - cron: "20 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: station-data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download canonical station data
+        run: >-
+          curl --fail --location --retry 3
+          https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json
+          --output /tmp/stations.json
+      - name: Validate dataset quality
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          incoming = json.loads(Path("/tmp/stations.json").read_text(encoding="utf-8"))
+          manifest = json.loads(Path("SarjBul/Resources/StationTiles/station-tiles-manifest.json").read_text())
+          previous = int(manifest["total_records"])
+          minimum = max(1_000, int(previous * 0.85))
+          if len(incoming) < minimum:
+              raise SystemExit(f"Dataset quality gate failed: {len(incoming)} < {minimum}")
+          required = {"id", "isim", "enlem", "boylam"}
+          invalid = [index for index, item in enumerate(incoming) if not required.issubset(item)]
+          if invalid:
+              raise SystemExit(f"Dataset has malformed records: {invalid[:10]}")
+          print(f"Accepted {len(incoming)} records; minimum was {minimum}")
+          PY
+      - name: Build geohash tiles
+        run: >-
+          python3 Scripts/build_station_tiles.py
+          /tmp/stations.json
+          SarjBul/Resources/StationTiles
+          --base-url
+          https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/
+      - name: Refresh licensed operators
+        run: python3 Scripts/update_epdk_operators.py
+      - name: Commit refreshed data
+        run: |
+          if git diff --quiet -- SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json; then
+            echo "Station data is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json
+          git commit -m "data: refresh station tiles"
+          git push

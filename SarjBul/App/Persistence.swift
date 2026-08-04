@@ -19,6 +19,7 @@ protocol AppPersistence: AnyObject {
     var reportCooldowns: [String: Date] { get set }
     var loungeBestScore: Int { get set }
     var chargingSessions: [ChargingSessionRecord] { get set }
+    var activeChargingSession: PersistedChargingSession? { get set }
     var demandAnalyticsEnabled: Bool { get set }
 }
 
@@ -45,6 +46,7 @@ final class SystemAppPersistence: AppPersistence {
         static let reportCooldowns = "stationReportCooldowns"
         static let loungeBest = "voltDashBest"
         static let chargingSessions = "chargingSessions"
+        static let activeChargingSession = "activeChargingSession"
         static let demandAnalyticsEnabled = "demandAnalyticsEnabled"
     }
 
@@ -118,6 +120,11 @@ final class SystemAppPersistence: AppPersistence {
     var chargingSessions: [ChargingSessionRecord] {
         get { decode([ChargingSessionRecord].self, key: Key.chargingSessions) ?? [] }
         set { encode(newValue, key: Key.chargingSessions) }
+    }
+
+    var activeChargingSession: PersistedChargingSession? {
+        get { decode(PersistedChargingSession.self, key: Key.activeChargingSession) }
+        set { encodeOptional(newValue, key: Key.activeChargingSession) }
     }
 
     var demandAnalyticsEnabled: Bool {

@@ -6,7 +6,8 @@ import SarjBulCore
 @Observable
 final class RouteStore {
     private var routes: [RouteKey: StationRoute] = [:]
-    private var failures: Set<RouteKey> = []
+    private var failures: [RouteKey: Date] = [:]
+    private let failureRetryInterval: TimeInterval = 30
 
     func cachedRoute(origin: UserLocation, station: Station) -> StationRoute? {
         routes[RouteKey(origin: origin, stationID: station.id)]
@@ -15,7 +16,10 @@ final class RouteStore {
     func route(origin: UserLocation, station: Station) async -> StationRoute? {
         let key = RouteKey(origin: origin, stationID: station.id)
         if let cached = routes[key] { return cached }
-        if failures.contains(key) { return nil }
+        if let failedAt = failures[key], Date().timeIntervalSince(failedAt) < failureRetryInterval {
+            return nil
+        }
+        failures.removeValue(forKey: key)
 
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
@@ -31,7 +35,7 @@ final class RouteStore {
 
         do {
             guard let route = try await MKDirections(request: request).calculate().routes.first else {
-                failures.insert(key)
+                failures[key] = Date()
                 return nil
             }
             let result = StationRoute(
@@ -55,7 +59,7 @@ final class RouteStore {
             return result
         } catch {
             AppLogger.routing.warning("MapKit route failed for \(station.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            failures.insert(key)
+            failures[key] = Date()
             return nil
         }
     }

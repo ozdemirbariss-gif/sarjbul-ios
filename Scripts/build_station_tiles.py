@@ -44,7 +44,16 @@ def main() -> None:
     parser.add_argument("--precision", type=int, default=3)
     args = parser.parse_args()
 
-    records = json.loads(args.input.read_text(encoding="utf-8"))
+    source_payload = args.input.read_bytes()
+    source_sha256 = hashlib.sha256(source_payload).hexdigest()
+    records = json.loads(source_payload)
+    previous_manifest = None
+    manifest_path = args.output / "station-tiles-manifest.json"
+    if manifest_path.exists():
+        try:
+            previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            previous_manifest = None
     groups = {}
     for record in records:
         key = geohash(float(record["enlem"]), float(record["boylam"]), args.precision)
@@ -65,9 +74,14 @@ def main() -> None:
             "sha256": hashlib.sha256(payload).hexdigest(),
         })
 
+    generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    if previous_manifest and previous_manifest.get("source_sha256") == source_sha256:
+        generated_at = previous_manifest.get("generated_at", generated_at)
+
     manifest = {
         "schema_version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "generated_at": generated_at,
+        "source_sha256": source_sha256,
         "total_records": len(records),
         "base_url": args.base_url.rstrip("/") + "/",
         "tiles": tiles,
