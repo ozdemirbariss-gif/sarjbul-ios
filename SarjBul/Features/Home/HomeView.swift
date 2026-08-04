@@ -25,7 +25,10 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
                         topControls
-                        journeyInputs
+                        if search.userLocation?.source != .device {
+                            locationInput
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                         routeAction
                         drivingProfile
                         filtersAndSettings
@@ -44,6 +47,7 @@ struct HomeView: View {
                 .padding(.leading, 18)
                 .padding(.top, 6)
             }
+            .animation(.easeInOut(duration: 0.24), value: search.userLocation?.source)
             .accessibilityIdentifier("home-screen")
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
@@ -52,6 +56,7 @@ struct HomeView: View {
             }
             .onAppear {
                 guard !isDeterministicUITest else { return }
+                settings.destination = nil
                 guard !didRequestDeviceLocation, search.userLocation == nil else { return }
                 requestDeviceLocation()
             }
@@ -109,19 +114,9 @@ struct HomeView: View {
         .buttonStyle(QuickActionStyle(active: settings.filters.preference == preference))
     }
 
-    private var journeyInputs: some View {
+    private var locationInput: some View {
         VStack(spacing: 0) {
             originJourneyButton
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(SBColor.signal)
-                    .frame(width: 6, height: 6)
-                Rectangle()
-                    .fill(SBColor.line)
-                    .frame(height: 1)
-            }
-            .padding(.leading, 16)
-            destinationJourneyButton
         }
         .padding(8)
         .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
@@ -130,6 +125,7 @@ struct HomeView: View {
                 .stroke(SBColor.line, lineWidth: 1)
         )
         .sbSoftShadow()
+        .accessibilityIdentifier("location-input")
     }
 
     private var originJourneyButton: some View {
@@ -141,27 +137,6 @@ struct HomeView: View {
                 icon: "location.fill"
             ) {
                 placeSearchMode = .origin
-            }
-    }
-
-    private var destinationJourneyButton: some View {
-        journeyButton(
-                title: settings.destination?.name ?? settings.t("place.choose_destination"),
-                subtitle: settings.destination?.address.isEmpty == false
-                    ? settings.destination?.address ?? ""
-                    : settings.t("place.optional"),
-                icon: "flag.checkered"
-            ) {
-                placeSearchMode = .destination
-            }
-            .contextMenu {
-                if settings.destination != nil {
-                    Button(role: .destructive) {
-                        settings.destination = nil
-                    } label: {
-                        Label(settings.t("place.clear_destination"), systemImage: "xmark")
-                    }
-                }
             }
     }
 
@@ -498,6 +473,7 @@ struct HomeView: View {
         #if DEBUG
         ProcessInfo.processInfo.arguments.contains("--ui-testing-home")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-device-location")
         #else
         false
         #endif

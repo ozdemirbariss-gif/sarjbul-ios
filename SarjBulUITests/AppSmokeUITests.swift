@@ -14,6 +14,17 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
         XCTAssertFalse(app.buttons["auth-submit-button"].exists)
         XCTAssertFalse(app.buttons["guest-start-button"].exists)
+        XCTAssertTrue(app.staticTexts["Konum seç"].exists)
+        XCTAssertFalse(app.staticTexts["Hedef ekle"].exists)
+    }
+
+    func testManualLocationInputHidesWhenDeviceLocationIsAvailable() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-device-location"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
+        XCTAssertFalse(app.descendants(matching: .any)["location-input"].exists)
     }
 
     func testStationStoryImageOpensShareSheet() throws {

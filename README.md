@@ -16,8 +16,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 
 ## Ürün Özellikleri
 
-- Cihaz konumu, adres/POI arama ve manuel koordinat akışı
-- İsteğe bağlı hedef ile rota koridorundaki istasyonları bulma
+- Açılışta cihaz konumu izni; izin yoksa adres/POI arama ve manuel koordinat akışı
 - Batarya kapasitesi, şarj yüzdesi, tüketim ve güvenlik payıyla varış şarjı hesabı
 - Yakın, hızlı, ekonomik ve dengeli sıralama; soket, güç ve menzil filtreleri
 - Gerçek `MKDirections` rotası, trafik katmanlı MapKit görünümü ve Apple/Google Maps aktarımı

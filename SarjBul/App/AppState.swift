@@ -96,7 +96,10 @@ final class AppState {
     private func applyDebugLaunchMode() {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("--ui-testing-home") || arguments.contains("--ui-testing-routes") {
+        if arguments.contains("--ui-testing-device-location") {
+            navigation.tab = .home
+            search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
+        } else if arguments.contains("--ui-testing-home") || arguments.contains("--ui-testing-routes") {
             navigation.tab = .home
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
         } else if arguments.contains("--ui-testing-lounge") {
