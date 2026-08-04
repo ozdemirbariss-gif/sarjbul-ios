@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var selectedPreset: ManualLocationPreset?
     @State private var didRequestDeviceLocation = false
     @State private var locationRequestTimedOut = false
+    @State private var drivingProfileExpanded = false
     @State private var settingsExpanded = false
     @State private var placeSearchMode: PlaceSearchMode?
     @Environment(\.openURL) private var openURL
@@ -257,65 +258,96 @@ struct HomeView: View {
 
     private var drivingProfile: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(settings.t("catalog.kicker"))
-                .font(.headline.weight(.heavy))
-                .foregroundStyle(SBColor.signal)
-                .textCase(.uppercase)
-                .padding(.horizontal, 4)
-
-            SBPanel {
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text(settings.t("catalog.charge_percent"))
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(SBColor.muted)
-                        Spacer()
-                        Text("\(settings.profile.chargePercent)")
-                            .font(.title2.weight(.heavy))
-                            .foregroundStyle(SBColor.muted)
-                    }
-                    Slider(
-                        value: Binding(
-                            get: { Double(settings.profile.chargePercent) },
-                            set: { settings.profile.chargePercent = Int($0.rounded()) }
-                        ),
-                        in: 1...100,
-                        step: 1
-                    )
-                    .tint(SBColor.signal)
+            Button {
+                Haptic.tap()
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) {
+                    drivingProfileExpanded.toggle()
                 }
-
-                ChargeVisual(
-                    percent: settings.profile.chargePercent,
-                    statusText: chargeStatusText,
-                    chargeLabel: settings.t("charge.label"),
-                    selectedLevelText: settings.t("charge.selected_level")
-                )
-
-                Divider().overlay(SBColor.line)
-
+            } label: {
                 HStack(spacing: 12) {
-                    MetricInput(
-                        title: settings.t("catalog.capacity"),
-                        unit: "kWh",
-                        value: Binding(
-                            get: { settings.profile.batteryKWh },
-                            set: { settings.profile.batteryKWh = $0 }
-                        ),
-                        range: 1...250,
-                        step: 1
-                    )
-                    MetricInput(
-                        title: settings.t("catalog.consumption"),
-                        unit: "kWh",
-                        value: Binding(
-                            get: { settings.profile.consumptionKWhPer100Km },
-                            set: { settings.profile.consumptionKWhPer100Km = $0 }
-                        ),
-                        range: 5...40,
-                        step: 0.1
-                    )
+                    Text(settings.t("catalog.kicker"))
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                        .textCase(.uppercase)
+
+                    Spacer(minLength: 12)
+
+                    Text("%\(settings.profile.chargePercent) · \(safeRangeKm) km")
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(SBColor.textSoft)
+                        .lineLimit(1)
+
+                    Image(systemName: "chevron.down")
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                        .rotationEffect(.degrees(drivingProfileExpanded ? 180 : 0))
                 }
+                .padding(.horizontal, 18)
+                .frame(height: 60)
+                .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                        .stroke(SBColor.line, lineWidth: 1)
+                )
+            }
+            .buttonStyle(SBPremiumButtonStyle())
+
+            if drivingProfileExpanded {
+                SBPanel {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text(settings.t("catalog.charge_percent"))
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(SBColor.muted)
+                            Spacer()
+                            Text("\(settings.profile.chargePercent)")
+                                .font(.title2.weight(.heavy))
+                                .foregroundStyle(SBColor.muted)
+                        }
+                        Slider(
+                            value: Binding(
+                                get: { Double(settings.profile.chargePercent) },
+                                set: { settings.profile.chargePercent = Int($0.rounded()) }
+                            ),
+                            in: 1...100,
+                            step: 1
+                        )
+                        .tint(SBColor.signal)
+                    }
+
+                    ChargeVisual(
+                        percent: settings.profile.chargePercent,
+                        statusText: chargeStatusText,
+                        chargeLabel: settings.t("charge.label"),
+                        selectedLevelText: settings.t("charge.selected_level")
+                    )
+
+                    Divider().overlay(SBColor.line)
+
+                    HStack(spacing: 12) {
+                        MetricInput(
+                            title: settings.t("catalog.capacity"),
+                            unit: "kWh",
+                            value: Binding(
+                                get: { settings.profile.batteryKWh },
+                                set: { settings.profile.batteryKWh = $0 }
+                            ),
+                            range: 1...250,
+                            step: 1
+                        )
+                        MetricInput(
+                            title: settings.t("catalog.consumption"),
+                            unit: "kWh",
+                            value: Binding(
+                                get: { settings.profile.consumptionKWhPer100Km },
+                                set: { settings.profile.consumptionKWhPer100Km = $0 }
+                            ),
+                            range: 5...40,
+                            step: 0.1
+                        )
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
