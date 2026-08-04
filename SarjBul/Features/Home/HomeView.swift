@@ -78,6 +78,13 @@ struct HomeView: View {
             preferenceButton(.fastest, icon: "bolt.fill")
             preferenceButton(.economical, icon: "fuelpump")
         }
+        .padding(6)
+        .background(SBColor.charcoal, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
+        )
+        .sbCardShadow()
         .padding(.leading, 72)
         .padding(.top, 4)
     }
@@ -102,18 +109,26 @@ struct HomeView: View {
     }
 
     private var journeyInputs: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 12) {
-                originJourneyButton
-                destinationJourneyButton
+        VStack(spacing: 0) {
+            originJourneyButton
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(SBColor.signal)
+                    .frame(width: 6, height: 6)
+                Rectangle()
+                    .fill(SBColor.line)
+                    .frame(height: 1)
             }
-
-            VStack(spacing: 10) {
-                originJourneyButton
-                destinationJourneyButton
-            }
+            .padding(.leading, 16)
+            destinationJourneyButton
         }
-        .padding(.leading, 0)
+        .padding(8)
+        .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
+        )
+        .sbSoftShadow()
     }
 
     private var originJourneyButton: some View {
@@ -180,8 +195,8 @@ struct HomeView: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity)
-            .frame(height: 68)
-            .sbPremiumGlass(radius: SBRadius.lg, interactive: true)
+            .frame(height: 72)
+            .contentShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         }
         .buttonStyle(SBPremiumButtonStyle())
     }
@@ -244,7 +259,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(settings.t("catalog.kicker"))
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(SBColor.primaryDeep)
+                .foregroundStyle(SBColor.signal)
                 .textCase(.uppercase)
                 .padding(.horizontal, 4)
 
@@ -516,15 +531,13 @@ private struct QuickActionStyle: ButtonStyle {
             .font(.subheadline.weight(.bold))
             .foregroundStyle(active ? SBColor.onSignal : SBColor.textSoft)
             .frame(maxWidth: .infinity)
-            .frame(height: 62)
-            .background(active ? SBColor.signal : SBColor.glassStrong.opacity(0.72))
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .sbPremiumGlass(radius: 22, interactive: true)
+            .frame(height: 56)
+            .background(active ? SBColor.signal : .clear)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(active ? .black.opacity(0.12) : SBColor.line, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(active ? .black.opacity(0.12) : .clear, lineWidth: 1)
             )
-            .sbSoftShadow()
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }

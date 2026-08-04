@@ -16,54 +16,7 @@ struct StationFeedView: View {
             ZStack(alignment: .topLeading) {
                 SBScreenBackground()
                 content
-
-                HStack(spacing: 10) {
-                    SBBackButton(accessibilityLabel: settings.t("nav.back")) {
-                        navigation.tab = .home
-                    }
-
-                    Spacer()
-
-                    if !search.routeCandidates.isEmpty {
-                        if search.tripPlan != nil {
-                            Button {
-                                Haptic.tap()
-                                tripPlanPresented = true
-                            } label: {
-                                Image(systemName: "bolt.car.fill")
-                                    .font(.headline.weight(.heavy))
-                                    .foregroundStyle(SBColor.ink)
-                                    .frame(width: 52, height: 52)
-                                    .sbPremiumGlass(radius: 26, interactive: true)
-                            }
-                            .buttonStyle(SBPremiumButtonStyle())
-                            .accessibilityLabel(settings.t("planner.title"))
-                        }
-
-                        Picker(settings.t("feed.view_mode"), selection: $mode) {
-                            Label(settings.t("feed.cards"), systemImage: "rectangle.stack").tag(FeedMode.cards)
-                            Label(settings.t("feed.map"), systemImage: "map").tag(FeedMode.map)
-                        }
-                        .pickerStyle(.segmented)
-                        .tint(SBColor.signal)
-                        .frame(maxWidth: 210)
-
-                        Button {
-                            Haptic.tap()
-                            filterSheetPresented = true
-                        } label: {
-                            Image(systemName: "line.3.horizontal.decrease")
-                                .font(.headline.weight(.heavy))
-                                .foregroundStyle(SBColor.ink)
-                                .frame(width: 52, height: 52)
-                                .sbPremiumGlass(radius: 26, interactive: true)
-                        }
-                        .buttonStyle(SBPremiumButtonStyle())
-                        .accessibilityLabel(settings.t("feed.filters"))
-                    }
-                }
-                .padding(.horizontal, 18)
-                .padding(.top, 6)
+                feedToolbar
             }
             .navigationDestination(for: AppRoute.self, destination: routeDestination)
         }
@@ -87,6 +40,79 @@ struct StationFeedView: View {
                     .environment(settings)
             }
         }
+    }
+
+    private var feedToolbar: some View {
+        HStack(spacing: 12) {
+            SBBackButton(accessibilityLabel: settings.t("nav.back")) {
+                navigation.tab = .home
+            }
+
+            Spacer(minLength: 8)
+
+            if !search.routeCandidates.isEmpty {
+                HStack(spacing: 4) {
+                    if search.tripPlan != nil {
+                        toolbarButton(
+                            icon: "bolt.car.fill",
+                            accessibilityLabel: settings.t("planner.title")
+                        ) {
+                            tripPlanPresented = true
+                        }
+                    }
+
+                    modeButton(.cards, icon: "rectangle.stack.fill", label: settings.t("feed.cards"))
+                    modeButton(.map, icon: "map.fill", label: settings.t("feed.map"))
+
+                    toolbarButton(
+                        icon: "line.3.horizontal.decrease",
+                        accessibilityLabel: settings.t("feed.filters")
+                    ) {
+                        filterSheetPresented = true
+                    }
+                }
+                .padding(5)
+                .background(SBColor.charcoal.opacity(0.98), in: Capsule())
+                .overlay(Capsule().stroke(SBColor.line, lineWidth: 1))
+                .sbCardShadow()
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 6)
+    }
+
+    private func modeButton(_ targetMode: FeedMode, icon: String, label: String) -> some View {
+        Button {
+            Haptic.tap()
+            mode = targetMode
+        } label: {
+            Image(systemName: icon)
+                .font(.headline.weight(.heavy))
+                .foregroundStyle(mode == targetMode ? SBColor.onSignal : SBColor.textSoft)
+                .frame(width: 46, height: 46)
+                .background(mode == targetMode ? SBColor.signal : .clear, in: Circle())
+        }
+        .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(mode == targetMode ? .isSelected : [])
+    }
+
+    private func toolbarButton(
+        icon: String,
+        accessibilityLabel: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            Haptic.tap()
+            action()
+        } label: {
+            Image(systemName: icon)
+                .font(.headline.weight(.heavy))
+                .foregroundStyle(SBColor.textSoft)
+                .frame(width: 46, height: 46)
+        }
+        .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityLabel(accessibilityLabel)
     }
 
     @ViewBuilder
@@ -153,7 +179,7 @@ struct StationFeedView: View {
                     if mode == .cards {
                         ScrollView {
                             LazyVStack(spacing: 18) {
-                                Color.clear.frame(height: 30)
+                                Color.clear.frame(height: 22)
                                 ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
                                     StationCard(candidate: candidate, rank: index + 1, total: candidates.count)
                                         .frame(maxWidth: 680)
