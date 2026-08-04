@@ -18,6 +18,9 @@ struct StationCard: View {
     @State private var route: StationRoute?
     @State private var fullMapPresented = false
     @State private var contributionPresented = false
+    @State private var storyShareItem: StationStoryShareItem?
+    @State private var isGeneratingStory = false
+    @State private var storyErrorPresented = false
     @ScaledMetric(relativeTo: .largeTitle) private var distanceTextSize = 56
     @ScaledMetric(relativeTo: .title) private var stationTitleSize = 24
 
@@ -47,6 +50,12 @@ struct StationCard: View {
                 .environment(settings)
                 .environment(auth)
                 .environment(stationData)
+        }
+        .sheet(item: $storyShareItem) { item in
+            StationStoryShareSheet(item: item)
+        }
+        .alert(settings.t("story.error"), isPresented: $storyErrorPresented) {
+            Button(settings.t("status.ok"), role: .cancel) {}
         }
     }
 
@@ -173,19 +182,27 @@ struct StationCard: View {
                 Spacer(minLength: 8)
                 stationToolsMenu
 
-                ShareLink(
-                    item: shareURL,
-                    subject: Text(candidate.station.name),
-                    message: Text(candidate.station.address)
-                ) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(SBColor.electricBlue)
-                        .frame(width: 40, height: 40)
-                        .sbPremiumGlass(radius: 20, interactive: true)
+                Button {
+                    Haptic.tap()
+                    Task { await createStoryShare() }
+                } label: {
+                    Group {
+                        if isGeneratingStory {
+                            ProgressView()
+                                .tint(SBColor.electricBlue)
+                        } else {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(SBColor.electricBlue)
+                        }
+                    }
+                    .frame(width: 40, height: 40)
+                    .sbPremiumGlass(radius: 20, interactive: true)
                 }
                 .buttonStyle(SBPremiumButtonStyle())
+                .disabled(isGeneratingStory)
                 .accessibilityLabel(settings.t("feed.share"))
+                .accessibilityIdentifier("station-story-share-button")
 
                 favoriteButton
             }
@@ -537,6 +554,42 @@ struct StationCard: View {
         components.host = "station"
         components.path = "/\(candidate.station.statusKey)"
         return components.url ?? URL(string: "https://sarjbul.app")!
+    }
+
+    @MainActor
+    private func createStoryShare() async {
+        guard !isGeneratingStory else { return }
+        isGeneratingStory = true
+        defer { isGeneratingStory = false }
+
+        let content = StationStoryContent(
+            coordinate: CLLocationCoordinate2D(
+                latitude: candidate.station.latitude,
+                longitude: candidate.station.longitude
+            ),
+            headline: settings.t("story.headline"),
+            stationLabel: settings.t("feed.detail_card"),
+            stationName: candidate.station.name,
+            operatorName: candidate.station.operatorName,
+            distanceText: String(format: "%.1f km", displayDistanceKm),
+            arrivalText: "\(settings.t("feed.arrival")) %\(Int(displayArrivalCharge.rounded()))",
+            scoreText: "\(candidate.score) \(settings.t("feed.score"))",
+            footer: settings.t("story.footer")
+        )
+
+        do {
+            let image = try await StationStoryRenderer.render(content)
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing-story"),
+               let data = image.pngData() {
+                let outputURL = FileManager.default.temporaryDirectory.appending(path: "station-story.png")
+                try? data.write(to: outputURL)
+            }
+            #endif
+            storyShareItem = StationStoryShareItem(image: image, link: shareURL)
+        } catch {
+            storyErrorPresented = true
+        }
     }
 
     private var hasUsefulAddress: Bool {

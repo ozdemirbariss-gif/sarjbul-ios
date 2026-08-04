@@ -6,6 +6,12 @@ SarjBul, Türkiye genelindeki elektrikli araç şarj noktalarını menzil, rota,
 
 ![SarjBul iOS ekranları](Docs/screenshots/sarjbul-ios-preview.png)
 
+### Şarj Hikâyesi
+
+Rota kartındaki paylaş düğmesi, harita ve istasyon verilerinden Instagram Story oranında 1080×1920 görsel üretir. Kullanıcı görseli iOS paylaşım ekranından istediği uygulamaya gönderebilir veya vazgeçebilir.
+
+<img src="Docs/screenshots/station-story.png" alt="SarjBul şarj hikâyesi" width="320">
+
 Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, radius, gölge ve tipografi tokenları `SarjBul/Resources/design-tokens.json` içinde tek kaynaktır.
 
 ## Ürün Özellikleri
@@ -19,7 +25,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - ETag destekli uzaktan istasyon verisi, kalite kapısı, yerel cache ve bundle fallback
 - Form gerektirmeyen anonim Firebase oturumu, token yenileme, favori senkronizasyonu ve durum bildirimi
 - Firebase App Check/App Attest, Crashlytics, sıkı Realtime Database kuralları ve sunucu tarafı özetleme
-- Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları
+- Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları ve 9:16 şarj hikâyesi üretimi
 - Doğrusal olmayan şarj eğrisi, rakım etkisi ve toplam süre optimizasyonlu uzun yol planı
 - Yol ağına göre 16 yönlü erişilebilir menzil poligonu; dairesel menzil yanılsaması yok
 - Fiyat/soket/adres doğrulama, zamanla azalan güven ve gece güvenliği katkıları

@@ -15,4 +15,17 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertFalse(app.buttons["auth-submit-button"].exists)
         XCTAssertFalse(app.buttons["guest-start-button"].exists)
     }
+
+    func testStationStoryImageOpensShareSheet() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-routes", "--ui-testing-story"]
+        app.launch()
+
+        let shareButton = app.buttons.matching(identifier: "station-story-share-button").firstMatch
+        XCTAssertTrue(shareButton.waitForExistence(timeout: 15))
+        shareButton.tap()
+
+        let shareSheet = app.otherElements["station-story-share-sheet"]
+        XCTAssertTrue(shareSheet.waitForExistence(timeout: 20))
+    }
 }
