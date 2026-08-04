@@ -25,9 +25,9 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 22) {
                         topControls
                         journeyInputs
+                        routeAction
                         drivingProfile
                         filtersAndSettings
-                        routeAction
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 22)
