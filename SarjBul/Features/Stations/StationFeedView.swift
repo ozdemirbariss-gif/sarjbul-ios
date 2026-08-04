@@ -45,6 +45,7 @@ struct StationFeedView: View {
                             Label(settings.t("feed.map"), systemImage: "map").tag(FeedMode.map)
                         }
                         .pickerStyle(.segmented)
+                        .tint(SBColor.signal)
                         .frame(maxWidth: 210)
 
                         Button {
@@ -151,7 +152,7 @@ struct StationFeedView: View {
                 Group {
                     if mode == .cards {
                         ScrollView {
-                            LazyVStack(spacing: 24) {
+                            LazyVStack(spacing: 18) {
                                 Color.clear.frame(height: 30)
                                 ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
                                     StationCard(candidate: candidate, rank: index + 1, total: candidates.count)
@@ -159,8 +160,8 @@ struct StationFeedView: View {
                                         .containerRelativeFrame(.vertical, count: 1, spacing: 22)
                                         .scrollTransition { content, phase in
                                             content
-                                                .opacity(shouldReduceMotion || phase.isIdentity ? 1 : 0.72)
-                                                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.92)
+                                                .opacity(shouldReduceMotion || phase.isIdentity ? 1 : 0.84)
+                                                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.97)
                                         }
                                 }
                             }

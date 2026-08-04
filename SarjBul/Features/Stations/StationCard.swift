@@ -26,17 +26,11 @@ struct StationCard: View {
             mapPreview
             details
         }
-        .background(
-            LinearGradient(
-                colors: [SBColor.surfaceSolid, SBColor.accent],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .background(SBColor.surfaceSolid)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(SBColor.lineStrong, lineWidth: 1)
+            RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
         )
         .sbCardShadow()
         .task(id: routeTaskID) {
@@ -62,8 +56,9 @@ struct StationCard: View {
             origin: search.userLocation,
             route: route
         )
-            .frame(height: 164)
+            .frame(height: 184)
             .clipped()
+            .preferredColorScheme(.dark)
             .overlay(alignment: .topLeading) {
                 routePill {
                     HStack(spacing: 6) {
@@ -146,7 +141,7 @@ struct StationCard: View {
                 ForEach(candidate.badges.prefix(2), id: \.self) { badge in
                     Text(localizedBadgeTitle(badge))
                         .font(.caption2.weight(.heavy))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.black)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
                         .padding(.horizontal, 10)
@@ -166,7 +161,7 @@ struct StationCard: View {
                     .foregroundStyle(SBColor.textSoft)
             }
         }
-        .padding(12)
+        .padding(16)
     }
 
     private var stationPanel: some View {
@@ -208,9 +203,8 @@ struct StationCard: View {
                     .lineLimit(1)
             }
         }
-        .padding(12)
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .sbPremiumGlass(radius: SBRadius.lg)
     }
 
     private var stationIntelligence: some View {
@@ -260,7 +254,8 @@ struct StationCard: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .sbPremiumGlass(radius: SBRadius.md)
+        .background(SBColor.surface.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
     }
 
     private var stationToolsMenu: some View {
@@ -312,7 +307,7 @@ struct StationCard: View {
         HStack(spacing: 8) {
             Text(settings.t("feed.open_route"))
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(.white)
+                .foregroundStyle(.black)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
@@ -326,7 +321,7 @@ struct StationCard: View {
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                .stroke(.white.opacity(0.14), lineWidth: 1)
+                .stroke(.black.opacity(0.12), lineWidth: 1)
         )
     }
 
@@ -425,7 +420,12 @@ struct StationCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .frame(minHeight: 58)
-        .sbPremiumGlass(radius: SBRadius.lg)
+        .background(SBColor.surface)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
+                .stroke(SBColor.line, lineWidth: 1)
+        )
     }
 
     private func localizedBadgeTitle(_ badge: StationBadge) -> String {

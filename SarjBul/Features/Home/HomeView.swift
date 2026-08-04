@@ -22,15 +22,15 @@ struct HomeView: View {
                 SBScreenBackground()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 28) {
+                    VStack(alignment: .leading, spacing: 22) {
                         topControls
                         journeyInputs
                         drivingProfile
                         filtersAndSettings
                         routeAction
                     }
-                    .padding(.horizontal, 22)
-                    .padding(.top, 28)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 22)
                     .frame(maxWidth: 720)
                     .frame(maxWidth: .infinity)
                 }
@@ -73,13 +73,13 @@ struct HomeView: View {
     }
 
     private var topControls: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 10) {
             preferenceButton(.nearest, icon: "location.north.line")
             preferenceButton(.fastest, icon: "bolt.fill")
             preferenceButton(.economical, icon: "fuelpump")
         }
-        .padding(.leading, 94)
-        .padding(.top, 10)
+        .padding(.leading, 72)
+        .padding(.top, 4)
     }
 
     private func preferenceButton(_ preference: RoutePreference, icon: String) -> some View {
@@ -113,7 +113,7 @@ struct HomeView: View {
                 destinationJourneyButton
             }
         }
-        .padding(.leading, 34)
+        .padding(.leading, 0)
     }
 
     private var originJourneyButton: some View {
@@ -162,9 +162,9 @@ struct HomeView: View {
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(SBColor.accent)
+                    .foregroundStyle(SBColor.onSignal)
                     .frame(width: 38, height: 38)
-                    .background(SBColor.electricBlue)
+                    .background(SBColor.signal)
                     .clipShape(Circle())
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
@@ -194,9 +194,9 @@ struct HomeView: View {
                     HStack {
                         Image(systemName: "scope")
                             .font(.title2)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(SBColor.onSignal)
                             .frame(width: 52, height: 52)
-                            .background(SBColor.electricBlue)
+                            .background(SBColor.signal)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 4) {
                             Text(settings.t("home.search_title"))
@@ -267,7 +267,7 @@ struct HomeView: View {
                         in: 1...100,
                         step: 1
                     )
-                    .tint(SBColor.electricBlue)
+                    .tint(SBColor.signal)
                 }
 
                 ChargeVisual(
@@ -277,8 +277,7 @@ struct HomeView: View {
                     selectedLevelText: settings.t("charge.selected_level")
                 )
 
-                Divider()
-                    .overlay(SBColor.line)
+                Divider().overlay(SBColor.line)
 
                 HStack(spacing: 12) {
                     MetricInput(
@@ -334,9 +333,9 @@ struct HomeView: View {
             HStack(spacing: 18) {
                 Image(systemName: "bolt.fill")
                     .font(.title2.weight(.heavy))
-                    .foregroundStyle(SBColor.accent)
+                    .foregroundStyle(SBColor.onSignal)
                     .frame(width: 72, height: 72)
-                    .background(SBColor.electricBlue)
+                    .background(SBColor.signal)
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 7) {
@@ -371,10 +370,10 @@ struct HomeView: View {
             } label: {
                 Text(search.isSearching ? settings.t("location.calculating") : settings.t("location.find_charger"))
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(SBColor.onSignal)
                     .frame(maxWidth: .infinity)
                     .frame(height: 76)
-                    .background(SBColor.electricBlue)
+                    .background(SBColor.signal)
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
@@ -385,7 +384,7 @@ struct HomeView: View {
         .sbPremiumGlass(radius: SBRadius.card)
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                .stroke(SBColor.lineStrong, lineWidth: 1)
+                .stroke(SBColor.signal.opacity(0.55), lineWidth: 1.5)
         )
         .sbGlowShadow()
     }
@@ -515,15 +514,15 @@ private struct QuickActionStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(active ? SBColor.accent : SBColor.muted)
+            .foregroundStyle(active ? SBColor.onSignal : SBColor.textSoft)
             .frame(maxWidth: .infinity)
-            .frame(height: 68)
-            .background(active ? SBColor.electricBlue : SBColor.glassStrong.opacity(0.54))
+            .frame(height: 62)
+            .background(active ? SBColor.signal : SBColor.glassStrong.opacity(0.72))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .sbPremiumGlass(radius: 22, interactive: true)
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(active ? SBColor.lineStrong : SBColor.line, lineWidth: active ? 2 : 1)
+                    .stroke(active ? .black.opacity(0.12) : SBColor.line, lineWidth: 1)
             )
             .sbSoftShadow()
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
@@ -545,7 +544,7 @@ private struct ChargeVisual: View {
         HStack(spacing: 18) {
             ZStack {
                 Circle()
-                    .stroke(SBColor.line, lineWidth: 14)
+                    .stroke(.black.opacity(0.1), lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: Double(clampedPercent) / 100)
                     .stroke(SBColor.electricBlue, style: StrokeStyle(lineWidth: 14, lineCap: .round))
@@ -553,10 +552,11 @@ private struct ChargeVisual: View {
                 VStack(spacing: 2) {
                     Text("%\(clampedPercent)")
                         .font(.title.weight(.heavy))
+                        .foregroundStyle(.black)
                         .contentTransition(.numericText())
                     Text(chargeLabel)
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(.black.opacity(0.5))
                 }
             }
             .frame(width: 108, height: 108)
@@ -564,15 +564,20 @@ private struct ChargeVisual: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(selectedLevelText)
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(.black.opacity(0.5))
                 Text(statusText)
                     .font(.title3.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(.black)
                 BatteryBar(percent: clampedPercent)
             }
         }
-        .padding(16)
-        .sbPremiumGlass(radius: SBRadius.lg)
+        .padding(18)
+        .background(SBColor.ice)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                .stroke(.white.opacity(0.45), lineWidth: 1)
+        )
         .animation(.spring(response: 0.42, dampingFraction: 0.82), value: clampedPercent)
     }
 }
@@ -585,19 +590,19 @@ private struct BatteryBar: View {
             let fillWidth = max(18, proxy.size.width * CGFloat(percent) / 100)
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(SBColor.line)
+                    .fill(.black.opacity(0.1))
                 Capsule()
                     .fill(LinearGradient.sbNeon)
                     .frame(width: fillWidth)
                 Capsule()
-                    .stroke(SBColor.line, lineWidth: 1)
+                    .stroke(.black.opacity(0.16), lineWidth: 1)
             }
         }
         .frame(height: 30)
         .animation(.spring(response: 0.38, dampingFraction: 0.8), value: percent)
         .overlay(alignment: .trailing) {
             Capsule()
-                .fill(SBColor.textSoft)
+                .fill(.black.opacity(0.28))
                 .frame(width: 8, height: 18)
                 .offset(x: 6)
         }

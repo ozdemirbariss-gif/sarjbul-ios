@@ -1,39 +1,39 @@
 {
   "source": "elektriklisarj/style.css",
   "colors": {
-    "background": { "hex": "#F3F3F3", "opacity": 1.0 },
-    "surface": { "hex": "#FFFFFF", "opacity": 1.0 },
-    "surfaceSoft": { "hex": "#E9E9E9", "opacity": 0.88 },
-    "line": { "hex": "#080808", "opacity": 0.10 },
-    "lineStrong": { "hex": "#080808", "opacity": 0.30 },
-    "text": { "hex": "#080808", "opacity": 1.0 },
-    "textSoft": { "hex": "#080808", "opacity": 0.68 },
-    "textMuted": { "hex": "#080808", "opacity": 0.50 },
-    "primary": { "hex": "#E8E8E8", "opacity": 1.0 },
-    "primaryDeep": { "hex": "#3A3A3A", "opacity": 1.0 },
-    "danger": { "hex": "#202020", "opacity": 1.0 },
-    "warning": { "hex": "#6B6B6B", "opacity": 1.0 },
-    "electricBlue": { "hex": "#080808", "opacity": 1.0 },
-    "glass": { "hex": "#FFFFFF", "opacity": 0.78 },
-    "glassStrong": { "hex": "#FFFFFF", "opacity": 0.94 }
+    "background": { "hex": "#090A0A", "opacity": 1.0 },
+    "surface": { "hex": "#1C1D1D", "opacity": 1.0 },
+    "surfaceSoft": { "hex": "#292A2A", "opacity": 1.0 },
+    "line": { "hex": "#FFFFFF", "opacity": 0.10 },
+    "lineStrong": { "hex": "#E7FF78", "opacity": 0.42 },
+    "text": { "hex": "#F7F8F3", "opacity": 1.0 },
+    "textSoft": { "hex": "#FFFFFF", "opacity": 0.70 },
+    "textMuted": { "hex": "#FFFFFF", "opacity": 0.48 },
+    "primary": { "hex": "#E7FF78", "opacity": 1.0 },
+    "primaryDeep": { "hex": "#D8DFE9", "opacity": 1.0 },
+    "danger": { "hex": "#FF8585", "opacity": 1.0 },
+    "warning": { "hex": "#F0D77B", "opacity": 1.0 },
+    "electricBlue": { "hex": "#E7FF78", "opacity": 1.0 },
+    "glass": { "hex": "#1C1D1D", "opacity": 0.82 },
+    "glassStrong": { "hex": "#252626", "opacity": 0.96 }
   },
   "radius": {
-    "sm": 8,
+    "sm": 10,
     "md": 18,
     "lg": 24,
-    "xl": 28,
-    "card": 30,
-    "screen": 42,
+    "xl": 30,
+    "card": 34,
+    "screen": 44,
     "pill": 999
   },
   "shadows": {
-    "soft": { "color": "#080808", "opacity": 0.09, "radius": 24, "x": 0, "y": 14 },
-    "glow": { "color": "#080808", "opacity": 0.16, "radius": 30, "x": 0, "y": 16 },
-    "card": { "color": "#080808", "opacity": 0.14, "radius": 26, "x": 0, "y": 18 }
+    "soft": { "color": "#000000", "opacity": 0.34, "radius": 24, "x": 0, "y": 16 },
+    "glow": { "color": "#E7FF78", "opacity": 0.16, "radius": 32, "x": 0, "y": 14 },
+    "card": { "color": "#000000", "opacity": 0.46, "radius": 30, "x": 0, "y": 22 }
   },
   "fonts": {
     "display": "Space Grotesk",
     "body": "Inter",
-    "iosDisplayDesign": "rounded"
+    "iosDisplayDesign": "default"
   }
 }

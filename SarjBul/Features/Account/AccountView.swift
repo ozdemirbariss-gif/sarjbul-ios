@@ -76,7 +76,7 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(settings.t("profile.eyebrow"))
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.primaryDeep)
+                .foregroundStyle(SBColor.signal)
 
             Text(settings.t("profile.title"))
                 .font(SBFont.display(size: 48, weight: .heavy))
@@ -176,7 +176,7 @@ struct AccountView: View {
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "bolt.fill")
-                            .foregroundStyle(SBColor.accent)
+                            .foregroundStyle(.black)
                             .frame(width: 38, height: 38)
                             .background(SBColor.electricBlue)
                             .clipShape(Circle())

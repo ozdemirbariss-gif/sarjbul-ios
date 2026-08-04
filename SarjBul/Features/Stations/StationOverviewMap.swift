@@ -101,7 +101,7 @@ struct StationOverviewMap: View {
             HStack(spacing: 14) {
                 Image(systemName: "bolt.fill")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.accent)
+                    .foregroundStyle(.black)
                     .frame(width: 48, height: 48)
                     .background(SBColor.electricBlue)
                     .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))

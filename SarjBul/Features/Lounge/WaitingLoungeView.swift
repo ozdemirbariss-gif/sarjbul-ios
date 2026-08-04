@@ -146,6 +146,7 @@ struct WaitingLoungeView: View {
                         systemImage: reminderScheduled ? "bell.slash.fill" : "bell.fill"
                     )
                     .font(.headline.weight(.heavy))
+                    .foregroundStyle(reminderScheduled ? SBColor.ink : .black)
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: 48)
                 }
@@ -166,16 +167,16 @@ struct WaitingLoungeView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(settings.t("lounge.kicker"))
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.primaryDeep)
+                .foregroundStyle(SBColor.signal)
                 .textCase(.uppercase)
             Text(settings.t("lounge.title"))
                 .font(SBFont.display(size: min(titleSize, 72), weight: .heavy))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
             Text(settings.t("lounge.subtitle"))
                 .font(.headline.weight(.bold))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.textSoft)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.leading, 92)
@@ -188,7 +189,7 @@ struct WaitingLoungeView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(settings.t("lounge.game_title"))
                             .font(.caption.weight(.heavy))
-                            .foregroundStyle(SBColor.primaryDeep)
+                            .foregroundStyle(SBColor.signal)
                         Text(gameStatusText)
                             .font(SBFont.display(size: min(statusSize, 50), weight: .heavy))
                             .foregroundStyle(SBColor.ink)
@@ -208,13 +209,7 @@ struct WaitingLoungeView: View {
                 GeometryReader { proxy in
                     ZStack(alignment: .bottomLeading) {
                         RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [SBColor.surfaceSolid.opacity(0.92), SBColor.accent.opacity(0.12)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(SBColor.charcoal)
                             .overlay(
                                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
                                     .stroke(SBColor.line, lineWidth: 1)
@@ -227,7 +222,7 @@ struct WaitingLoungeView: View {
                             .sbGlowShadow()
 
                         RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous)
-                            .fill(SBColor.electricBlue)
+                            .fill(SBColor.ice)
                             .frame(width: 34, height: 72)
                             .offset(x: obstacleX, y: 0)
                     }

@@ -22,7 +22,7 @@ struct LegalView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         Image(systemName: icon)
                             .font(.system(size: 34, weight: .heavy))
-                            .foregroundStyle(SBColor.accent)
+                            .foregroundStyle(.black)
                             .frame(width: 72, height: 72)
                             .background(SBColor.electricBlue)
                             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
@@ -108,7 +108,7 @@ struct LegalView: View {
         Button(action: action) {
             Label(title, systemImage: icon)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.black)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(SBColor.electricBlue)

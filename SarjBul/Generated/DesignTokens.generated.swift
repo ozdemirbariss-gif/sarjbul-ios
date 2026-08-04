@@ -17,35 +17,35 @@ struct SBGeneratedShadowToken {
 enum SBGeneratedTokens {
     static let source = "elektriklisarj/style.css"
 
-    static let background = SBGeneratedColorToken(hex: "#F3F3F3", opacity: 1.0)
-    static let surface = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 1.0)
-    static let surfaceSoft = SBGeneratedColorToken(hex: "#E9E9E9", opacity: 0.88)
-    static let line = SBGeneratedColorToken(hex: "#080808", opacity: 0.1)
-    static let lineStrong = SBGeneratedColorToken(hex: "#080808", opacity: 0.3)
-    static let text = SBGeneratedColorToken(hex: "#080808", opacity: 1.0)
-    static let textSoft = SBGeneratedColorToken(hex: "#080808", opacity: 0.68)
-    static let textMuted = SBGeneratedColorToken(hex: "#080808", opacity: 0.5)
-    static let primary = SBGeneratedColorToken(hex: "#E8E8E8", opacity: 1.0)
-    static let primaryDeep = SBGeneratedColorToken(hex: "#3A3A3A", opacity: 1.0)
-    static let danger = SBGeneratedColorToken(hex: "#202020", opacity: 1.0)
-    static let warning = SBGeneratedColorToken(hex: "#6B6B6B", opacity: 1.0)
-    static let electricBlue = SBGeneratedColorToken(hex: "#080808", opacity: 1.0)
-    static let glass = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.78)
-    static let glassStrong = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.94)
+    static let background = SBGeneratedColorToken(hex: "#090A0A", opacity: 1.0)
+    static let surface = SBGeneratedColorToken(hex: "#1C1D1D", opacity: 1.0)
+    static let surfaceSoft = SBGeneratedColorToken(hex: "#292A2A", opacity: 1.0)
+    static let line = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.1)
+    static let lineStrong = SBGeneratedColorToken(hex: "#E7FF78", opacity: 0.42)
+    static let text = SBGeneratedColorToken(hex: "#F7F8F3", opacity: 1.0)
+    static let textSoft = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.7)
+    static let textMuted = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.48)
+    static let primary = SBGeneratedColorToken(hex: "#E7FF78", opacity: 1.0)
+    static let primaryDeep = SBGeneratedColorToken(hex: "#D8DFE9", opacity: 1.0)
+    static let danger = SBGeneratedColorToken(hex: "#FF8585", opacity: 1.0)
+    static let warning = SBGeneratedColorToken(hex: "#F0D77B", opacity: 1.0)
+    static let electricBlue = SBGeneratedColorToken(hex: "#E7FF78", opacity: 1.0)
+    static let glass = SBGeneratedColorToken(hex: "#1C1D1D", opacity: 0.82)
+    static let glassStrong = SBGeneratedColorToken(hex: "#252626", opacity: 0.96)
 
-    static let radiusSm = 8.0
+    static let radiusSm = 10.0
     static let radiusMd = 18.0
     static let radiusLg = 24.0
-    static let radiusXl = 28.0
-    static let radiusCard = 30.0
-    static let radiusScreen = 42.0
+    static let radiusXl = 30.0
+    static let radiusCard = 34.0
+    static let radiusScreen = 44.0
     static let radiusPill = 999.0
 
-    static let shadowSoft = SBGeneratedShadowToken(color: "#080808", opacity: 0.09, radius: 24.0, x: 0.0, y: 14.0)
-    static let shadowGlow = SBGeneratedShadowToken(color: "#080808", opacity: 0.16, radius: 30.0, x: 0.0, y: 16.0)
-    static let shadowCard = SBGeneratedShadowToken(color: "#080808", opacity: 0.14, radius: 26.0, x: 0.0, y: 18.0)
+    static let shadowSoft = SBGeneratedShadowToken(color: "#000000", opacity: 0.34, radius: 24.0, x: 0.0, y: 16.0)
+    static let shadowGlow = SBGeneratedShadowToken(color: "#E7FF78", opacity: 0.16, radius: 32.0, x: 0.0, y: 14.0)
+    static let shadowCard = SBGeneratedShadowToken(color: "#000000", opacity: 0.46, radius: 30.0, x: 0.0, y: 22.0)
 
     static let displayFont = "Space Grotesk"
     static let bodyFont = "Inter"
-    static let iosDisplayDesign = "rounded"
+    static let iosDisplayDesign = "default"
 }

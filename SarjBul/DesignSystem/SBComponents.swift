@@ -2,11 +2,7 @@ import SwiftUI
 
 struct SBScreenBackground: View {
     var body: some View {
-        LinearGradient(
-            colors: [SBColor.surfaceSolid, SBColor.background, SBColor.surface],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+        SBColor.background
         .ignoresSafeArea()
     }
 }
@@ -23,14 +19,14 @@ struct SBBackButton: View {
             Image(systemName: "arrow.left")
                 .font(.title2.weight(.heavy))
                 .foregroundStyle(SBColor.ink)
-                .frame(width: 72, height: 72)
+                .frame(width: 58, height: 58)
                 .background(SBColor.glassStrong)
                 .clipShape(Circle())
                 .overlay(
                     Circle()
                         .stroke(SBColor.line, lineWidth: 1)
                 )
-                .shadow(color: SBColor.ink.opacity(0.14), radius: 28, x: 0, y: 12)
+                .shadow(color: .black.opacity(0.42), radius: 22, x: 0, y: 12)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
@@ -89,9 +85,9 @@ struct SBLanguageSwitch: View {
         } label: {
             Text(language)
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(selectedLanguage == language ? .white : SBColor.muted)
-                .frame(width: 72, height: 54)
-                .background(selectedLanguage == language ? SBColor.electricBlue : .clear)
+                .foregroundStyle(selectedLanguage == language ? SBColor.onSignal : SBColor.muted)
+                .frame(width: 62, height: 48)
+                .background(selectedLanguage == language ? SBColor.signal : .clear)
                 .clipShape(Capsule())
         }
         .buttonStyle(SBPremiumButtonStyle())
@@ -110,7 +106,7 @@ struct SBPanel<Content: View>: View {
             content
         }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
+            .padding(22)
             .sbPremiumGlass(radius: SBRadius.xl)
             .sbSoftShadow()
     }
@@ -128,8 +124,9 @@ struct SBSecondaryPanel<Content: View>: View {
             content
         }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            .sbPremiumGlass(radius: SBRadius.xl)
+            .padding(22)
+            .background(SBColor.surface, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous).stroke(SBColor.line, lineWidth: 1))
             .sbSoftShadow()
     }
 }
@@ -152,14 +149,14 @@ struct SBPrimaryButton: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(SBColor.onSignal)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(LinearGradient.sbNeon)
+            .background(SBColor.signal)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .stroke(.white.opacity(0.20), lineWidth: 1)
+                    .stroke(.black.opacity(0.12), lineWidth: 1)
             )
             .sbGlowShadow()
         }
@@ -182,10 +179,10 @@ struct SBDarkButton: View {
                 Text(title)
                     .font(.headline.weight(.heavy))
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(SBColor.onSignal)
             .frame(maxWidth: .infinity)
             .frame(height: 68)
-            .background(SBColor.electricBlue)
+            .background(SBColor.ice)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         }
         .buttonStyle(.plain)

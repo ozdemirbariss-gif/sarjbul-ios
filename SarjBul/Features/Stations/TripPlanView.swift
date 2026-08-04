@@ -67,7 +67,7 @@ struct TripPlanView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(settings.t("planner.fastest_plan"))
                 .font(.subheadline.weight(.heavy))
-                .foregroundStyle(SBColor.primaryDeep)
+                .foregroundStyle(SBColor.signal)
             Text(duration(plan.totalMinutes))
                 .font(SBFont.display(size: 52, weight: .heavy))
                 .foregroundStyle(SBColor.ink)
@@ -86,7 +86,7 @@ struct TripPlanView: View {
         HStack(spacing: 14) {
             Text("\(number)")
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(.white)
+                .foregroundStyle(.black)
                 .frame(width: 42, height: 42)
                 .background(SBColor.electricBlue)
                 .clipShape(Circle())

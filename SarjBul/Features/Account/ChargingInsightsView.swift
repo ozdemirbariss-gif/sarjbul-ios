@@ -38,7 +38,7 @@ struct ChargingInsightsView: View {
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     Image(systemName: "doc.viewfinder")
                         .font(.title3.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(.black)
                         .frame(width: 48, height: 48)
                         .background(SBColor.accent)
                         .clipShape(Circle())

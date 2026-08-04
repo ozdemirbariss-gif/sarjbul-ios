@@ -31,8 +31,8 @@ struct RootView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .tint(SBColor.electricBlue)
-        .preferredColorScheme(.light)
+        .tint(SBColor.signal)
+        .preferredColorScheme(.dark)
         .task {
             await chargingSession.prepare()
             await search.prepare()
@@ -69,10 +69,10 @@ struct RootView: View {
     private var offlineBanner: some View {
         Label(settings.t("network.offline"), systemImage: "wifi.slash")
             .font(.caption.weight(.heavy))
-            .foregroundStyle(.white)
+            .foregroundStyle(SBColor.onSignal)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 34)
-            .background(SBColor.electricBlue)
+            .background(SBColor.signal)
             .accessibilityAddTraits(.isStaticText)
     }
 
@@ -117,11 +117,12 @@ struct RootView: View {
             tabButton(.routes)
             tabButton(.account)
         }
-        .padding(8)
-        .sbPremiumGlass(radius: 36, interactive: true)
+        .padding(7)
+        .background(SBColor.charcoal.opacity(0.98), in: Capsule())
+        .overlay(Capsule().stroke(SBColor.line, lineWidth: 1))
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
-        .shadow(color: SBColor.electricBlue.opacity(0.16), radius: 24, x: 0, y: 16)
+        .shadow(color: .black.opacity(0.54), radius: 26, x: 0, y: 16)
     }
 
     private var collapsedBottomNavigation: some View {
@@ -138,10 +139,10 @@ struct RootView: View {
             Image(systemName: "square.grid.2x2.fill")
                 .font(.headline.weight(.heavy))
                 .symbolEffect(.bounce, value: navigation.tab)
-            .foregroundStyle(SBColor.ink)
+            .foregroundStyle(SBColor.onSignal)
             .frame(width: 54, height: 54)
-            .sbPremiumGlass(radius: 27, interactive: true)
-            .shadow(color: SBColor.electricBlue.opacity(0.14), radius: 18, x: 0, y: 10)
+            .background(SBColor.signal, in: Circle())
+            .shadow(color: SBColor.signal.opacity(0.20), radius: 20, x: 0, y: 10)
         }
         .buttonStyle(SBPremiumButtonStyle())
         .accessibilityLabel(settings.t("navigation.open"))
@@ -175,14 +176,14 @@ struct RootView: View {
                     .minimumScaleFactor(0.68)
                     .allowsTightening(true)
             }
-            .foregroundStyle(isSelected ? .white : SBColor.muted)
+            .foregroundStyle(isSelected ? SBColor.onSignal : SBColor.textSoft)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(isSelected ? SBColor.electricBlue : SBColor.surface.opacity(0.58))
+            .background(isSelected ? SBColor.signal : SBColor.surface.opacity(0.72))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(isSelected ? SBColor.lineStrong : SBColor.line, lineWidth: 1)
+                    .stroke(isSelected ? .black.opacity(0.12) : SBColor.line, lineWidth: 1)
             )
         }
         .buttonStyle(SBPremiumButtonStyle())
