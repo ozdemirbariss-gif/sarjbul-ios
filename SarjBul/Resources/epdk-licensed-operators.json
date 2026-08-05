@@ -1,6 +1,6 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-07-19T21:01:27+00:00",
+  "generated_at": "2026-08-05T06:45:45+00:00",
   "license_count": 183,
   "licenses": [
     {
@@ -774,7 +774,7 @@
     },
     {
       "brands": [
-        "INTERENERGY electric charging unit şekil"
+        "INTERENERGY electric charging unit"
       ],
       "holder": "INTEREN ENERJİ ŞARJ HİZMETLERİ ANONİM ŞİRKETİ",
       "license_number": "ŞH/14672/00224",
