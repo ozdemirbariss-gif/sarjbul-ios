@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <title>SarjBul bağlantı ayarları</title>
+</head>
+<body class="options-body">
+  <main>
+    <p class="eyebrow">SARJBUL BAĞLANTISI</p>
+    <h1>Gateway ayarları</h1>
+    <label for="endpoint">Browser endpoint</label>
+    <input id="endpoint" type="url" placeholder="https://europe-west1-PROJECT.cloudfunctions.net/browserCommand">
+    <label for="channelKey">Kanal anahtarı</label>
+    <input id="channelKey" type="password" autocomplete="off">
+    <button id="save" class="primary" type="button">Kaydet</button>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

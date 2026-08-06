@@ -11,6 +11,9 @@
 - Vision ile tamamen cihaz içinde fiş OCR
 - Open-Meteo Elevation API / Copernicus DEM ile rota rakım profili
 - EPDK şarj ağı işletmeci lisansı REST servisiyle operatör doğrulama snapshot'ı
+- Telegram, WhatsApp, e-posta ve browser uzantısı için ortak salt okunur komut gateway'i
+
+Kanal gateway'inin sağlayıcı kurulumu ve güvenlik sınırları [CHANNEL_AUTOMATION.md](CHANNEL_AUTOMATION.md) içinde açıklanır.
 
 ## Yetkili sağlayıcı gerektirenler
 

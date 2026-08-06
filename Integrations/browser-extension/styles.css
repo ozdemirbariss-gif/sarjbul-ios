@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  background: #080808;
+  color: #f8f8f6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 380px;
+  min-height: 420px;
+  margin: 0;
+  background: #080808;
+}
+
+.options-body { width: min(560px, 100%); margin: 48px auto; }
+main { padding: 24px; }
+header { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
+h1 { margin: 2px 0 0; font-size: 26px; letter-spacing: 0; }
+.eyebrow { margin: 0; color: #b8b8b2; font-size: 11px; font-weight: 700; }
+.hint { color: #aaa; line-height: 1.45; }
+.mark { width: 14px; height: 42px; border-radius: 7px; background: #f4f4ef; }
+button, input { min-height: 46px; border-radius: 8px; font: inherit; }
+button { cursor: pointer; }
+.icon-button { width: 46px; border: 1px solid #303030; background: #171717; color: #fff; }
+.preferences { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0 12px; }
+.preference { border: 1px solid #303030; background: #151515; color: #a8a8a4; font-weight: 700; }
+.preference.active { background: #f4f4ef; color: #0b0b0b; border-color: #f4f4ef; }
+.primary { width: 100%; border: 0; background: #f4f4ef; color: #090909; font-weight: 800; }
+.primary:disabled { opacity: .55; cursor: wait; }
+.status { min-height: 20px; color: #aaa; font-size: 13px; }
+.station { padding: 14px 0; border-top: 1px solid #292929; }
+.station h2 { margin: 0 0 5px; font-size: 16px; }
+.station p { margin: 0 0 10px; color: #aaa; font-size: 13px; }
+.station a { display: inline-flex; color: #f4f4ef; font-weight: 700; text-decoration: none; }
+label { display: block; margin: 20px 0 8px; color: #bbb; font-weight: 700; }
+input { width: 100%; padding: 0 14px; border: 1px solid #333; background: #151515; color: #fff; }
+.options-body .primary { margin-top: 20px; }

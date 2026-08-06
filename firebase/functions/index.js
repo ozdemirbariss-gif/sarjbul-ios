@@ -231,3 +231,10 @@ exports.deleteAccountData = onValueCreated(
       }
     },
 );
+
+const channelGateway = require("./channel-gateway");
+exports.browserCommand = channelGateway.browserCommand;
+exports.cleanupChannelRateLimits = channelGateway.cleanupChannelRateLimits;
+exports.emailCommand = channelGateway.emailCommand;
+exports.telegramWebhook = channelGateway.telegramWebhook;
+exports.whatsAppWebhook = channelGateway.whatsAppWebhook;

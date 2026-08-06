@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <title>SarjBul</title>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <p class="eyebrow">SARJBUL</p>
+        <h1>Rotanı hazırla.</h1>
+      </div>
+      <button id="settings" class="icon-button" type="button" title="Ayarlar" aria-label="Ayarlar">⚙</button>
+    </header>
+    <p class="hint">Konumuna göre en uygun şarj noktasını seç.</p>
+    <div class="preferences" role="group" aria-label="Arama tercihi">
+      <button class="preference active" data-preference="nearest" type="button">Yakın</button>
+      <button class="preference" data-preference="fastest" type="button">Hızlı</button>
+      <button class="preference" data-preference="economical" type="button">Ekonomik</button>
+    </div>
+    <button id="find" class="primary" type="button">Konumumla bul</button>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <section id="results" aria-label="İstasyon sonuçları"></section>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

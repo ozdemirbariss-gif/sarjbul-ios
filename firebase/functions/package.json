@@ -6,8 +6,9 @@
     "node": "22"
   },
   "scripts": {
-    "lint": "node --check index.js",
-    "test:rules": "node --test test/database.rules.test.js",
+    "lint": "node --check index.js && node --check channel-core.js && node --check channel-gateway.js && node --check ../../Integrations/browser-extension/popup.js && node --check ../../Integrations/browser-extension/options.js",
+    "test:core": "node --test test/channel-core.test.js",
+    "test:rules": "firebase emulators:exec --only database \"node --test test/database.rules.test.js\"",
     "deploy": "firebase deploy --only functions,database"
   },
   "dependencies": {

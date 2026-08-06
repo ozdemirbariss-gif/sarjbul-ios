@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "SarjBul Quick Route",
+  "version": "1.0.0",
+  "description": "Uygulamayı açmadan yakındaki şarj istasyonunu bulur.",
+  "permissions": ["geolocation", "storage"],
+  "host_permissions": ["https://*.cloudfunctions.net/*"],
+  "action": {
+    "default_title": "SarjBul",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html"
+}
