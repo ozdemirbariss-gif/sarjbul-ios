@@ -463,13 +463,11 @@ struct StationCard: View {
         Button {
             Haptic.tap()
             Task {
-                if await stationData.reportStatus(
+                _ = await stationData.reportStatus(
                     stationKey: candidate.station.statusKey,
                     status: status,
                     auth: auth
-                ) {
-                    await search.findStations()
-                }
+                )
             }
         } label: {
             Label(title, systemImage: icon)

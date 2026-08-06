@@ -27,6 +27,7 @@ final class AppState {
         let messages = AppMessagePresenter()
         let settings = UserSettingsStore(persistence: persistence, externalLinks: externalLinks)
         let navigation = NavigationCoordinator()
+        let mutationQueue = AsyncMutationQueue()
         let auth = AuthStore(
             client: clients.auth,
             persistence: persistence,
@@ -41,6 +42,8 @@ final class AppState {
         let stationData = StationDataStore(
             pipeline: pipeline,
             statusClient: clients.status,
+            realtimeClient: clients.realtime,
+            mutationQueue: mutationQueue,
             persistence: persistence,
             messages: messages
         )
@@ -48,6 +51,7 @@ final class AppState {
             client: clients.favorites,
             auth: auth,
             stationData: stationData,
+            mutationQueue: mutationQueue,
             persistence: persistence,
             messages: messages
         )
@@ -60,7 +64,8 @@ final class AppState {
             navigation: navigation,
             messages: messages,
             habits: habits,
-            demandAnalytics: clients.demandAnalytics
+            demandAnalytics: clients.demandAnalytics,
+            mutationQueue: mutationQueue
         )
 
         self.messages = messages
@@ -83,9 +88,13 @@ final class AppState {
         chargingHistory = ChargingHistoryStore(persistence: persistence)
         chargingSession = ChargingSessionStore(persistence: persistence)
 
+        stationData.onRealtimeEvent = { [weak search] event in
+            search?.applyRealtime(event)
+        }
         auth.onSessionChanged = { [weak favorites, weak stationData] session in
             await favorites?.handleSessionChanged(session)
             await stationData?.reloadCommunityData(idToken: session?.idToken)
+            stationData?.startRealtime(idToken: session?.idToken)
         }
         applyDebugLaunchMode()
     }
@@ -109,6 +118,7 @@ final class AppState {
                 favorites: UnavailableFavoritesClient(),
                 status: UnavailableStatusClient(),
                 demandAnalytics: UnavailableDemandAnalyticsClient(),
+                realtime: UnavailableRealtimeStationClient(),
                 liveAvailability: UnavailableLiveAvailabilityClient(),
                 isConfigured: false
             )

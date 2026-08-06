@@ -8,6 +8,7 @@ final class FavoritesStore {
     private let client: any FavoritesClient
     private let auth: AuthStore
     private let stationData: StationDataStore
+    private let mutationQueue: AsyncMutationQueue
     private let persistence: any AppPersistence
     private let messages: AppMessagePresenter
     private var pendingKeys: Set<String> = []
@@ -19,12 +20,14 @@ final class FavoritesStore {
         client: any FavoritesClient,
         auth: AuthStore,
         stationData: StationDataStore,
+        mutationQueue: AsyncMutationQueue,
         persistence: any AppPersistence,
         messages: AppMessagePresenter
     ) {
         self.client = client
         self.auth = auth
         self.stationData = stationData
+        self.mutationQueue = mutationQueue
         self.persistence = persistence
         self.messages = messages
         recentRoutes = persistence.recentRoutes
@@ -57,22 +60,25 @@ final class FavoritesStore {
         guard !pendingKeys.contains(stationKey) else { return }
 
         pendingKeys.insert(stationKey)
-        defer { pendingKeys.remove(stationKey) }
         let shouldFavorite = !favorites.contains(stationKey)
         if shouldFavorite { favorites.insert(stationKey) } else { favorites.remove(stationKey) }
 
-        do {
+        await mutationQueue.enqueue(id: "favorite:\(stationKey)") { [auth, client] in
             try await auth.authenticatedRequest { session in
-                try await self.client.setFavorite(
+                try await client.setFavorite(
                     uid: session.uid,
                     stationKey: stationKey,
                     isFavorite: shouldFavorite,
                     idToken: session.idToken
                 )
             }
-        } catch {
-            if shouldFavorite { favorites.remove(stationKey) } else { favorites.insert(stationKey) }
-            messages.present(.auth(AuthError.map(error)))
+        } completion: { [weak self] result in
+            guard let self else { return }
+            self.pendingKeys.remove(stationKey)
+            if case .failure(let error) = result {
+                if shouldFavorite { self.favorites.remove(stationKey) } else { self.favorites.insert(stationKey) }
+                self.messages.present(.auth(AuthError.map(error)))
+            }
         }
     }
 

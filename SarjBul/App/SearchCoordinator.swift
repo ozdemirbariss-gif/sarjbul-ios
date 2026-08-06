@@ -34,6 +34,7 @@ final class SearchCoordinator {
     private let messages: AppMessagePresenter
     private let habits: HabitStore
     private let demandAnalytics: any DemandAnalyticsClient
+    private let mutationQueue: AsyncMutationQueue
     private let journeyRouteService = JourneyRouteService()
     private let tripPlanner = ChargingTripPlanner()
     private var pendingStationKey: String?
@@ -53,7 +54,8 @@ final class SearchCoordinator {
         navigation: NavigationCoordinator,
         messages: AppMessagePresenter,
         habits: HabitStore,
-        demandAnalytics: any DemandAnalyticsClient = UnavailableDemandAnalyticsClient()
+        demandAnalytics: any DemandAnalyticsClient = UnavailableDemandAnalyticsClient(),
+        mutationQueue: AsyncMutationQueue
     ) {
         self.stationData = stationData
         self.settings = settings
@@ -63,6 +65,7 @@ final class SearchCoordinator {
         self.messages = messages
         self.habits = habits
         self.demandAnalytics = demandAnalytics
+        self.mutationQueue = mutationQueue
     }
 
     var routeCandidates: [StationCandidate] { state.candidates }
@@ -75,6 +78,7 @@ final class SearchCoordinator {
         await auth.prepare()
         let session = try? await auth.validSession()
         await stationData.load(statusIDToken: session?.idToken)
+        stationData.startRealtime(idToken: session?.idToken)
         if auth.isConfigured { await favorites.load() }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes") {
@@ -184,6 +188,33 @@ final class SearchCoordinator {
         await recordDemandIfEnabled(origin: userLocation, resultCount: result.count)
     }
 
+    func applyRealtime(_ event: StationRealtimeEvent) {
+        guard case .results(var candidates) = state else { return }
+        for index in candidates.indices {
+            let key = candidates[index].station.statusKey
+            let id = candidates[index].station.id
+            switch event {
+            case .statusesSnapshot(let values):
+                candidates[index].status = values[key] ?? values[id]
+            case .statusChanged(let changedKey, let value) where changedKey == key || changedKey == id:
+                candidates[index].status = value
+            case .insightsSnapshot(let values):
+                candidates[index].communityInsight = values[key] ?? values[id]
+            case .insightChanged(let changedKey, let value) where changedKey == key || changedKey == id:
+                candidates[index].communityInsight = value
+            case .availabilitySnapshot(let values):
+                candidates[index].liveAvailability = values[key] ?? values[id]
+            case .availabilityChanged(let changedKey, let value) where changedKey == key || changedKey == id:
+                candidates[index].liveAvailability = value
+            default:
+                continue
+            }
+            candidates[index].score = StationScorer.score(candidate: candidates[index])
+            candidates[index].badges = StationScorer.badges(for: candidates[index])
+        }
+        state = .results(candidates)
+    }
+
     private var profileSafeRange: Double { settings.profile.safeRangeKm }
 
     private func recordDemandIfEnabled(origin: UserLocation, resultCount: Int) async {
@@ -194,16 +225,21 @@ final class SearchCoordinator {
             searchRadiusKm: settings.filters.rangeFilterEnabled ? settings.profile.safeRangeKm : 400,
             resultCount: resultCount
         )
-        do {
+        await mutationQueue.enqueue(
+            id: "demand:\(event.coarseCell):\(event.createdAtMilliseconds)",
+            maxAttempts: 2
+        ) { [auth, demandAnalytics] in
             try await auth.authenticatedRequest { session in
-                try await self.demandAnalytics.recordSearchDemand(
+                try await demandAnalytics.recordSearchDemand(
                     event: event,
                     uid: session.uid,
                     idToken: session.idToken
                 )
             }
-        } catch {
-            AppLogger.data.debug("Opt-in demand event skipped: \(error.localizedDescription, privacy: .public)")
+        } completion: { result in
+            if case .failure(let error) = result {
+                AppLogger.data.debug("Opt-in demand event skipped: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 

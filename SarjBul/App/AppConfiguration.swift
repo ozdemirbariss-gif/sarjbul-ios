@@ -75,6 +75,7 @@ struct AppConfiguration {
                 favorites: UnavailableFavoritesClient(),
                 status: UnavailableStatusClient(),
                 demandAnalytics: UnavailableDemandAnalyticsClient(),
+                realtime: UnavailableRealtimeStationClient(),
                 liveAvailability: configuredLiveAvailabilityClient,
                 isConfigured: false
             )
@@ -97,6 +98,7 @@ struct AppConfiguration {
             favorites: client,
             status: client,
             demandAnalytics: client,
+            realtime: client,
             liveAvailability: configuredLiveAvailabilityClient,
             isConfigured: true
         )
@@ -145,6 +147,7 @@ struct AppServiceClients {
     let favorites: any FavoritesClient
     let status: any StatusClient
     let demandAnalytics: any DemandAnalyticsClient
+    let realtime: any RealtimeStationClient
     let liveAvailability: any LiveAvailabilityClient
     let isConfigured: Bool
 }

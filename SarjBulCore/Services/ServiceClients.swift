@@ -38,6 +38,10 @@ public protocol DemandAnalyticsClient: Sendable {
     ) async throws
 }
 
+public protocol RealtimeStationClient: Sendable {
+    func events(idToken: String?) -> AsyncThrowingStream<StationRealtimeEvent, any Error>
+}
+
 public enum ServiceClientError: LocalizedError, Equatable, Sendable {
     case notConfigured
 
@@ -101,6 +105,14 @@ public struct UnavailableDemandAnalyticsClient: DemandAnalyticsClient {
     ) async throws {}
 }
 
+public struct UnavailableRealtimeStationClient: RealtimeStationClient {
+    public init() {}
+
+    public func events(idToken: String?) -> AsyncThrowingStream<StationRealtimeEvent, any Error> {
+        AsyncThrowingStream { $0.finish() }
+    }
+}
+
 public enum AuthError: LocalizedError, Equatable, Sendable {
     case tooManyAttempts
     case network
@@ -144,4 +156,4 @@ public enum AuthError: LocalizedError, Equatable, Sendable {
     }
 }
 
-extension FirebaseRESTClient: AuthClient, FavoritesClient, StatusClient, DemandAnalyticsClient {}
+extension FirebaseRESTClient: AuthClient, FavoritesClient, StatusClient, DemandAnalyticsClient, RealtimeStationClient {}

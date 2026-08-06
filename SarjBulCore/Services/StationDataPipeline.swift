@@ -60,6 +60,23 @@ public actor StationDataPipeline {
         stations.first { $0.statusKey == key || $0.id == key }
     }
 
+    public func applyRealtime(_ event: StationRealtimeEvent) {
+        switch event {
+        case .statusesSnapshot(let values):
+            statuses = values
+        case .statusChanged(let key, let value):
+            statuses[key] = value
+        case .insightsSnapshot(let values):
+            insights = values
+        case .insightChanged(let key, let value):
+            insights[key] = value
+        case .availabilitySnapshot(let values):
+            liveAvailability = values
+        case .availabilityChanged(let key, let value):
+            liveAvailability[key] = value
+        }
+    }
+
     public func search(
         origin: UserLocation,
         destination: JourneyDestination?,

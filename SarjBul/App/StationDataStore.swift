@@ -17,9 +17,14 @@ final class StationDataStore {
 
     private let pipeline: StationDataPipeline
     private let statusClient: any StatusClient
+    private let realtimeClient: any RealtimeStationClient
+    private let mutationQueue: AsyncMutationQueue
     private let persistence: any AppPersistence
     private let messages: AppMessagePresenter
     private var reportCooldowns: [String: Date]
+    private var realtimeTask: Task<Void, Never>?
+
+    var onRealtimeEvent: (@MainActor (StationRealtimeEvent) -> Void)?
 
     private(set) var stations: [Station] = []
     private(set) var stationStatuses: [String: StationStatusSummary] = [:]
@@ -29,11 +34,15 @@ final class StationDataStore {
     init(
         pipeline: StationDataPipeline,
         statusClient: any StatusClient,
+        realtimeClient: any RealtimeStationClient,
+        mutationQueue: AsyncMutationQueue,
         persistence: any AppPersistence,
         messages: AppMessagePresenter
     ) {
         self.pipeline = pipeline
         self.statusClient = statusClient
+        self.realtimeClient = realtimeClient
+        self.mutationQueue = mutationQueue
         self.persistence = persistence
         self.messages = messages
         reportCooldowns = persistence.reportCooldowns
@@ -91,6 +100,33 @@ final class StationDataStore {
         } catch {
             AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    func startRealtime(idToken: String?) {
+        realtimeTask?.cancel()
+        realtimeTask = Task { [weak self, realtimeClient] in
+            do {
+                for try await event in realtimeClient.events(idToken: idToken) {
+                    guard !Task.isCancelled, let self else { return }
+                    await self.applyRealtime(event)
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                AppLogger.data.warning("Realtime stream stopped: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+
+    private func applyRealtime(_ event: StationRealtimeEvent) async {
+        switch event {
+        case .statusesSnapshot(let values): stationStatuses = values
+        case .statusChanged(let key, let value): stationStatuses[key] = value
+        case .insightsSnapshot(let values): communityInsights = values
+        case .insightChanged(let key, let value): communityInsights[key] = value
+        case .availabilitySnapshot, .availabilityChanged: break
+        }
+        await pipeline.applyRealtime(event)
+        onRealtimeEvent?(event)
     }
 
     @discardableResult
@@ -173,9 +209,15 @@ final class StationDataStore {
             return false
         }
 
-        do {
+        let previous = stationStatuses[stationKey]
+        let optimistic = Self.optimisticStatus(status)
+        reportCooldowns[stationKey] = Date()
+        persistReportCooldowns()
+        await applyRealtime(.statusChanged(key: stationKey, value: optimistic))
+
+        await mutationQueue.enqueue(id: "status:\(stationKey)") { [auth, statusClient] in
             try await auth.authenticatedRequest { session in
-                try await self.statusClient.sendStationReport(
+                try await statusClient.sendStationReport(
                     stationKey: stationKey,
                     status: status,
                     comment: status,
@@ -183,16 +225,19 @@ final class StationDataStore {
                     idToken: session.idToken
                 )
             }
-            reportCooldowns[stationKey] = Date()
-            persistReportCooldowns()
-            let session = try? await auth.validSession()
-            await reloadStatuses(idToken: session?.idToken)
-            messages.present(.localized(key: "service.report_sent", kind: .success))
-            return true
-        } catch {
-            messages.present(.auth(AuthError.map(error)))
-            return false
+        } completion: { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success:
+                self.messages.present(.localized(key: "service.report_sent", kind: .success))
+            case .failure(let error):
+                self.reportCooldowns[stationKey] = nil
+                self.persistReportCooldowns()
+                Task { await self.applyRealtime(.statusChanged(key: stationKey, value: previous)) }
+                self.messages.present(.auth(AuthError.map(error)))
+            }
         }
+        return true
     }
 
     func canContribute(to stationKey: String, now: Date = Date()) -> Bool {
@@ -207,25 +252,27 @@ final class StationDataStore {
     ) async -> Bool {
         guard !contribution.values.isEmpty, canContribute(to: stationKey) else { return false }
 
-        do {
+        let cooldownKey = "contribution:\(stationKey)"
+        reportCooldowns[cooldownKey] = Date()
+        persistReportCooldowns()
+        messages.present(.localized(key: "data_quality.thanks", kind: .success))
+
+        await mutationQueue.enqueue(id: cooldownKey) { [auth, statusClient] in
             try await auth.authenticatedRequest { session in
-                try await self.statusClient.sendStationContribution(
+                try await statusClient.sendStationContribution(
                     stationKey: stationKey,
                     contribution: contribution,
                     uid: session.uid,
                     idToken: session.idToken
                 )
             }
-            reportCooldowns["contribution:\(stationKey)"] = Date()
-            persistReportCooldowns()
-            let session = try? await auth.validSession()
-            await reloadCommunityData(idToken: session?.idToken)
-            messages.present(.localized(key: "data_quality.thanks", kind: .success))
-            return true
-        } catch {
-            messages.present(.auth(AuthError.map(error)))
-            return false
+        } completion: { [weak self] result in
+            guard let self, case .failure(let error) = result else { return }
+            self.reportCooldowns[cooldownKey] = nil
+            self.persistReportCooldowns()
+            self.messages.present(.auth(AuthError.map(error)))
         }
+        return true
     }
 
     private func refreshStations() async {
@@ -243,5 +290,18 @@ final class StationDataStore {
             Date().timeIntervalSince($0.value) < 24 * 60 * 60
         }
         persistence.reportCooldowns = reportCooldowns
+    }
+
+    private static func optimisticStatus(_ status: String) -> StationStatusSummary {
+        let normalized = status.folding(
+            options: [.diacriticInsensitive, .caseInsensitive],
+            locale: Locale(identifier: "tr_TR")
+        )
+        let isAvailable = ["uygun", "bos", "sorunsuz", "aktif"].contains(where: normalized.contains)
+        return StationStatusSummary(
+            durum: isAvailable ? "aktif" : "riskli",
+            etiket: status,
+            toplam: 1
+        )
     }
 }
