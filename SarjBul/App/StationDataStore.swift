@@ -49,6 +49,7 @@ final class StationDataStore {
         loadState = .loading
         do {
             stations = try await pipeline.loadStations()
+            persistence.stationDataLastRefreshedAt = Date()
             loadState = .loaded
             await reloadCommunityData(idToken: statusIDToken)
             await refreshStations()
@@ -65,30 +66,51 @@ final class StationDataStore {
         await load(statusIDToken: statusIDToken)
     }
 
+    @discardableResult
+    func refreshForAutomation(idToken: String? = nil) async -> Bool {
+        var didRefresh = false
+        do {
+            if let refreshed = try await pipeline.refreshStations() {
+                stations = refreshed
+                didRefresh = true
+            }
+            let didRefreshCommunity = await reloadCommunityData(idToken: idToken)
+            if didRefresh || didRefreshCommunity {
+                persistence.stationDataLastRefreshedAt = Date()
+            }
+            return didRefresh || didRefreshCommunity
+        } catch {
+            AppLogger.data.warning("Automation station refresh failed: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
+
     func reloadStatuses(idToken: String? = nil) async {
         do {
             stationStatuses = try await pipeline.reloadStatuses(idToken: idToken)
         } catch {
-            stationStatuses = [:]
             AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
-    func reloadCommunityData(idToken: String? = nil) async {
+    @discardableResult
+    func reloadCommunityData(idToken: String? = nil) async -> Bool {
         async let statusesTask = pipeline.reloadStatuses(idToken: idToken)
         async let insightsTask = pipeline.reloadCommunityInsights(idToken: idToken)
+        var didRefresh = false
         do {
             stationStatuses = try await statusesTask
+            didRefresh = true
         } catch {
-            stationStatuses = [:]
             AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
         }
         do {
             communityInsights = try await insightsTask
+            didRefresh = true
         } catch {
-            communityInsights = [:]
             AppLogger.data.error("Station insights failed: \(error.localizedDescription, privacy: .public)")
         }
+        return didRefresh
     }
 
     func insight(for stationKey: String) -> StationCommunityInsight? {
@@ -210,6 +232,7 @@ final class StationDataStore {
         do {
             guard let refreshed = try await pipeline.refreshStations() else { return }
             stations = refreshed
+            persistence.stationDataLastRefreshedAt = Date()
         } catch {
             AppLogger.data.warning("Remote station refresh skipped: \(error.localizedDescription, privacy: .public)")
         }

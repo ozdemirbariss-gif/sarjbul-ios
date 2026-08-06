@@ -221,6 +221,21 @@ struct HomeView: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(SBColor.muted)
 
+            if let report = autonomousAgent.latestReport,
+               report.selectedStationName == proposal.stationName {
+                Text(automationReportText(report))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(SBColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(SBColor.surfaceSolid, in: RoundedRectangle(
+                        cornerRadius: SBRadius.sm,
+                        style: .continuous
+                    ))
+            }
+
             Button {
                 Haptic.tap()
                 Task { await autonomousAgent.acceptProposal() }
@@ -248,6 +263,19 @@ struct HomeView: View {
         )
         .sbGlowShadow()
         .accessibilityIdentifier("autonomous-proposal-card")
+    }
+
+    private func automationReportText(_ report: AutomationReport) -> String {
+        switch report.rule {
+        case .preparedRouteRisky:
+            settings.t("agent.report_risky", ["station": report.selectedStationName ?? ""])
+        case .preparedRouteExpired:
+            settings.t("agent.report_expired", ["station": report.selectedStationName ?? ""])
+        case .stationDataStale:
+            settings.t("agent.report_refreshed", ["station": report.selectedStationName ?? ""])
+        case .lowCharge:
+            settings.t("agent.report_low_charge", ["station": report.selectedStationName ?? ""])
+        }
     }
 
     private func agentMetric(_ text: String) -> some View {

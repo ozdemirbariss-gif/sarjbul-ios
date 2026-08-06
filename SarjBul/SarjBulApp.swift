@@ -10,9 +10,20 @@ struct SarjBulApp: App {
 
     init() {
         FirebaseBootstrap.configureIfAvailable()
-        appState = AppState.bootstrap()
+        let appState = AppState.bootstrap()
+        self.appState = appState
         _routeStore = State(initialValue: RouteStore())
         _networkMonitor = State(initialValue: NetworkMonitor())
+        AutonomousBackgroundRuntime.install(
+            silentPushHandler: {
+                await appState.search.prepare()
+                await appState.autonomousAgent.handleSilentPush()
+            },
+            processingHandler: {
+                await appState.search.prepare()
+                await appState.autonomousAgent.processInBackground()
+            }
+        )
     }
 
     var body: some Scene {
@@ -36,9 +47,9 @@ struct SarjBulApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .background, appState.settings.autonomousChargingPolicy.isEnabled else { return }
-            AutonomousBackgroundScheduler.schedule()
+            AutonomousBackgroundScheduler.scheduleAll()
         }
-        .backgroundTask(.appRefresh(AutonomousBackgroundScheduler.identifier)) {
+        .backgroundTask(.appRefresh(AutonomousBackgroundScheduler.refreshIdentifier)) {
             await appState.search.prepare()
             await appState.autonomousAgent.refreshInBackground()
         }

@@ -29,6 +29,8 @@ protocol AppPersistence: AnyObject {
     var lastKnownLocation: UserLocation? { get set }
     var lastVehicleTelemetry: VehicleTelemetrySnapshot? { get set }
     var autonomousChargingMutedUntil: Date? { get set }
+    var stationDataLastRefreshedAt: Date? { get set }
+    var automationReports: [AutomationReport] { get set }
 }
 
 protocol SecureStorage {
@@ -64,6 +66,8 @@ final class SystemAppPersistence: AppPersistence {
         static let lastKnownLocation = "lastKnownLocation"
         static let lastVehicleTelemetry = "lastVehicleTelemetry"
         static let autonomousChargingMutedUntil = AutonomousNotificationConstants.mutedUntilKey
+        static let stationDataLastRefreshedAt = "stationDataLastRefreshedAt"
+        static let automationReports = "automationReports"
     }
 
     private let defaults: UserDefaults
@@ -186,6 +190,16 @@ final class SystemAppPersistence: AppPersistence {
     var autonomousChargingMutedUntil: Date? {
         get { defaults.object(forKey: Key.autonomousChargingMutedUntil) as? Date }
         set { defaults.set(newValue, forKey: Key.autonomousChargingMutedUntil) }
+    }
+
+    var stationDataLastRefreshedAt: Date? {
+        get { defaults.object(forKey: Key.stationDataLastRefreshedAt) as? Date }
+        set { defaults.set(newValue, forKey: Key.stationDataLastRefreshedAt) }
+    }
+
+    var automationReports: [AutomationReport] {
+        get { decode([AutomationReport].self, key: Key.automationReports) ?? [] }
+        set { encode(Array(newValue.prefix(20)), key: Key.automationReports) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

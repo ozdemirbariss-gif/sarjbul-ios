@@ -72,6 +72,8 @@ public enum ChargingAgentTrigger: String, Codable, Sendable {
     case appLaunch
     case locationUpdate
     case backgroundRefresh
+    case backgroundProcessing
+    case silentPush
     case vehicleConnected
 }
 

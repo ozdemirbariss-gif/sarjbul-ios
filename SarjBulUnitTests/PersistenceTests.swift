@@ -132,6 +132,20 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(persistence.autonomousChargingMutedUntil, mutedUntil)
     }
 
+    func testAutomationReportsPersistNewestFirst() throws {
+        let persistence = try makePersistence()
+        let report = AutomationReport(
+            rule: .preparedRouteRisky,
+            actions: [.refreshStationData, .replacePreparedRoute],
+            previousStationName: "Old Station",
+            selectedStationName: "Safe Station"
+        )
+
+        persistence.automationReports = [report]
+
+        XCTAssertEqual(persistence.automationReports, [report])
+    }
+
     private func makePersistence() throws -> SystemAppPersistence {
         let suiteName = "StoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
