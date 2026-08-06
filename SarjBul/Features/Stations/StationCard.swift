@@ -15,20 +15,21 @@ struct StationCard: View {
     var candidate: StationCandidate
     var rank: Int
     var total: Int
+
     @State private var route: StationRoute?
     @State private var fullMapPresented = false
+    @State private var detailsPresented = false
     @State private var contributionPresented = false
     @State private var storyShareItem: StationStoryShareItem?
     @State private var isGeneratingStory = false
     @State private var storyErrorPresented = false
-    @State private var technicalDetailsExpanded = false
-    @ScaledMetric(relativeTo: .largeTitle) private var distanceTextSize = 56
-    @ScaledMetric(relativeTo: .title) private var stationTitleSize = 24
+    @ScaledMetric(relativeTo: .largeTitle) private var distanceTextSize = 54
+    @ScaledMetric(relativeTo: .title) private var stationTitleSize = 25
 
     var body: some View {
         VStack(spacing: 0) {
-            mapPreview
-            details
+            mapHero
+            zeroUIDetails
         }
         .background(SBColor.surfaceSolid)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
@@ -37,6 +38,7 @@ struct StationCard: View {
                 .stroke(SBColor.line, lineWidth: 1)
         )
         .sbCardShadow()
+        .accessibilityIdentifier("station-route-card")
         .task(id: routeTaskID) {
             guard let origin = search.userLocation else { return }
             route = await routeStore.route(origin: origin, station: candidate.station)
@@ -45,6 +47,9 @@ struct StationCard: View {
             FullRouteMapView(candidate: candidate, route: route)
                 .environment(settings)
                 .environment(search)
+        }
+        .sheet(isPresented: $detailsPresented) {
+            detailsSheet
         }
         .sheet(isPresented: $contributionPresented) {
             StationContributionSheet(candidate: candidate)
@@ -60,76 +65,274 @@ struct StationCard: View {
         }
     }
 
-    private var mapPreview: some View {
+    private var mapHero: some View {
         StationMapPreview(
             station: candidate.station,
             origin: search.userLocation,
             route: route
         )
-            .frame(height: 184)
-            .clipped()
-            .preferredColorScheme(.dark)
-            .overlay(alignment: .topTrailing) {
-                VStack(spacing: 16) {
-                    routePill {
-                        Text(String(format: "%02d / %02d", rank, total))
-                            .font(.title2.weight(.heavy))
-                    }
+        .frame(height: 236)
+        .clipped()
+        .preferredColorScheme(.dark)
+        .overlay(alignment: .top) {
+            HStack(alignment: .top) {
+                Text("\(rank) / \(total)")
+                    .font(.subheadline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+                    .padding(.horizontal, 14)
+                    .frame(height: 42)
+                    .sbPremiumGlass(radius: 21)
 
-                    Button {
-                        Haptic.tap()
-                        fullMapPresented = true
-                    } label: {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .font(.title2.weight(.heavy))
-                            .foregroundStyle(SBColor.ink)
-                            .frame(width: 48, height: 48)
-                            .sbPremiumGlass(radius: 24, interactive: true)
-                    }
-                    .buttonStyle(SBPremiumButtonStyle())
-                    .accessibilityLabel(settings.t("feed.expand_map"))
-                }
-                    .padding(16)
+                Spacer(minLength: 12)
+                actionsMenu
             }
+            .padding(14)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            Haptic.tap()
+            fullMapPresented = true
+        }
+        .accessibilityLabel(settings.t("feed.expand_map"))
+        .accessibilityAddTraits(.isButton)
     }
 
-    private var details: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .lastTextBaseline, spacing: 14) {
-                Text(String(format: "%.1f km", displayDistanceKm))
-                    .font(SBFont.display(size: min(distanceTextSize, 66), weight: .heavy))
-                    .foregroundStyle(SBColor.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-                Spacer(minLength: 0)
-                Text("\(displayMinutes) \(settings.t("feed.minute"))")
-                    .font(.subheadline.weight(.heavy))
-                    .foregroundStyle(SBColor.textSoft)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+    private var zeroUIDetails: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            stationIdentity
+            journeyDecision
+            primaryRouteAction
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 18)
+    }
+
+    private var stationIdentity: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(rank == 1 ? settings.t("feed.best_match") : settings.t("feed.nearby_option"))
+                .font(.caption.weight(.heavy))
+                .foregroundStyle(SBColor.electricBlue)
+
+            Text(candidate.station.name)
+                .font(SBFont.display(size: min(stationTitleSize, 32), weight: .heavy))
+                .foregroundStyle(SBColor.ink)
+                .lineLimit(2)
+                .minimumScaleFactor(0.72)
+
+            HStack(spacing: 6) {
+                Text(candidate.station.operatorName)
+                if hasUsefulAddress {
+                    Text("·")
+                    Text(candidate.station.address)
+                        .lineLimit(1)
+                }
             }
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(SBColor.textSoft)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
-            stationPanel
-            decisionSummary
-            technicalDetails
+    private var journeyDecision: some View {
+        let summary = decisionSummaryValue
+        return HStack(alignment: .bottom, spacing: 16) {
+            Text(String(format: "%.1f km", displayDistanceKm))
+                .font(SBFont.display(size: min(distanceTextSize, 64), weight: .heavy))
+                .foregroundStyle(SBColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.66)
 
-            routeButtons
+            Spacer(minLength: 0)
 
-            statusActions
-            if reportCooldownRemaining > 0 {
-                Text(settings.t("service.report_cooldown", ["seconds": "\(reportCooldownRemaining)"]))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(SBColor.textSoft)
+            VStack(alignment: .trailing, spacing: 6) {
+                Text("\(displayMinutes) \(settings.t("feed.minute"))")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+
+                HStack(spacing: 7) {
+                    Circle()
+                        .fill(availabilityColor(summary.availability))
+                        .frame(width: 7, height: 7)
+                    Text("%\(summary.arrivalChargePercent) · \(availabilityText(summary.availability))")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+                .font(.caption.weight(.heavy))
+                .foregroundStyle(SBColor.textSoft)
             }
         }
-        .padding(16)
+        .accessibilityElement(children: .combine)
     }
 
-    private var decisionSummary: some View {
-        let summary = StationDecisionEngine.summarize(
-            candidate: decisionCandidate,
-            profile: settings.profile
-        )
+    private var primaryRouteAction: some View {
+        HStack(spacing: 0) {
+            Button {
+                Haptic.tap()
+                openInAppleMaps()
+            } label: {
+                HStack(spacing: 10) {
+                    Text(settings.t("feed.start_route"))
+                        .font(.headline.weight(.heavy))
+                    Spacer(minLength: 8)
+                    Image(systemName: "arrow.up.right")
+                        .font(.headline.weight(.heavy))
+                }
+                .foregroundStyle(SBColor.onSignal)
+                .padding(.leading, 18)
+                .padding(.trailing, 14)
+                .frame(maxWidth: .infinity)
+                .frame(height: 58)
+            }
+            .buttonStyle(SBPremiumButtonStyle())
+            .accessibilityIdentifier("station-primary-route-button")
+
+            Rectangle()
+                .fill(.black.opacity(0.14))
+                .frame(width: 1, height: 30)
+
+            Menu {
+                Button(settings.t("feed.apple_maps"), systemImage: "apple.logo", action: openInAppleMaps)
+                Button(settings.t("feed.google_maps"), systemImage: "map", action: openInGoogleMaps)
+            } label: {
+                Image(systemName: "chevron.down")
+                    .font(.subheadline.weight(.heavy))
+                    .foregroundStyle(SBColor.onSignal)
+                    .frame(width: 54, height: 58)
+            }
+            .accessibilityLabel(settings.t("feed.route_options"))
+        }
+        .background(SBColor.signal)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+        .sbGlowShadow()
+    }
+
+    private var actionsMenu: some View {
+        Menu {
+            Button {
+                detailsPresented = true
+            } label: {
+                Label(settings.t("feed.more_details"), systemImage: "info.circle")
+            }
+
+            Button {
+                Task { await favorites.toggle(candidate.station.statusKey) }
+            } label: {
+                Label(
+                    favorites.isFavorite(candidate.station.statusKey)
+                        ? settings.t("feed.favorite_remove")
+                        : settings.t("feed.favorite_add"),
+                    systemImage: favorites.isFavorite(candidate.station.statusKey) ? "heart.slash" : "heart"
+                )
+            }
+
+            Button {
+                Task { await createStoryShare() }
+            } label: {
+                Label(settings.t("feed.share"), systemImage: "square.and.arrow.up")
+                    .accessibilityIdentifier("station-story-share-button")
+            }
+            .disabled(isGeneratingStory)
+
+            Button {
+                fullMapPresented = true
+            } label: {
+                Label(settings.t("feed.expand_map"), systemImage: "arrow.up.left.and.arrow.down.right")
+            }
+
+            Divider()
+
+            Menu(settings.t("feed.report_status"), systemImage: "waveform.path.ecg") {
+                reportMenuButton(settings.t("actions.available"), status: "Uygun", icon: "checkmark.circle")
+                reportMenuButton(
+                    settings.t("actions.issue_value"),
+                    status: "Sorun var",
+                    icon: "exclamationmark.triangle"
+                )
+                reportMenuButton(settings.t("actions.queue_value"), status: "Sıra var", icon: "clock")
+            }
+
+            Button {
+                Task {
+                    await chargingSession.start(
+                        station: candidate.station,
+                        initialPercent: settings.profile.chargePercent,
+                        languageCode: settings.language.rawValue
+                    )
+                    navigation.select(.lounge)
+                }
+            } label: {
+                Label(settings.t("break.start"), systemImage: "cup.and.saucer")
+            }
+
+            Button {
+                contributionPresented = true
+            } label: {
+                Label(settings.t("data_quality.improve"), systemImage: "checkmark.seal")
+            }
+        } label: {
+            Group {
+                if isGeneratingStory {
+                    ProgressView()
+                        .tint(SBColor.ink)
+                } else {
+                    Image(systemName: "ellipsis")
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(SBColor.ink)
+                }
+            }
+            .frame(width: 44, height: 44)
+            .sbPremiumGlass(radius: 22, interactive: true)
+            .accessibilityIdentifier("station-actions-menu")
+        }
+        .accessibilityLabel(settings.t("actions.station_tools"))
+    }
+
+    private var detailsSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    stationIdentity
+                    detailedDecisionSummary
+
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
+                        spacing: 8
+                    ) {
+                        metric(settings.t("feed.power"), candidate.station.power)
+                        metric(settings.t("feed.socket"), effectiveSocket)
+                        metric(settings.t("feed.price"), effectivePrice)
+                    }
+
+                    stationIntelligence
+                    statusActions
+
+                    if reportCooldownRemaining > 0 {
+                        Text(settings.t(
+                            "service.report_cooldown",
+                            ["seconds": "\(reportCooldownRemaining)"]
+                        ))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(SBColor.textSoft)
+                    }
+                }
+                .padding(20)
+            }
+            .background(SBScreenBackground())
+            .navigationTitle(settings.t("feed.more_details"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(settings.t("status.ok")) { detailsPresented = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private var detailedDecisionSummary: some View {
+        let summary = decisionSummaryValue
         return HStack(spacing: 0) {
             decisionMetric(
                 title: settings.t("decision.arrival"),
@@ -183,44 +386,118 @@ struct StationCard: View {
             .frame(width: 1, height: 54)
     }
 
-    private var technicalDetails: some View {
-        DisclosureGroup(isExpanded: $technicalDetailsExpanded) {
-            VStack(alignment: .leading, spacing: 10) {
-                LazyVGrid(
-                    columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
-                    spacing: 8
-                ) {
-                    metric(settings.t("feed.power"), candidate.station.power)
-                    metric(settings.t("feed.socket"), effectiveSocket)
-                    metric(settings.t("feed.price"), effectivePrice)
-                }
-                stationIntelligence
-                HStack(alignment: .center, spacing: 8) {
-                    ForEach(candidate.badges.prefix(2), id: \.self) { badge in
-                        Text(localizedBadgeTitle(badge))
-                            .font(.caption2.weight(.heavy))
-                            .foregroundStyle(.black)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.78)
-                            .padding(.horizontal, 10)
-                            .frame(height: 32)
-                            .background(badgeBackground(badge.tone))
-                            .clipShape(Capsule())
-                    }
-                    Spacer(minLength: 0)
-                }
+    private var stationIntelligence: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let availability = candidate.liveAvailability {
+                Label(
+                    settings.t("insight.live_availability", [
+                        "available": "\(availability.availableConnectors)",
+                        "total": "\(availability.totalConnectors)"
+                    ]),
+                    systemImage: availability.availableConnectors > 0
+                        ? "bolt.circle.fill"
+                        : "clock.badge.exclamationmark"
+                )
+                .foregroundStyle(availability.availableConnectors > 0 ? SBColor.electricBlue : SBColor.warning)
+            } else {
+                let prediction = OccupancyPredictor.predict(
+                    station: candidate.station,
+                    insight: candidate.communityInsight
+                )
+                Label(
+                    settings.t("insight.busy_prediction", [
+                        "percent": "\(Int((prediction.busyProbability * 100).rounded()))"
+                    ]),
+                    systemImage: "chart.xyaxis.line"
+                )
+                .foregroundStyle(SBColor.muted)
             }
-            .padding(.top, 10)
-        } label: {
-            Label(settings.t("decision.technical_details"), systemImage: "slider.horizontal.3")
-                .font(.subheadline.weight(.heavy))
-                .foregroundStyle(SBColor.textSoft)
+
+            Label(
+                settings.t("insight.data_confidence", [
+                    "percent": "\(Int((candidate.station.confidenceScore * 100).rounded()))"
+                ]),
+                systemImage: "checkmark.shield"
+            )
+            .foregroundStyle(SBColor.textSoft)
+
+            if !nightSafetyText.isEmpty {
+                Label(nightSafetyText, systemImage: "moon.stars.fill")
+                    .foregroundStyle(SBColor.electricBlue)
+            }
         }
-        .tint(SBColor.electricBlue)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(SBColor.surface.opacity(0.5))
+        .font(.caption.weight(.heavy))
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var statusActions: some View {
+        HStack(spacing: 8) {
+            reportButton(settings.t("actions.available"), status: "Uygun", icon: "checkmark.circle.fill")
+            reportButton(
+                settings.t("actions.issue_value"),
+                status: "Sorun var",
+                icon: "exclamationmark.triangle.fill"
+            )
+            reportButton(settings.t("actions.queue_value"), status: "Sıra var", icon: "clock.fill")
+        }
+    }
+
+    private func reportMenuButton(_ title: String, status: String, icon: String) -> some View {
+        Button {
+            Task {
+                _ = await stationData.reportStatus(
+                    stationKey: candidate.station.statusKey,
+                    status: status
+                )
+            }
+        } label: {
+            Label(title, systemImage: icon)
+        }
+        .disabled(!stationData.canReportStatus(for: candidate.station.statusKey))
+    }
+
+    private func reportButton(_ title: String, status: String, icon: String) -> some View {
+        Button {
+            Haptic.tap()
+            Task {
+                _ = await stationData.reportStatus(
+                    stationKey: candidate.station.statusKey,
+                    status: status
+                )
+            }
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.caption.weight(.heavy))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .sbPremiumGlass(radius: 20, interactive: true)
+        }
+        .buttonStyle(SBPremiumButtonStyle())
+        .disabled(!stationData.canReportStatus(for: candidate.station.statusKey))
+        .opacity(stationData.canReportStatus(for: candidate.station.statusKey) ? 1 : 0.48)
+    }
+
+    private func metric(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.caption2.weight(.heavy))
+                .foregroundStyle(SBColor.muted)
+            Text(value)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(SBColor.ink)
+                .lineLimit(2)
+                .minimumScaleFactor(0.76)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .frame(minHeight: 62)
+        .background(SBColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+    }
+
+    private var decisionSummaryValue: StationDecisionSummary {
+        StationDecisionEngine.summarize(candidate: decisionCandidate, profile: settings.profile)
     }
 
     private var decisionCandidate: StationCandidate {
@@ -254,288 +531,16 @@ struct StationCard: View {
         }
     }
 
-    private var stationPanel: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 8) {
-                Text(settings.t("feed.detail_card"))
-                    .font(.caption.weight(.heavy))
-                    .foregroundStyle(SBColor.muted)
-                Spacer(minLength: 8)
-                stationToolsMenu
-
-                Button {
-                    Haptic.tap()
-                    Task { await createStoryShare() }
-                } label: {
-                    Group {
-                        if isGeneratingStory {
-                            ProgressView()
-                                .tint(SBColor.electricBlue)
-                        } else {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.headline.weight(.bold))
-                                .foregroundStyle(SBColor.electricBlue)
-                        }
-                    }
-                    .frame(width: 40, height: 40)
-                    .sbPremiumGlass(radius: 20, interactive: true)
-                }
-                .buttonStyle(SBPremiumButtonStyle())
-                .disabled(isGeneratingStory)
-                .accessibilityLabel(settings.t("feed.share"))
-                .accessibilityIdentifier("station-story-share-button")
-
-                favoriteButton
-            }
-            Text(candidate.station.name)
-                .font(SBFont.display(size: min(stationTitleSize, 32), weight: .heavy))
-                .lineLimit(2)
-                .minimumScaleFactor(0.72)
-            Text(candidate.station.operatorName)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(SBColor.textSoft)
-            if hasUsefulAddress {
-                Text(candidate.station.address)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(SBColor.textSoft)
-                    .lineLimit(1)
-            }
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var stationIntelligence: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let availability = candidate.liveAvailability {
-                Label(
-                    settings.t("insight.live_availability", [
-                        "available": "\(availability.availableConnectors)",
-                        "total": "\(availability.totalConnectors)"
-                    ]),
-                    systemImage: availability.availableConnectors > 0 ? "bolt.circle.fill" : "clock.badge.exclamationmark"
-                )
-                .foregroundStyle(availability.availableConnectors > 0 ? SBColor.electricBlue : SBColor.warning)
-            } else {
-                let prediction = OccupancyPredictor.predict(
-                    station: candidate.station,
-                    insight: candidate.communityInsight
-                )
-                Label(
-                    settings.t("insight.busy_prediction", [
-                        "percent": "\(Int((prediction.busyProbability * 100).rounded()))"
-                    ]),
-                    systemImage: "chart.xyaxis.line"
-                )
-                .foregroundStyle(SBColor.muted)
-            }
-
-            HStack(spacing: 8) {
-                Label(
-                    settings.t("insight.data_confidence", [
-                        "percent": "\(Int((candidate.station.confidenceScore * 100).rounded()))"
-                    ]),
-                    systemImage: "checkmark.shield"
-                )
-                if LicensedOperatorRegistry.contains(candidate.station.operatorName) {
-                    Label(settings.t("insight.operator_match"), systemImage: "building.columns.fill")
-                }
-            }
-            .foregroundStyle(SBColor.textSoft)
-
-            if !nightSafetyText.isEmpty {
-                Label(nightSafetyText, systemImage: "moon.stars.fill")
-                    .foregroundStyle(SBColor.electricBlue)
-            }
-        }
-        .font(.caption.weight(.heavy))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SBColor.surface.opacity(0.72))
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
-    }
-
-    private var stationToolsMenu: some View {
-        Menu {
-            Button {
-                Task {
-                    await chargingSession.start(
-                        station: candidate.station,
-                        initialPercent: settings.profile.chargePercent,
-                        languageCode: settings.language.rawValue
-                    )
-                    navigation.select(.lounge)
-                }
-            } label: {
-                Label(settings.t("break.start"), systemImage: "cup.and.saucer.fill")
-            }
-
-            Button {
-                contributionPresented = true
-            } label: {
-                Label(
-                    settings.t("data_quality.improve"),
-                    systemImage: "checkmark.seal"
-                )
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.headline.weight(.bold))
-                .foregroundStyle(SBColor.electricBlue)
-                .frame(width: 40, height: 40)
-                .sbPremiumGlass(radius: 20, interactive: true)
-        }
-        .accessibilityLabel(settings.t("actions.station_tools"))
-    }
-
-    private var favoriteButton: some View {
-        let stationKey = candidate.station.statusKey
-        return Button {
-            Haptic.tap()
-            Task { await favorites.toggle(stationKey) }
-        } label: {
-            Image(systemName: favorites.isFavorite(stationKey) ? "heart.fill" : "heart")
-                .font(.headline.weight(.bold))
-                .foregroundStyle(favorites.isFavorite(stationKey) ? SBColor.danger : SBColor.electricBlue)
-                .frame(width: 40, height: 40)
-                .sbPremiumGlass(radius: 20, interactive: true)
-        }
-        .buttonStyle(SBPremiumButtonStyle())
-        .accessibilityLabel(favorites.isFavorite(stationKey) ? settings.t("feed.favorite_remove") : settings.t("feed.favorite_add"))
-    }
-
-    private var routeButtons: some View {
-        HStack(spacing: 8) {
-            Text(settings.t("feed.open_route"))
-                .font(.headline.weight(.heavy))
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-
-            routeMapButton(settings.t("feed.apple_maps_short"), icon: "apple.logo", action: openInAppleMaps)
-            routeMapButton(settings.t("feed.google_maps_short"), icon: "map", action: openInGoogleMaps)
-        }
-        .padding(.horizontal, 16)
-        .frame(height: 54)
-        .background(SBColor.electricBlue)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                .stroke(.black.opacity(0.12), lineWidth: 1)
-        )
-    }
-
-    private var statusActions: some View {
-        HStack(spacing: 8) {
-            reportButton(settings.t("actions.available"), status: "Uygun", icon: "checkmark.circle.fill")
-            reportButton(settings.t("actions.issue_value"), status: "Sorun var", icon: "exclamationmark.triangle.fill")
-            reportButton(settings.t("actions.queue_value"), status: "Sıra var", icon: "clock.fill")
-        }
-    }
-
-    private func routeMapButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
-        Button {
-            Haptic.tap()
-            action()
-        } label: {
-            Label(title, systemImage: icon)
-                .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.74)
-                .padding(.horizontal, 10)
-                .frame(minWidth: 72)
-                .frame(height: 38)
-                .sbPremiumGlass(radius: 19, interactive: true)
-        }
-        .buttonStyle(SBPremiumButtonStyle())
-    }
-
-    private func routePill<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .foregroundStyle(SBColor.ink)
-            .padding(.horizontal, 14)
-            .frame(height: 44)
-            .sbPremiumGlass(radius: 22)
-    }
-
-    private func reportButton(_ title: String, status: String, icon: String) -> some View {
-        Button {
-            Haptic.tap()
-            Task {
-                _ = await stationData.reportStatus(
-                    stationKey: candidate.station.statusKey,
-                    status: status
-                )
-            }
-        } label: {
-            Label(title, systemImage: icon)
-                .font(.caption.weight(.heavy))
-                .lineLimit(1)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .sbPremiumGlass(radius: 20, interactive: true)
-        }
-        .buttonStyle(SBPremiumButtonStyle())
-        .disabled(!stationData.canReportStatus(for: candidate.station.statusKey))
-        .opacity(stationData.canReportStatus(for: candidate.station.statusKey) ? 1 : 0.48)
-    }
-
-    private func badgeBackground(_ tone: StationBadge.Tone) -> Color {
-        switch tone {
-        case .good, .info:
+    private func availabilityColor(_ availability: StationDecisionSummary.Availability) -> Color {
+        switch availability {
+        case .risky, .predictedBusy:
+            SBColor.warning
+        case .live(let available, _):
+            available > 0 ? SBColor.electricBlue : SBColor.warning
+        case .predictedAvailable:
             SBColor.electricBlue
-        case .warning:
-            SBColor.primaryDeep
-        case .risk:
-            SBColor.danger
-        }
-    }
-
-    private func metric(_ title: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(title)
-                .font(.caption2.weight(.heavy))
-                .foregroundStyle(SBColor.muted)
-            Text(value)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(SBColor.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.78)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .frame(minHeight: 58)
-        .background(SBColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
-        )
-    }
-
-    private func localizedBadgeTitle(_ badge: StationBadge) -> String {
-        switch badge.kind {
-        case .risk:
-            settings.t("badge.risk")
-        case .lastPositive:
-            settings.t("badge.last_positive")
-        case .noLiveData:
-            settings.t("badge.no_live")
-        case .arrivalSafe:
-            settings.t("badge.arrival_safe")
-        case .arrivalLow:
-            settings.t("badge.arrival_low")
-        case .fastDC:
-            settings.t("badge.fast_dc")
-        case .dc:
-            settings.t("badge.dc")
-        case .sources(let count):
-            settings.t("badge.sources", ["count": "\(count)"])
-        case .highConfidence:
-            settings.t("badge.high_confidence")
+        case .unknown:
+            SBColor.muted
         }
     }
 
@@ -564,7 +569,9 @@ struct StationCard: View {
             longitude: candidate.station.longitude
         )))
         destination.name = candidate.station.name
-        destination.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+        destination.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
     }
 
     private func openInGoogleMaps() {
@@ -573,12 +580,13 @@ struct StationCard: View {
         var components = URLComponents(string: "https://www.google.com/maps/dir/")
         components?.queryItems = [
             URLQueryItem(name: "api", value: "1"),
-            URLQueryItem(name: "destination", value: "\(candidate.station.latitude),\(candidate.station.longitude)"),
+            URLQueryItem(
+                name: "destination",
+                value: "\(candidate.station.latitude),\(candidate.station.longitude)"
+            ),
             URLQueryItem(name: "travelmode", value: "driving")
         ]
-        if let url = components?.url {
-            openURL(url)
-        }
+        if let url = components?.url { openURL(url) }
     }
 
     private var reportCooldownRemaining: Int {
@@ -647,10 +655,7 @@ struct StationCard: View {
                 try? data.write(to: outputURL)
             }
             #endif
-            storyShareItem = StationStoryShareItem(
-                image: image,
-                title: candidate.station.name
-            )
+            storyShareItem = StationStoryShareItem(image: image, title: candidate.station.name)
         } catch {
             storyErrorPresented = true
         }

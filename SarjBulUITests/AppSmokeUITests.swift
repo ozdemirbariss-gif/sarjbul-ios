@@ -61,7 +61,11 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-routes", "--ui-testing-story"]
         app.launch()
 
-        let shareButton = app.buttons.matching(identifier: "station-story-share-button").firstMatch
+        let actionsMenu = app.descendants(matching: .any)["station-actions-menu"]
+        XCTAssertTrue(actionsMenu.waitForExistence(timeout: 15))
+        actionsMenu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+
+        let shareButton = app.buttons["Şarj noktasını paylaş"]
         XCTAssertTrue(shareButton.waitForExistence(timeout: 15))
         shareButton.tap()
 
