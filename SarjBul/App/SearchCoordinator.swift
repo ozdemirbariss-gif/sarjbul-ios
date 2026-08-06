@@ -180,7 +180,7 @@ final class SearchCoordinator {
             state = .results(result)
             navigation.select(.routes)
         }
-        if !result.isEmpty { habits.recordSearch(preference: settings.filters.preference) }
+        if !result.isEmpty { habits.recordSearch(filters: settings.filters) }
         await recordDemandIfEnabled(origin: userLocation, resultCount: result.count)
     }
 

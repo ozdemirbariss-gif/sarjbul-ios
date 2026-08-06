@@ -39,6 +39,29 @@ final class HabitStoreTests: XCTestCase {
         XCTAssertEqual(suggestion, .routePreference(preference: .fastest, period: .evening))
     }
 
+    func testSearchParametersPrefillOnlyAfterNinetyPercentConsistency() throws {
+        let context = try makeContext()
+        defer { context.defaults.removePersistentDomain(forName: context.suiteName) }
+        let filters = StationFilters(
+            preference: .fastest,
+            minimumPowerKW: 100,
+            socketFilters: ["CCS"],
+            rangeFilterEnabled: true
+        )
+
+        for week in 1...6 {
+            let date = try XCTUnwrap(context.calendar.date(byAdding: .weekOfYear, value: -week, to: context.now))
+            context.store.recordSearch(filters: filters, at: date)
+        }
+
+        let prediction = try XCTUnwrap(context.store.searchPrediction(
+            at: context.now,
+            calendar: context.calendar
+        ))
+        XCTAssertEqual(prediction.parameters, SearchIntentParameters(filters: filters))
+        XCTAssertGreaterThanOrEqual(prediction.confidence, 0.9)
+    }
+
     private func makeContext() throws -> HabitTestContext {
         let suiteName = "HabitStoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

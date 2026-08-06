@@ -1,6 +1,6 @@
 import Foundation
 
-public enum RoutePreference: String, CaseIterable, Identifiable, Sendable {
+public enum RoutePreference: String, Codable, CaseIterable, Hashable, Identifiable, Sendable {
     case balanced
     case nearest
     case fastest
@@ -17,4 +17,3 @@ public enum RoutePreference: String, CaseIterable, Identifiable, Sendable {
         }
     }
 }
-

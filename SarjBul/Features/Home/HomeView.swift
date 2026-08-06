@@ -17,6 +17,9 @@ struct HomeView: View {
     @State private var drivingProfileExpanded = false
     @State private var settingsExpanded = false
     @State private var placeSearchMode: PlaceSearchMode?
+    @State private var intentPrediction: SearchIntentPrediction?
+    @State private var filtersBeforePrediction: StationFilters?
+    @State private var didEvaluateIntentPrediction = false
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -66,6 +69,7 @@ struct HomeView: View {
             .onAppear {
                 guard !isDeterministicUITest else { return }
                 settings.destination = nil
+                applyIntentPrefillIfEligible()
                 guard !didRequestDeviceLocation, search.userLocation == nil else { return }
                 requestDeviceLocation()
             }
@@ -301,6 +305,8 @@ struct HomeView: View {
     private func preferenceButton(_ preference: RoutePreference, icon: String) -> some View {
         Button {
             Haptic.tap()
+            intentPrediction = nil
+            filtersBeforePrediction = nil
             settings.filters.preference = preference
         } label: {
             VStack(spacing: 6) {
@@ -583,6 +589,28 @@ struct HomeView: View {
             .padding(22)
             .background(LinearGradient.sbSoftPanel)
 
+            if let intentPrediction {
+                HStack(spacing: 10) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(SBColor.signal)
+                    Text(settings.t("intent_prefill.applied", [
+                        "confidence": "\(Int((intentPrediction.confidence * 100).rounded()))"
+                    ]))
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(SBColor.textSoft)
+                        .lineLimit(2)
+                    Spacer(minLength: 4)
+                    Button(settings.t("intent_prefill.undo"), action: undoIntentPrefill)
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                        .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 22)
+                .padding(.vertical, 12)
+                .background(SBColor.charcoal)
+                .accessibilityIdentifier("intent-prefill-indicator")
+            }
+
             Button {
                 guard search.canSearch else { return }
                 Haptic.tap()
@@ -612,6 +640,24 @@ struct HomeView: View {
                 .stroke(SBColor.signal.opacity(0.55), lineWidth: 1.5)
         )
         .sbGlowShadow()
+    }
+
+    private func applyIntentPrefillIfEligible() {
+        guard !didEvaluateIntentPrediction else { return }
+        didEvaluateIntentPrediction = true
+        guard case .idle = search.state, let prediction = habits.searchPrediction() else { return }
+        filtersBeforePrediction = settings.filters
+        settings.filters = prediction.parameters.applying(to: settings.filters)
+        intentPrediction = prediction
+    }
+
+    private func undoIntentPrefill() {
+        Haptic.tap()
+        if let filtersBeforePrediction {
+            settings.filters = filtersBeforePrediction
+        }
+        self.filtersBeforePrediction = nil
+        intentPrediction = nil
     }
 
     private var safeRangeKm: Int {

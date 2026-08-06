@@ -14,6 +14,7 @@ struct UsageHabitEvent: Codable, Hashable, Identifiable {
     var preference: String?
     var stationKey: String?
     var stationName: String?
+    var searchParameters: SearchIntentParameters? = nil
 }
 
 enum HabitDayPeriod: String, Codable, Hashable {
@@ -71,6 +72,22 @@ final class HabitStore {
         ), now: date)
     }
 
+    func recordSearch(filters: StationFilters, at date: Date = Date()) {
+        let parameters = SearchIntentParameters(filters: filters)
+        guard shouldRecord(
+            kind: .search,
+            value: persistenceKey(for: parameters),
+            at: date,
+            cooldownHours: 2
+        ) else { return }
+        append(UsageHabitEvent(
+            kind: .search,
+            occurredAt: date,
+            preference: filters.preference.rawValue,
+            searchParameters: parameters
+        ), now: date)
+    }
+
     func recordRouteOpened(_ station: Station, at date: Date = Date()) {
         guard shouldRecord(kind: .routeOpened, value: station.statusKey, at: date, cooldownHours: 6) else { return }
         append(UsageHabitEvent(
@@ -97,6 +114,26 @@ final class HabitStore {
             return preferenceSuggestion
         }
         return nil
+    }
+
+    func searchPrediction(
+        at now: Date = Date(),
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> SearchIntentPrediction? {
+        let observations = events.compactMap { event -> SearchIntentObservation? in
+            guard event.kind == .search, let parameters = event.searchParameters else { return nil }
+            return SearchIntentObservation(
+                occurredAt: event.occurredAt,
+                contextKey: contextKey(for: event.occurredAt, calendar: calendar),
+                parameters: parameters
+            )
+        }
+        return PredictiveIntentEngine.predictSearch(
+            observations: observations,
+            contextKey: contextKey(for: now, calendar: calendar),
+            now: now,
+            calendar: calendar
+        )
     }
 
     func dismiss(_ suggestion: HabitSuggestion, at date: Date = Date()) {
@@ -149,11 +186,31 @@ final class HabitStore {
         cooldownHours: Double
     ) -> Bool {
         !events.contains { event in
-            let eventValue = kind == .search ? event.preference : event.stationKey
+            let eventValue: String?
+            if kind == .search, let parameters = event.searchParameters {
+                eventValue = persistenceKey(for: parameters)
+            } else {
+                eventValue = kind == .search ? event.preference : event.stationKey
+            }
             return event.kind == kind
                 && eventValue == value
                 && abs(date.timeIntervalSince(event.occurredAt)) < cooldownHours * 3_600
         }
+    }
+
+    private func contextKey(for date: Date, calendar: Calendar) -> String {
+        let dayKind = calendar.isDateInWeekend(date) ? "weekend" : "weekday"
+        return "\(dayKind):\(HabitDayPeriod.period(for: date, calendar: calendar).rawValue)"
+    }
+
+    private func persistenceKey(for parameters: SearchIntentParameters) -> String {
+        [
+            parameters.preference.rawValue,
+            String(Int(parameters.minimumPowerKW.rounded())),
+            parameters.socketFilters.sorted().joined(separator: ","),
+            parameters.operatorFilters.sorted().joined(separator: ","),
+            parameters.rangeFilterEnabled ? "range" : "all"
+        ].joined(separator: "|")
     }
 
     private func append(_ event: UsageHabitEvent, now: Date) {

@@ -8,6 +8,8 @@ Hesap ekranındaki "Anonim talep paylaşımı" ayarı varsayılan olarak kapalı
 
 ŞarjBul giriş veya kayıt formu göstermez; e-posta ve şifre işlemez. Uygulama, favorileri ve bildirimleri güvenli biçimde ayırmak için ilk kullanımda anonim bir Firebase kimliği oluşturur ve oturumu cihazın Keychain alanında saklar. Kullanıcının gönderdiği istasyon durum bildirimi, bütünlük ve kötüye kullanım önlemleri için bu anonim kimlikle ilişkilendirilir. Diğer kullanıcılar ham kimliği ve kişisel kayıtları okuyamaz.
 
+Arama tercihleri ve filtreleri, aynı zaman bağlamındaki tekrarlanan işlemleri önceden doldurmak için en fazla 90 gün cihazda saklanabilir. Bu tahmin verisi Firebase'e veya üçüncü taraf bir yapay zeka servisine gönderilmez. Yeterli örnek ve en az %90 geçmiş eşleşme oluşmadığında uygulama parametreleri değiştirmez; kullanıcı uygulanan ön doldurmayı geri alabilir.
+
 Fiyat, soket, adres ve gece güvenliği doğrulamaları kötüye kullanımı önlemek ve bağımsız kullanıcı sayısını hesaplamak için Firebase kullanıcı kimliğiyle ilişkilendirilir. Diğer kullanıcılar ham katkıları veya kimliği okuyamaz; yalnızca Cloud Function'ın ürettiği anonim doğrulama sayısı, güncellik ve güven özeti herkese açıktır.
 
 Şarj fişi fotoğrafı Apple Vision ile cihaz üzerinde işlenir ve fotoğraf ŞarjBul sunucusuna yüklenmez. Okunan enerji ve harcama geçmişi cihazda saklanır. Kullanıcı fişi bir istasyonla eşleştirip katkı göndermeyi seçerse yalnızca hesaplanan birim fiyat istasyon doğrulama akışına yazılır.
