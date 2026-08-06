@@ -40,6 +40,16 @@ struct StationFeedView: View {
                     .environment(settings)
             }
         }
+        .task(id: autoSearchReady) {
+            guard autoSearchReady else { return }
+            await search.findStations()
+        }
+    }
+
+    private var autoSearchReady: Bool {
+        guard search.canSearch else { return false }
+        if case .idle = search.state { return true }
+        return false
     }
 
     private var feedToolbar: some View {

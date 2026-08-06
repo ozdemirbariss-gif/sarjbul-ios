@@ -79,4 +79,13 @@ final class AppSmokeUITests: XCTestCase {
         let shareSheet = app.descendants(matching: .any)["ActivityListView"]
         XCTAssertTrue(shareSheet.waitForExistence(timeout: 20))
     }
+
+    func testRoutesTabAutomaticallyFindsStations() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-routes-idle"]
+        app.launch()
+
+        let routeCard = app.descendants(matching: .any)["station-route-card"]
+        XCTAssertTrue(routeCard.waitForExistence(timeout: 15))
+    }
 }

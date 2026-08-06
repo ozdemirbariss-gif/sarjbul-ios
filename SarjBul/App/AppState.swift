@@ -120,6 +120,7 @@ final class AppState {
         let clients: AppServiceClients
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes-idle")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent") {
             repository = UITestStationRepository()
             clients = AppServiceClients(
@@ -150,7 +151,12 @@ final class AppState {
     private func applyDebugLaunchMode() {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
-        if arguments.contains("--ui-testing-device-location") {
+        if arguments.contains("--ui-testing-routes-idle") {
+            navigation.tab = .routes
+            settings.destination = nil
+            settings.filters = StationFilters(rangeFilterEnabled: false)
+            search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        } else if arguments.contains("--ui-testing-device-location") {
             navigation.tab = .home
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
         } else if arguments.contains("--ui-testing-home")
