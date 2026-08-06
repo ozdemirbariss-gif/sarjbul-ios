@@ -36,6 +36,15 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["habit-suggestion-card"].waitForExistence(timeout: 5))
     }
 
+    func testAutonomousAgentPresentsPreparedRoute() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-agent"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.descendants(matching: .any)["autonomous-proposal-card"].waitForExistence(timeout: 8))
+    }
+
     func testStationStoryImageOpensShareSheet() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-routes", "--ui-testing-story"]

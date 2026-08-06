@@ -1,11 +1,11 @@
 import Foundation
 
-public struct UserLocation: Hashable, Sendable {
+public struct UserLocation: Codable, Hashable, Sendable {
     public var latitude: Double
     public var longitude: Double
     public var source: Source
 
-    public enum Source: String, Sendable {
+    public enum Source: String, Codable, Sendable {
         case device
         case manual
     }
@@ -16,4 +16,3 @@ public struct UserLocation: Hashable, Sendable {
         self.source = source
     }
 }
-

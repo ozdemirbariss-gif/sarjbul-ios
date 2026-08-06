@@ -26,6 +26,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Firebase App Check/App Attest, Crashlytics, sıkı Realtime Database kuralları ve sunucu tarafı özetleme
 - Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları ve 9:16 şarj hikâyesi üretimi
 - Yalnızca cihazda tutulan geçmişten, yeterli tekrar oluştuğunda açıklanabilir ve kapatılabilir alışkanlık önerileri
+- Düşük şarjda güvenli istasyonu önceden seçen, arka planda rota hazırlayan ve eylemli bildirimle onay isteyen otonom şarj ajanı
 - Doğrusal olmayan şarj eğrisi, rakım etkisi ve toplam süre optimizasyonlu uzun yol planı
 - Yol ağına göre 16 yönlü erişilebilir menzil poligonu; dairesel menzil yanılsaması yok
 - Fiyat/soket/adres doğrulama, zamanla azalan güven ve gece güvenliği katkıları
@@ -53,6 +54,8 @@ SarjBulUITests/           Kritik misafir akışı smoke testi
 firebase/functions/       Durum/veri/talep özetleri ve anonim kimlik verisi temizleme işleri
 database.rules.json       auth.uid tabanlı Realtime Database izolasyonu
 ```
+
+Otonom karar hattı, araç sağlayıcısı sınırları ve güvenlik kuralları için [Otonom Şarj Ajanı mimarisi](Docs/AUTONOMOUS_AGENT_ARCHITECTURE.md) belgesine bakın.
 
 ## Kurulum
 

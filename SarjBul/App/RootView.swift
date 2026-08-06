@@ -10,6 +10,7 @@ struct RootView: View {
     @Environment(NetworkMonitor.self) private var networkMonitor
     @Environment(RouteStore.self) private var routeStore
     @Environment(ChargingSessionStore.self) private var chargingSession
+    @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @State private var bottomNavigationExpanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -36,8 +37,16 @@ struct RootView: View {
         .task {
             await chargingSession.prepare()
             await search.prepare()
+            await autonomousAgent.evaluate(
+                trigger: .appLaunch,
+                location: search.userLocation
+            )
+            await autonomousAgent.openPendingRouteIfNeeded()
             guard PendingAppIntentStore.consume() == .nearestFast else { return }
             await search.openNearestFast()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: PendingAutonomousRouteStore.didChange)) { _ in
+            Task { await autonomousAgent.openPendingRouteIfNeeded() }
         }
         .onChange(of: networkMonitor.isConnected) { wasConnected, isConnected in
             if !wasConnected && isConnected { routeStore.invalidate() }

@@ -38,6 +38,14 @@
     <string>Yakındaki şarj istasyonlarını bulmak ve varış şarjını hesaplamak için konumun kullanılır.</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.ozdemirbaris.sarjbul.autonomous-refresh</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+    </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
 </dict>

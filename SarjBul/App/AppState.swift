@@ -15,12 +15,14 @@ final class AppState {
     let chargingHistory: ChargingHistoryStore
     let chargingSession: ChargingSessionStore
     let habits: HabitStore
+    let autonomousAgent: AutonomousChargingAgentStore
 
     init(
         repository: any StationRepository,
         clients: AppServiceClients,
         persistence: any AppPersistence,
-        externalLinks: AppExternalLinks
+        externalLinks: AppExternalLinks,
+        vehicleTelemetryClient: any VehicleTelemetryClient = ProfileVehicleTelemetryClient()
     ) {
         let messages = AppMessagePresenter()
         let settings = UserSettingsStore(persistence: persistence, externalLinks: externalLinks)
@@ -69,6 +71,13 @@ final class AppState {
         self.search = search
         self.navigation = navigation
         self.habits = habits
+        autonomousAgent = AutonomousChargingAgentStore(
+            stationData: stationData,
+            settings: settings,
+            search: search,
+            persistence: persistence,
+            telemetryClient: vehicleTelemetryClient
+        )
         deepLinks = DeepLinkRouter(search: search, navigation: navigation)
         lounge = LoungeStore(persistence: persistence)
         chargingHistory = ChargingHistoryStore(persistence: persistence)
@@ -92,7 +101,8 @@ final class AppState {
         let repository: any StationRepository
         let clients: AppServiceClients
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes") {
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent") {
             repository = UITestStationRepository()
             clients = AppServiceClients(
                 auth: UnavailableAuthClient(),
@@ -126,13 +136,22 @@ final class AppState {
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
         } else if arguments.contains("--ui-testing-home")
                     || arguments.contains("--ui-testing-routes")
-                    || arguments.contains("--ui-testing-habit") {
+                    || arguments.contains("--ui-testing-habit")
+                    || arguments.contains("--ui-testing-agent") {
             navigation.tab = .home
             settings.destination = nil
             settings.filters = StationFilters(rangeFilterEnabled: false)
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
             if arguments.contains("--ui-testing-habit") {
                 seedHabitSuggestionForUITesting()
+            }
+            if arguments.contains("--ui-testing-agent") {
+                autonomousAgent.resetForUITesting()
+                settings.profile.chargePercent = 20
+                var policy = settings.autonomousChargingPolicy
+                policy.isEnabled = true
+                policy.minimumStationScore = 1
+                settings.autonomousChargingPolicy = policy
             }
         } else if arguments.contains("--ui-testing-lounge") {
             navigation.tab = .lounge

@@ -19,6 +19,9 @@ final class UserSettingsStore {
     var demandAnalyticsEnabled: Bool {
         didSet { persistence.demandAnalyticsEnabled = demandAnalyticsEnabled }
     }
+    var autonomousChargingPolicy: AutonomousChargingPolicy {
+        didSet { persistence.autonomousChargingPolicy = autonomousChargingPolicy }
+    }
     let externalLinks: AppExternalLinks
 
     init(persistence: any AppPersistence, externalLinks: AppExternalLinks) {
@@ -27,6 +30,7 @@ final class UserSettingsStore {
         profile = persistence.profile
         destination = persistence.destination
         demandAnalyticsEnabled = persistence.demandAnalyticsEnabled
+        autonomousChargingPolicy = persistence.autonomousChargingPolicy
         self.externalLinks = externalLinks
     }
 

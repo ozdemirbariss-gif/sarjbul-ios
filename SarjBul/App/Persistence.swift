@@ -23,6 +23,11 @@ protocol AppPersistence: AnyObject {
     var demandAnalyticsEnabled: Bool { get set }
     var usageHabitEvents: [UsageHabitEvent] { get set }
     var habitSuggestionDismissals: [String: Date] { get set }
+    var autonomousChargingPolicy: AutonomousChargingPolicy { get set }
+    var autonomousChargingProposal: AutonomousChargingProposal? { get set }
+    var lastAutonomousChargingProposal: AutonomousChargingProposal? { get set }
+    var lastKnownLocation: UserLocation? { get set }
+    var lastVehicleTelemetry: VehicleTelemetrySnapshot? { get set }
 }
 
 protocol SecureStorage {
@@ -52,6 +57,11 @@ final class SystemAppPersistence: AppPersistence {
         static let demandAnalyticsEnabled = "demandAnalyticsEnabled"
         static let usageHabitEvents = "usageHabitEvents"
         static let habitSuggestionDismissals = "habitSuggestionDismissals"
+        static let autonomousChargingPolicy = "autonomousChargingPolicy"
+        static let autonomousChargingProposal = "autonomousChargingProposal"
+        static let lastAutonomousChargingProposal = "lastAutonomousChargingProposal"
+        static let lastKnownLocation = "lastKnownLocation"
+        static let lastVehicleTelemetry = "lastVehicleTelemetry"
     }
 
     private let defaults: UserDefaults
@@ -144,6 +154,31 @@ final class SystemAppPersistence: AppPersistence {
     var habitSuggestionDismissals: [String: Date] {
         get { decode([String: Date].self, key: Key.habitSuggestionDismissals) ?? [:] }
         set { encode(newValue, key: Key.habitSuggestionDismissals) }
+    }
+
+    var autonomousChargingPolicy: AutonomousChargingPolicy {
+        get { decode(AutonomousChargingPolicy.self, key: Key.autonomousChargingPolicy) ?? AutonomousChargingPolicy() }
+        set { encode(newValue, key: Key.autonomousChargingPolicy) }
+    }
+
+    var autonomousChargingProposal: AutonomousChargingProposal? {
+        get { decode(AutonomousChargingProposal.self, key: Key.autonomousChargingProposal) }
+        set { encodeOptional(newValue, key: Key.autonomousChargingProposal) }
+    }
+
+    var lastAutonomousChargingProposal: AutonomousChargingProposal? {
+        get { decode(AutonomousChargingProposal.self, key: Key.lastAutonomousChargingProposal) }
+        set { encodeOptional(newValue, key: Key.lastAutonomousChargingProposal) }
+    }
+
+    var lastKnownLocation: UserLocation? {
+        get { decode(UserLocation.self, key: Key.lastKnownLocation) }
+        set { encodeOptional(newValue, key: Key.lastKnownLocation) }
+    }
+
+    var lastVehicleTelemetry: VehicleTelemetrySnapshot? {
+        get { decode(VehicleTelemetrySnapshot.self, key: Key.lastVehicleTelemetry) }
+        set { encodeOptional(newValue, key: Key.lastVehicleTelemetry) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

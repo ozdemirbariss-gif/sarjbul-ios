@@ -7,6 +7,7 @@ struct AccountView: View {
     @Environment(FavoritesStore.self) private var favorites
     @Environment(SearchCoordinator.self) private var search
     @Environment(ChargingHistoryStore.self) private var chargingHistory
+    @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @State private var isDeletingData = false
     @State private var deleteConfirmationPresented = false
     @State private var legalDocument: LegalDocument?
@@ -20,6 +21,7 @@ struct AccountView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         languageRow
                         profileHeader
+                        autonomousAssistantPanel
                         stationLibraryPanel
 
                         ChargingInsightsView()
@@ -112,6 +114,73 @@ struct AccountView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private var autonomousAssistantPanel: some View {
+        SBSecondaryPanel {
+            VStack(alignment: .leading, spacing: 16) {
+                Label(settings.t("agent.settings_title"), systemImage: "sparkles")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+
+                Text(settings.t("agent.settings_hint"))
+                    .font(.subheadline)
+                    .foregroundStyle(SBColor.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle(settings.t("agent.enable"), isOn: Binding(
+                    get: { settings.autonomousChargingPolicy.isEnabled },
+                    set: { enabled in Task { await autonomousAgent.setEnabled(enabled) } }
+                ))
+                .font(.subheadline.weight(.bold))
+                .tint(SBColor.signal)
+
+                if settings.autonomousChargingPolicy.isEnabled {
+                    Divider().overlay(SBColor.line)
+
+                    Stepper(
+                        settings.t("agent.threshold", [
+                            "percent": "\(settings.autonomousChargingPolicy.triggerChargePercent)"
+                        ]),
+                        value: autonomousThresholdBinding,
+                        in: 10...50,
+                        step: 5
+                    )
+                    .font(.subheadline.weight(.bold))
+
+                    Toggle(settings.t("agent.profile_fallback"), isOn: profileFallbackBinding)
+                        .font(.subheadline.weight(.bold))
+                        .tint(SBColor.signal)
+
+                    Text(settings.t("agent.profile_fallback_hint"))
+                        .font(.caption)
+                        .foregroundStyle(SBColor.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private var autonomousThresholdBinding: Binding<Int> {
+        Binding(
+            get: { settings.autonomousChargingPolicy.triggerChargePercent },
+            set: { value in
+                var policy = settings.autonomousChargingPolicy
+                policy.triggerChargePercent = value
+                settings.autonomousChargingPolicy = policy
+            }
+        )
+    }
+
+    private var profileFallbackBinding: Binding<Bool> {
+        Binding(
+            get: { settings.autonomousChargingPolicy.allowsProfileFallback },
+            set: { value in
+                var policy = settings.autonomousChargingPolicy
+                policy.allowsProfileFallback = value
+                settings.autonomousChargingPolicy = policy
+            }
+        )
     }
 
     private var dataPanel: some View {

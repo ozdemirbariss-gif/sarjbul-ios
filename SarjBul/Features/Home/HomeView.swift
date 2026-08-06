@@ -7,6 +7,7 @@ struct HomeView: View {
     @Environment(SearchCoordinator.self) private var search
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(HabitStore.self) private var habits
+    @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -30,7 +31,10 @@ struct HomeView: View {
                             locationInput
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
-                        if let suggestion = habits.suggestion() {
+                        if let proposal = autonomousAgent.proposal {
+                            autonomousProposalCard(proposal)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        } else if let suggestion = habits.suggestion() {
                             habitSuggestionCard(suggestion)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
@@ -57,7 +61,7 @@ struct HomeView: View {
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 guard !isDeterministicUITest else { return }
-                search.updateLocation(latitude: location.latitude, longitude: location.longitude, source: .device)
+                applyLocation(location)
             }
             .onAppear {
                 guard !isDeterministicUITest else { return }
@@ -69,11 +73,11 @@ struct HomeView: View {
                 PlaceSearchSheet(mode: mode) { place in
                     switch mode {
                     case .origin:
-                        search.updateLocation(
+                        applyLocation(UserLocation(
                             latitude: place.latitude,
                             longitude: place.longitude,
                             source: .manual
-                        )
+                        ))
                     case .destination:
                         settings.destination = place
                     }
@@ -163,6 +167,94 @@ struct HomeView: View {
         )
         .sbGlowShadow()
         .accessibilityIdentifier("habit-suggestion-card")
+    }
+
+    private func autonomousProposalCard(_ proposal: AutonomousChargingProposal) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: "bolt.car.fill")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.onSignal)
+                    .frame(width: 44, height: 44)
+                    .background(SBColor.signal, in: Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(settings.t("agent.ready_kicker"))
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                    Text(settings.t("agent.ready_title"))
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(SBColor.ink)
+                        .lineLimit(2)
+                }
+                Spacer()
+                Button {
+                    autonomousAgent.dismissProposal()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(SBColor.muted)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(SBPremiumButtonStyle())
+                .accessibilityLabel(settings.t("agent.dismiss"))
+            }
+
+            Text(proposal.stationName)
+                .font(.title3.weight(.heavy))
+                .foregroundStyle(SBColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 8) {
+                agentMetric("\(proposal.distanceKm.formatted(.number.precision(.fractionLength(1)))) km")
+                agentMetric(settings.t("agent.minutes", ["minutes": "\(proposal.estimatedMinutes)"]))
+                agentMetric(settings.t("agent.arrival", ["percent": "\(proposal.arrivalChargePercent)"]))
+            }
+
+            Text(settings.t(
+                proposal.telemetrySource == .manualProfile ? "agent.source_profile" : "agent.source_vehicle"
+            ))
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(SBColor.muted)
+
+            Button {
+                Haptic.tap()
+                Task { await autonomousAgent.acceptProposal() }
+            } label: {
+                HStack {
+                    Text(settings.t("agent.open_route"))
+                        .font(.headline.weight(.heavy))
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                        .font(.headline.weight(.heavy))
+                }
+                .foregroundStyle(SBColor.onSignal)
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 56)
+                .background(SBColor.signal, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+            }
+            .buttonStyle(SBPremiumButtonStyle())
+        }
+        .padding(22)
+        .background(SBColor.charcoal, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
+                .stroke(SBColor.signal.opacity(0.6), lineWidth: 1)
+        )
+        .sbGlowShadow()
+        .accessibilityIdentifier("autonomous-proposal-card")
+    }
+
+    private func agentMetric(_ text: String) -> some View {
+        Text(text)
+            .font(.caption.weight(.heavy))
+            .foregroundStyle(SBColor.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 34)
+            .background(SBColor.surfaceSolid, in: Capsule())
     }
 
     private func habitSuggestionText(_ suggestion: HabitSuggestion) -> String {
@@ -586,6 +678,7 @@ struct HomeView: View {
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-device-location")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-habit")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")
         #else
         false
         #endif
@@ -611,7 +704,7 @@ struct HomeView: View {
                 guard let preset else { return }
                 manualLatitude = preset.latitude
                 manualLongitude = preset.longitude
-                search.updateLocation(latitude: preset.latitude, longitude: preset.longitude, source: .manual)
+                applyLocation(UserLocation(latitude: preset.latitude, longitude: preset.longitude, source: .manual))
             }
 
             HStack {
@@ -631,7 +724,7 @@ struct HomeView: View {
 
             Button {
                 Haptic.tap()
-                search.updateLocation(latitude: manualLatitude, longitude: manualLongitude, source: .manual)
+                applyLocation(UserLocation(latitude: manualLatitude, longitude: manualLongitude, source: .manual))
             } label: {
                 Label(settings.t("home.use_manual_location"), systemImage: "mappin.and.ellipse")
                     .font(.headline.weight(.bold))
@@ -640,6 +733,15 @@ struct HomeView: View {
             .buttonStyle(.borderedProminent)
             .tint(SBColor.electricBlue)
         }
+    }
+
+    private func applyLocation(_ location: UserLocation) {
+        search.updateLocation(
+            latitude: location.latitude,
+            longitude: location.longitude,
+            source: location.source
+        )
+        Task { await autonomousAgent.updateLocation(location) }
     }
 }
 
