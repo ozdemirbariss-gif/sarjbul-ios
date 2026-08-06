@@ -22,6 +22,7 @@ struct StationCard: View {
     @State private var storyShareItem: StationStoryShareItem?
     @State private var isGeneratingStory = false
     @State private var storyErrorPresented = false
+    @State private var technicalDetailsExpanded = false
     @ScaledMetric(relativeTo: .largeTitle) private var distanceTextSize = 56
     @ScaledMetric(relativeTo: .title) private var stationTitleSize = 24
 
@@ -70,18 +71,6 @@ struct StationCard: View {
             .frame(height: 184)
             .clipped()
             .preferredColorScheme(.dark)
-            .overlay(alignment: .topLeading) {
-                routePill {
-                    HStack(spacing: 6) {
-                        Text("\(candidate.score)")
-                            .font(.title2.weight(.heavy))
-                        Text(settings.t("feed.score"))
-                            .font(.headline.weight(.heavy))
-                            .foregroundStyle(SBColor.muted)
-                    }
-                }
-                .padding(16)
-            }
             .overlay(alignment: .topTrailing) {
                 VStack(spacing: 16) {
                     routePill {
@@ -104,14 +93,6 @@ struct StationCard: View {
                 }
                     .padding(16)
             }
-            .overlay(alignment: .bottomLeading) {
-                routePill {
-                    Text(route == nil ? settings.t("feed.route_approximate") : settings.t("feed.route_live"))
-                        .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.electricBlue)
-                }
-                .padding(16)
-            }
     }
 
     private var details: some View {
@@ -123,45 +104,16 @@ struct StationCard: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.68)
                 Spacer(minLength: 0)
-                Text("\(displayMinutes) \(settings.t("feed.minute")) · \(settings.t("feed.arrival")) %\(Int(displayArrivalCharge.rounded()))")
+                Text("\(displayMinutes) \(settings.t("feed.minute"))")
                     .font(.subheadline.weight(.heavy))
                     .foregroundStyle(SBColor.textSoft)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
             }
 
-            HStack(spacing: 10) {
-                chip("\(settings.t("feed.arrival_charge")) %\(Int(displayArrivalCharge.rounded()))")
-                chip(String(format: "\(settings.t("feed.deviation")) +%.1f km", displayDeviationKm))
-            }
-
             stationPanel
-
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
-                spacing: 8
-            ) {
-                metric(settings.t("feed.power"), candidate.station.power)
-                metric(settings.t("feed.socket"), effectiveSocket)
-                metric(settings.t("feed.price"), effectivePrice)
-            }
-
-            stationIntelligence
-
-            HStack(alignment: .center, spacing: 8) {
-                ForEach(candidate.badges.prefix(2), id: \.self) { badge in
-                    Text(localizedBadgeTitle(badge))
-                        .font(.caption2.weight(.heavy))
-                        .foregroundStyle(.black)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
-                        .padding(.horizontal, 10)
-                        .frame(height: 32)
-                        .background(badgeBackground(badge.tone))
-                        .clipShape(Capsule())
-                    }
-                Spacer(minLength: 0)
-            }
+            decisionSummary
+            technicalDetails
 
             routeButtons
 
@@ -173,6 +125,135 @@ struct StationCard: View {
             }
         }
         .padding(16)
+    }
+
+    private var decisionSummary: some View {
+        let summary = StationDecisionEngine.summarize(
+            candidate: decisionCandidate,
+            profile: settings.profile
+        )
+        return HStack(spacing: 0) {
+            decisionMetric(
+                title: settings.t("decision.arrival"),
+                value: "%\(summary.arrivalChargePercent)",
+                icon: "battery.50percent"
+            )
+            decisionDivider
+            decisionMetric(
+                title: settings.t("decision.availability"),
+                value: availabilityText(summary.availability),
+                icon: availabilityIcon(summary.availability)
+            )
+            decisionDivider
+            decisionMetric(
+                title: settings.t("decision.charge_target", ["percent": "\(summary.targetChargePercent)"]),
+                value: summary.chargeToTargetMinutes.map {
+                    settings.t("decision.minutes", ["minutes": "\($0)"])
+                } ?? settings.t("decision.unknown"),
+                icon: "bolt.fill"
+            )
+        }
+        .padding(.vertical, 14)
+        .background(SBColor.surface.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func decisionMetric(title: String, value: String, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption.weight(.heavy))
+                .foregroundStyle(SBColor.electricBlue)
+            Text(value)
+                .font(.subheadline.weight(.heavy))
+                .foregroundStyle(SBColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(SBColor.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var decisionDivider: some View {
+        Rectangle()
+            .fill(SBColor.line)
+            .frame(width: 1, height: 54)
+    }
+
+    private var technicalDetails: some View {
+        DisclosureGroup(isExpanded: $technicalDetailsExpanded) {
+            VStack(alignment: .leading, spacing: 10) {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
+                    spacing: 8
+                ) {
+                    metric(settings.t("feed.power"), candidate.station.power)
+                    metric(settings.t("feed.socket"), effectiveSocket)
+                    metric(settings.t("feed.price"), effectivePrice)
+                }
+                stationIntelligence
+                HStack(alignment: .center, spacing: 8) {
+                    ForEach(candidate.badges.prefix(2), id: \.self) { badge in
+                        Text(localizedBadgeTitle(badge))
+                            .font(.caption2.weight(.heavy))
+                            .foregroundStyle(.black)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                            .padding(.horizontal, 10)
+                            .frame(height: 32)
+                            .background(badgeBackground(badge.tone))
+                            .clipShape(Capsule())
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+            .padding(.top, 10)
+        } label: {
+            Label(settings.t("decision.technical_details"), systemImage: "slider.horizontal.3")
+                .font(.subheadline.weight(.heavy))
+                .foregroundStyle(SBColor.textSoft)
+        }
+        .tint(SBColor.electricBlue)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(SBColor.surface.opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+    }
+
+    private var decisionCandidate: StationCandidate {
+        var value = candidate
+        value.arrivalChargePercent = displayArrivalCharge
+        return value
+    }
+
+    private func availabilityText(_ availability: StationDecisionSummary.Availability) -> String {
+        switch availability {
+        case .risky:
+            settings.t("decision.risky")
+        case .live(let available, let total):
+            settings.t("decision.live_count", ["available": "\(available)", "total": "\(total)"])
+        case .predictedBusy(let percent):
+            settings.t("decision.busy", ["percent": "\(percent)"])
+        case .predictedAvailable(let percent):
+            settings.t("decision.available", ["percent": "\(percent)"])
+        case .unknown:
+            settings.t("decision.unknown")
+        }
+    }
+
+    private func availabilityIcon(_ availability: StationDecisionSummary.Availability) -> String {
+        switch availability {
+        case .risky: "exclamationmark.triangle.fill"
+        case .live(let available, _): available > 0 ? "bolt.circle.fill" : "clock.fill"
+        case .predictedBusy: "clock.fill"
+        case .predictedAvailable: "checkmark.circle.fill"
+        case .unknown: "questionmark.circle"
+        }
     }
 
     private var stationPanel: some View {
@@ -378,17 +459,6 @@ struct StationCard: View {
             .sbPremiumGlass(radius: 22)
     }
 
-    private func chip(_ title: String) -> some View {
-        Text(title)
-            .font(.subheadline.weight(.heavy))
-            .foregroundStyle(SBColor.electricBlue)
-            .lineLimit(1)
-            .minimumScaleFactor(0.78)
-            .padding(.horizontal, 12)
-            .frame(height: 36)
-            .sbPremiumGlass(radius: 18)
-    }
-
     private func reportButton(_ title: String, status: String, icon: String) -> some View {
         Button {
             Haptic.tap()
@@ -485,10 +555,6 @@ struct StationCard: View {
 
     private var displayArrivalCharge: Double {
         settings.profile.arrivalChargePercent(distanceKm: displayDistanceKm)
-    }
-
-    private var displayDeviationKm: Double {
-        max(0, displayDistanceKm - candidate.straightLineDistanceKm)
     }
 
     private func openInAppleMaps() {
