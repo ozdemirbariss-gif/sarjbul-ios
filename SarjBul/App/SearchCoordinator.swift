@@ -33,8 +33,7 @@ final class SearchCoordinator {
     private let navigation: NavigationCoordinator
     private let messages: AppMessagePresenter
     private let habits: HabitStore
-    private let demandAnalytics: any DemandAnalyticsClient
-    private let mutationQueue: AsyncMutationQueue
+    private let offlineSync: OfflineSyncCoordinator
     private let journeyRouteService = JourneyRouteService()
     private let tripPlanner = ChargingTripPlanner()
     private var pendingStationKey: String?
@@ -54,8 +53,7 @@ final class SearchCoordinator {
         navigation: NavigationCoordinator,
         messages: AppMessagePresenter,
         habits: HabitStore,
-        demandAnalytics: any DemandAnalyticsClient = UnavailableDemandAnalyticsClient(),
-        mutationQueue: AsyncMutationQueue
+        offlineSync: OfflineSyncCoordinator
     ) {
         self.stationData = stationData
         self.settings = settings
@@ -64,8 +62,7 @@ final class SearchCoordinator {
         self.navigation = navigation
         self.messages = messages
         self.habits = habits
-        self.demandAnalytics = demandAnalytics
-        self.mutationQueue = mutationQueue
+        self.offlineSync = offlineSync
     }
 
     var routeCandidates: [StationCandidate] { state.candidates }
@@ -137,6 +134,7 @@ final class SearchCoordinator {
             } catch {
                 journeySnapshot = nil
                 routePoints = []
+                AppTelemetry.capture(error, operation: "journey_route_fallback")
                 AppLogger.routing.warning("Journey corridor route failed: \(error.localizedDescription, privacy: .public)")
             }
         } else {
@@ -225,22 +223,10 @@ final class SearchCoordinator {
             searchRadiusKm: settings.filters.rangeFilterEnabled ? settings.profile.safeRangeKm : 400,
             resultCount: resultCount
         )
-        await mutationQueue.enqueue(
-            id: "demand:\(event.coarseCell):\(event.createdAtMilliseconds)",
-            maxAttempts: 2
-        ) { [auth, demandAnalytics] in
-            try await auth.authenticatedRequest { session in
-                try await demandAnalytics.recordSearchDemand(
-                    event: event,
-                    uid: session.uid,
-                    idToken: session.idToken
-                )
-            }
-        } completion: { result in
-            if case .failure(let error) = result {
-                AppLogger.data.debug("Opt-in demand event skipped: \(error.localizedDescription, privacy: .public)")
-            }
-        }
+        await offlineSync.submit(
+            .demand(event),
+            deduplicationKey: "demand:\(event.coarseCell):\(event.createdAtMilliseconds)"
+        ) { _ in }
     }
 
     func openNearestFast() async {

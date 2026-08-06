@@ -16,6 +16,7 @@ final class AppState {
     let chargingSession: ChargingSessionStore
     let habits: HabitStore
     let autonomousAgent: AutonomousChargingAgentStore
+    let offlineSync: OfflineSyncCoordinator
 
     init(
         repository: any StationRepository,
@@ -34,6 +35,14 @@ final class AppState {
             messages: messages,
             isConfigured: clients.isConfigured
         )
+        let offlineSync = OfflineSyncCoordinator(
+            auth: auth,
+            favoritesClient: clients.favorites,
+            statusClient: clients.status,
+            demandClient: clients.demandAnalytics,
+            persistence: persistence,
+            queue: mutationQueue
+        )
         let pipeline = StationDataPipeline(
             repository: repository,
             statusClient: clients.status,
@@ -43,7 +52,7 @@ final class AppState {
             pipeline: pipeline,
             statusClient: clients.status,
             realtimeClient: clients.realtime,
-            mutationQueue: mutationQueue,
+            offlineSync: offlineSync,
             persistence: persistence,
             messages: messages
         )
@@ -51,7 +60,7 @@ final class AppState {
             client: clients.favorites,
             auth: auth,
             stationData: stationData,
-            mutationQueue: mutationQueue,
+            offlineSync: offlineSync,
             persistence: persistence,
             messages: messages
         )
@@ -64,8 +73,7 @@ final class AppState {
             navigation: navigation,
             messages: messages,
             habits: habits,
-            demandAnalytics: clients.demandAnalytics,
-            mutationQueue: mutationQueue
+            offlineSync: offlineSync
         )
 
         self.messages = messages
@@ -76,6 +84,7 @@ final class AppState {
         self.search = search
         self.navigation = navigation
         self.habits = habits
+        self.offlineSync = offlineSync
         autonomousAgent = AutonomousChargingAgentStore(
             stationData: stationData,
             settings: settings,

@@ -3,7 +3,6 @@ import SwiftUI
 
 struct StationContributionSheet: View {
     @Environment(UserSettingsStore.self) private var settings
-    @Environment(AuthStore.self) private var auth
     @Environment(StationDataStore.self) private var stationData
     @Environment(\.dismiss) private var dismiss
 
@@ -121,8 +120,7 @@ struct StationContributionSheet: View {
         defer { isSubmitting = false }
         if await stationData.submitContribution(
             stationKey: candidate.station.statusKey,
-            contribution: contribution,
-            auth: auth
+            contribution: contribution
         ) {
             Haptic.success()
             dismiss()

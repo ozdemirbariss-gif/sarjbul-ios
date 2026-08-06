@@ -28,6 +28,10 @@ public struct UnavailableLiveAvailabilityClient: LiveAvailabilityClient {
 public actor OCPIGatewayClient: LiveAvailabilityClient {
     private let endpoint: URL
     private let session: URLSession
+    private var cache: [String: LiveStationAvailability] = [:]
+    private var cachedRequestKeys: Set<String> = []
+    private var cacheStoredAt: Date?
+    private var lastRequestAt: Date?
 
     public init(endpoint: URL, session: URLSession = .shared) {
         self.endpoint = endpoint
@@ -36,6 +40,17 @@ public actor OCPIGatewayClient: LiveAvailabilityClient {
 
     public func availability(stationKeys: [String]) async throws -> [String: LiveStationAvailability] {
         guard !stationKeys.isEmpty else { return [:] }
+        let requestedKeys = Set(stationKeys)
+        if let cacheStoredAt,
+           Date().timeIntervalSince(cacheStoredAt) < 60,
+           requestedKeys.isSubset(of: cachedRequestKeys) {
+            return cache.filter { requestedKeys.contains($0.key) }
+        }
+        if let lastRequestAt {
+            let delay = 1.5 - Date().timeIntervalSince(lastRequestAt)
+            if delay > 0 { try await Task.sleep(for: .seconds(delay)) }
+        }
+        lastRequestAt = Date()
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.timeoutInterval = 10
@@ -49,7 +64,11 @@ public actor OCPIGatewayClient: LiveAvailabilityClient {
         decoder.dateDecodingStrategy = .iso8601
         let availability = try decoder.decode([String: LiveStationAvailability].self, from: data)
         let freshnessLimit = Date().addingTimeInterval(-15 * 60)
-        return availability.filter { $0.value.updatedAt >= freshnessLimit }
+        let fresh = availability.filter { $0.value.updatedAt >= freshnessLimit }
+        cache.merge(fresh) { _, new in new }
+        cachedRequestKeys.formUnion(requestedKeys)
+        cacheStoredAt = Date()
+        return fresh
     }
 }
 

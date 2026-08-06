@@ -42,6 +42,7 @@ struct SarjBulApp: App {
                 .environment(appState.chargingSession)
                 .environment(appState.habits)
                 .environment(appState.autonomousAgent)
+                .environment(appState.offlineSync)
                 .environment(routeStore)
                 .environment(networkMonitor)
         }

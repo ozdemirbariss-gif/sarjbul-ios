@@ -9,6 +9,20 @@ struct RecentStationRoute: Codable, Hashable, Identifiable {
     var id: String { stationID }
 }
 
+enum OfflineMutationPayload: Codable, Sendable {
+    case favorite(stationKey: String, isFavorite: Bool)
+    case stationReport(stationKey: String, status: String)
+    case contribution(stationKey: String, contribution: StationContribution)
+    case demand(SearchDemandEvent)
+}
+
+struct PendingOfflineMutation: Codable, Identifiable, Sendable {
+    var id: String
+    var deduplicationKey: String
+    var payload: OfflineMutationPayload
+    var createdAt: Date
+}
+
 @MainActor
 protocol AppPersistence: AnyObject {
     var profile: DrivingProfile { get set }
@@ -16,6 +30,7 @@ protocol AppPersistence: AnyObject {
     var language: AppLanguage { get set }
     var destination: JourneyDestination? { get set }
     var recentRoutes: [RecentStationRoute] { get set }
+    var favoriteStationKeys: Set<String> { get set }
     var reportCooldowns: [String: Date] { get set }
     var loungeBestScore: Int { get set }
     var chargingSessions: [ChargingSessionRecord] { get set }
@@ -31,6 +46,7 @@ protocol AppPersistence: AnyObject {
     var autonomousChargingMutedUntil: Date? { get set }
     var stationDataLastRefreshedAt: Date? { get set }
     var automationReports: [AutomationReport] { get set }
+    var pendingOfflineMutations: [PendingOfflineMutation] { get set }
 }
 
 protocol SecureStorage {
@@ -53,6 +69,7 @@ final class SystemAppPersistence: AppPersistence {
         static let language = "appLanguage"
         static let destination = "journeyDestination"
         static let recentRoutes = "recentStationRoutes"
+        static let favoriteStationKeys = "favoriteStationKeys"
         static let reportCooldowns = "stationReportCooldowns"
         static let loungeBest = "voltDashBest"
         static let chargingSessions = "chargingSessions"
@@ -68,6 +85,7 @@ final class SystemAppPersistence: AppPersistence {
         static let autonomousChargingMutedUntil = AutonomousNotificationConstants.mutedUntilKey
         static let stationDataLastRefreshedAt = "stationDataLastRefreshedAt"
         static let automationReports = "automationReports"
+        static let pendingOfflineMutations = "pendingOfflineMutations"
     }
 
     private let defaults: UserDefaults
@@ -125,6 +143,11 @@ final class SystemAppPersistence: AppPersistence {
     var recentRoutes: [RecentStationRoute] {
         get { decode([RecentStationRoute].self, key: Key.recentRoutes) ?? [] }
         set { encode(newValue, key: Key.recentRoutes) }
+    }
+
+    var favoriteStationKeys: Set<String> {
+        get { Set(decode([String].self, key: Key.favoriteStationKeys) ?? []) }
+        set { encode(Array(newValue).sorted(), key: Key.favoriteStationKeys) }
     }
 
     var reportCooldowns: [String: Date] {
@@ -200,6 +223,11 @@ final class SystemAppPersistence: AppPersistence {
     var automationReports: [AutomationReport] {
         get { decode([AutomationReport].self, key: Key.automationReports) ?? [] }
         set { encode(Array(newValue.prefix(20)), key: Key.automationReports) }
+    }
+
+    var pendingOfflineMutations: [PendingOfflineMutation] {
+        get { decode([PendingOfflineMutation].self, key: Key.pendingOfflineMutations) ?? [] }
+        set { encode(Array(newValue.suffix(100)), key: Key.pendingOfflineMutations) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

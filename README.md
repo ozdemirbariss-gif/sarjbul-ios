@@ -22,6 +22,9 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Gerçek `MKDirections` rotası, trafik katmanlı MapKit görünümü ve Apple/Google Maps aktarımı
 - Dikey snap kart akışı ile bütün istasyonları gösteren harita arasında geçiş
 - ETag destekli uzaktan istasyon verisi, kalite kapısı, yerel cache ve bundle fallback
+- Çevrimdışı favori/durum/katkı outbox'ı; bağlantı dönüşünde otomatik, sıralı ve hız kontrollü senkronizasyon
+- Dış uygunluk, rota ve rakım servislerinde süreli cache, istek tekilleştirme ve kota koruması
+- Teknik ayrıntıyı kullanıcıdan ayıran, tekrar baskılamalı OSLog + Crashlytics operasyon telemetrisi
 - Form gerektirmeyen anonim Firebase oturumu, token yenileme, favori senkronizasyonu ve durum bildirimi
 - Firebase App Check/App Attest, Crashlytics, sıkı Realtime Database kuralları ve sunucu tarafı özetleme
 - Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları ve 9:16 şarj hikâyesi üretimi

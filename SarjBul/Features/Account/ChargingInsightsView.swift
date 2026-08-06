@@ -8,7 +8,6 @@ struct ChargingInsightsView: View {
     @Environment(ChargingHistoryStore.self) private var history
     @Environment(FavoritesStore.self) private var favorites
     @Environment(StationDataStore.self) private var stationData
-    @Environment(AuthStore.self) private var auth
 
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var parsedReceipt: ParsedChargingReceipt?
@@ -262,8 +261,7 @@ struct ChargingInsightsView: View {
                 stationKey: station.statusKey,
                 contribution: StationContribution(values: [
                     .price: String(format: "%.2f TL/kWh", unitPrice)
-                ]),
-                auth: auth
+                ])
             )
         }
     }

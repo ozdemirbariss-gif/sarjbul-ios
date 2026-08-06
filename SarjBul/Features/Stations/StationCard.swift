@@ -5,7 +5,6 @@ import SwiftUI
 struct StationCard: View {
     @Environment(UserSettingsStore.self) private var settings
     @Environment(SearchCoordinator.self) private var search
-    @Environment(AuthStore.self) private var auth
     @Environment(FavoritesStore.self) private var favorites
     @Environment(StationDataStore.self) private var stationData
     @Environment(ChargingSessionStore.self) private var chargingSession
@@ -50,7 +49,6 @@ struct StationCard: View {
         .sheet(isPresented: $contributionPresented) {
             StationContributionSheet(candidate: candidate)
                 .environment(settings)
-                .environment(auth)
                 .environment(stationData)
         }
         .sheet(item: $storyShareItem) { item in
@@ -469,8 +467,7 @@ struct StationCard: View {
             Task {
                 _ = await stationData.reportStatus(
                     stationKey: candidate.station.statusKey,
-                    status: status,
-                    auth: auth
+                    status: status
                 )
             }
         } label: {

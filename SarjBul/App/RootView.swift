@@ -11,6 +11,7 @@ struct RootView: View {
     @Environment(RouteStore.self) private var routeStore
     @Environment(ChargingSessionStore.self) private var chargingSession
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
+    @Environment(OfflineSyncCoordinator.self) private var offlineSync
     @State private var bottomNavigationExpanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -37,6 +38,7 @@ struct RootView: View {
         .task {
             await chargingSession.prepare()
             await search.prepare()
+            await offlineSync.syncPending()
             await autonomousAgent.evaluate(
                 trigger: .appLaunch,
                 location: search.userLocation
@@ -52,7 +54,10 @@ struct RootView: View {
             autonomousAgent.handleMutedNotificationAction()
         }
         .onChange(of: networkMonitor.isConnected) { wasConnected, isConnected in
-            if !wasConnected && isConnected { routeStore.invalidate() }
+            if !wasConnected && isConnected {
+                routeStore.invalidate()
+                Task { await offlineSync.syncPending() }
+            }
         }
         .sensoryFeedback(.selection, trigger: navigation.tab)
         .onChange(of: navigation.tab) { _, tab in

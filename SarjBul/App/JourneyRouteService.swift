@@ -3,12 +3,23 @@ import SarjBulCore
 
 actor JourneyRouteService {
     private let elevationService = RouteElevationService()
+    private var cachedRoutes: [String: (snapshot: JourneyRouteSnapshot, date: Date)] = [:]
 
     func routeSnapshot(
         origin: UserLocation,
         destination: JourneyDestination,
         maximumPointCount: Int = 96
     ) async throws -> JourneyRouteSnapshot {
+        let cacheKey = String(
+            format: "%.4f:%.4f:%.4f:%.4f",
+            origin.latitude,
+            origin.longitude,
+            destination.latitude,
+            destination.longitude
+        )
+        if let cached = cachedRoutes[cacheKey], Date().timeIntervalSince(cached.date) < 5 * 60 {
+            return cached.snapshot
+        }
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
             latitude: origin.latitude,
@@ -58,12 +69,17 @@ actor JourneyRouteService {
             ))
         }
         let elevation = (try? await elevationService.profile(for: result)) ?? .init()
-        return JourneyRouteSnapshot(
+        let snapshot = JourneyRouteSnapshot(
             points: result,
             distanceKm: route.distance / 1_000,
             estimatedMinutes: Int(ceil(route.expectedTravelTime / 60)),
             elevation: elevation
         )
+        cachedRoutes[cacheKey] = (snapshot, Date())
+        if cachedRoutes.count > 16 {
+            cachedRoutes = cachedRoutes.filter { Date().timeIntervalSince($0.value.date) < 5 * 60 }
+        }
+        return snapshot
     }
 }
 
@@ -76,6 +92,8 @@ struct JourneyRouteSnapshot: Sendable {
 
 private actor RouteElevationService {
     private let session: URLSession
+    private var cache: [String: (profile: RouteElevationProfile, date: Date)] = [:]
+    private var lastRequestAt: Date?
 
     init(session: URLSession = .shared) {
         self.session = session
@@ -84,6 +102,17 @@ private actor RouteElevationService {
     func profile(for route: [UserLocation]) async throws -> RouteElevationProfile {
         let sampled = sampledPoints(route, maximumCount: 80)
         guard sampled.count >= 2 else { return .init() }
+        let cacheKey = sampled.map {
+            String(format: "%.3f:%.3f", $0.latitude, $0.longitude)
+        }.joined(separator: "|")
+        if let cached = cache[cacheKey], Date().timeIntervalSince(cached.date) < 30 * 60 {
+            return cached.profile
+        }
+        if let lastRequestAt {
+            let delay = 1.0 - Date().timeIntervalSince(lastRequestAt)
+            if delay > 0 { try await Task.sleep(for: .seconds(delay)) }
+        }
+        lastRequestAt = Date()
         var components = URLComponents(string: "https://api.open-meteo.com/v1/elevation")
         components?.queryItems = [
             URLQueryItem(name: "latitude", value: sampled.map { String(format: "%.5f", $0.latitude) }.joined(separator: ",")),
@@ -104,7 +133,9 @@ private actor RouteElevationService {
             let delta = end - start
             if delta > 0 { gain += delta } else { loss += abs(delta) }
         }
-        return RouteElevationProfile(gainMeters: gain, lossMeters: loss)
+        let profile = RouteElevationProfile(gainMeters: gain, lossMeters: loss)
+        cache[cacheKey] = (profile, Date())
+        return profile
     }
 
     private func sampledPoints(_ route: [UserLocation], maximumCount: Int) -> [UserLocation] {

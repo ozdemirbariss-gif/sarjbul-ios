@@ -8,7 +8,7 @@ final class FavoritesStore {
     private let client: any FavoritesClient
     private let auth: AuthStore
     private let stationData: StationDataStore
-    private let mutationQueue: AsyncMutationQueue
+    private let offlineSync: OfflineSyncCoordinator
     private let persistence: any AppPersistence
     private let messages: AppMessagePresenter
     private var pendingKeys: Set<String> = []
@@ -20,17 +20,18 @@ final class FavoritesStore {
         client: any FavoritesClient,
         auth: AuthStore,
         stationData: StationDataStore,
-        mutationQueue: AsyncMutationQueue,
+        offlineSync: OfflineSyncCoordinator,
         persistence: any AppPersistence,
         messages: AppMessagePresenter
     ) {
         self.client = client
         self.auth = auth
         self.stationData = stationData
-        self.mutationQueue = mutationQueue
+        self.offlineSync = offlineSync
         self.persistence = persistence
         self.messages = messages
         recentRoutes = persistence.recentRoutes
+        favorites = persistence.favoriteStationKeys
     }
 
     func handleSessionChanged(_ session: FirebaseAuthSession?) async {
@@ -46,9 +47,9 @@ final class FavoritesStore {
             favorites = try await auth.authenticatedRequest { session in
                 try await self.client.favoriteIDs(uid: session.uid, idToken: session.idToken)
             }
+            persistence.favoriteStationKeys = favorites
         } catch {
-            AppLogger.account.error("Favorites failed: \(error.localizedDescription, privacy: .public)")
-            messages.present(.auth(AuthError.map(error)))
+            AppTelemetry.capture(error, operation: "favorites_load")
         }
     }
 
@@ -62,21 +63,17 @@ final class FavoritesStore {
         pendingKeys.insert(stationKey)
         let shouldFavorite = !favorites.contains(stationKey)
         if shouldFavorite { favorites.insert(stationKey) } else { favorites.remove(stationKey) }
+        persistence.favoriteStationKeys = favorites
 
-        await mutationQueue.enqueue(id: "favorite:\(stationKey)") { [auth, client] in
-            try await auth.authenticatedRequest { session in
-                try await client.setFavorite(
-                    uid: session.uid,
-                    stationKey: stationKey,
-                    isFavorite: shouldFavorite,
-                    idToken: session.idToken
-                )
-            }
-        } completion: { [weak self] result in
+        await offlineSync.submit(
+            .favorite(stationKey: stationKey, isFavorite: shouldFavorite),
+            deduplicationKey: "favorite:\(stationKey)"
+        ) { [weak self] result in
             guard let self else { return }
             self.pendingKeys.remove(stationKey)
-            if case .failure(let error) = result {
+            if case .rejected(let error) = result {
                 if shouldFavorite { self.favorites.remove(stationKey) } else { self.favorites.insert(stationKey) }
+                self.persistence.favoriteStationKeys = self.favorites
                 self.messages.present(.auth(AuthError.map(error)))
             }
         }

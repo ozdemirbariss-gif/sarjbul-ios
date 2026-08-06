@@ -18,7 +18,7 @@ final class StationDataStore {
     private let pipeline: StationDataPipeline
     private let statusClient: any StatusClient
     private let realtimeClient: any RealtimeStationClient
-    private let mutationQueue: AsyncMutationQueue
+    private let offlineSync: OfflineSyncCoordinator
     private let persistence: any AppPersistence
     private let messages: AppMessagePresenter
     private var reportCooldowns: [String: Date]
@@ -35,14 +35,14 @@ final class StationDataStore {
         pipeline: StationDataPipeline,
         statusClient: any StatusClient,
         realtimeClient: any RealtimeStationClient,
-        mutationQueue: AsyncMutationQueue,
+        offlineSync: OfflineSyncCoordinator,
         persistence: any AppPersistence,
         messages: AppMessagePresenter
     ) {
         self.pipeline = pipeline
         self.statusClient = statusClient
         self.realtimeClient = realtimeClient
-        self.mutationQueue = mutationQueue
+        self.offlineSync = offlineSync
         self.persistence = persistence
         self.messages = messages
         reportCooldowns = persistence.reportCooldowns
@@ -63,7 +63,8 @@ final class StationDataStore {
             await reloadCommunityData(idToken: statusIDToken)
             await refreshStations()
         } catch {
-            let message = AppMessage.raw(error.localizedDescription, kind: .error)
+            AppTelemetry.capture(error, operation: "station_catalog_load")
+            let message = AppMessage.localized(key: "data.recovery_failed", kind: .error)
             loadState = .failed(message)
             messages.present(message)
             AppLogger.data.error("Station load failed: \(error.localizedDescription, privacy: .public)")
@@ -89,6 +90,7 @@ final class StationDataStore {
             }
             return didRefresh || didRefreshCommunity
         } catch {
+            AppTelemetry.capture(error, operation: "station_automation_refresh")
             AppLogger.data.warning("Automation station refresh failed: \(error.localizedDescription, privacy: .public)")
             return false
         }
@@ -98,6 +100,7 @@ final class StationDataStore {
         do {
             stationStatuses = try await pipeline.reloadStatuses(idToken: idToken)
         } catch {
+            AppTelemetry.capture(error, operation: "station_status_refresh")
             AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
         }
     }
@@ -138,12 +141,14 @@ final class StationDataStore {
             stationStatuses = try await statusesTask
             didRefresh = true
         } catch {
+            AppTelemetry.capture(error, operation: "station_status_refresh")
             AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
         }
         do {
             communityInsights = try await insightsTask
             didRefresh = true
         } catch {
+            AppTelemetry.capture(error, operation: "station_insight_refresh")
             AppLogger.data.error("Station insights failed: \(error.localizedDescription, privacy: .public)")
         }
         return didRefresh
@@ -199,7 +204,7 @@ final class StationDataStore {
         return max(0, Int(ceil(Self.reportCooldown - now.timeIntervalSince(lastReport))))
     }
 
-    func reportStatus(stationKey: String, status: String, auth: AuthStore) async -> Bool {
+    func reportStatus(stationKey: String, status: String) async -> Bool {
         guard canReportStatus(for: stationKey) else {
             messages.present(.localized(
                 key: "service.report_cooldown",
@@ -215,22 +220,17 @@ final class StationDataStore {
         persistReportCooldowns()
         await applyRealtime(.statusChanged(key: stationKey, value: optimistic))
 
-        await mutationQueue.enqueue(id: "status:\(stationKey)") { [auth, statusClient] in
-            try await auth.authenticatedRequest { session in
-                try await statusClient.sendStationReport(
-                    stationKey: stationKey,
-                    status: status,
-                    comment: status,
-                    uid: session.uid,
-                    idToken: session.idToken
-                )
-            }
-        } completion: { [weak self] result in
+        await offlineSync.submit(
+            .stationReport(stationKey: stationKey, status: status),
+            deduplicationKey: "status:\(stationKey)"
+        ) { [weak self] result in
             guard let self else { return }
             switch result {
-            case .success:
+            case .synced:
                 self.messages.present(.localized(key: "service.report_sent", kind: .success))
-            case .failure(let error):
+            case .queued:
+                self.messages.present(.localized(key: "offline.saved", kind: .information))
+            case .rejected(let error):
                 self.reportCooldowns[stationKey] = nil
                 self.persistReportCooldowns()
                 Task { await self.applyRealtime(.statusChanged(key: stationKey, value: previous)) }
@@ -247,8 +247,7 @@ final class StationDataStore {
 
     func submitContribution(
         stationKey: String,
-        contribution: StationContribution,
-        auth: AuthStore
+        contribution: StationContribution
     ) async -> Bool {
         guard !contribution.values.isEmpty, canContribute(to: stationKey) else { return false }
 
@@ -257,17 +256,15 @@ final class StationDataStore {
         persistReportCooldowns()
         messages.present(.localized(key: "data_quality.thanks", kind: .success))
 
-        await mutationQueue.enqueue(id: cooldownKey) { [auth, statusClient] in
-            try await auth.authenticatedRequest { session in
-                try await statusClient.sendStationContribution(
-                    stationKey: stationKey,
-                    contribution: contribution,
-                    uid: session.uid,
-                    idToken: session.idToken
-                )
+        await offlineSync.submit(
+            .contribution(stationKey: stationKey, contribution: contribution),
+            deduplicationKey: cooldownKey
+        ) { [weak self] result in
+            guard let self else { return }
+            if case .queued = result {
+                self.messages.present(.localized(key: "offline.saved", kind: .information))
             }
-        } completion: { [weak self] result in
-            guard let self, case .failure(let error) = result else { return }
+            guard case .rejected(let error) = result else { return }
             self.reportCooldowns[cooldownKey] = nil
             self.persistReportCooldowns()
             self.messages.present(.auth(AuthError.map(error)))
