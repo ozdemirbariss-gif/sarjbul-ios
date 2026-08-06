@@ -1,5 +1,7 @@
+import LinkPresentation
 import MapKit
 import SwiftUI
+import UniformTypeIdentifiers
 import UIKit
 
 struct StationStoryContent {
@@ -17,15 +19,16 @@ struct StationStoryContent {
 struct StationStoryShareItem: Identifiable {
     let id = UUID()
     let image: UIImage
-    let link: URL
+    let title: String
 }
 
 struct StationStoryShareSheet: UIViewControllerRepresentable {
     let item: StationStoryShareItem
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
+        let activityItem = StationStoryActivityItem(item: item)
         let controller = UIActivityViewController(
-            activityItems: [item.image, item.link],
+            activityItems: [activityItem],
             applicationActivities: nil
         )
         controller.view.accessibilityIdentifier = "station-story-share-sheet"
@@ -33,6 +36,92 @@ struct StationStoryShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+struct StationStoryPreviewSheet: View {
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(\.dismiss) private var dismiss
+    let item: StationStoryShareItem
+    @State private var sharePresented = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                SBColor.background.ignoresSafeArea()
+
+                VStack(spacing: 18) {
+                    Image(uiImage: item.image)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                                .stroke(SBColor.line, lineWidth: 1)
+                        )
+                        .shadow(color: SBColor.signal.opacity(0.12), radius: 24, y: 10)
+                        .accessibilityLabel(settings.t("story.preview_title"))
+
+                    SBPrimaryButton(
+                        title: settings.t("story.share_action"),
+                        systemImage: "square.and.arrow.up"
+                    ) {
+                        Haptic.tap()
+                        sharePresented = true
+                    }
+                    .accessibilityIdentifier("station-story-confirm-share-button")
+                }
+                .padding(.horizontal, 22)
+                .padding(.bottom, 12)
+            }
+            .navigationTitle(settings.t("story.preview_title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(settings.t("status.cancel")) { dismiss() }
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+        .accessibilityIdentifier("station-story-preview")
+        .sheet(isPresented: $sharePresented) {
+            StationStoryShareSheet(item: item)
+        }
+    }
+}
+
+private final class StationStoryActivityItem: NSObject, UIActivityItemSource {
+    let item: StationStoryShareItem
+
+    init(item: StationStoryShareItem) {
+        self.item = item
+    }
+
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        item.image
+    }
+
+    func activityViewController(
+        _ activityViewController: UIActivityViewController,
+        itemForActivityType activityType: UIActivity.ActivityType?
+    ) -> Any? {
+        item.image
+    }
+
+    func activityViewController(
+        _ activityViewController: UIActivityViewController,
+        dataTypeIdentifierForActivityType activityType: UIActivity.ActivityType?
+    ) -> String {
+        UTType.png.identifier
+    }
+
+    func activityViewControllerLinkMetadata(
+        _ activityViewController: UIActivityViewController
+    ) -> LPLinkMetadata? {
+        let metadata = LPLinkMetadata()
+        metadata.title = item.title
+        metadata.imageProvider = NSItemProvider(object: item.image)
+        return metadata
+    }
 }
 
 @MainActor

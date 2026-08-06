@@ -52,7 +52,8 @@ struct StationCard: View {
                 .environment(stationData)
         }
         .sheet(item: $storyShareItem) { item in
-            StationStoryShareSheet(item: item)
+            StationStoryPreviewSheet(item: item)
+                .environment(settings)
         }
         .alert(settings.t("story.error"), isPresented: $storyErrorPresented) {
             Button(settings.t("status.ok"), role: .cancel) {}
@@ -548,14 +549,6 @@ struct StationCard: View {
         return positives.joined(separator: " · ")
     }
 
-    private var shareURL: URL {
-        var components = URLComponents()
-        components.scheme = "sarjbul"
-        components.host = "station"
-        components.path = "/\(candidate.station.statusKey)"
-        return components.url ?? URL(string: "https://sarjbul.app")!
-    }
-
     @MainActor
     private func createStoryShare() async {
         guard !isGeneratingStory else { return }
@@ -586,7 +579,10 @@ struct StationCard: View {
                 try? data.write(to: outputURL)
             }
             #endif
-            storyShareItem = StationStoryShareItem(image: image, link: shareURL)
+            storyShareItem = StationStoryShareItem(
+                image: image,
+                title: candidate.station.name
+            )
         } catch {
             storyErrorPresented = true
         }

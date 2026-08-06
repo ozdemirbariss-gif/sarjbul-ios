@@ -8,7 +8,7 @@ SarjBul, Türkiye genelindeki elektrikli araç şarj noktalarını menzil, rota,
 
 ### Şarj Hikâyesi
 
-Rota kartındaki paylaş düğmesi, harita ve istasyon verilerinden Instagram Story oranında 1080×1920 görsel üretir. Kullanıcı görseli iOS paylaşım ekranından istediği uygulamaya gönderebilir veya vazgeçebilir.
+Rota kartındaki paylaş düğmesi, harita ve istasyon verilerinden Instagram Story oranında 1080×1920 PNG üretir. Kullanıcı önce tam görseli inceler; onay verirse iOS paylaşım ekranından istediği uygulamaya gönderir veya vazgeçer.
 
 <img src="Docs/screenshots/station-story.png" alt="SarjBul şarj hikâyesi" width="320">
 

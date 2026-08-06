@@ -85,9 +85,30 @@ final class AppState {
             supportURL: config.supportURL,
             supportEmail: config.supportEmail
         )
+        let repository: any StationRepository
+        let clients: AppServiceClients
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes") {
+            repository = UITestStationRepository()
+            clients = AppServiceClients(
+                auth: UnavailableAuthClient(),
+                favorites: UnavailableFavoritesClient(),
+                status: UnavailableStatusClient(),
+                demandAnalytics: UnavailableDemandAnalyticsClient(),
+                liveAvailability: UnavailableLiveAvailabilityClient(),
+                isConfigured: false
+            )
+        } else {
+            repository = config.stationRepository() ?? EmptyStationRepository()
+            clients = config.serviceClients
+        }
+        #else
+        repository = config.stationRepository() ?? EmptyStationRepository()
+        clients = config.serviceClients
+        #endif
         return AppState(
-            repository: config.stationRepository() ?? EmptyStationRepository(),
-            clients: config.serviceClients,
+            repository: repository,
+            clients: clients,
             persistence: SystemAppPersistence(),
             externalLinks: links
         )
@@ -101,6 +122,8 @@ final class AppState {
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
         } else if arguments.contains("--ui-testing-home") || arguments.contains("--ui-testing-routes") {
             navigation.tab = .home
+            settings.destination = nil
+            settings.filters = StationFilters(rangeFilterEnabled: false)
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
         } else if arguments.contains("--ui-testing-lounge") {
             navigation.tab = .lounge
@@ -116,3 +139,25 @@ private struct EmptyStationRepository: StationRepository {
         throw StationRepositoryError.missingResource
     }
 }
+
+#if DEBUG
+private struct UITestStationRepository: StationRepository {
+    func loadStations() async throws -> [Station] {
+        [
+            Station(
+                id: "ui-test-station",
+                name: "Buca Belediyesi Yedigöller Cafe",
+                address: "Buca, İzmir",
+                latitude: 38.4002,
+                longitude: 27.1814,
+                power: "180 kW",
+                operatorName: "wat mobilite",
+                socket: "CCS2",
+                price: "8,90 TL/kWh",
+                source: "ui-test",
+                confidenceScore: 0.94
+            )
+        ]
+    }
+}
+#endif

@@ -36,7 +36,14 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(shareButton.waitForExistence(timeout: 15))
         shareButton.tap()
 
-        let shareSheet = app.otherElements["station-story-share-sheet"]
+        let preview = app.descendants(matching: .any)["station-story-preview"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 20))
+
+        let confirmButton = app.buttons["station-story-confirm-share-button"]
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 5))
+        confirmButton.tap()
+
+        let shareSheet = app.descendants(matching: .any)["ActivityListView"]
         XCTAssertTrue(shareSheet.waitForExistence(timeout: 20))
     }
 }
