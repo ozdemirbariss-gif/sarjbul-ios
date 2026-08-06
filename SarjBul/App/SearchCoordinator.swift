@@ -32,6 +32,7 @@ final class SearchCoordinator {
     private let auth: AuthStore
     private let navigation: NavigationCoordinator
     private let messages: AppMessagePresenter
+    private let habits: HabitStore
     private let demandAnalytics: any DemandAnalyticsClient
     private let journeyRouteService = JourneyRouteService()
     private let tripPlanner = ChargingTripPlanner()
@@ -51,6 +52,7 @@ final class SearchCoordinator {
         auth: AuthStore,
         navigation: NavigationCoordinator,
         messages: AppMessagePresenter,
+        habits: HabitStore,
         demandAnalytics: any DemandAnalyticsClient = UnavailableDemandAnalyticsClient()
     ) {
         self.stationData = stationData
@@ -59,6 +61,7 @@ final class SearchCoordinator {
         self.auth = auth
         self.navigation = navigation
         self.messages = messages
+        self.habits = habits
         self.demandAnalytics = demandAnalytics
     }
 
@@ -177,6 +180,7 @@ final class SearchCoordinator {
             state = .results(result)
             navigation.select(.routes)
         }
+        if !result.isEmpty { habits.recordSearch(preference: settings.filters.preference) }
         await recordDemandIfEnabled(origin: userLocation, resultCount: result.count)
     }
 

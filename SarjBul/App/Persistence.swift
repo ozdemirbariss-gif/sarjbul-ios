@@ -21,6 +21,8 @@ protocol AppPersistence: AnyObject {
     var chargingSessions: [ChargingSessionRecord] { get set }
     var activeChargingSession: PersistedChargingSession? { get set }
     var demandAnalyticsEnabled: Bool { get set }
+    var usageHabitEvents: [UsageHabitEvent] { get set }
+    var habitSuggestionDismissals: [String: Date] { get set }
 }
 
 protocol SecureStorage {
@@ -48,6 +50,8 @@ final class SystemAppPersistence: AppPersistence {
         static let chargingSessions = "chargingSessions"
         static let activeChargingSession = "activeChargingSession"
         static let demandAnalyticsEnabled = "demandAnalyticsEnabled"
+        static let usageHabitEvents = "usageHabitEvents"
+        static let habitSuggestionDismissals = "habitSuggestionDismissals"
     }
 
     private let defaults: UserDefaults
@@ -130,6 +134,16 @@ final class SystemAppPersistence: AppPersistence {
     var demandAnalyticsEnabled: Bool {
         get { defaults.bool(forKey: Key.demandAnalyticsEnabled) }
         set { defaults.set(newValue, forKey: Key.demandAnalyticsEnabled) }
+    }
+
+    var usageHabitEvents: [UsageHabitEvent] {
+        get { decode([UsageHabitEvent].self, key: Key.usageHabitEvents) ?? [] }
+        set { encode(newValue, key: Key.usageHabitEvents) }
+    }
+
+    var habitSuggestionDismissals: [String: Date] {
+        get { decode([String: Date].self, key: Key.habitSuggestionDismissals) ?? [:] }
+        set { encode(newValue, key: Key.habitSuggestionDismissals) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

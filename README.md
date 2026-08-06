@@ -25,6 +25,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Form gerektirmeyen anonim Firebase oturumu, token yenileme, favori senkronizasyonu ve durum bildirimi
 - Firebase App Check/App Attest, Crashlytics, sıkı Realtime Database kuralları ve sunucu tarafı özetleme
 - Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları ve 9:16 şarj hikâyesi üretimi
+- Yalnızca cihazda tutulan geçmişten, yeterli tekrar oluştuğunda açıklanabilir ve kapatılabilir alışkanlık önerileri
 - Doğrusal olmayan şarj eğrisi, rakım etkisi ve toplam süre optimizasyonlu uzun yol planı
 - Yol ağına göre 16 yönlü erişilebilir menzil poligonu; dairesel menzil yanılsaması yok
 - Fiyat/soket/adres doğrulama, zamanla azalan güven ve gece güvenliği katkıları

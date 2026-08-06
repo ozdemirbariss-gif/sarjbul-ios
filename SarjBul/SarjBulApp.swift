@@ -27,6 +27,7 @@ struct SarjBulApp: App {
                 .environment(appState.lounge)
                 .environment(appState.chargingHistory)
                 .environment(appState.chargingSession)
+                .environment(appState.habits)
                 .environment(routeStore)
                 .environment(networkMonitor)
         }

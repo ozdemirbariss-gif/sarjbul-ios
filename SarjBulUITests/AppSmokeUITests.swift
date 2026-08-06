@@ -27,6 +27,15 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["location-input"].exists)
     }
 
+    func testHabitSuggestionAppearsAfterRepeatedUse() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-habit"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.descendants(matching: .any)["habit-suggestion-card"].waitForExistence(timeout: 5))
+    }
+
     func testStationStoryImageOpensShareSheet() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-routes", "--ui-testing-story"]

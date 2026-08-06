@@ -11,6 +11,7 @@ struct StationCard: View {
     @Environment(ChargingSessionStore.self) private var chargingSession
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(RouteStore.self) private var routeStore
+    @Environment(HabitStore.self) private var habits
     @Environment(\.openURL) private var openURL
     var candidate: StationCandidate
     var rank: Int
@@ -492,6 +493,7 @@ struct StationCard: View {
 
     private func openInAppleMaps() {
         favorites.recordRouteOpened(candidate.station)
+        habits.recordRouteOpened(candidate.station)
         let destination = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
             latitude: candidate.station.latitude,
             longitude: candidate.station.longitude
@@ -502,6 +504,7 @@ struct StationCard: View {
 
     private func openInGoogleMaps() {
         favorites.recordRouteOpened(candidate.station)
+        habits.recordRouteOpened(candidate.station)
         var components = URLComponents(string: "https://www.google.com/maps/dir/")
         components?.queryItems = [
             URLQueryItem(name: "api", value: "1"),

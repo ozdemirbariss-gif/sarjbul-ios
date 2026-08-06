@@ -6,6 +6,7 @@ struct HomeView: View {
     @Environment(UserSettingsStore.self) private var settings
     @Environment(SearchCoordinator.self) private var search
     @Environment(NavigationCoordinator.self) private var navigation
+    @Environment(HabitStore.self) private var habits
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -27,6 +28,10 @@ struct HomeView: View {
                         topControls
                         if search.userLocation?.source != .device {
                             locationInput
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                        if let suggestion = habits.suggestion() {
+                            habitSuggestionCard(suggestion)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                         routeAction
@@ -93,6 +98,112 @@ struct HomeView: View {
         .sbCardShadow()
         .padding(.leading, 72)
         .padding(.top, 4)
+    }
+
+    private func habitSuggestionCard(_ suggestion: HabitSuggestion) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.onSignal)
+                    .frame(width: 42, height: 42)
+                    .background(SBColor.signal, in: Circle())
+
+                Text(settings.t("habit.kicker"))
+                    .font(.caption.weight(.heavy))
+                    .foregroundStyle(SBColor.signal)
+                    .textCase(.uppercase)
+
+                Spacer()
+
+                Button {
+                    Haptic.tap()
+                    habits.dismiss(suggestion)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(SBColor.textSoft)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(SBPremiumButtonStyle())
+                .accessibilityLabel(settings.t("habit.dismiss"))
+            }
+
+            Text(habitSuggestionText(suggestion))
+                .font(.title3.weight(.heavy))
+                .foregroundStyle(SBColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(settings.t("habit.local_note"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(SBColor.textSoft)
+
+            Button {
+                applyHabitSuggestion(suggestion)
+            } label: {
+                HStack {
+                    Text(habitActionTitle(suggestion))
+                        .font(.subheadline.weight(.heavy))
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                        .font(.subheadline.weight(.heavy))
+                }
+                .foregroundStyle(SBColor.onSignal)
+                .padding(.horizontal, 18)
+                .frame(height: 52)
+                .background(SBColor.signal, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+            }
+            .buttonStyle(SBPremiumButtonStyle())
+        }
+        .padding(20)
+        .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
+                .stroke(SBColor.signal.opacity(0.5), lineWidth: 1)
+        )
+        .sbGlowShadow()
+        .accessibilityIdentifier("habit-suggestion-card")
+    }
+
+    private func habitSuggestionText(_ suggestion: HabitSuggestion) -> String {
+        switch suggestion {
+        case .repeatedStation(_, let stationName, let period):
+            settings.t("habit.station_message", [
+                "period": habitPeriodTitle(period),
+                "station": stationName
+            ])
+        case .routePreference(let preference, let period):
+            settings.t("habit.preference_message", [
+                "period": habitPeriodTitle(period),
+                "preference": preferenceTitle(preference).lowercased(with: habitLocale)
+            ])
+        }
+    }
+
+    private func habitActionTitle(_ suggestion: HabitSuggestion) -> String {
+        switch suggestion {
+        case .repeatedStation: settings.t("habit.open_route")
+        case .routePreference: settings.t("habit.apply")
+        }
+    }
+
+    private func habitPeriodTitle(_ period: HabitDayPeriod) -> String {
+        settings.t("habit.period_\(period.rawValue)")
+    }
+
+    private var habitLocale: Locale {
+        Locale(identifier: settings.language == .tr ? "tr_TR" : "en_US")
+    }
+
+    private func applyHabitSuggestion(_ suggestion: HabitSuggestion) {
+        Haptic.tap()
+        switch suggestion {
+        case .repeatedStation(let stationKey, _, _):
+            Task { await search.openStation(withKey: stationKey) }
+        case .routePreference(let preference, _):
+            settings.filters.preference = preference
+            Task { await search.findStations() }
+        }
     }
 
     private func preferenceButton(_ preference: RoutePreference, icon: String) -> some View {
@@ -474,6 +585,7 @@ struct HomeView: View {
         ProcessInfo.processInfo.arguments.contains("--ui-testing-home")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-device-location")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-habit")
         #else
         false
         #endif

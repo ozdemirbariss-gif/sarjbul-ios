@@ -14,6 +14,7 @@ final class AppState {
     let lounge: LoungeStore
     let chargingHistory: ChargingHistoryStore
     let chargingSession: ChargingSessionStore
+    let habits: HabitStore
 
     init(
         repository: any StationRepository,
@@ -48,6 +49,7 @@ final class AppState {
             persistence: persistence,
             messages: messages
         )
+        let habits = HabitStore(persistence: persistence)
         let search = SearchCoordinator(
             stationData: stationData,
             settings: settings,
@@ -55,6 +57,7 @@ final class AppState {
             auth: auth,
             navigation: navigation,
             messages: messages,
+            habits: habits,
             demandAnalytics: clients.demandAnalytics
         )
 
@@ -65,6 +68,7 @@ final class AppState {
         self.favorites = favorites
         self.search = search
         self.navigation = navigation
+        self.habits = habits
         deepLinks = DeepLinkRouter(search: search, navigation: navigation)
         lounge = LoungeStore(persistence: persistence)
         chargingHistory = ChargingHistoryStore(persistence: persistence)
@@ -120,11 +124,16 @@ final class AppState {
         if arguments.contains("--ui-testing-device-location") {
             navigation.tab = .home
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
-        } else if arguments.contains("--ui-testing-home") || arguments.contains("--ui-testing-routes") {
+        } else if arguments.contains("--ui-testing-home")
+                    || arguments.contains("--ui-testing-routes")
+                    || arguments.contains("--ui-testing-habit") {
             navigation.tab = .home
             settings.destination = nil
             settings.filters = StationFilters(rangeFilterEnabled: false)
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+            if arguments.contains("--ui-testing-habit") {
+                seedHabitSuggestionForUITesting()
+            }
         } else if arguments.contains("--ui-testing-lounge") {
             navigation.tab = .lounge
         } else if arguments.contains("--ui-testing-profile") {
@@ -132,6 +141,26 @@ final class AppState {
         }
         #endif
     }
+
+    #if DEBUG
+    private func seedHabitSuggestionForUITesting() {
+        let station = Station(
+            id: "habit-test-station",
+            name: "Alsancak Hızlı Şarj",
+            address: "Konak, İzmir",
+            latitude: 38.4382,
+            longitude: 27.1434,
+            power: "180 kW",
+            operatorName: "ŞarjBul",
+            socket: "CCS2",
+            price: "Bilinmiyor",
+            source: "ui-test"
+        )
+        for day in 1...3 {
+            habits.recordRouteOpened(station, at: Date().addingTimeInterval(-Double(day) * 86_400))
+        }
+    }
+    #endif
 }
 
 private struct EmptyStationRepository: StationRepository {
