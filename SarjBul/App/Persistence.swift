@@ -28,6 +28,7 @@ protocol AppPersistence: AnyObject {
     var lastAutonomousChargingProposal: AutonomousChargingProposal? { get set }
     var lastKnownLocation: UserLocation? { get set }
     var lastVehicleTelemetry: VehicleTelemetrySnapshot? { get set }
+    var autonomousChargingMutedUntil: Date? { get set }
 }
 
 protocol SecureStorage {
@@ -62,6 +63,7 @@ final class SystemAppPersistence: AppPersistence {
         static let lastAutonomousChargingProposal = "lastAutonomousChargingProposal"
         static let lastKnownLocation = "lastKnownLocation"
         static let lastVehicleTelemetry = "lastVehicleTelemetry"
+        static let autonomousChargingMutedUntil = AutonomousNotificationConstants.mutedUntilKey
     }
 
     private let defaults: UserDefaults
@@ -179,6 +181,11 @@ final class SystemAppPersistence: AppPersistence {
     var lastVehicleTelemetry: VehicleTelemetrySnapshot? {
         get { decode(VehicleTelemetrySnapshot.self, key: Key.lastVehicleTelemetry) }
         set { encodeOptional(newValue, key: Key.lastVehicleTelemetry) }
+    }
+
+    var autonomousChargingMutedUntil: Date? {
+        get { defaults.object(forKey: Key.autonomousChargingMutedUntil) as? Date }
+        set { defaults.set(newValue, forKey: Key.autonomousChargingMutedUntil) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

@@ -48,6 +48,9 @@ struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: PendingAutonomousRouteStore.didChange)) { _ in
             Task { await autonomousAgent.openPendingRouteIfNeeded() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: PendingAutonomousRouteStore.didMute)) { _ in
+            autonomousAgent.handleMutedNotificationAction()
+        }
         .onChange(of: networkMonitor.isConnected) { wasConnected, isConnected in
             if !wasConnected && isConnected { routeStore.invalidate() }
         }

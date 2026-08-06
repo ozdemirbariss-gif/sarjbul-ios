@@ -37,7 +37,9 @@ final class AutonomousChargingAgentStore {
         self.persistence = persistence
         self.telemetryClient = telemetryClient
         self.notificationService = notificationService
-        if let saved = persistence.autonomousChargingProposal, saved.expiresAt > Date() {
+        if let mutedUntil = persistence.autonomousChargingMutedUntil, mutedUntil > Date() {
+            persistence.autonomousChargingProposal = nil
+        } else if let saved = persistence.autonomousChargingProposal, saved.expiresAt > Date() {
             proposal = saved
             state = .ready
         } else {
@@ -71,6 +73,7 @@ final class AutonomousChargingAgentStore {
 
     func evaluate(trigger: ChargingAgentTrigger, location: UserLocation?) async {
         guard settings.autonomousChargingPolicy.isEnabled, let location else { return }
+        guard persistence.autonomousChargingMutedUntil.map({ $0 <= Date() }) ?? true else { return }
         guard state != .evaluating else { return }
         state = .evaluating
         defer { if state == .evaluating { state = proposal == nil ? .idle : .ready } }
@@ -116,7 +119,9 @@ final class AutonomousChargingAgentStore {
                         "station": proposal.stationName,
                         "minutes": "\(proposal.estimatedMinutes)"
                     ]),
-                    actionTitle: settings.t("agent.open_route")
+                    openRouteTitle: settings.t("agent.open_route"),
+                    snoozeTitle: settings.t("agent.snooze"),
+                    muteTodayTitle: settings.t("agent.mute_today")
                 )
             }
         }
@@ -152,12 +157,17 @@ final class AutonomousChargingAgentStore {
         persistence.autonomousChargingProposal = nil
     }
 
+    func handleMutedNotificationAction() {
+        dismissProposal()
+    }
+
     #if DEBUG
     func resetForUITesting() {
         proposal = nil
         state = .idle
         persistence.autonomousChargingProposal = nil
         persistence.lastAutonomousChargingProposal = nil
+        persistence.autonomousChargingMutedUntil = nil
     }
     #endif
 }

@@ -123,6 +123,15 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(store.targetPercent, 85)
     }
 
+    func testAutonomousMuteWindowPersists() throws {
+        let persistence = try makePersistence()
+        let mutedUntil = Date(timeIntervalSince1970: 1_800_000_000)
+
+        persistence.autonomousChargingMutedUntil = mutedUntil
+
+        XCTAssertEqual(persistence.autonomousChargingMutedUntil, mutedUntil)
+    }
+
     private func makePersistence() throws -> SystemAppPersistence {
         let suiteName = "StoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

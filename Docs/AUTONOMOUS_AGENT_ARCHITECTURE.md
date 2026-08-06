@@ -35,6 +35,7 @@ AutonomousChargingProposal
 - Telemetri altı saatten eskiyse kullanılmaz.
 - Arka plan görevinin ne zaman çalışacağına iOS karar verir; uygulama bunu kesin zamanlayıcı gibi kullanmaz.
 - Navigasyon ancak kullanıcı bildirim veya kart eylemine dokunduğunda açılır.
+- Bildirim, uygulamayı açmadan 15 dakika erteleme ve gün sonuna kadar susturma aksiyonlarını uygular; rota aksiyonu hazırlanmış istasyonu tek dokunuşla açar.
 
 ## Araç Entegrasyonu
 
