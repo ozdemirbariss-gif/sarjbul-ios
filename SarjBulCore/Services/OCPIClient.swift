@@ -28,14 +28,20 @@ public struct UnavailableLiveAvailabilityClient: LiveAvailabilityClient {
 public actor OCPIGatewayClient: LiveAvailabilityClient {
     private let endpoint: URL
     private let session: URLSession
+    private let resilience: ServiceResilienceController
     private var cache: [String: LiveStationAvailability] = [:]
     private var cachedRequestKeys: Set<String> = []
     private var cacheStoredAt: Date?
     private var lastRequestAt: Date?
 
-    public init(endpoint: URL, session: URLSession = .shared) {
+    public init(
+        endpoint: URL,
+        session: URLSession = .shared,
+        resilience: ServiceResilienceController = ServiceResilienceController()
+    ) {
         self.endpoint = endpoint
         self.session = session
+        self.resilience = resilience
     }
 
     public func availability(stationKeys: [String]) async throws -> [String: LiveStationAvailability] {
@@ -56,7 +62,23 @@ public actor OCPIGatewayClient: LiveAvailabilityClient {
         request.timeoutInterval = 10
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(AvailabilityRequest(stationKeys: stationKeys))
-        let (data, response) = try await session.data(for: request)
+        let finalRequest = request
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await resilience.execute(partition: .liveAvailability) {
+                let result = try await session.data(for: finalRequest)
+                guard let response = result.1 as? HTTPURLResponse,
+                      (200..<300).contains(response.statusCode) else {
+                    throw URLError(.badServerResponse)
+                }
+                return result
+            }
+        } catch {
+            let fallback = cache.filter { requestedKeys.contains($0.key) }
+            if !fallback.isEmpty { return fallback }
+            throw error
+        }
         guard let response = response as? HTTPURLResponse, (200..<300).contains(response.statusCode) else {
             throw URLError(.badServerResponse)
         }

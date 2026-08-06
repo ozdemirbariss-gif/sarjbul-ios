@@ -62,6 +62,24 @@ test("reports require the authenticated uid and canonical schema", async () => {
   }));
 });
 
+test("idempotency keys accept identical replay and reject conflicting overwrite", async () => {
+  const owner = testEnvironment.authenticatedContext("owner").database();
+  const reportRef = ref(owner, "yorumlar/station-1/08e750b8-idempotency-key");
+  const report = {
+    kullanici: "Doğrulanmış Sürücü",
+    yorum: "Çalışıyor",
+    durum: "Uygun",
+    durum_sinifi: "bos",
+    sinif_kaynagi: "ios_write_rule_v1",
+    tarih: new Date(Date.now() - 86_400_000).toISOString(),
+    uid: "owner",
+  };
+
+  await assertSucceeds(set(reportRef, report));
+  await assertSucceeds(set(reportRef, report));
+  await assertFails(set(reportRef, {...report, durum: "Arızalı"}));
+});
+
 test("anonymous users cannot write private data", async () => {
   const anonymous = testEnvironment.unauthenticatedContext().database();
   await assertFails(set(ref(anonymous, "favoriler/anonymous/station-1"), true));

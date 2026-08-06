@@ -56,6 +56,14 @@ public actor StationDataPipeline {
         (stations, statuses, insights)
     }
 
+    public func seedCommunitySnapshots(
+        statuses: [String: StationStatusSummary],
+        insights: [String: StationCommunityInsight]
+    ) {
+        if self.statuses.isEmpty { self.statuses = statuses }
+        if self.insights.isEmpty { self.insights = insights }
+    }
+
     public func station(withKey key: String) -> Station? {
         stations.first { $0.statusKey == key || $0.id == key }
     }

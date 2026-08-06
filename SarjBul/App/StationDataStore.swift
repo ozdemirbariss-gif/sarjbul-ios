@@ -46,6 +46,8 @@ final class StationDataStore {
         self.persistence = persistence
         self.messages = messages
         reportCooldowns = persistence.reportCooldowns
+        stationStatuses = persistence.cachedStationStatuses
+        communityInsights = persistence.cachedCommunityInsights
     }
 
     var canRetryLoad: Bool {
@@ -58,6 +60,10 @@ final class StationDataStore {
         loadState = .loading
         do {
             stations = try await pipeline.loadStations()
+            await pipeline.seedCommunitySnapshots(
+                statuses: stationStatuses,
+                insights: communityInsights
+            )
             persistence.stationDataLastRefreshedAt = Date()
             loadState = .loaded
             await reloadCommunityData(idToken: statusIDToken)
@@ -99,6 +105,7 @@ final class StationDataStore {
     func reloadStatuses(idToken: String? = nil) async {
         do {
             stationStatuses = try await pipeline.reloadStatuses(idToken: idToken)
+            persistence.cachedStationStatuses = stationStatuses
         } catch {
             AppTelemetry.capture(error, operation: "station_status_refresh")
             AppLogger.data.error("Station statuses failed: \(error.localizedDescription, privacy: .public)")
@@ -122,10 +129,18 @@ final class StationDataStore {
 
     private func applyRealtime(_ event: StationRealtimeEvent) async {
         switch event {
-        case .statusesSnapshot(let values): stationStatuses = values
-        case .statusChanged(let key, let value): stationStatuses[key] = value
-        case .insightsSnapshot(let values): communityInsights = values
-        case .insightChanged(let key, let value): communityInsights[key] = value
+        case .statusesSnapshot(let values):
+            stationStatuses = values
+            persistence.cachedStationStatuses = values
+        case .statusChanged(let key, let value):
+            stationStatuses[key] = value
+            persistence.cachedStationStatuses = stationStatuses
+        case .insightsSnapshot(let values):
+            communityInsights = values
+            persistence.cachedCommunityInsights = values
+        case .insightChanged(let key, let value):
+            communityInsights[key] = value
+            persistence.cachedCommunityInsights = communityInsights
         case .availabilitySnapshot, .availabilityChanged: break
         }
         await pipeline.applyRealtime(event)
@@ -139,6 +154,7 @@ final class StationDataStore {
         var didRefresh = false
         do {
             stationStatuses = try await statusesTask
+            persistence.cachedStationStatuses = stationStatuses
             didRefresh = true
         } catch {
             AppTelemetry.capture(error, operation: "station_status_refresh")
@@ -146,6 +162,7 @@ final class StationDataStore {
         }
         do {
             communityInsights = try await insightsTask
+            persistence.cachedCommunityInsights = communityInsights
             didRefresh = true
         } catch {
             AppTelemetry.capture(error, operation: "station_insight_refresh")

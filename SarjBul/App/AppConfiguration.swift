@@ -80,6 +80,7 @@ struct AppConfiguration {
                 isConfigured: false
             )
         }
+        let resilience = ServiceResilienceController()
         let tokenProvider: (@Sendable () async throws -> String?)?
         if FirebaseBootstrap.isConfigured {
             tokenProvider = { @Sendable in
@@ -91,7 +92,8 @@ struct AppConfiguration {
         let client = FirebaseRESTClient(
             databaseURL: firebaseDatabaseURL,
             apiKey: firebaseAPIKey,
-            appCheckTokenProvider: tokenProvider
+            appCheckTokenProvider: tokenProvider,
+            resilience: resilience
         )
         return AppServiceClients(
             auth: client,

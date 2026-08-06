@@ -45,6 +45,8 @@ protocol AppPersistence: AnyObject {
     var lastVehicleTelemetry: VehicleTelemetrySnapshot? { get set }
     var autonomousChargingMutedUntil: Date? { get set }
     var stationDataLastRefreshedAt: Date? { get set }
+    var cachedStationStatuses: [String: StationStatusSummary] { get set }
+    var cachedCommunityInsights: [String: StationCommunityInsight] { get set }
     var automationReports: [AutomationReport] { get set }
     var pendingOfflineMutations: [PendingOfflineMutation] { get set }
 }
@@ -84,6 +86,8 @@ final class SystemAppPersistence: AppPersistence {
         static let lastVehicleTelemetry = "lastVehicleTelemetry"
         static let autonomousChargingMutedUntil = AutonomousNotificationConstants.mutedUntilKey
         static let stationDataLastRefreshedAt = "stationDataLastRefreshedAt"
+        static let cachedStationStatuses = "cachedStationStatuses"
+        static let cachedCommunityInsights = "cachedCommunityInsights"
         static let automationReports = "automationReports"
         static let pendingOfflineMutations = "pendingOfflineMutations"
     }
@@ -225,9 +229,39 @@ final class SystemAppPersistence: AppPersistence {
         set { encode(Array(newValue.prefix(20)), key: Key.automationReports) }
     }
 
+    var cachedStationStatuses: [String: StationStatusSummary] {
+        get { decode([String: StationStatusSummary].self, key: Key.cachedStationStatuses) ?? [:] }
+        set { encode(newValue, key: Key.cachedStationStatuses) }
+    }
+
+    var cachedCommunityInsights: [String: StationCommunityInsight] {
+        get { decode([String: StationCommunityInsight].self, key: Key.cachedCommunityInsights) ?? [:] }
+        set { encode(newValue, key: Key.cachedCommunityInsights) }
+    }
+
     var pendingOfflineMutations: [PendingOfflineMutation] {
-        get { decode([PendingOfflineMutation].self, key: Key.pendingOfflineMutations) ?? [] }
-        set { encode(Array(newValue.suffix(100)), key: Key.pendingOfflineMutations) }
+        get {
+            if let data = secureStorage.data(for: Key.pendingOfflineMutations),
+               let mutations = try? decoder.decode([PendingOfflineMutation].self, from: data) {
+                return mutations
+            }
+            guard let legacy = defaults.data(forKey: Key.pendingOfflineMutations),
+                  let mutations = try? decoder.decode([PendingOfflineMutation].self, from: legacy) else {
+                return []
+            }
+            secureStorage.set(legacy, for: Key.pendingOfflineMutations)
+            defaults.removeObject(forKey: Key.pendingOfflineMutations)
+            return mutations
+        }
+        set {
+            defaults.removeObject(forKey: Key.pendingOfflineMutations)
+            let bounded = Array(newValue.suffix(100))
+            guard !bounded.isEmpty, let data = try? encoder.encode(bounded) else {
+                secureStorage.remove(Key.pendingOfflineMutations)
+                return
+            }
+            secureStorage.set(data, for: Key.pendingOfflineMutations)
+        }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

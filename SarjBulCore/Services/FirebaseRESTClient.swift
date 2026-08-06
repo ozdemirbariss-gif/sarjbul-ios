@@ -5,17 +5,20 @@ public struct FirebaseRESTClient: Sendable {
     public var apiKey: String
     public var session: URLSession
     public var appCheckTokenProvider: (@Sendable () async throws -> String?)?
+    public var resilience: ServiceResilienceController
 
     public init(
         databaseURL: URL,
         apiKey: String,
         session: URLSession = .shared,
-        appCheckTokenProvider: (@Sendable () async throws -> String?)? = nil
+        appCheckTokenProvider: (@Sendable () async throws -> String?)? = nil,
+        resilience: ServiceResilienceController = ServiceResilienceController()
     ) {
         self.databaseURL = databaseURL
         self.apiKey = apiKey
         self.session = session
         self.appCheckTokenProvider = appCheckTokenProvider
+        self.resilience = resilience
     }
 
     public func stationStatuses(idToken: String? = nil) async throws -> [String: StationStatusSummary] {
@@ -25,7 +28,7 @@ public struct FirebaseRESTClient: Sendable {
         }
         guard let url = components?.url else { return [:] }
         let request = try await databaseRequest(url: url)
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .communityReads)
         try validate(response: response, data: data)
         guard !data.isEmpty, String(data: data, encoding: .utf8) != "null" else { return [:] }
         return try JSONDecoder().decode([String: StationStatusSummary].self, from: data)
@@ -41,7 +44,7 @@ public struct FirebaseRESTClient: Sendable {
         }
         guard let url = components?.url else { return [:] }
         let request = try await databaseRequest(url: url)
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .communityReads)
         try validate(response: response, data: data)
         guard !data.isEmpty, String(data: data, encoding: .utf8) != "null" else { return [:] }
         return try JSONDecoder().decode([String: StationCommunityInsight].self, from: data)
@@ -105,7 +108,7 @@ public struct FirebaseRESTClient: Sendable {
         ]
         request.httpBody = body.percentEncodedQuery?.data(using: .utf8)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .authentication)
         try validate(response: response, data: data)
         return try JSONDecoder().decode(FirebaseAuthSession.self, from: data)
     }
@@ -116,7 +119,7 @@ public struct FirebaseRESTClient: Sendable {
         guard let url = components?.url else { return [] }
 
         let request = try await databaseRequest(url: url)
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .communityReads)
         try validate(response: response, data: data)
         guard !data.isEmpty, String(data: data, encoding: .utf8) != "null" else { return [] }
 
@@ -124,7 +127,13 @@ public struct FirebaseRESTClient: Sendable {
         return Set(values.compactMap { $0.value ? $0.key : nil })
     }
 
-    public func setFavorite(uid: String, stationKey: String, isFavorite: Bool, idToken: String) async throws {
+    public func setFavorite(
+        uid: String,
+        stationKey: String,
+        isFavorite: Bool,
+        idToken: String,
+        context: ServiceMutationContext
+    ) async throws {
         var components = URLComponents(url: databaseURL.appending(path: "favoriler/\(uid)/\(stationKey).json"), resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
         guard let url = components?.url else {
@@ -134,12 +143,13 @@ public struct FirebaseRESTClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = isFavorite ? "PUT" : "DELETE"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(context.idempotencyKey, forHTTPHeaderField: "X-Idempotency-Key")
         if isFavorite {
             request.httpBody = try JSONEncoder().encode(true)
         }
         try await attachAppCheck(to: &request)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .userWrites)
         try validate(response: response, data: data)
     }
 
@@ -148,9 +158,10 @@ public struct FirebaseRESTClient: Sendable {
         status: String,
         comment: String,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws {
-        let now = ISO8601DateFormatter().string(from: Date())
+        let now = ISO8601DateFormatter().string(from: context.createdAt)
         let statusClass = Self.statusClass(status: status, comment: comment)
         let report = StationReportPayload(
             kullanici: "Doğrulanmış Sürücü",
@@ -161,14 +172,15 @@ public struct FirebaseRESTClient: Sendable {
             tarih: now,
             uid: uid
         )
-        let reportID = UUID().uuidString.lowercased()
+        let reportID = context.idempotencyKey.lowercased()
         let metadata = StationReportMetadata(
             lastReportAt: now,
-            lastReportAtMilliseconds: Int64(Date().timeIntervalSince1970 * 1_000)
+            lastReportAtMilliseconds: Int64(context.createdAt.timeIntervalSince1970 * 1_000)
         )
         try await patchJSON(
             path: ".json",
             idToken: idToken,
+            context: context,
             body: AtomicStationReportWrite(
                 reportPath: "yorumlar/\(stationKey)/\(reportID)",
                 metadataPath: "kullanici_yorum_meta/\(uid)",
@@ -182,19 +194,21 @@ public struct FirebaseRESTClient: Sendable {
         stationKey: String,
         contribution: StationContribution,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws {
-        let now = ISO8601DateFormatter().string(from: Date())
+        let now = ISO8601DateFormatter().string(from: context.createdAt)
         let values = Dictionary(uniqueKeysWithValues: contribution.values.map { ($0.key.rawValue, $0.value) })
         let payload = StationContributionPayload(values: values, date: now, uid: uid, source: "ios")
-        let contributionID = UUID().uuidString.lowercased()
+        let contributionID = context.idempotencyKey.lowercased()
         let metadata = StationContributionMetadata(
             lastContributionAt: now,
-            lastContributionAtMilliseconds: Int64(Date().timeIntervalSince1970 * 1_000)
+            lastContributionAtMilliseconds: Int64(context.createdAt.timeIntervalSince1970 * 1_000)
         )
         try await patchJSON(
             path: ".json",
             idToken: idToken,
+            context: context,
             body: AtomicStationContributionWrite(
                 contributionPath: "station_contributions/\(stationKey)/\(contributionID)",
                 metadataPath: "kullanici_dogrulama_meta/\(uid)",
@@ -207,15 +221,17 @@ public struct FirebaseRESTClient: Sendable {
     public func recordSearchDemand(
         event: SearchDemandEvent,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws {
-        let eventID = UUID().uuidString.lowercased()
+        let eventID = context.idempotencyKey.lowercased()
         var payload = event
-        payload.createdAtMilliseconds = Int64(Date().timeIntervalSince1970 * 1_000)
+        payload.createdAtMilliseconds = Int64(context.createdAt.timeIntervalSince1970 * 1_000)
         let metadata = DemandAnalyticsMetadata(lastEventAtMilliseconds: payload.createdAtMilliseconds)
         try await patchJSON(
             path: ".json",
             idToken: idToken,
+            context: context,
             body: AtomicDemandAnalyticsWrite(
                 eventPath: "search_demand_events/\(eventID)",
                 metadataPath: "search_demand_meta/\(uid)",
@@ -242,7 +258,7 @@ public struct FirebaseRESTClient: Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .authentication)
         try validate(response: response, data: data)
         return data
     }
@@ -251,11 +267,22 @@ public struct FirebaseRESTClient: Sendable {
         try await sendJSON(method: "PUT", path: path, idToken: idToken, body: body)
     }
 
-    private func patchJSON<T: Encodable>(path: String, idToken: String, body: T) async throws {
-        try await sendJSON(method: "PATCH", path: path, idToken: idToken, body: body)
+    private func patchJSON<T: Encodable>(
+        path: String,
+        idToken: String,
+        context: ServiceMutationContext? = nil,
+        body: T
+    ) async throws {
+        try await sendJSON(method: "PATCH", path: path, idToken: idToken, context: context, body: body)
     }
 
-    private func sendJSON<T: Encodable>(method: String, path: String, idToken: String, body: T) async throws {
+    private func sendJSON<T: Encodable>(
+        method: String,
+        path: String,
+        idToken: String,
+        context: ServiceMutationContext? = nil,
+        body: T
+    ) async throws {
         var components = URLComponents(url: databaseURL.appending(path: path), resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
         guard let url = components?.url else {
@@ -265,10 +292,13 @@ public struct FirebaseRESTClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let context {
+            request.setValue(context.idempotencyKey, forHTTPHeaderField: "X-Idempotency-Key")
+        }
         request.httpBody = try JSONEncoder().encode(body)
         try await attachAppCheck(to: &request)
 
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .userWrites)
         try validate(response: response, data: data)
     }
 
@@ -280,7 +310,7 @@ public struct FirebaseRESTClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
         try await attachAppCheck(to: &request)
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request, partition: .userWrites)
         try validate(response: response, data: data)
     }
 
@@ -288,6 +318,22 @@ public struct FirebaseRESTClient: Sendable {
         var request = URLRequest(url: url)
         try await attachAppCheck(to: &request)
         return request
+    }
+
+    private func data(
+        for request: URLRequest,
+        partition: ServicePartition
+    ) async throws -> (Data, URLResponse) {
+        try await resilience.execute(partition: partition) {
+            let result = try await session.data(for: request)
+            let statusCode = (result.1 as? HTTPURLResponse)?.statusCode ?? 500
+            if statusCode == 429 || statusCode >= 500 {
+                let message = (try? JSONDecoder().decode(FirebaseErrorEnvelope.self, from: result.0).error.message)
+                    ?? HTTPURLResponse.localizedString(forStatusCode: statusCode)
+                throw FirebaseRESTError.requestFailed(message, statusCode: statusCode)
+            }
+            return result
+        }
     }
 
     private func attachAppCheck(to request: inout URLRequest) async throws {

@@ -147,7 +147,11 @@ final class PersistenceTests: XCTestCase {
     }
 
     func testOfflineMutationOutboxSurvivesRelaunch() throws {
-        let persistence = try makePersistence()
+        let suiteName = "OfflineOutboxTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let secureStorage = MemorySecureStorage()
+        let persistence = SystemAppPersistence(defaults: defaults, secureStorage: secureStorage)
         let mutation = PendingOfflineMutation(
             id: "offline-1",
             deduplicationKey: "favorite:station-1",
@@ -158,6 +162,8 @@ final class PersistenceTests: XCTestCase {
         persistence.pendingOfflineMutations = [mutation]
 
         XCTAssertEqual(persistence.pendingOfflineMutations.map(\.id), ["offline-1"])
+        XCTAssertNil(defaults.data(forKey: "pendingOfflineMutations"))
+        XCTAssertNotNil(secureStorage.data(for: "pendingOfflineMutations"))
     }
 
     func testFavoriteSnapshotIsAvailableOffline() throws {

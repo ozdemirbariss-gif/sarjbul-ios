@@ -12,9 +12,11 @@ SarjBul keeps the station catalog usable and user intent durable when connectivi
 
 ## Write path
 
-Favorite changes, station reports, community contributions and opted-in demand events enter a Codable outbox before transmission. The outbox is persisted in `SystemAppPersistence`, capped at 100 items and deduplicated by semantic key. Optimistic UI remains visible during transient failures.
+Favorite changes, station reports, community contributions and opted-in demand events enter a Codable outbox before transmission. The outbox is encrypted by iOS Keychain, capped at 100 items and deduplicated by semantic key. Optimistic UI remains visible during transient failures.
 
 `OfflineSyncCoordinator` replays pending mutations at launch and whenever `NWPathMonitor` reports that connectivity returned. Replay is ordered, rate-limited and uses a refreshed anonymous Firebase session. Successful writes are removed. Transient failures stay queued; permanent server rejections are removed and the relevant optimistic state is rolled back.
+
+Each queued mutation keeps one UUID and creation date for its entire lifetime. Firebase record paths use the UUID, making retries idempotent. Pending favorite intentions are reconciled over the remote snapshot before the UI is updated.
 
 ## Telemetry and recovery
 

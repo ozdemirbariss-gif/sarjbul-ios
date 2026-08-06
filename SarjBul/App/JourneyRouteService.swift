@@ -92,6 +92,7 @@ struct JourneyRouteSnapshot: Sendable {
 
 private actor RouteElevationService {
     private let session: URLSession
+    private let resilience = ServiceResilienceController()
     private var cache: [String: (profile: RouteElevationProfile, date: Date)] = [:]
     private var lastRequestAt: Date?
 
@@ -122,7 +123,15 @@ private actor RouteElevationService {
         var request = URLRequest(url: url)
         request.timeoutInterval = 8
         request.setValue("SarjBul-iOS/1", forHTTPHeaderField: "User-Agent")
-        let (data, response) = try await session.data(for: request)
+        let finalRequest = request
+        let (data, response) = try await resilience.execute(partition: .liveAvailability) {
+            let result = try await session.data(for: finalRequest)
+            guard let response = result.1 as? HTTPURLResponse,
+                  (200..<300).contains(response.statusCode) else {
+                throw URLError(.badServerResponse)
+            }
+            return result
+        }
         guard let response = response as? HTTPURLResponse, (200..<300).contains(response.statusCode) else {
             throw URLError(.badServerResponse)
         }

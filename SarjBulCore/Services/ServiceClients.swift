@@ -9,7 +9,13 @@ public protocol AuthClient: Sendable {
 
 public protocol FavoritesClient: Sendable {
     func favoriteIDs(uid: String, idToken: String) async throws -> Set<String>
-    func setFavorite(uid: String, stationKey: String, isFavorite: Bool, idToken: String) async throws
+    func setFavorite(
+        uid: String,
+        stationKey: String,
+        isFavorite: Bool,
+        idToken: String,
+        context: ServiceMutationContext
+    ) async throws
 }
 
 public protocol StatusClient: Sendable {
@@ -20,13 +26,15 @@ public protocol StatusClient: Sendable {
         status: String,
         comment: String,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws
     func sendStationContribution(
         stationKey: String,
         contribution: StationContribution,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws
 }
 
@@ -34,7 +42,8 @@ public protocol DemandAnalyticsClient: Sendable {
     func recordSearchDemand(
         event: SearchDemandEvent,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws
 }
 
@@ -66,7 +75,15 @@ public struct UnavailableFavoritesClient: FavoritesClient {
     public init() {}
 
     public func favoriteIDs(uid: String, idToken: String) async throws -> Set<String> { throw ServiceClientError.notConfigured }
-    public func setFavorite(uid: String, stationKey: String, isFavorite: Bool, idToken: String) async throws { throw ServiceClientError.notConfigured }
+    public func setFavorite(
+        uid: String,
+        stationKey: String,
+        isFavorite: Bool,
+        idToken: String,
+        context: ServiceMutationContext
+    ) async throws {
+        throw ServiceClientError.notConfigured
+    }
 }
 
 public struct UnavailableStatusClient: StatusClient {
@@ -80,7 +97,8 @@ public struct UnavailableStatusClient: StatusClient {
         status: String,
         comment: String,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws {
         throw ServiceClientError.notConfigured
     }
@@ -89,7 +107,8 @@ public struct UnavailableStatusClient: StatusClient {
         stationKey: String,
         contribution: StationContribution,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws {
         throw ServiceClientError.notConfigured
     }
@@ -101,7 +120,8 @@ public struct UnavailableDemandAnalyticsClient: DemandAnalyticsClient {
     public func recordSearchDemand(
         event: SearchDemandEvent,
         uid: String,
-        idToken: String
+        idToken: String,
+        context: ServiceMutationContext
     ) async throws {}
 }
 

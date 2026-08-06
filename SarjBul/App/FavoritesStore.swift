@@ -44,9 +44,10 @@ final class FavoritesStore {
 
     func load() async {
         do {
-            favorites = try await auth.authenticatedRequest { session in
+            let remote = try await auth.authenticatedRequest { session in
                 try await self.client.favoriteIDs(uid: session.uid, idToken: session.idToken)
             }
+            favorites = offlineSync.reconciledFavorites(remote: remote)
             persistence.favoriteStationKeys = favorites
         } catch {
             AppTelemetry.capture(error, operation: "favorites_load")

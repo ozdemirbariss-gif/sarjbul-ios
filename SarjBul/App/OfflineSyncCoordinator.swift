@@ -21,6 +21,7 @@ final class OfflineSyncCoordinator {
 
     private(set) var pendingCount = 0
     private(set) var isSyncing = false
+    private(set) var isReadOnlySafeMode = false
 
     init(
         auth: AuthStore,
@@ -58,14 +59,16 @@ final class OfflineSyncCoordinator {
 
         await queue.enqueue(id: "offline:\(mutation.id)", maxAttempts: 2) { [weak self] in
             guard let self else { return }
-            try await self.send(mutation.payload)
+            try await self.send(mutation)
         } completion: { [weak self] result in
             guard let self else { return }
             switch result {
             case .success:
                 self.remove(mutation.id)
+                self.isReadOnlySafeMode = false
                 completion(.synced)
             case .failure(let error) where Self.isTransient(error):
+                self.isReadOnlySafeMode = error is ServiceResilienceError
                 AppTelemetry.capture(error, operation: "offline_mutation_queued", metadata: [
                     "mutation": mutation.deduplicationKey
                 ])
@@ -87,9 +90,11 @@ final class OfflineSyncCoordinator {
 
         for mutation in persistence.pendingOfflineMutations.sorted(by: { $0.createdAt < $1.createdAt }) {
             do {
-                try await send(mutation.payload)
+                try await send(mutation)
                 remove(mutation.id)
+                isReadOnlySafeMode = false
             } catch where Self.isTransient(error) {
+                isReadOnlySafeMode = error is ServiceResilienceError
                 AppTelemetry.capture(error, operation: "offline_sync_deferred")
                 break
             } catch {
@@ -99,16 +104,30 @@ final class OfflineSyncCoordinator {
         }
     }
 
-    private func send(_ payload: OfflineMutationPayload) async throws {
+    func reconciledFavorites(remote: Set<String>) -> Set<String> {
+        persistence.pendingOfflineMutations
+            .sorted(by: { $0.createdAt < $1.createdAt })
+            .reduce(into: remote) { result, mutation in
+                guard case .favorite(let stationKey, let isFavorite) = mutation.payload else { return }
+                if isFavorite { result.insert(stationKey) } else { result.remove(stationKey) }
+            }
+    }
+
+    private func send(_ mutation: PendingOfflineMutation) async throws {
         await rateLimiter.acquire()
+        let context = ServiceMutationContext(
+            idempotencyKey: mutation.id,
+            createdAt: mutation.createdAt
+        )
         try await auth.authenticatedRequest { session in
-            switch payload {
+            switch mutation.payload {
             case .favorite(let stationKey, let isFavorite):
                 try await self.favoritesClient.setFavorite(
                     uid: session.uid,
                     stationKey: stationKey,
                     isFavorite: isFavorite,
-                    idToken: session.idToken
+                    idToken: session.idToken,
+                    context: context
                 )
             case .stationReport(let stationKey, let status):
                 try await self.statusClient.sendStationReport(
@@ -116,20 +135,23 @@ final class OfflineSyncCoordinator {
                     status: status,
                     comment: status,
                     uid: session.uid,
-                    idToken: session.idToken
+                    idToken: session.idToken,
+                    context: context
                 )
             case .contribution(let stationKey, let contribution):
                 try await self.statusClient.sendStationContribution(
                     stationKey: stationKey,
                     contribution: contribution,
                     uid: session.uid,
-                    idToken: session.idToken
+                    idToken: session.idToken,
+                    context: context
                 )
             case .demand(let event):
                 try await self.demandClient.recordSearchDemand(
                     event: event,
                     uid: session.uid,
-                    idToken: session.idToken
+                    idToken: session.idToken,
+                    context: context
                 )
             }
         }
@@ -146,6 +168,7 @@ final class OfflineSyncCoordinator {
                 .contains(error.code)
         }
         if let error = error as? AuthError { return error == .network || error == .sessionExpired }
+        if error is ServiceResilienceError { return true }
         if let firebaseError = error as? FirebaseRESTError,
            case .requestFailed(_, let statusCode) = firebaseError {
             return statusCode == 429 || (statusCode.map { $0 >= 500 } ?? false)

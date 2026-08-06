@@ -1,0 +1,13 @@
+name = "sarjbul-recovery-edge"
+main = "src/worker.js"
+compatibility_date = "2026-08-01"
+
+[vars]
+STATIONS_ORIGIN = "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json"
+TILE_MANIFEST_ORIGIN = "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json"
+TILE_ORIGIN = "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/"
+
+# Create this KV namespace before production deploy, then add its id:
+# [[kv_namespaces]]
+# binding = "STABLE_SNAPSHOTS"
+# id = "replace-with-cloudflare-kv-id"

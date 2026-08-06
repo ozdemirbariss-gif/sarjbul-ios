@@ -17,10 +17,12 @@ struct SarjBulApp: App {
         AutonomousBackgroundRuntime.install(
             silentPushHandler: {
                 await appState.search.prepare()
+                await appState.offlineSync.syncPending()
                 await appState.autonomousAgent.handleSilentPush()
             },
             processingHandler: {
                 await appState.search.prepare()
+                await appState.offlineSync.syncPending()
                 await appState.autonomousAgent.processInBackground()
             }
         )
@@ -47,11 +49,12 @@ struct SarjBulApp: App {
                 .environment(networkMonitor)
         }
         .onChange(of: scenePhase) { _, phase in
-            guard phase == .background, appState.settings.autonomousChargingPolicy.isEnabled else { return }
+            guard phase == .background else { return }
             AutonomousBackgroundScheduler.scheduleAll()
         }
         .backgroundTask(.appRefresh(AutonomousBackgroundScheduler.refreshIdentifier)) {
             await appState.search.prepare()
+            await appState.offlineSync.syncPending()
             await appState.autonomousAgent.refreshInBackground()
         }
     }

@@ -25,6 +25,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Çevrimdışı favori/durum/katkı outbox'ı; bağlantı dönüşünde otomatik, sıralı ve hız kontrollü senkronizasyon
 - Dış uygunluk, rota ve rakım servislerinde süreli cache, istek tekilleştirme ve kota koruması
 - Teknik ayrıntıyı kullanıcıdan ayıran, tekrar baskılamalı OSLog + Crashlytics operasyon telemetrisi
+- Yüzde 5 hata eşiğinde safe mode'a geçen circuit breaker, servis bulkhead'leri ve Keychain şifreli idempotent outbox
 - Form gerektirmeyen anonim Firebase oturumu, token yenileme, favori senkronizasyonu ve durum bildirimi
 - Firebase App Check/App Attest, Crashlytics, sıkı Realtime Database kuralları ve sunucu tarafı özetleme
 - Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları ve 9:16 şarj hikâyesi üretimi
@@ -59,9 +60,12 @@ SarjBulUnitTests/         Auth state-machine ve persistence migrasyon testleri
 SarjBulUITests/           Kritik misafir akışı smoke testi
 firebase/functions/       Durum/veri/talep özetleri ve anonim kimlik verisi temizleme işleri
 database.rules.json       auth.uid tabanlı Realtime Database izolasyonu
+Edge/                     Son kararlı istasyon snapshot'ını sunan Cloudflare recovery worker'ı
 ```
 
 Otonom karar hattı, araç sağlayıcısı sınırları ve güvenlik kuralları için [Otonom Şarj Ajanı mimarisi](Docs/AUTONOMOUS_AGENT_ARCHITECTURE.md) belgesine bakın.
+
+Circuit breaker, reconciliation, exactly-once sınırları ve edge fallback için [Self-healing mimari](Docs/SELF_HEALING_ARCHITECTURE.md) belgesine bakın.
 
 ## Kurulum
 

@@ -22,6 +22,9 @@ struct RootView: View {
                     if !networkMonitor.isConnected {
                         offlineBanner
                             .transition(.move(edge: .top).combined(with: .opacity))
+                    } else if offlineSync.isReadOnlySafeMode {
+                        safeModeBanner
+                            .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
                 .safeAreaInset(edge: .bottom) {
@@ -90,6 +93,16 @@ struct RootView: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: 34)
             .background(SBColor.signal)
+            .accessibilityAddTraits(.isStaticText)
+    }
+
+    private var safeModeBanner: some View {
+        Label(settings.t("recovery.safe_mode"), systemImage: "shield.lefthalf.filled")
+            .font(.caption.weight(.heavy))
+            .foregroundStyle(SBColor.ink)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 34)
+            .background(SBColor.surface)
             .accessibilityAddTraits(.isStaticText)
     }
 
