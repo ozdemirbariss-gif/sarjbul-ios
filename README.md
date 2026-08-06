@@ -36,7 +36,8 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - EPDK'nin resmi lisans servisinden üretilen çevrimdışı operatör/lisans doğrulama snapshot'ı
 - Saatlik durum örneklerinden açıkça etiketlenmiş yoğunluk tahmini
 - Vision tabanlı cihaz içi fiş OCR, şarj günlüğü, yıllık özet ve 81 il koleksiyonu
-- WidgetKit, App Intent, Live Activity ve Dynamic Island şarj geri sayımı
+- Aktif şarj ve kritik menzili uygulamayı açmadan gösteren bağlamsal WidgetKit yüzeyi; ilerleme çizgili Live Activity ve Dynamic Island
+- Aktif şarj, kritik menzil, otonom rota ve alışkanlık önerisini tek öncelik sırasıyla sunan bağlamsal ana ekran
 - Şarj molasında 400 metre içindeki kahve, market, park ve diğer yürüyüş noktaları
 - Şarj hatırlatıcısı ve kısa Salon oyunu
 - Türkçe/İngilizce, Dynamic Type, Reduce Motion, VoiceOver etiketleri ve çevrimdışı durum

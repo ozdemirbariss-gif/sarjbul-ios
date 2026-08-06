@@ -18,6 +18,9 @@ struct PersistedChargingSession: Codable, Equatable, Sendable {
     var station: Station
     var endDate: Date
     var targetPercent: Int
+    var startedAt: Date? = nil
+    var initialPercent: Int? = nil
+    var languageCode: String? = nil
 }
 
 @MainActor
@@ -32,6 +35,9 @@ final class ChargingSessionStore {
     private(set) var nearbyPlaces: [ChargingBreakPlace] = []
     private(set) var isLoadingPlaces = false
     private(set) var targetPercent = 80
+    private(set) var startedAt: Date?
+    private(set) var initialPercent = 20
+    private(set) var languageCode = "tr"
 
     init(persistence: any AppPersistence) {
         self.persistence = persistence
@@ -42,6 +48,9 @@ final class ChargingSessionStore {
         station = saved.station
         endDate = saved.endDate
         targetPercent = saved.targetPercent
+        startedAt = saved.startedAt ?? Date()
+        initialPercent = saved.initialPercent ?? 20
+        languageCode = saved.languageCode ?? "tr"
     }
 
     var isActive: Bool { station != nil && endDate != nil }
@@ -49,42 +58,79 @@ final class ChargingSessionStore {
     func prepare() async {
         guard !prepared else { return }
         prepared = true
-        guard let station, let endDate, endDate > Date() else {
+        guard let station, let endDate, let startedAt, endDate > Date() else {
             persistence.activeChargingSession = nil
             return
         }
         await loadPlaces(near: station)
         await ChargingActivityManager.shared.start(
             stationName: station.name,
+            startedAt: startedAt,
             endDate: endDate,
-            targetPercent: targetPercent
+            initialPercent: initialPercent,
+            targetPercent: targetPercent,
+            languageCode: languageCode
         )
+        saveWidgetContext(station: station, endDate: endDate)
     }
 
-    func start(station: Station, minutes: Int = 30, targetPercent: Int = 80) async {
+    func start(
+        station: Station,
+        minutes: Int = 30,
+        initialPercent: Int = 20,
+        targetPercent: Int = 80,
+        languageCode: String = "tr"
+    ) async {
         self.station = station
+        let startedAt = Date()
         let endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        self.startedAt = startedAt
         self.endDate = endDate
+        self.initialPercent = initialPercent
         self.targetPercent = targetPercent
+        self.languageCode = languageCode
         persistence.activeChargingSession = PersistedChargingSession(
             station: station,
             endDate: endDate,
-            targetPercent: targetPercent
+            targetPercent: targetPercent,
+            startedAt: startedAt,
+            initialPercent: initialPercent,
+            languageCode: languageCode
         )
         await loadPlaces(near: station)
         await ChargingActivityManager.shared.start(
             stationName: station.name,
+            startedAt: startedAt,
             endDate: endDate,
-            targetPercent: targetPercent
+            initialPercent: initialPercent,
+            targetPercent: targetPercent,
+            languageCode: languageCode
         )
+        saveWidgetContext(station: station, endDate: endDate)
     }
 
     func stop() async {
         station = nil
         endDate = nil
+        startedAt = nil
         nearbyPlaces = []
         persistence.activeChargingSession = nil
+        WidgetContextSnapshotStore.clear(kind: .activeCharging)
         await ChargingActivityManager.shared.stop()
+    }
+
+    private func saveWidgetContext(station: Station, endDate: Date) {
+        let isEnglish = languageCode == "en"
+        WidgetContextSnapshotStore.save(WidgetContextSnapshot(
+            kind: .activeCharging,
+            title: isEnglish ? "Charging" : "Şarj devam ediyor",
+            subtitle: station.name,
+            value: "%\(targetPercent)",
+            icon: "bolt.fill",
+            deepLink: "sarjbul://lounge",
+            updatedAt: Date(),
+            endDate: endDate
+        ))
     }
 
     private func loadPlaces(near station: Station) async {

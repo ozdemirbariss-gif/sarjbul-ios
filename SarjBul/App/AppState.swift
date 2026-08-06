@@ -147,13 +147,17 @@ final class AppState {
         } else if arguments.contains("--ui-testing-home")
                     || arguments.contains("--ui-testing-routes")
                     || arguments.contains("--ui-testing-habit")
-                    || arguments.contains("--ui-testing-agent") {
+                    || arguments.contains("--ui-testing-agent")
+                    || arguments.contains("--ui-testing-context-critical") {
             navigation.tab = .home
             settings.destination = nil
             settings.filters = StationFilters(rangeFilterEnabled: false)
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
             if arguments.contains("--ui-testing-habit") {
                 seedHabitSuggestionForUITesting()
+            }
+            if arguments.contains("--ui-testing-context-critical") {
+                settings.profile.chargePercent = 15
             }
             if arguments.contains("--ui-testing-agent") {
                 autonomousAgent.resetForUITesting()

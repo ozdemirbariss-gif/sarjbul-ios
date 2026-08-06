@@ -27,6 +27,7 @@ struct SarjBulNearestWidget: Widget {
 private struct NearestStationEntry: TimelineEntry {
     var date: Date
     var snapshot: WidgetSnapshot?
+    var context: WidgetContextSnapshot?
 }
 
 private struct NearestStationProvider: TimelineProvider {
@@ -39,17 +40,24 @@ private struct NearestStationProvider: TimelineProvider {
                 power: "180 kW",
                 safeRangeKm: 100,
                 updatedAt: Date()
-            )
+            ),
+            context: nil
         )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (NearestStationEntry) -> Void) {
-        completion(NearestStationEntry(date: Date(), snapshot: WidgetSnapshotStore.load()))
+        completion(NearestStationEntry(
+            date: Date(),
+            snapshot: WidgetSnapshotStore.load(),
+            context: WidgetContextSnapshotStore.load()
+        ))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<NearestStationEntry>) -> Void) {
-        let entry = NearestStationEntry(date: Date(), snapshot: WidgetSnapshotStore.load())
-        completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(15 * 60))))
+        let context = WidgetContextSnapshotStore.load()
+        let entry = NearestStationEntry(date: Date(), snapshot: WidgetSnapshotStore.load(), context: context)
+        let refreshDate = context?.endDate ?? Date().addingTimeInterval(15 * 60)
+        completion(Timeline(entries: [entry], policy: .after(refreshDate)))
     }
 }
 
@@ -58,7 +66,9 @@ private struct NearestStationWidgetView: View {
     let entry: NearestStationEntry
 
     var body: some View {
-        if let snapshot = entry.snapshot {
+        if let context = entry.context {
+            contextualView(context)
+        } else if let snapshot = entry.snapshot {
             Link(destination: URL(string: "sarjbul://quick/fast")!) {
                 VStack(alignment: .leading, spacing: 7) {
                     Label("ŞarjBul", systemImage: "bolt.car.fill")
@@ -92,6 +102,35 @@ private struct NearestStationWidgetView: View {
         }
     }
 
+    private func contextualView(_ context: WidgetContextSnapshot) -> some View {
+        Link(destination: URL(string: context.deepLink)!) {
+            VStack(alignment: .leading, spacing: 7) {
+                HStack {
+                    Image(systemName: context.icon)
+                        .foregroundStyle(context.kind == .criticalRange ? Color.orange : Color.white)
+                    Text(context.title)
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(.white.opacity(0.72))
+                    Spacer(minLength: 0)
+                    Text(context.value)
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(.white)
+                }
+                Text(context.subtitle)
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                Spacer(minLength: 0)
+                if let endDate = context.endDate {
+                    Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
+                        .font(.caption.monospacedDigit().weight(.bold))
+                        .foregroundStyle(.white.opacity(0.72))
+                }
+            }
+        }
+        .containerBackground(Color.black, for: .widget)
+    }
+
     private var accent: Color { .black }
     private var ink: Color { .black }
     private var isEnglish: Bool { entry.snapshot?.languageCode == "en" }
@@ -103,19 +142,35 @@ private struct NearestStationWidgetView: View {
 struct ChargingLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: ChargingActivityAttributes.self) { context in
-            HStack(spacing: 12) {
-                Image(systemName: "bolt.fill")
-                    .foregroundStyle(activityAccent)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(context.attributes.stationName)
-                        .font(.headline.weight(.heavy))
-                        .lineLimit(1)
-                    Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
-                        .font(.subheadline.monospacedDigit().weight(.bold))
+            VStack(alignment: .leading, spacing: 9) {
+                HStack(spacing: 12) {
+                    Image(systemName: "bolt.fill")
+                        .foregroundStyle(activityAccent)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(chargingTitle(context.attributes.languageCode))
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white.opacity(0.68))
+                        Text(context.attributes.stationName)
+                            .font(.headline.weight(.heavy))
+                            .lineLimit(1)
+                    }
+                    Spacer()
+                    Text("%\(context.state.targetPercent)")
+                        .font(.title3.weight(.heavy))
                 }
-                Spacer()
-                Text("%\(context.state.targetPercent)")
-                    .font(.title3.weight(.heavy))
+                ProgressView(
+                    timerInterval: context.state.startedAt...context.state.endDate,
+                    countsDown: false
+                )
+                .tint(activityAccent)
+                HStack {
+                    Text("%\(context.state.initialPercent)")
+                    Spacer()
+                    Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
+                        .monospacedDigit()
+                }
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white.opacity(0.72))
             }
             .padding(.horizontal, 4)
             .activityBackgroundTint(Color.black)
@@ -132,8 +187,15 @@ struct ChargingLiveActivityWidget: Widget {
                     Text("%\(context.state.targetPercent)").fontWeight(.heavy)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
-                        .monospacedDigit()
+                    VStack(spacing: 6) {
+                        ProgressView(
+                            timerInterval: context.state.startedAt...context.state.endDate,
+                            countsDown: false
+                        )
+                        .tint(activityAccent)
+                        Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
+                            .monospacedDigit()
+                    }
                 }
             } compactLeading: {
                 Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
@@ -150,4 +212,8 @@ struct ChargingLiveActivityWidget: Widget {
     }
 
     private var activityAccent: Color { .white }
+
+    private func chargingTitle(_ languageCode: String) -> String {
+        languageCode == "en" ? "Charging" : "Şarj devam ediyor"
+    }
 }

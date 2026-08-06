@@ -362,7 +362,11 @@ struct StationCard: View {
         Menu {
             Button {
                 Task {
-                    await chargingSession.start(station: candidate.station)
+                    await chargingSession.start(
+                        station: candidate.station,
+                        initialPercent: settings.profile.chargePercent,
+                        languageCode: settings.language.rawValue
+                    )
                     navigation.select(.lounge)
                 }
             } label: {

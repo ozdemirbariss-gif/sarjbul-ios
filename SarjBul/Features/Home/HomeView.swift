@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(HabitStore.self) private var habits
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
+    @Environment(ChargingSessionStore.self) private var chargingSession
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -34,14 +35,22 @@ struct HomeView: View {
                             locationInput
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
-                        if let proposal = autonomousAgent.proposal {
+                        if chargingSession.isActive {
+                            activeChargingContextCard
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        } else if settings.profile.chargePercent <= 20 {
+                            criticalRangeContextCard
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        } else if let proposal = autonomousAgent.proposal {
                             autonomousProposalCard(proposal)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         } else if let suggestion = habits.suggestion() {
                             habitSuggestionCard(suggestion)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
-                        routeAction
+                        if !chargingSession.isActive && settings.profile.chargePercent > 20 {
+                            routeAction
+                        }
                         drivingProfile
                         filtersAndSettings
                     }
@@ -70,9 +79,12 @@ struct HomeView: View {
                 guard !isDeterministicUITest else { return }
                 settings.destination = nil
                 applyIntentPrefillIfEligible()
+                syncWidgetContext()
                 guard !didRequestDeviceLocation, search.userLocation == nil else { return }
                 requestDeviceLocation()
             }
+            .onChange(of: settings.profile.chargePercent) { _, _ in syncWidgetContext() }
+            .onChange(of: chargingSession.isActive) { _, _ in syncWidgetContext() }
             .sheet(item: $placeSearchMode) { mode in
                 PlaceSearchSheet(mode: mode) { place in
                     switch mode {
@@ -106,6 +118,120 @@ struct HomeView: View {
         .sbCardShadow()
         .padding(.leading, 72)
         .padding(.top, 4)
+    }
+
+    private var activeChargingContextCard: some View {
+        Button {
+            Haptic.tap()
+            navigation.select(.lounge)
+        } label: {
+            contextualStatusCard(
+                icon: "bolt.fill",
+                kicker: settings.t("context.charging_kicker"),
+                title: chargingSession.station?.name ?? settings.t("context.charging_title"),
+                detail: settings.t("context.charging_target", [
+                    "percent": "\(chargingSession.targetPercent)"
+                ]),
+                tint: SBColor.ice
+            ) {
+                if let endDate = chargingSession.endDate {
+                    Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
+                        .font(.headline.monospacedDigit().weight(.heavy))
+                        .foregroundStyle(SBColor.ink)
+                }
+            }
+        }
+        .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityIdentifier("active-charging-context-card")
+    }
+
+    private var criticalRangeContextCard: some View {
+        Button {
+            Haptic.tap()
+            if search.userLocation == nil {
+                requestDeviceLocation()
+            } else {
+                Task { await search.findStations() }
+            }
+        } label: {
+            contextualStatusCard(
+                icon: "battery.25percent",
+                kicker: settings.t("context.critical_kicker"),
+                title: settings.t("context.critical_title", [
+                    "percent": "\(settings.profile.chargePercent)"
+                ]),
+                detail: settings.t("context.critical_detail", ["range": "\(safeRangeKm)"]),
+                tint: SBColor.danger
+            ) {
+                Image(systemName: "arrow.right")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+            }
+        }
+        .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityIdentifier("critical-range-context-card")
+    }
+
+    private func contextualStatusCard<Trailing: View>(
+        icon: String,
+        kicker: String,
+        title: String,
+        detail: String,
+        tint: Color,
+        @ViewBuilder trailing: () -> Trailing
+    ) -> some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.title2.weight(.heavy))
+                .foregroundStyle(.black)
+                .frame(width: 56, height: 56)
+                .background(tint, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(kicker)
+                    .font(.caption.weight(.heavy))
+                    .foregroundStyle(tint)
+                    .textCase(.uppercase)
+                Text(title)
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+                    .lineLimit(2)
+                Text(detail)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SBColor.textSoft)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 8)
+            trailing()
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
+                .stroke(tint.opacity(0.42), lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+    }
+
+    private func syncWidgetContext() {
+        guard !chargingSession.isActive else { return }
+        guard settings.profile.chargePercent <= 20 else {
+            WidgetContextSnapshotStore.clear(kind: .criticalRange)
+            return
+        }
+        WidgetContextSnapshotStore.save(WidgetContextSnapshot(
+            kind: .criticalRange,
+            title: settings.t("context.critical_kicker"),
+            subtitle: settings.t("context.critical_title", [
+                "percent": "\(settings.profile.chargePercent)"
+            ]),
+            value: "\(safeRangeKm) km",
+            icon: "battery.25percent",
+            deepLink: "sarjbul://quick/fast",
+            updatedAt: Date(),
+            endDate: nil
+        ))
     }
 
     private func habitSuggestionCard(_ suggestion: HabitSuggestion) -> some View {

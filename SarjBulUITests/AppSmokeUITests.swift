@@ -45,6 +45,17 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["autonomous-proposal-card"].waitForExistence(timeout: 8))
     }
 
+    func testCriticalRangeBecomesTheSinglePrimaryContext() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-context-critical"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.descendants(matching: .any)["critical-range-context-card"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["habit-suggestion-card"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["autonomous-proposal-card"].exists)
+    }
+
     func testStationStoryImageOpensShareSheet() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-routes", "--ui-testing-story"]
