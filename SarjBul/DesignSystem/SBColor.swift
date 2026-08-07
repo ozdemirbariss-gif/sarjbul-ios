@@ -39,6 +39,7 @@ enum SBColor {
     static let danger = SBGeneratedTokens.danger.color
     static let warning = SBGeneratedTokens.warning.color
     static let electricBlue = SBGeneratedTokens.electricBlue.color
+    static let loungeAccent = SBGeneratedTokens.loungeAccent.color
     static let glass = SBGeneratedTokens.glass.color
     static let glassStrong = SBGeneratedTokens.glassStrong.color
     static let signal = accent

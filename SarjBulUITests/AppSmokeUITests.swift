@@ -35,6 +35,15 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["location-input"].exists)
     }
 
+    func testLoungeOmitsRedundantPageTitle() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-lounge"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
+        XCTAssertFalse(app.staticTexts["Salon"].exists)
+    }
+
     func testHabitSuggestionAppearsAfterRepeatedUse() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-habit"]

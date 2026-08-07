@@ -17,7 +17,6 @@ struct WaitingLoungeView: View {
     @State private var reminderMinutes = 30
     @State private var reminderMessage: String?
     @State private var reminderScheduled = false
-    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 52
     @ScaledMetric(relativeTo: .title) private var statusSize = 36
 
     private let timer = Timer.publish(every: 0.025, on: .main, in: .common)
@@ -52,6 +51,7 @@ struct WaitingLoungeView: View {
         .onDisappear {
             stopTimer()
         }
+        .accessibilityIdentifier("lounge-screen")
     }
 
     private var breakAssistantPanel: some View {
@@ -164,22 +164,16 @@ struct WaitingLoungeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(settings.t("lounge.kicker"))
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.signal)
+                .foregroundStyle(SBColor.loungeAccent)
                 .textCase(.uppercase)
-            Text(settings.t("lounge.title"))
-                .font(SBFont.display(size: min(titleSize, 72), weight: .heavy))
-                .foregroundStyle(SBColor.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
             Text(settings.t("lounge.subtitle"))
                 .font(.headline.weight(.bold))
                 .foregroundStyle(SBColor.textSoft)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.leading, 92)
     }
 
     private var gamePanel: some View {

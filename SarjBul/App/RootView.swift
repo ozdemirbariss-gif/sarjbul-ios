@@ -197,6 +197,7 @@ struct RootView: View {
 
     private func tabButton(_ tab: AppTab) -> some View {
         let isSelected = navigation.tab == tab
+        let selectedColor = tab == .lounge ? SBColor.loungeAccent : SBColor.signal
         return Button {
             Haptic.tap()
             if reduceMotion {
@@ -223,7 +224,7 @@ struct RootView: View {
             .foregroundStyle(isSelected ? SBColor.onSignal : SBColor.textSoft)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(isSelected ? SBColor.signal : SBColor.surface.opacity(0.72))
+            .background(isSelected ? selectedColor : SBColor.surface.opacity(0.72))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)

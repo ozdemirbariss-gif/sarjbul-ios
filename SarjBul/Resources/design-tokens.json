@@ -14,6 +14,7 @@
     "danger": { "hex": "#FF8585", "opacity": 1.0 },
     "warning": { "hex": "#F0D77B", "opacity": 1.0 },
     "electricBlue": { "hex": "#E7FF78", "opacity": 1.0 },
+    "loungeAccent": { "hex": "#B8A7FF", "opacity": 1.0 },
     "glass": { "hex": "#1C1D1D", "opacity": 0.82 },
     "glassStrong": { "hex": "#252626", "opacity": 0.96 }
   },

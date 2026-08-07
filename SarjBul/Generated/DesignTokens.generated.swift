@@ -30,6 +30,7 @@ enum SBGeneratedTokens {
     static let danger = SBGeneratedColorToken(hex: "#FF8585", opacity: 1.0)
     static let warning = SBGeneratedColorToken(hex: "#F0D77B", opacity: 1.0)
     static let electricBlue = SBGeneratedColorToken(hex: "#E7FF78", opacity: 1.0)
+    static let loungeAccent = SBGeneratedColorToken(hex: "#B8A7FF", opacity: 1.0)
     static let glass = SBGeneratedColorToken(hex: "#1C1D1D", opacity: 0.82)
     static let glassStrong = SBGeneratedColorToken(hex: "#252626", opacity: 0.96)
 
