@@ -50,16 +50,24 @@ enum HabitSuggestion: Hashable, Identifiable {
 @MainActor
 @Observable
 final class HabitStore {
+    private struct Exposure {
+        var candidate: StationCandidate
+        var startedAt: Date
+    }
+
     private static let retentionDays = 90
     private static let dismissalDays = 14
     private let persistence: any AppPersistence
     private(set) var events: [UsageHabitEvent]
     private var dismissals: [String: Date]
+    private var exposures: [String: Exposure] = [:]
+    private(set) var implicitProfile: ImplicitUserProfile
 
     init(persistence: any AppPersistence) {
         self.persistence = persistence
         events = persistence.usageHabitEvents
         dismissals = persistence.habitSuggestionDismissals
+        implicitProfile = persistence.implicitUserProfile
         prune(now: Date())
     }
 
@@ -96,6 +104,41 @@ final class HabitStore {
             stationKey: station.statusKey,
             stationName: station.name
         ), now: date)
+    }
+
+    func recordRouteOpened(_ candidate: StationCandidate, at date: Date = Date()) {
+        recordInteraction(candidate, signal: .routeOpened, at: date)
+        recordRouteOpened(candidate.station, at: date)
+    }
+
+    func recordImpression(_ candidate: StationCandidate, at date: Date = Date()) {
+        guard exposures[candidate.id] == nil else { return }
+        exposures[candidate.id] = Exposure(candidate: candidate, startedAt: date)
+    }
+
+    func recordInteraction(
+        _ candidate: StationCandidate,
+        signal: ImplicitFeedbackSignal,
+        at date: Date = Date()
+    ) {
+        let exposure = exposures.removeValue(forKey: candidate.id)
+        learn(
+            candidate: candidate,
+            signal: signal,
+            latency: max(0, date.timeIntervalSince(exposure?.startedAt ?? date)),
+            at: date
+        )
+    }
+
+    func recordIgnored(_ candidate: StationCandidate, at date: Date = Date()) {
+        guard let exposure = exposures.removeValue(forKey: candidate.id) else { return }
+        let duration = max(0, date.timeIntervalSince(exposure.startedAt))
+        guard duration >= ImplicitFeedbackEngine.minimumExposureSeconds else { return }
+        learn(candidate: exposure.candidate, signal: .ignored, latency: duration, at: date)
+    }
+
+    func personalize(_ candidates: [StationCandidate]) -> [StationCandidate] {
+        ImplicitFeedbackEngine.rerank(candidates, profile: implicitProfile)
     }
 
     func suggestion(at now: Date = Date(), calendar: Calendar = .autoupdatingCurrent) -> HabitSuggestion? {
@@ -217,6 +260,31 @@ final class HabitStore {
         events.append(event)
         prune(now: now)
         persistence.usageHabitEvents = events
+    }
+
+    private func learn(
+        candidate: StationCandidate,
+        signal: ImplicitFeedbackSignal,
+        latency: TimeInterval,
+        at date: Date
+    ) {
+        let features = ImplicitFeedbackEngine.features(for: candidate)
+        implicitProfile = ImplicitFeedbackEngine.updated(
+            profile: implicitProfile,
+            features: features,
+            signal: signal,
+            actionLatency: latency,
+            at: date
+        )
+        persistence.implicitUserProfile = implicitProfile
+        var feedback = persistence.implicitFeedbackEvents
+        feedback.append(ImplicitFeedbackEvent(
+            signal: signal,
+            features: features,
+            actionLatency: latency,
+            occurredAt: date
+        ))
+        persistence.implicitFeedbackEvents = feedback
     }
 
     private func prune(now: Date) {

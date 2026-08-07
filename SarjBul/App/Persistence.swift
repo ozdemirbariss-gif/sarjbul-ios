@@ -23,6 +23,14 @@ struct PendingOfflineMutation: Codable, Identifiable, Sendable {
     var createdAt: Date
 }
 
+struct ImplicitFeedbackEvent: Codable, Identifiable, Sendable {
+    var id = UUID()
+    var signal: ImplicitFeedbackSignal
+    var features: StationPreferenceVector
+    var actionLatency: TimeInterval
+    var occurredAt: Date
+}
+
 @MainActor
 protocol AppPersistence: AnyObject {
     var profile: DrivingProfile { get set }
@@ -38,6 +46,8 @@ protocol AppPersistence: AnyObject {
     var demandAnalyticsEnabled: Bool { get set }
     var usageHabitEvents: [UsageHabitEvent] { get set }
     var habitSuggestionDismissals: [String: Date] { get set }
+    var implicitUserProfile: ImplicitUserProfile { get set }
+    var implicitFeedbackEvents: [ImplicitFeedbackEvent] { get set }
     var autonomousChargingPolicy: AutonomousChargingPolicy { get set }
     var autonomousChargingProposal: AutonomousChargingProposal? { get set }
     var lastAutonomousChargingProposal: AutonomousChargingProposal? { get set }
@@ -79,6 +89,8 @@ final class SystemAppPersistence: AppPersistence {
         static let demandAnalyticsEnabled = "demandAnalyticsEnabled"
         static let usageHabitEvents = "usageHabitEvents"
         static let habitSuggestionDismissals = "habitSuggestionDismissals"
+        static let implicitUserProfile = "implicitUserProfile"
+        static let implicitFeedbackEvents = "implicitFeedbackEvents"
         static let autonomousChargingPolicy = "autonomousChargingPolicy"
         static let autonomousChargingProposal = "autonomousChargingProposal"
         static let lastAutonomousChargingProposal = "lastAutonomousChargingProposal"
@@ -187,6 +199,16 @@ final class SystemAppPersistence: AppPersistence {
     var habitSuggestionDismissals: [String: Date] {
         get { decode([String: Date].self, key: Key.habitSuggestionDismissals) ?? [:] }
         set { encode(newValue, key: Key.habitSuggestionDismissals) }
+    }
+
+    var implicitUserProfile: ImplicitUserProfile {
+        get { decode(ImplicitUserProfile.self, key: Key.implicitUserProfile) ?? ImplicitUserProfile() }
+        set { encode(newValue, key: Key.implicitUserProfile) }
+    }
+
+    var implicitFeedbackEvents: [ImplicitFeedbackEvent] {
+        get { decode([ImplicitFeedbackEvent].self, key: Key.implicitFeedbackEvents) ?? [] }
+        set { encode(Array(newValue.suffix(120)), key: Key.implicitFeedbackEvents) }
     }
 
     var autonomousChargingPolicy: AutonomousChargingPolicy {

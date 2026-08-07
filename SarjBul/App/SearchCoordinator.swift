@@ -146,7 +146,7 @@ final class SearchCoordinator {
         if settings.destination != nil {
             searchFilters.rangeFilterEnabled = false
         }
-        let planningCandidates = await stationData.candidates(
+        let rawCandidates = await stationData.candidates(
             origin: userLocation,
             destination: settings.destination,
             routePoints: routePoints,
@@ -154,6 +154,7 @@ final class SearchCoordinator {
             filters: searchFilters,
             limit: settings.destination == nil ? 80 : 240
         )
+        let planningCandidates = habits.personalize(rawCandidates)
         if let snapshot = journeySnapshot {
             tripPlan = tripPlanner.plan(
                 routeDistanceKm: snapshot.distanceKm,

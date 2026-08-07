@@ -62,6 +62,46 @@ final class HabitStoreTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(prediction.confidence, 0.9)
     }
 
+    func testImpressionAndRouteActionPersistImplicitProfile() throws {
+        let context = try makeContext()
+        defer { context.defaults.removePersistentDomain(forName: context.suiteName) }
+        let candidate = testCandidate
+
+        context.store.recordImpression(candidate, at: context.now)
+        context.store.recordRouteOpened(candidate, at: context.now.addingTimeInterval(4))
+
+        XCTAssertEqual(context.store.implicitProfile.observationCount, 1)
+        XCTAssertEqual(context.persistence.implicitFeedbackEvents.first?.signal, .routeOpened)
+        XCTAssertEqual(context.persistence.implicitFeedbackEvents.first?.actionLatency, 4)
+        XCTAssertGreaterThan(context.persistence.implicitUserProfile.weights.proximity, 0)
+    }
+
+    func testBriefExposureDoesNotBecomeNegativeFeedback() throws {
+        let context = try makeContext()
+        defer { context.defaults.removePersistentDomain(forName: context.suiteName) }
+
+        context.store.recordImpression(testCandidate, at: context.now)
+        context.store.recordIgnored(testCandidate, at: context.now.addingTimeInterval(1))
+
+        XCTAssertEqual(context.store.implicitProfile.observationCount, 0)
+        XCTAssertTrue(context.persistence.implicitFeedbackEvents.isEmpty)
+    }
+
+    func testLearnedProfileSurvivesStoreRelaunch() throws {
+        let context = try makeContext()
+        defer { context.defaults.removePersistentDomain(forName: context.suiteName) }
+
+        context.store.recordImpression(testCandidate, at: context.now)
+        context.store.recordInteraction(
+            testCandidate,
+            signal: .favoriteAdded,
+            at: context.now.addingTimeInterval(3)
+        )
+        let restored = HabitStore(persistence: context.persistence)
+
+        XCTAssertEqual(restored.implicitProfile, context.store.implicitProfile)
+    }
+
     private func makeContext() throws -> HabitTestContext {
         let suiteName = "HabitStoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
@@ -81,6 +121,7 @@ final class HabitStoreTests: XCTestCase {
         return HabitTestContext(
             suiteName: suiteName,
             defaults: defaults,
+            persistence: persistence,
             store: HabitStore(persistence: persistence),
             calendar: calendar,
             now: now
@@ -101,11 +142,25 @@ final class HabitStoreTests: XCTestCase {
             source: "test"
         )
     }
+
+    private var testCandidate: StationCandidate {
+        StationCandidate(
+            station: testStation,
+            distanceKm: 2,
+            straightLineDistanceKm: 1.8,
+            estimatedMinutes: 4,
+            arrivalChargePercent: 35,
+            remainingSafeRangeKm: 80,
+            score: 82,
+            badges: []
+        )
+    }
 }
 
 private struct HabitTestContext {
     let suiteName: String
     let defaults: UserDefaults
+    let persistence: SystemAppPersistence
     let store: HabitStore
     let calendar: Calendar
     let now: Date

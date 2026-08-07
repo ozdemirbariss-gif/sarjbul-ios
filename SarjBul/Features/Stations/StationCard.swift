@@ -63,6 +63,8 @@ struct StationCard: View {
         .alert(settings.t("story.error"), isPresented: $storyErrorPresented) {
             Button(settings.t("status.ok"), role: .cancel) {}
         }
+        .onAppear { habits.recordImpression(candidate) }
+        .onDisappear { habits.recordIgnored(candidate) }
     }
 
     private var mapHero: some View {
@@ -91,6 +93,7 @@ struct StationCard: View {
         .contentShape(Rectangle())
         .onTapGesture {
             Haptic.tap()
+            habits.recordInteraction(candidate, signal: .mapExpanded)
             fullMapPresented = true
         }
         .accessibilityLabel(settings.t("feed.expand_map"))
@@ -210,12 +213,16 @@ struct StationCard: View {
     private var actionsMenu: some View {
         Menu {
             Button {
+                habits.recordInteraction(candidate, signal: .detailsOpened)
                 detailsPresented = true
             } label: {
                 Label(settings.t("feed.more_details"), systemImage: "info.circle")
             }
 
             Button {
+                if !favorites.isFavorite(candidate.station.statusKey) {
+                    habits.recordInteraction(candidate, signal: .favoriteAdded)
+                }
                 Task { await favorites.toggle(candidate.station.statusKey) }
             } label: {
                 Label(
@@ -227,6 +234,7 @@ struct StationCard: View {
             }
 
             Button {
+                habits.recordInteraction(candidate, signal: .shared)
                 Task { await createStoryShare() }
             } label: {
                 Label(settings.t("feed.share"), systemImage: "square.and.arrow.up")
@@ -235,6 +243,7 @@ struct StationCard: View {
             .disabled(isGeneratingStory)
 
             Button {
+                habits.recordInteraction(candidate, signal: .mapExpanded)
                 fullMapPresented = true
             } label: {
                 Label(settings.t("feed.expand_map"), systemImage: "arrow.up.left.and.arrow.down.right")
@@ -563,7 +572,7 @@ struct StationCard: View {
 
     private func openInAppleMaps() {
         favorites.recordRouteOpened(candidate.station)
-        habits.recordRouteOpened(candidate.station)
+        habits.recordRouteOpened(candidate)
         let destination = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
             latitude: candidate.station.latitude,
             longitude: candidate.station.longitude
@@ -576,7 +585,7 @@ struct StationCard: View {
 
     private func openInGoogleMaps() {
         favorites.recordRouteOpened(candidate.station)
-        habits.recordRouteOpened(candidate.station)
+        habits.recordRouteOpened(candidate)
         var components = URLComponents(string: "https://www.google.com/maps/dir/")
         components?.queryItems = [
             URLQueryItem(name: "api", value: "1"),
