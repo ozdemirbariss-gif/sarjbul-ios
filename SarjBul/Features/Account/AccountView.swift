@@ -8,6 +8,7 @@ struct AccountView: View {
     @Environment(SearchCoordinator.self) private var search
     @Environment(ChargingHistoryStore.self) private var chargingHistory
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
+    @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @State private var isDeletingData = false
     @State private var deleteConfirmationPresented = false
     @State private var legalDocument: LegalDocument?
@@ -22,6 +23,7 @@ struct AccountView: View {
                         languageRow
                         profileHeader
                         autonomousAssistantPanel
+                        contextIntelligencePanel
                         stationLibraryPanel
 
                         ChargingInsightsView()
@@ -170,6 +172,58 @@ struct AccountView: View {
                 settings.autonomousChargingPolicy = policy
             }
         )
+    }
+
+    private var contextIntelligencePanel: some View {
+        SBSecondaryPanel {
+            VStack(alignment: .leading, spacing: 14) {
+                Label(settings.t("context.settings_title"), systemImage: "brain.head.profile")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+
+                Text(settings.t("context.settings_hint"))
+                    .font(.caption)
+                    .foregroundStyle(SBColor.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle(settings.t("context.enable"), isOn: Binding(
+                    get: { contextIntelligence.policy.isEnabled },
+                    set: { enabled in Task { await contextIntelligence.setEnabled(enabled) } }
+                ))
+                .font(.subheadline.weight(.bold))
+                .tint(SBColor.signal)
+
+                if contextIntelligence.policy.isEnabled {
+                    Divider().overlay(SBColor.line)
+
+                    Toggle(settings.t("context.health"), isOn: Binding(
+                        get: { contextIntelligence.policy.usesHealthSignals },
+                        set: { enabled in Task { await contextIntelligence.setUsesHealthSignals(enabled) } }
+                    ))
+                    .font(.subheadline.weight(.bold))
+                    .tint(SBColor.signal)
+
+                    Toggle(settings.t("context.weather"), isOn: Binding(
+                        get: { contextIntelligence.policy.usesWeather },
+                        set: { contextIntelligence.setUsesWeather($0) }
+                    ))
+                    .font(.subheadline.weight(.bold))
+                    .tint(SBColor.signal)
+
+                    Toggle(settings.t("context.calendar_auto"), isOn: Binding(
+                        get: { contextIntelligence.policy.allowsAutomaticCalendarChanges },
+                        set: { enabled in Task { await contextIntelligence.setAutomaticCalendarChanges(enabled) } }
+                    ))
+                    .font(.subheadline.weight(.bold))
+                    .tint(SBColor.signal)
+
+                    Text(settings.t("context.calendar_auto_hint"))
+                        .font(.caption2)
+                        .foregroundStyle(SBColor.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 
     private var profileFallbackBinding: Binding<Bool> {

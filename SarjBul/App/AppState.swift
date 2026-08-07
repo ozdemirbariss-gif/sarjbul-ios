@@ -16,6 +16,7 @@ final class AppState {
     let chargingSession: ChargingSessionStore
     let habits: HabitStore
     let autonomousAgent: AutonomousChargingAgentStore
+    let contextIntelligence: ContextIntelligenceStore
     let offlineSync: OfflineSyncCoordinator
 
     init(
@@ -91,6 +92,11 @@ final class AppState {
             search: search,
             persistence: persistence,
             telemetryClient: vehicleTelemetryClient
+        )
+        contextIntelligence = ContextIntelligenceStore(
+            persistence: persistence,
+            habits: habits,
+            settings: settings
         )
         deepLinks = DeepLinkRouter(search: search, navigation: navigation)
         lounge = LoungeStore(persistence: persistence)

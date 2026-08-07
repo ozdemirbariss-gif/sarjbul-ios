@@ -12,8 +12,17 @@
 - Open-Meteo Elevation API / Copernicus DEM ile rota rakım profili
 - EPDK şarj ağı işletmeci lisansı REST servisiyle operatör doğrulama snapshot'ı
 - Telegram, WhatsApp, e-posta ve browser uzantısı için ortak salt okunur komut gateway'i
+- Açık rızalı, cihaz içi takvim + HealthKit + konum + alışkanlık bağlam motoru
 
 Kanal gateway'inin sağlayıcı kurulumu ve güvenlik sınırları [CHANNEL_AUTOMATION.md](CHANNEL_AUTOMATION.md) içinde açıklanır.
+
+## Bağlam zekası veri sınırı
+
+Bağlam zekası varsayılan olarak kapalıdır ve Hesap ekranından ayrı ayrı açılır. EventKit takvim içeriği, HealthKit kalp atışları ve kişisel alışkanlık özeti cihazdan çıkarılmaz. Hava durumu için Open-Meteo'ya yalnızca üç ondalığa yuvarlanmış yaklaşık koordinat gönderilir; kullanıcı veya oturum kimliği eklenmez.
+
+Kalp atış hızı tıbbi stres teşhisi olarak kullanılmaz. Motor son 15 dakikadaki ölçümü kişisel dinlenik nabız tabanıyla karşılaştırıp yalnızca "fizyolojik yük yükselmiş olabilir" önerisi üretir. Takvim olayı, kullanıcı aynı erteleme önerisini en az iki kez kabul etmeden ve ayrıca otomatik takvim eylemini açmadan değiştirilmez. Tüm gün etkinlikleri ve başka birinin düzenlediği etkinlikler otomasyona kapalıdır.
+
+iOS sürekli ve sınırsız arka plan çalışması garanti etmez. Değerlendirme uygulama açılışı, konum güncellemesi ve sistemin verdiği BGTask pencerelerinde yapılır. Canlı trafik yoğunluğu entegrasyonu bulunmadığı için hareket hızı yalnızca "seyir halinde" sinyali olarak kullanılır; sıkışıklık iddiası üretilmez.
 
 ## Yetkili sağlayıcı gerektirenler
 

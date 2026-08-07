@@ -16,6 +16,7 @@
 - [x] App Intent / Siri hızlı şarj kısayolu
 - [x] Geohash tile manifesti ve checksum tabanlı delta güncelleme
 - [x] Varsayılan kapalı anonim talep paylaşımı, kaba konum hücresi ve sunucu tarafı toplama
+- [x] Varsayılan kapalı, cihaz içi takvim/HealthKit bağlam motoru ve öğrenilmiş otomasyon eşiği
 
 ## Hesap sahibi tarafından tamamlanacaklar
 
@@ -31,5 +32,8 @@
 - [ ] CarPlay navigasyon entitlement başvurusunu `CARPLAY_REQUEST.md` ile gönder
 - [ ] Open-Meteo ticari kullanım/attribution koşullarını yayın öncesi ürün modeliyle doğrula
 - [ ] App Store gizlilik formunda açık rızalı kaba konum analizini beyan et; operatör çıktılarında en az 10 örnek eşiğini uygula
+- [ ] Apple Developer App ID üzerinde HealthKit capability'sini aç ve distribution provisioning profilini yenile
+- [ ] App Store gizlilik formunda hava durumu için üçüncü tarafa gönderilen yaklaşık konumu beyan et
+- [ ] Gerçek cihazda EventKit sahiplik kontrolü, HealthKit izni ve otomatik takvim erteleme eşiğini doğrula
 
 Operatör API'si veya Apple CarPlay entitlement onayı gelmeden rezervasyon, ödeme, şarj kontrolü ve gömülü CarPlay hedefi release kapsamına alınmamalıdır.

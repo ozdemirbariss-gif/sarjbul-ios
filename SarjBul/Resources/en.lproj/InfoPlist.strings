@@ -1,1 +1,3 @@
 "NSLocationWhenInUseUsageDescription" = "Your location is used to find nearby charging stations and calculate arrival charge.";
+"NSCalendarsFullAccessUsageDescription" = "Calendar access is used to move upcoming plans during high-load travel moments, only when you allow it.";
+"NSHealthShareUsageDescription" = "Heart-rate data is compared with your personal resting level on device to offer calmer suggestions.";

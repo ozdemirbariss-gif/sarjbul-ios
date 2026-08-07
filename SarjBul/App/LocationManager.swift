@@ -7,6 +7,7 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var lastLocation: UserLocation?
     @Published var lastError: Error?
+    @Published var movementSpeedMetersPerSecond: Double?
 
     private let manager = CLLocationManager()
 
@@ -39,9 +40,11 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let coordinate = locations.last?.coordinate else { return }
+        guard let location = locations.last else { return }
+        let coordinate = location.coordinate
         lastError = nil
         lastLocation = UserLocation(latitude: coordinate.latitude, longitude: coordinate.longitude, source: .device)
+        movementSpeedMetersPerSecond = location.speed >= 0 ? location.speed : nil
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

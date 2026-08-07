@@ -1,1 +1,3 @@
 "NSLocationWhenInUseUsageDescription" = "Yakındaki şarj istasyonlarını bulmak ve varış şarjını hesaplamak için konumun kullanılır.";
+"NSCalendarsFullAccessUsageDescription" = "Yaklaşan planlarını yoğun yolculuk anlarında, yalnızca izin verdiğinde erteleyebilmek için takvim erişimi kullanılır.";
+"NSHealthShareUsageDescription" = "Kalp atış hızını kişisel dinlenik düzeyinle cihaz üzerinde karşılaştırıp daha sakin öneriler sunmak için kullanılır.";

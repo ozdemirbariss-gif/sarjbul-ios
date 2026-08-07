@@ -11,6 +11,7 @@ struct RootView: View {
     @Environment(RouteStore.self) private var routeStore
     @Environment(ChargingSessionStore.self) private var chargingSession
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
+    @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(OfflineSyncCoordinator.self) private var offlineSync
     @State private var bottomNavigationExpanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -46,6 +47,7 @@ struct RootView: View {
                 trigger: .appLaunch,
                 location: search.userLocation
             )
+            await contextIntelligence.evaluate(location: search.userLocation)
             await autonomousAgent.openPendingRouteIfNeeded()
             guard PendingAppIntentStore.consume() == .nearestFast else { return }
             await search.openNearestFast()

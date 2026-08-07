@@ -174,6 +174,27 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(persistence.favoriteStationKeys, ["station-1", "station-2"])
     }
 
+    func testContextPolicyAndActionReportsSurviveRelaunch() throws {
+        let persistence = try makePersistence()
+        let policy = ContextIntelligencePolicy(
+            isEnabled: true,
+            usesHealthSignals: true,
+            usesWeather: true,
+            allowsAutomaticCalendarChanges: true
+        )
+        let report = ContextActionReport(
+            action: .offerCalendarDeferral,
+            outcome: .accepted,
+            createdAt: Date(timeIntervalSince1970: 1_800_000_000)
+        )
+
+        persistence.contextIntelligencePolicy = policy
+        persistence.contextActionReports = [report]
+
+        XCTAssertEqual(persistence.contextIntelligencePolicy, policy)
+        XCTAssertEqual(persistence.contextActionReports, [report])
+    }
+
     private func makePersistence() throws -> SystemAppPersistence {
         let suiteName = "StoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

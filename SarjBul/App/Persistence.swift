@@ -48,6 +48,8 @@ protocol AppPersistence: AnyObject {
     var habitSuggestionDismissals: [String: Date] { get set }
     var implicitUserProfile: ImplicitUserProfile { get set }
     var implicitFeedbackEvents: [ImplicitFeedbackEvent] { get set }
+    var contextIntelligencePolicy: ContextIntelligencePolicy { get set }
+    var contextActionReports: [ContextActionReport] { get set }
     var autonomousChargingPolicy: AutonomousChargingPolicy { get set }
     var autonomousChargingProposal: AutonomousChargingProposal? { get set }
     var lastAutonomousChargingProposal: AutonomousChargingProposal? { get set }
@@ -91,6 +93,8 @@ final class SystemAppPersistence: AppPersistence {
         static let habitSuggestionDismissals = "habitSuggestionDismissals"
         static let implicitUserProfile = "implicitUserProfile"
         static let implicitFeedbackEvents = "implicitFeedbackEvents"
+        static let contextIntelligencePolicy = "contextIntelligencePolicy"
+        static let contextActionReports = "contextActionReports"
         static let autonomousChargingPolicy = "autonomousChargingPolicy"
         static let autonomousChargingProposal = "autonomousChargingProposal"
         static let lastAutonomousChargingProposal = "lastAutonomousChargingProposal"
@@ -209,6 +213,16 @@ final class SystemAppPersistence: AppPersistence {
     var implicitFeedbackEvents: [ImplicitFeedbackEvent] {
         get { decode([ImplicitFeedbackEvent].self, key: Key.implicitFeedbackEvents) ?? [] }
         set { encode(Array(newValue.suffix(120)), key: Key.implicitFeedbackEvents) }
+    }
+
+    var contextIntelligencePolicy: ContextIntelligencePolicy {
+        get { decode(ContextIntelligencePolicy.self, key: Key.contextIntelligencePolicy) ?? ContextIntelligencePolicy() }
+        set { encode(newValue, key: Key.contextIntelligencePolicy) }
+    }
+
+    var contextActionReports: [ContextActionReport] {
+        get { decode([ContextActionReport].self, key: Key.contextActionReports) ?? [] }
+        set { encode(Array(newValue.prefix(40)), key: Key.contextActionReports) }
     }
 
     var autonomousChargingPolicy: AutonomousChargingPolicy {

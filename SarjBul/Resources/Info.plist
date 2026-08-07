@@ -36,6 +36,10 @@
     </dict>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Yakındaki şarj istasyonlarını bulmak ve varış şarjını hesaplamak için konumun kullanılır.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Yaklaşan planlarını yoğun yolculuk anlarında, yalnızca izin verdiğinde erteleyebilmek için takvim erişimi kullanılır.</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>Kalp atış hızını kişisel dinlenik düzeyinle cihaz üzerinde karşılaştırıp daha sakin öneriler sunmak için kullanılır.</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>

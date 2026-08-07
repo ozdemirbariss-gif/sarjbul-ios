@@ -19,11 +19,17 @@ struct SarjBulApp: App {
                 await appState.search.prepare()
                 await appState.offlineSync.syncPending()
                 await appState.autonomousAgent.handleSilentPush()
+                await appState.contextIntelligence.refreshInBackground(
+                    location: appState.search.userLocation
+                )
             },
             processingHandler: {
                 await appState.search.prepare()
                 await appState.offlineSync.syncPending()
                 await appState.autonomousAgent.processInBackground()
+                await appState.contextIntelligence.refreshInBackground(
+                    location: appState.search.userLocation
+                )
             }
         )
     }
@@ -44,6 +50,7 @@ struct SarjBulApp: App {
                 .environment(appState.chargingSession)
                 .environment(appState.habits)
                 .environment(appState.autonomousAgent)
+                .environment(appState.contextIntelligence)
                 .environment(appState.offlineSync)
                 .environment(routeStore)
                 .environment(networkMonitor)
@@ -56,6 +63,9 @@ struct SarjBulApp: App {
             await appState.search.prepare()
             await appState.offlineSync.syncPending()
             await appState.autonomousAgent.refreshInBackground()
+            await appState.contextIntelligence.refreshInBackground(
+                location: appState.search.userLocation
+            )
         }
     }
 }

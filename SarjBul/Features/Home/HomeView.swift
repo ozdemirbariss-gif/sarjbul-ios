@@ -9,6 +9,7 @@ struct HomeView: View {
     @Environment(HabitStore.self) private var habits
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @Environment(ChargingSessionStore.self) private var chargingSession
+    @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -44,6 +45,12 @@ struct HomeView: View {
                         } else if let proposal = autonomousAgent.proposal {
                             autonomousProposalCard(proposal)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
+                        } else if let recommendation = contextIntelligence.recommendation {
+                            contextRecommendationCard(recommendation)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        } else if contextIntelligence.recentAutomaticReport != nil {
+                            contextAutomationReportCard
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                         } else if let suggestion = habits.suggestion() {
                             habitSuggestionCard(suggestion)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -74,6 +81,12 @@ struct HomeView: View {
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 guard !isDeterministicUITest else { return }
                 applyLocation(location)
+                Task {
+                    await contextIntelligence.evaluate(
+                        location: location,
+                        movementSpeedMetersPerSecond: locationManager.movementSpeedMetersPerSecond
+                    )
+                }
             }
             .onAppear {
                 guard !isDeterministicUITest else { return }
@@ -170,6 +183,84 @@ struct HomeView: View {
         }
         .buttonStyle(SBPremiumButtonStyle())
         .accessibilityIdentifier("critical-range-context-card")
+    }
+
+    private func contextRecommendationCard(_ recommendation: ContextRecommendation) -> some View {
+        HStack(spacing: 16) {
+            Image(systemName: recommendation.elevatedPhysiologicalLoad ? "heart.text.square.fill" : "cloud.rain.fill")
+                .font(.title2.weight(.heavy))
+                .foregroundStyle(.black)
+                .frame(width: 56, height: 56)
+                .background(SBColor.signal, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(settings.t("context.smart_kicker"))
+                    .font(.caption.weight(.heavy))
+                    .foregroundStyle(SBColor.signal)
+                    .textCase(.uppercase)
+                Text(contextRecommendationTitle(recommendation))
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+                    .lineLimit(2)
+                Text(settings.t("context.health_disclaimer"))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(SBColor.textSoft)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 6)
+
+            VStack(spacing: 8) {
+                Button {
+                    Task { await contextIntelligence.acceptRecommendation() }
+                } label: {
+                    Image(systemName: recommendation.action == .suggestRecoveryPause ? "checkmark" : "clock.arrow.circlepath")
+                        .frame(width: 38, height: 38)
+                        .background(SBColor.signal, in: Circle())
+                        .foregroundStyle(SBColor.onSignal)
+                }
+                .buttonStyle(SBPremiumButtonStyle())
+                .accessibilityLabel(settings.t("context.accept"))
+
+                Button {
+                    contextIntelligence.dismissRecommendation()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.heavy))
+                        .frame(width: 32, height: 32)
+                }
+                .foregroundStyle(SBColor.textSoft)
+                .accessibilityLabel(settings.t("context.dismiss"))
+            }
+        }
+        .padding(18)
+        .background(SBColor.signal.opacity(0.08), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: SBRadius.xl).stroke(SBColor.signal.opacity(0.36)))
+    }
+
+    private func contextRecommendationTitle(_ recommendation: ContextRecommendation) -> String {
+        switch recommendation.action {
+        case .offerCalendarDeferral:
+            settings.t("context.defer_offer")
+        case .automaticallyDeferCalendar:
+            settings.t("context.defer_completed")
+        case .suggestRecoveryPause:
+            settings.t("context.recovery_offer")
+        }
+    }
+
+    private var contextAutomationReportCard: some View {
+        contextualStatusCard(
+            icon: "checkmark",
+            kicker: settings.t("context.completed_kicker"),
+            title: settings.t("context.defer_completed"),
+            detail: settings.t("context.completed_detail"),
+            tint: SBColor.signal
+        ) {
+            Image(systemName: "calendar.badge.checkmark")
+                .font(.headline.weight(.heavy))
+                .foregroundStyle(SBColor.signal)
+        }
     }
 
     private func contextualStatusCard<Trailing: View>(
