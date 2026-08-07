@@ -31,6 +31,7 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
+                        homeHeader
                         topControls
                         if search.userLocation?.source != .device {
                             locationInput
@@ -68,12 +69,6 @@ struct HomeView: View {
                 }
                 .scrollIndicators(.hidden)
                 .sensoryFeedback(.selection, trigger: settings.filters.preference)
-
-                SBBackButton(accessibilityLabel: settings.t("nav.back")) {
-                    navigation.tab = .account
-                }
-                .padding(.leading, 18)
-                .padding(.top, 6)
             }
             .animation(.easeInOut(duration: 0.24), value: search.userLocation?.source)
             .accessibilityIdentifier("home-screen")
@@ -116,6 +111,15 @@ struct HomeView: View {
         }
     }
 
+    private var homeHeader: some View {
+        HStack {
+            SBBackButton(accessibilityLabel: settings.t("nav.back")) {
+                navigation.tab = .account
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
     private var topControls: some View {
         HStack(spacing: 10) {
             preferenceButton(.nearest, icon: "location.north.line")
@@ -129,8 +133,8 @@ struct HomeView: View {
                 .stroke(SBColor.line, lineWidth: 1)
         )
         .sbCardShadow()
-        .padding(.leading, 72)
-        .padding(.top, 4)
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("home-preference-card")
     }
 
     private var activeChargingContextCard: some View {

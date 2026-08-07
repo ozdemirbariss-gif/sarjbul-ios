@@ -14,6 +14,7 @@ struct RootView: View {
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(OfflineSyncCoordinator.self) private var offlineSync
     @State private var bottomNavigationExpanded = false
+    @State private var didSetInitialTab = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -38,6 +39,7 @@ struct RootView: View {
         .tint(SBColor.signal)
         .preferredColorScheme(.dark)
         .task {
+            setInitialTabIfNeeded()
             await chargingSession.prepare()
             await search.prepare()
             await offlineSync.syncPending()
@@ -137,8 +139,8 @@ struct RootView: View {
     private var expandedBottomNavigation: some View {
         HStack(spacing: 8) {
             tabButton(.home)
-            tabButton(.lounge)
             tabButton(.routes)
+            tabButton(.lounge)
             tabButton(.account)
         }
         .padding(7)
@@ -147,6 +149,21 @@ struct RootView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
         .shadow(color: .black.opacity(0.54), radius: 26, x: 0, y: 16)
+    }
+
+    private func setInitialTabIfNeeded() {
+        guard !didSetInitialTab else { return }
+        didSetInitialTab = true
+
+        #if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        let forcedPreview = arguments.contains { argument in
+            argument.hasPrefix("--ui-testing-") && argument != "--ui-testing-default-launch"
+        }
+        guard !forcedPreview else { return }
+        #endif
+
+        navigation.select(.home)
     }
 
     private var collapsedBottomNavigation: some View {

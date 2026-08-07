@@ -18,6 +18,14 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Hedef ekle"].exists)
     }
 
+    func testStandardLaunchAlwaysStartsOnHome() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-default-launch"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
+    }
+
     func testManualLocationInputHidesWhenDeviceLocationIsAvailable() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-device-location"]
@@ -99,7 +107,16 @@ final class AppSmokeUITests: XCTestCase {
         openNavigation.tap()
 
         let home = app.buttons["bottom-navigation-tab-home"]
+        let routes = app.buttons["bottom-navigation-tab-routes"]
+        let lounge = app.buttons["bottom-navigation-tab-lounge"]
+        let profile = app.buttons["bottom-navigation-tab-account"]
         XCTAssertTrue(home.waitForExistence(timeout: 5))
+        XCTAssertTrue(routes.exists)
+        XCTAssertTrue(lounge.exists)
+        XCTAssertTrue(profile.exists)
+        XCTAssertLessThan(home.frame.minX, routes.frame.minX)
+        XCTAssertLessThan(routes.frame.minX, lounge.frame.minX)
+        XCTAssertLessThan(lounge.frame.minX, profile.frame.minX)
         home.tap()
 
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 10))
