@@ -1,7 +1,7 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-08-06T07:06:48+00:00",
-  "license_count": 183,
+  "generated_at": "2026-08-07T05:53:33+00:00",
+  "license_count": 181,
   "licenses": [
     {
       "brands": [
@@ -411,15 +411,6 @@
     },
     {
       "brands": [
-        "ACONE CONSTRUCTION EQUIPMENT"
-      ],
-      "holder": "EGE ŞARJ ENERJİ VE İHRACAT İTHALAT SANAYİ TİCARET LİMİTED ŞİRKETİ",
-      "license_number": "ŞH/14214/00221",
-      "valid_from": "2025-12-30T00:00:00Z",
-      "valid_until": "2074-12-30T00:00:00Z"
-    },
-    {
-      "brands": [
         "EKA ENERJİ"
       ],
       "holder": "EKA ENERJİ VE TEKNOLOJİ ANONİM ŞİRKETİ",
@@ -734,15 +725,6 @@
       "license_number": "ŞH/11615-5/00101",
       "valid_from": "2023-02-02T00:00:00Z",
       "valid_until": "2072-02-02T00:00:00Z"
-    },
-    {
-      "brands": [
-        "GÜLAN"
-      ],
-      "holder": "GÜLAN OTOMOTİV SANAYİ VE TİCARET ANONİM ŞİRKETİ",
-      "license_number": "ŞH/14183-1/00219",
-      "valid_from": "2025-12-30T00:00:00Z",
-      "valid_until": "2074-12-30T00:00:00Z"
     },
     {
       "brands": [
@@ -1562,8 +1544,8 @@
     },
     {
       "brands": [
-        "ecojet",
         "Ecojet",
+        "ecojet",
         "ekojet",
         "EVE"
       ],
