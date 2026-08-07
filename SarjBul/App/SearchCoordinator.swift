@@ -67,7 +67,7 @@ final class SearchCoordinator {
 
     var routeCandidates: [StationCandidate] { state.candidates }
     var isSearching: Bool { state.isSearching }
-    var canSearch: Bool { userLocation != nil && !stationData.stations.isEmpty && !isSearching }
+    var canSearch: Bool { userLocation != nil && !isSearching }
 
     func prepare() async {
         guard !prepared else { return }
@@ -120,8 +120,19 @@ final class SearchCoordinator {
             state = .failed(.localized(key: "route.location_required", kind: .error))
             return
         }
+        guard !isSearching else { return }
 
         state = .searching
+        if stationData.stations.isEmpty {
+            let session = try? await auth.validSession()
+            await stationData.retry(statusIDToken: session?.idToken)
+        }
+        guard !stationData.stations.isEmpty else {
+            state = .failed(.localized(key: "data.recovery_failed", kind: .error))
+            navigation.select(.routes)
+            return
+        }
+
         let routePoints: [UserLocation]
         if let destination = settings.destination {
             do {

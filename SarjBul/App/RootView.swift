@@ -17,7 +17,7 @@ struct RootView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             currentScreen
                 .safeAreaInset(edge: .top, spacing: 0) {
                     if !networkMonitor.isConnected {
@@ -28,14 +28,12 @@ struct RootView: View {
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
-                .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: bottomInsetHeight)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if showsBottomNavigation {
+                        bottomNavigation
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
-
-            if showsBottomNavigation {
-                bottomNavigation
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
         }
         .tint(SBColor.signal)
         .preferredColorScheme(.dark)
@@ -65,8 +63,7 @@ struct RootView: View {
             }
         }
         .sensoryFeedback(.selection, trigger: navigation.tab)
-        .onChange(of: navigation.tab) { _, tab in
-            guard tab != .account else { return }
+        .onChange(of: navigation.tab) { _, _ in
             bottomNavigationExpanded = false
         }
         .onOpenURL { url in
@@ -108,13 +105,8 @@ struct RootView: View {
             .accessibilityAddTraits(.isStaticText)
     }
 
-    private var bottomInsetHeight: CGFloat {
-        guard showsBottomNavigation else { return 0 }
-        return bottomNavigationExpanded ? 118 : 28
-    }
-
     private var showsBottomNavigation: Bool {
-        navigation.tab == .home || navigation.tab == .lounge
+        navigation.tab == .home || navigation.tab == .lounge || navigation.tab == .account
     }
 
     @ViewBuilder
@@ -178,9 +170,12 @@ struct RootView: View {
         }
         .buttonStyle(SBPremiumButtonStyle())
         .accessibilityLabel(settings.t("navigation.open"))
+        .accessibilityIdentifier("bottom-navigation-open")
         .frame(maxWidth: .infinity, alignment: .trailing)
         .padding(.trailing, 18)
+        .padding(.top, 10)
         .padding(.bottom, 14)
+        .background(SBColor.background.opacity(0.98))
     }
 
     private func tabButton(_ tab: AppTab) -> some View {
@@ -219,6 +214,8 @@ struct RootView: View {
             )
         }
         .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityLabel(tabTitle(tab))
+        .accessibilityIdentifier("bottom-navigation-tab-\(tabIdentifier(tab))")
     }
 
     private func tabTitle(_ tab: AppTab) -> String {
@@ -244,6 +241,15 @@ struct RootView: View {
             "point.topleft.down.curvedto.point.bottomright.up"
         case .account:
             "person"
+        }
+    }
+
+    private func tabIdentifier(_ tab: AppTab) -> String {
+        switch tab {
+        case .home: "home"
+        case .lounge: "lounge"
+        case .routes: "routes"
+        case .account: "account"
         }
     }
 

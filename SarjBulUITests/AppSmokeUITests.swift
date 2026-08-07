@@ -88,4 +88,34 @@ final class AppSmokeUITests: XCTestCase {
         let routeCard = app.descendants(matching: .any)["station-route-card"]
         XCTAssertTrue(routeCard.waitForExistence(timeout: 15))
     }
+
+    func testProfileCanOpenNavigationAndReturnHome() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-profile"]
+        app.launch()
+
+        let openNavigation = app.buttons["bottom-navigation-open"]
+        XCTAssertTrue(openNavigation.waitForExistence(timeout: 10))
+        openNavigation.tap()
+
+        let home = app.buttons["bottom-navigation-tab-home"]
+        XCTAssertTrue(home.waitForExistence(timeout: 5))
+        home.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 10))
+    }
+
+    func testBundledStationCatalogCreatesRoute() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-device-location"]
+        app.launch()
+
+        let findStations = app.buttons["find-stations-button"]
+        XCTAssertTrue(findStations.waitForExistence(timeout: 20))
+        XCTAssertTrue(findStations.isEnabled)
+        findStations.tap()
+
+        let routeCard = app.descendants(matching: .any)["station-route-card"]
+        XCTAssertTrue(routeCard.waitForExistence(timeout: 20))
+    }
 }
