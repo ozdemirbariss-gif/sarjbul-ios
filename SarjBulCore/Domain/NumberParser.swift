@@ -25,7 +25,11 @@ enum NumberParser {
         let commaCount = token.filter { $0 == "," }.count
 
         if dotCount > 0 && commaCount > 0 {
-            let decimalSeparator: Character = token.lastIndex(of: ",")! > token.lastIndex(of: ".")! ? "," : "."
+            guard let commaIndex = token.lastIndex(of: ","),
+                  let dotIndex = token.lastIndex(of: ".") else {
+                return token
+            }
+            let decimalSeparator: Character = commaIndex > dotIndex ? "," : "."
             return normalizeMixedSeparators(token, decimalSeparator: decimalSeparator)
         }
 

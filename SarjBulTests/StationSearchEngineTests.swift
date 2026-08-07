@@ -190,9 +190,10 @@ struct StationSearchEngineTests {
     @Test
     func deepLinkParserReturnsTypedStationRoute() throws {
         let url = try #require(URL(string: "sarjbul://station/near_ac"))
+        let unsupportedURL = try #require(URL(string: "https://example.com/station/near_ac"))
 
         #expect(DeepLinkRouteParser.parse(url) == .station(key: "near_ac"))
-        #expect(DeepLinkRouteParser.parse(URL(string: "https://example.com/station/near_ac")!) == nil)
+        #expect(DeepLinkRouteParser.parse(unsupportedURL) == nil)
     }
 
     @Test

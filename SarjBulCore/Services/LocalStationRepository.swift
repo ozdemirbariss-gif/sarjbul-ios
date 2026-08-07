@@ -18,4 +18,3 @@ public struct LocalStationRepository: StationRepository {
         return stations
     }
 }
-

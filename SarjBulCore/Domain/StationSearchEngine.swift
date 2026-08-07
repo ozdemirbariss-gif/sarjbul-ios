@@ -305,7 +305,7 @@ public struct StationSearchEngine: Sendable {
                 lateralDistanceKm: lateralDistance,
                 distanceFromOriginKm: cumulativeDistance + segmentDistance * progress
             )
-            if best == nil || position.lateralDistanceKm < best!.lateralDistanceKm {
+            if position.lateralDistanceKm < (best?.lateralDistanceKm ?? .infinity) {
                 best = position
             }
             cumulativeDistance += segmentDistance

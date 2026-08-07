@@ -24,4 +24,3 @@ public struct StationFilters: Equatable, Sendable {
         self.rangeFilterEnabled = rangeFilterEnabled
     }
 }
-

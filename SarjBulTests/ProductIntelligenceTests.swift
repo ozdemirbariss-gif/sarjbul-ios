@@ -118,14 +118,16 @@ struct ProductIntelligenceTests {
     }
 
     @Test
-    func occupancyPredictionUsesHourlyEvidenceWithoutOverconfidence() {
+    func occupancyPredictionUsesHourlyEvidenceWithoutOverconfidence() throws {
         let station = makeStation(id: "mall", power: 120)
         let insight = StationCommunityInsight(occupancy: [
             "2-18": OccupancyObservationBucket(busy: 8, available: 2)
         ])
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
-        let date = calendar.date(from: DateComponents(year: 2026, month: 7, day: 20, hour: 18))!
+        calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
+        let date = try #require(calendar.date(
+            from: DateComponents(year: 2026, month: 7, day: 20, hour: 18)
+        ))
 
         let prediction = OccupancyPredictor.predict(station: station, insight: insight, date: date, calendar: calendar)
 
@@ -210,7 +212,7 @@ struct ProductIntelligenceTests {
     @Test
     func holidayAdvisorActivatesOnlyInsideKnownMigrationWindow() throws {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/Istanbul")!
+        calendar.timeZone = try #require(TimeZone(identifier: "Europe/Istanbul"))
         let active = try #require(calendar.date(from: DateComponents(year: 2026, month: 5, day: 27)))
         let normal = try #require(calendar.date(from: DateComponents(year: 2026, month: 7, day: 19)))
 

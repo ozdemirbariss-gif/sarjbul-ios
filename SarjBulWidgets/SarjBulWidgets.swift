@@ -69,7 +69,7 @@ private struct NearestStationWidgetView: View {
         if let context = entry.context {
             contextualView(context)
         } else if let snapshot = entry.snapshot {
-            Link(destination: URL(string: "sarjbul://quick/fast")!) {
+            Link(destination: deepLinkURL("sarjbul://quick/fast")) {
                 VStack(alignment: .leading, spacing: 7) {
                     Label("ŞarjBul", systemImage: "bolt.car.fill")
                         .font(.caption.weight(.heavy))
@@ -103,7 +103,7 @@ private struct NearestStationWidgetView: View {
     }
 
     private func contextualView(_ context: WidgetContextSnapshot) -> some View {
-        Link(destination: URL(string: context.deepLink)!) {
+        Link(destination: deepLinkURL(context.deepLink)) {
             VStack(alignment: .leading, spacing: 7) {
                 HStack {
                     Image(systemName: context.icon)
@@ -129,6 +129,10 @@ private struct NearestStationWidgetView: View {
             }
         }
         .containerBackground(Color.black, for: .widget)
+    }
+
+    private func deepLinkURL(_ value: String) -> URL {
+        URL(string: value) ?? URL(fileURLWithPath: "/")
     }
 
     private var accent: Color { .black }
