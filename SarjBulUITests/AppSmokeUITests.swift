@@ -122,6 +122,19 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 10))
     }
 
+    func testBackButtonAppearsOnlyOnProfileAndReturnsHome() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-profile"]
+        app.launch()
+
+        let profileBack = app.buttons["profile-back-button"]
+        XCTAssertTrue(profileBack.waitForExistence(timeout: 10))
+        profileBack.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["profile-back-button"].exists)
+    }
+
     func testBundledStationCatalogCreatesRoute() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-device-location"]

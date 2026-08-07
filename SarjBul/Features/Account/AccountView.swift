@@ -9,6 +9,7 @@ struct AccountView: View {
     @Environment(ChargingHistoryStore.self) private var chargingHistory
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
+    @Environment(NavigationCoordinator.self) private var navigation
     @State private var isDeletingData = false
     @State private var deleteConfirmationPresented = false
     @State private var legalDocument: LegalDocument?
@@ -20,7 +21,7 @@ struct AccountView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
-                        languageRow
+                        profileTopBar
                         profileHeader
                         autonomousAssistantPanel
                         contextIntelligencePanel
@@ -66,8 +67,13 @@ struct AccountView: View {
         }
     }
 
-    private var languageRow: some View {
+    private var profileTopBar: some View {
         HStack {
+            SBBackButton(accessibilityLabel: settings.t("nav.back")) {
+                navigation.select(.home)
+            }
+            .accessibilityIdentifier("profile-back-button")
+
             Spacer()
             SBLanguageSwitch(selectedLanguage: Binding(
                 get: { settings.language.displayCode },

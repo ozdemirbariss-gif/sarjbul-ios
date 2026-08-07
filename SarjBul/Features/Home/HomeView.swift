@@ -31,7 +31,6 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
-                        homeHeader
                         topControls
                         if search.userLocation?.source != .device {
                             locationInput
@@ -108,15 +107,6 @@ struct HomeView: View {
                 }
                 .environment(settings)
             }
-        }
-    }
-
-    private var homeHeader: some View {
-        HStack {
-            SBBackButton(accessibilityLabel: settings.t("nav.back")) {
-                navigation.tab = .account
-            }
-            Spacer(minLength: 0)
         }
     }
 
