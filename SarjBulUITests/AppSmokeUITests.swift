@@ -157,4 +157,31 @@ final class AppSmokeUITests: XCTestCase {
         let routeCard = app.descendants(matching: .any)["station-route-card"]
         XCTAssertTrue(routeCard.waitForExistence(timeout: 20))
     }
+
+    func testSearchRecoversFromFiltersThatWouldHideEveryStation() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-filter-recovery"]
+        app.launch()
+
+        let findStations = app.buttons["find-stations-button"]
+        XCTAssertTrue(findStations.waitForExistence(timeout: 15))
+        findStations.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["station-route-card"].waitForExistence(timeout: 15))
+    }
+
+    func testOutsideCoverageRevealsLocationRecoveryInsteadOfEmptyRoutes() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-outside-coverage"]
+        app.launch()
+
+        XCTAssertFalse(app.descendants(matching: .any)["location-input"].exists)
+        let findStations = app.buttons["find-stations-button"]
+        XCTAssertTrue(findStations.waitForExistence(timeout: 15))
+        findStations.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["location-input"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.descendants(matching: .any)["station-route-card"].exists)
+    }
 }

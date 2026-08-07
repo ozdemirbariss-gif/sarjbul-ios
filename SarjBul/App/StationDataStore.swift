@@ -23,6 +23,7 @@ final class StationDataStore {
     private let messages: AppMessagePresenter
     private var reportCooldowns: [String: Date]
     private var realtimeTask: Task<Void, Never>?
+    private var loadTask: Task<Void, Never>?
 
     var onRealtimeEvent: (@MainActor (StationRealtimeEvent) -> Void)?
 
@@ -56,7 +57,21 @@ final class StationDataStore {
     }
 
     func load(statusIDToken: String? = nil) async {
+        if let loadTask {
+            await loadTask.value
+            return
+        }
         guard stations.isEmpty else { return }
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.performLoad(statusIDToken: statusIDToken)
+        }
+        loadTask = task
+        await task.value
+        loadTask = nil
+    }
+
+    private func performLoad(statusIDToken: String?) async {
         loadState = .loading
         do {
             stations = try await pipeline.loadStations()
@@ -78,6 +93,10 @@ final class StationDataStore {
     }
 
     func retry(statusIDToken: String? = nil) async {
+        if let loadTask {
+            await loadTask.value
+            return
+        }
         loadState = .idle
         await load(statusIDToken: statusIDToken)
     }

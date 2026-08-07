@@ -44,6 +44,7 @@ final class SearchCoordinator {
     var state: SearchState = .idle
     private(set) var journeySnapshot: JourneyRouteSnapshot?
     private(set) var tripPlan: ChargingTripPlan?
+    private(set) var locationNeedsReview = false
 
     init(
         stationData: StationDataStore,
@@ -91,6 +92,7 @@ final class SearchCoordinator {
 
     func updateLocation(latitude: Double, longitude: Double, source: UserLocation.Source) {
         userLocation = UserLocation(latitude: latitude, longitude: longitude, source: source)
+        locationNeedsReview = false
         state = .idle
         journeySnapshot = nil
         tripPlan = nil
@@ -107,6 +109,7 @@ final class SearchCoordinator {
         state = .idle
         journeySnapshot = nil
         tripPlan = nil
+        locationNeedsReview = false
     }
 
     func applyFilters(_ filters: StationFilters) async {
@@ -122,6 +125,7 @@ final class SearchCoordinator {
         }
         guard !isSearching else { return }
 
+        locationNeedsReview = false
         state = .searching
         if stationData.stations.isEmpty {
             let session = try? await auth.validSession()
@@ -157,7 +161,7 @@ final class SearchCoordinator {
         if settings.destination != nil {
             searchFilters.rangeFilterEnabled = false
         }
-        let rawCandidates = await stationData.candidates(
+        var rawCandidates = await stationData.candidates(
             origin: userLocation,
             destination: settings.destination,
             routePoints: routePoints,
@@ -165,6 +169,36 @@ final class SearchCoordinator {
             filters: searchFilters,
             limit: settings.destination == nil ? 80 : 240
         )
+        let recoveryFilters = relaxedFilters(from: searchFilters)
+        if rawCandidates.isEmpty, recoveryFilters != searchFilters {
+            rawCandidates = await stationData.candidates(
+                origin: userLocation,
+                destination: settings.destination,
+                routePoints: routePoints,
+                profile: settings.profile,
+                filters: recoveryFilters,
+                limit: settings.destination == nil ? 80 : 240
+            )
+            if !rawCandidates.isEmpty {
+                AppLogger.routing.notice("Station search recovered with safe fallback filters")
+            }
+        }
+
+        guard !rawCandidates.isEmpty else {
+            if settings.destination == nil {
+                locationNeedsReview = true
+                state = .idle
+                navigation.select(.home)
+                AppLogger.routing.warning("Station search found no nearby candidates after fallback")
+            } else {
+                state = .results([])
+                navigation.select(.routes)
+                AppLogger.routing.warning("Journey search found no corridor candidates after fallback")
+            }
+            await recordDemandIfEnabled(origin: userLocation, resultCount: 0)
+            return
+        }
+
         let planningCandidates = habits.personalize(rawCandidates)
         if let snapshot = journeySnapshot {
             tripPlan = tripPlanner.plan(
@@ -196,6 +230,16 @@ final class SearchCoordinator {
         }
         if !result.isEmpty { habits.recordSearch(filters: settings.filters) }
         await recordDemandIfEnabled(origin: userLocation, resultCount: result.count)
+    }
+
+    private func relaxedFilters(from filters: StationFilters) -> StationFilters {
+        var relaxed = filters
+        relaxed.searchText = ""
+        relaxed.minimumPowerKW = 0
+        relaxed.socketFilters = []
+        relaxed.operatorFilters = []
+        relaxed.rangeFilterEnabled = false
+        return relaxed
     }
 
     func applyRealtime(_ event: StationRealtimeEvent) {

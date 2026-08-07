@@ -32,7 +32,7 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
                         topControls
-                        if search.userLocation?.source != .device {
+                        if search.userLocation?.source != .device || search.locationNeedsReview {
                             locationInput
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
@@ -563,7 +563,15 @@ struct HomeView: View {
     }
 
     private var locationInput: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: search.locationNeedsReview ? 8 : 0) {
+            if search.locationNeedsReview {
+                Label(settings.t("route.location_review"), systemImage: "location.magnifyingglass")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(SBColor.muted)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                    .accessibilityIdentifier("location-review-message")
+            }
             originJourneyButton
         }
         .padding(8)
@@ -924,6 +932,7 @@ struct HomeView: View {
     }
 
     private var manualLocationEntryVisible: Bool {
+        if search.locationNeedsReview { return true }
         if search.userLocation?.source == .manual { return true }
         if locationManager.lastError != nil || locationRequestTimedOut { return true }
         switch locationManager.authorizationStatus {
@@ -964,6 +973,8 @@ struct HomeView: View {
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-device-location")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-habit")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-filter-recovery")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-outside-coverage")
         #else
         false
         #endif

@@ -127,7 +127,9 @@ final class AppState {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes-idle")
-            || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent") {
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-filter-recovery")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-outside-coverage") {
             repository = UITestStationRepository()
             clients = AppServiceClients(
                 auth: UnavailableAuthClient(),
@@ -149,9 +151,24 @@ final class AppState {
         return AppState(
             repository: repository,
             clients: clients,
-            persistence: SystemAppPersistence(),
+            persistence: makePersistence(),
             externalLinks: links
         )
+    }
+
+    private static func makePersistence() -> any AppPersistence {
+        #if DEBUG
+        let isUITesting = ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("--ui-testing-") }
+        let suiteName = "com.ozdemirbaris.sarjbul.ui-testing"
+        if isUITesting, let defaults = UserDefaults(suiteName: suiteName) {
+            defaults.removePersistentDomain(forName: suiteName)
+            return SystemAppPersistence(
+                defaults: defaults,
+                secureStorage: EphemeralSecureStorage()
+            )
+        }
+        #endif
+        return SystemAppPersistence()
     }
 
     private func applyDebugLaunchMode() {
@@ -162,6 +179,23 @@ final class AppState {
             settings.destination = nil
             settings.filters = StationFilters(rangeFilterEnabled: false)
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        } else if arguments.contains("--ui-testing-filter-recovery") {
+            navigation.tab = .home
+            settings.destination = nil
+            settings.filters = StationFilters(
+                minimumPowerKW: 350,
+                socketFilters: ["NACS"],
+                operatorFilters: ["missing-operator"],
+                rangeFilterEnabled: true
+            )
+            settings.profile.chargePercent = 80
+            search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        } else if arguments.contains("--ui-testing-outside-coverage") {
+            navigation.tab = .home
+            settings.destination = nil
+            settings.filters = StationFilters(rangeFilterEnabled: false)
+            settings.profile.chargePercent = 80
+            search.userLocation = UserLocation(latitude: 37.3349, longitude: -122.0090, source: .device)
         } else if arguments.contains("--ui-testing-device-location") {
             navigation.tab = .home
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
@@ -222,6 +256,16 @@ private struct EmptyStationRepository: StationRepository {
         throw StationRepositoryError.missingResource
     }
 }
+
+#if DEBUG
+private final class EphemeralSecureStorage: SecureStorage {
+    private var values: [String: Data] = [:]
+
+    func data(for key: String) -> Data? { values[key] }
+    func set(_ data: Data, for key: String) { values[key] = data }
+    func remove(_ key: String) { values[key] = nil }
+}
+#endif
 
 #if DEBUG
 private struct UITestStationRepository: StationRepository {
