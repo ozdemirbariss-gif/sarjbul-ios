@@ -200,6 +200,7 @@ final class AppState {
             navigation.tab = .home
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
         } else if arguments.contains("--ui-testing-home")
+                    || arguments.contains("--ui-testing-home-en")
                     || arguments.contains("--ui-testing-routes")
                     || arguments.contains("--ui-testing-habit")
                     || arguments.contains("--ui-testing-agent")
@@ -208,6 +209,9 @@ final class AppState {
             settings.destination = nil
             settings.filters = StationFilters(rangeFilterEnabled: false)
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+            if arguments.contains("--ui-testing-home-en") {
+                settings.language = .en
+            }
             if arguments.contains("--ui-testing-habit") {
                 seedHabitSuggestionForUITesting()
             }

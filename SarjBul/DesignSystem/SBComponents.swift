@@ -195,12 +195,32 @@ struct MetricInput: View {
     @Binding var value: Double
     var range: ClosedRange<Double>
     var step: Double
+    var accessibilityIdentifier: String?
+
+    init(
+        title: String,
+        unit: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        step: Double,
+        accessibilityIdentifier: String? = nil
+    ) {
+        self.title = title
+        self.unit = unit
+        _value = value
+        self.range = range
+        self.step = step
+        self.accessibilityIdentifier = accessibilityIdentifier
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.headline.weight(.heavy))
                 .foregroundStyle(SBColor.muted)
+                .lineLimit(2)
+                .minimumScaleFactor(0.84)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .bottomLeading)
 
             HStack(alignment: .center, spacing: 8) {
                 TextField(title, value: $value, format: .number.precision(.fractionLength(step < 1 ? 1 : 0)))
@@ -212,6 +232,7 @@ struct MetricInput: View {
                     .onChange(of: value) { _, newValue in
                         value = min(range.upperBound, max(range.lowerBound, newValue))
                     }
+                    .accessibilityIdentifier(accessibilityIdentifier ?? "")
                 Text(unit)
                     .font(.caption2.weight(.heavy))
                     .foregroundStyle(SBColor.muted)

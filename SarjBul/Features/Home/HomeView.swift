@@ -29,44 +29,59 @@ struct HomeView: View {
             ZStack(alignment: .topLeading) {
                 SBScreenBackground()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        topControls
-                        if search.userLocation?.source != .device || search.locationNeedsReview {
-                            locationInput
-                                .transition(.opacity.combined(with: .move(edge: .top)))
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 22) {
+                            topControls
+                            if search.userLocation?.source != .device || search.locationNeedsReview {
+                                locationInput
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+                            if chargingSession.isActive {
+                                activeChargingContextCard
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            } else if settings.profile.chargePercent <= 20 {
+                                criticalRangeContextCard
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            } else if let proposal = autonomousAgent.proposal {
+                                autonomousProposalCard(proposal)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            } else if let recommendation = contextIntelligence.recommendation {
+                                contextRecommendationCard(recommendation)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            } else if contextIntelligence.recentAutomaticReport != nil {
+                                contextAutomationReportCard
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            } else if let suggestion = habits.suggestion() {
+                                habitSuggestionCard(suggestion)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+                            if !chargingSession.isActive && settings.profile.chargePercent > 20 {
+                                routeAction
+                            }
+                            drivingProfile
+                                .id("driving-profile")
+                            filtersAndSettings
+                                .id("filters-and-settings")
                         }
-                        if chargingSession.isActive {
-                            activeChargingContextCard
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        } else if settings.profile.chargePercent <= 20 {
-                            criticalRangeContextCard
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        } else if let proposal = autonomousAgent.proposal {
-                            autonomousProposalCard(proposal)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        } else if let recommendation = contextIntelligence.recommendation {
-                            contextRecommendationCard(recommendation)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        } else if contextIntelligence.recentAutomaticReport != nil {
-                            contextAutomationReportCard
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        } else if let suggestion = habits.suggestion() {
-                            habitSuggestionCard(suggestion)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-                        if !chargingSession.isActive && settings.profile.chargePercent > 20 {
-                            routeAction
-                        }
-                        drivingProfile
-                        filtersAndSettings
+                        .padding(.horizontal, 18)
+                        .padding(.top, 22)
+                        .padding(.bottom, 150)
+                        .frame(maxWidth: 720)
+                        .frame(maxWidth: .infinity)
                     }
-                    .padding(.horizontal, 18)
-                    .padding(.top, 22)
-                    .frame(maxWidth: 720)
-                    .frame(maxWidth: .infinity)
+                    .scrollIndicators(.hidden)
+                    .onChange(of: drivingProfileExpanded) { _, expanded in
+                        guard expanded else { return }
+                        settingsExpanded = false
+                        scrollExpandedPanel("driving-profile", using: scrollProxy)
+                    }
+                    .onChange(of: settingsExpanded) { _, expanded in
+                        guard expanded else { return }
+                        drivingProfileExpanded = false
+                        scrollExpandedPanel("filters-and-settings", using: scrollProxy)
+                    }
                 }
-                .scrollIndicators(.hidden)
                 .sensoryFeedback(.selection, trigger: settings.filters.preference)
             }
             .animation(.easeInOut(duration: 0.24), value: search.userLocation?.source)
@@ -188,10 +203,9 @@ struct HomeView: View {
                 .background(SBColor.signal, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(settings.t("context.smart_kicker"))
+                Text(settings.language.uppercased(settings.t("context.smart_kicker")))
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(SBColor.signal)
-                    .textCase(.uppercase)
                 Text(contextRecommendationTitle(recommendation))
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.ink)
@@ -273,10 +287,9 @@ struct HomeView: View {
                 .background(tint, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(kicker)
+                Text(settings.language.uppercased(kicker))
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(tint)
-                    .textCase(.uppercase)
                 Text(title)
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.ink)
@@ -328,10 +341,9 @@ struct HomeView: View {
                     .frame(width: 42, height: 42)
                     .background(SBColor.signal, in: Circle())
 
-                Text(settings.t("habit.kicker"))
+                Text(settings.language.uppercased(settings.t("habit.kicker")))
                     .font(.caption.weight(.heavy))
                     .foregroundStyle(SBColor.signal)
-                    .textCase(.uppercase)
 
                 Spacer()
 
@@ -696,10 +708,9 @@ struct HomeView: View {
                 }
             } label: {
                 HStack(spacing: 12) {
-                    Text(settings.t("catalog.kicker"))
+                    Text(settings.language.uppercased(settings.t("catalog.kicker")))
                         .font(.headline.weight(.heavy))
                         .foregroundStyle(SBColor.signal)
-                        .textCase(.uppercase)
 
                     Spacer(minLength: 12)
 
@@ -722,6 +733,7 @@ struct HomeView: View {
                 )
             }
             .buttonStyle(SBPremiumButtonStyle())
+            .accessibilityIdentifier("driving-profile-toggle")
 
             if drivingProfileExpanded {
                 SBPanel {
@@ -755,7 +767,7 @@ struct HomeView: View {
 
                     Divider().overlay(SBColor.line)
 
-                    HStack(spacing: 12) {
+                    HStack(alignment: .top, spacing: 12) {
                         MetricInput(
                             title: settings.t("catalog.capacity"),
                             unit: "kWh",
@@ -764,7 +776,8 @@ struct HomeView: View {
                                 set: { settings.profile.batteryKWh = $0 }
                             ),
                             range: 1...250,
-                            step: 1
+                            step: 1,
+                            accessibilityIdentifier: "battery-capacity-input"
                         )
                         MetricInput(
                             title: settings.t("catalog.consumption"),
@@ -774,7 +787,8 @@ struct HomeView: View {
                                 set: { settings.profile.consumptionKWhPer100Km = $0 }
                             ),
                             range: 5...40,
-                            step: 0.1
+                            step: 0.1,
+                            accessibilityIdentifier: "average-consumption-input"
                         )
                     }
                 }
@@ -784,26 +798,56 @@ struct HomeView: View {
     }
 
     private var filtersAndSettings: some View {
-        DisclosureGroup(isExpanded: $settingsExpanded) {
-            VStack(alignment: .leading, spacing: 14) {
-                locationSection
-                Toggle(settings.t("filters.range"), isOn: Binding(
-                    get: { settings.filters.rangeFilterEnabled },
-                    set: { settings.filters.rangeFilterEnabled = $0 }
-                ))
-                .font(.headline.weight(.semibold))
-                .tint(SBColor.electricBlue)
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                Haptic.tap()
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) {
+                    settingsExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    Text(settings.t("filters.title"))
+                        .font(.title3.weight(.heavy))
+                        .foregroundStyle(SBColor.muted)
+                    Spacer(minLength: 12)
+                    Image(systemName: "chevron.down")
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                        .rotationEffect(.degrees(settingsExpanded ? 180 : 0))
+                }
+                .contentShape(Rectangle())
             }
-            .padding(.top, 16)
-        } label: {
-            Label(settings.t("filters.title"), systemImage: "chevron.right")
-                .font(.title3.weight(.heavy))
-                .foregroundStyle(SBColor.muted)
+            .buttonStyle(SBPremiumButtonStyle())
+            .accessibilityIdentifier("filters-and-settings-toggle")
+
+            if settingsExpanded {
+                VStack(alignment: .leading, spacing: 14) {
+                    locationSection
+                    Toggle(settings.t("filters.range"), isOn: Binding(
+                        get: { settings.filters.rangeFilterEnabled },
+                        set: { settings.filters.rangeFilterEnabled = $0 }
+                    ))
+                    .font(.headline.weight(.semibold))
+                    .tint(SBColor.electricBlue)
+                }
+                .padding(.top, 16)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
         .sbPremiumGlass(radius: SBRadius.lg, interactive: true)
         .sbSoftShadow()
+    }
+
+    private func scrollExpandedPanel(_ id: String, using proxy: ScrollViewProxy) {
+        Task { @MainActor in
+            await Task.yield()
+            try? await Task.sleep(for: .milliseconds(280))
+            withAnimation(.easeInOut(duration: 0.32)) {
+                proxy.scrollTo(id, anchor: .bottom)
+            }
+        }
     }
 
     private var routeAction: some View {
@@ -973,6 +1017,7 @@ struct HomeView: View {
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-device-location")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-habit")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-home-en")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-filter-recovery")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-outside-coverage")
         #else

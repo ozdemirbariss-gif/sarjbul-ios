@@ -5,6 +5,14 @@ import XCTest
 
 @MainActor
 final class PersistenceTests: XCTestCase {
+    func testEnglishUppercaseDoesNotUseTurkishDottedCapitalI() {
+        let title = AppLanguage.en.uppercased("driving profile")
+
+        XCTAssertEqual(title, "DRIVING PROFILE")
+        XCTAssertFalse(title.contains("İ"))
+        XCTAssertEqual(AppLanguage.tr.uppercased("sürüş profili"), "SÜRÜŞ PROFİLİ")
+    }
+
     func testLegacyAuthSessionMigratesFromDefaultsToSecureStorage() throws {
         let suiteName = "PersistenceTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

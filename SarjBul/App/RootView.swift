@@ -37,6 +37,7 @@ struct RootView: View {
                 }
         }
         .tint(SBColor.signal)
+        .environment(\.locale, settings.language.locale)
         .preferredColorScheme(.dark)
         .task {
             setInitialTabIfNeeded()

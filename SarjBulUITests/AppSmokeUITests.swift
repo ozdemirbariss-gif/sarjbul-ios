@@ -44,6 +44,56 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Salon"].exists)
     }
 
+    func testLoungeRotatesIntoFullscreenGame() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-lounge"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
+        for _ in 0..<5 where !app.buttons["lounge-fullscreen-button"].isHittable { app.swipeUp() }
+        XCTAssertTrue(app.buttons["lounge-fullscreen-button"].isHittable)
+        app.buttons["lounge-fullscreen-button"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["lounge-game-fullscreen"].waitForExistence(timeout: 8))
+        let exit = app.descendants(matching: .any)["lounge-fullscreen-exit"]
+        XCTAssertTrue(exit.waitForExistence(timeout: 8))
+        exit.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 8))
+    }
+
+    func testEnglishHeadingsUseLatinCapitalI() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-home-en"]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["DRIVING PROFILE"].waitForExistence(timeout: 12))
+        XCTAssertFalse(app.staticTexts["DRİVİNG PROFİLE"].exists)
+    }
+
+    func testDrivingMetricsAlignAndExpandedPanelsRemainReachable() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-home-en"]
+        app.launch()
+
+        let profile = app.buttons["driving-profile-toggle"]
+        XCTAssertTrue(profile.waitForExistence(timeout: 12))
+        profile.tap()
+
+        let battery = app.descendants(matching: .any)["battery-capacity-input"]
+        let consumption = app.descendants(matching: .any)["average-consumption-input"]
+        XCTAssertTrue(battery.waitForExistence(timeout: 8))
+        XCTAssertTrue(consumption.exists)
+        XCTAssertEqual(battery.frame.minY, consumption.frame.minY, accuracy: 2)
+
+        let filters = app.descendants(matching: .any)["filters-and-settings-toggle"]
+        for _ in 0..<4 where !filters.isHittable { app.swipeUp() }
+        XCTAssertTrue(filters.isHittable)
+        filters.tap()
+        let rangeToggle = app.switches["Hide out-of-range"]
+        XCTAssertTrue(rangeToggle.waitForExistence(timeout: 8))
+        for _ in 0..<3 where !rangeToggle.isHittable { app.swipeUp() }
+        XCTAssertTrue(rangeToggle.isHittable)
+    }
+
     func testHabitSuggestionAppearsAfterRepeatedUse() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-habit"]

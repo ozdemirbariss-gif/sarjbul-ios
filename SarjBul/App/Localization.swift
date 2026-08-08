@@ -8,6 +8,17 @@ enum AppLanguage: String, CaseIterable, Codable {
         rawValue.uppercased()
     }
 
+    var locale: Locale {
+        switch self {
+        case .tr: Locale(identifier: "tr_TR")
+        case .en: Locale(identifier: "en_US")
+        }
+    }
+
+    func uppercased(_ value: String) -> String {
+        value.uppercased(with: locale)
+    }
+
     init(code: String) {
         switch code.lowercased() {
         case "en":
@@ -250,6 +261,8 @@ enum AppLocalization {
             "lounge.ready": "Hazır",
             "lounge.running": "Koşuyor",
             "lounge.crashed": "Çarptın",
+            "lounge.fullscreen": "Tam ekran oyna",
+            "lounge.exit_fullscreen": "Tam ekrandan çık",
             "reminder.title": "Şarj hatırlatıcısı",
             "reminder.hint": "Aracını kontrol etmeyi unutmamak için yerel bir hatırlatıcı kur.",
             "reminder.minutes": "{minutes} dk",
@@ -572,6 +585,8 @@ enum AppLocalization {
             "lounge.ready": "Ready",
             "lounge.running": "Running",
             "lounge.crashed": "Crashed",
+            "lounge.fullscreen": "Play full screen",
+            "lounge.exit_fullscreen": "Exit full screen",
             "reminder.title": "Charging reminder",
             "reminder.hint": "Set a local reminder so you do not forget to check your vehicle.",
             "reminder.minutes": "{minutes} min",

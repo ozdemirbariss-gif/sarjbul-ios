@@ -1,6 +1,7 @@
 import Combine
 import MapKit
 import SwiftUI
+import UIKit
 
 struct WaitingLoungeView: View {
     @Environment(UserSettingsStore.self) private var settings
@@ -17,11 +18,46 @@ struct WaitingLoungeView: View {
     @State private var reminderMinutes = 30
     @State private var reminderMessage: String?
     @State private var reminderScheduled = false
+    @State private var gameIsFullscreen = false
     @ScaledMetric(relativeTo: .title) private var statusSize = 36
 
     private let timer = Timer.publish(every: 0.025, on: .main, in: .common)
 
     var body: some View {
+        GeometryReader { viewport in
+            portraitContent
+                .onChange(of: viewport.size) { _, size in
+                    if size.width > size.height, !gameIsFullscreen {
+                        gameIsFullscreen = true
+                    } else if size.height >= size.width, gameIsFullscreen {
+                        gameIsFullscreen = false
+                    }
+                }
+        }
+        .fullScreenCover(isPresented: $gameIsFullscreen) {
+            fullscreenGame
+        }
+        .onAppear {
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+            allowLoungeLandscape()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            let orientation = UIDevice.current.orientation
+            if orientation.isLandscape, !gameIsFullscreen {
+                gameIsFullscreen = true
+            } else if orientation.isPortrait, gameIsFullscreen {
+                gameIsFullscreen = false
+            }
+        }
+        .onDisappear {
+            UIDevice.current.endGeneratingDeviceOrientationNotifications()
+            stopTimer()
+            restorePortraitOrientation()
+        }
+        .accessibilityIdentifier("lounge-screen")
+    }
+
+    private var portraitContent: some View {
         ZStack(alignment: .topLeading) {
             SBScreenBackground()
 
@@ -48,10 +84,6 @@ struct WaitingLoungeView: View {
             .padding(.leading, 18)
             .padding(.top, 6)
         }
-        .onDisappear {
-            stopTimer()
-        }
-        .accessibilityIdentifier("lounge-screen")
     }
 
     private var breakAssistantPanel: some View {
@@ -165,10 +197,9 @@ struct WaitingLoungeView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(settings.t("lounge.kicker"))
+            Text(settings.language.uppercased(settings.t("lounge.kicker")))
                 .font(.caption.weight(.heavy))
                 .foregroundStyle(SBColor.loungeAccent)
-                .textCase(.uppercase)
             Text(settings.t("lounge.subtitle"))
                 .font(.headline.weight(.bold))
                 .foregroundStyle(SBColor.textSoft)
@@ -191,50 +222,127 @@ struct WaitingLoungeView: View {
                             .minimumScaleFactor(0.78)
                     }
                     Spacer()
-                    VStack(alignment: .trailing, spacing: 6) {
-                        Text("\(settings.t("lounge.score")) \(score)")
-                            .font(.headline.weight(.heavy))
-                        Text("\(settings.t("lounge.best")) \(lounge.bestScore)")
-                            .font(.caption.weight(.heavy))
-                            .foregroundStyle(SBColor.muted)
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .trailing, spacing: 6) {
+                            Text("\(settings.t("lounge.score")) \(score)")
+                                .font(.headline.weight(.heavy))
+                            Text("\(settings.t("lounge.best")) \(lounge.bestScore)")
+                                .font(.caption.weight(.heavy))
+                                .foregroundStyle(SBColor.muted)
+                        }
+                        Button {
+                            enterFullscreenGame()
+                        } label: {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.headline.weight(.heavy))
+                                .foregroundStyle(SBColor.ink)
+                                .frame(width: 44, height: 44)
+                                .background(SBColor.surface, in: Circle())
+                        }
+                        .buttonStyle(SBPremiumButtonStyle())
+                        .accessibilityLabel(settings.t("lounge.fullscreen"))
+                        .accessibilityIdentifier("lounge-fullscreen-button")
                     }
                 }
 
-                GeometryReader { proxy in
-                    ZStack(alignment: .bottomLeading) {
-                        RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                            .fill(SBColor.charcoal)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                                    .stroke(SBColor.line, lineWidth: 1)
-                            )
-
-                        Capsule()
-                            .fill(LinearGradient.sbPrimary)
-                            .frame(width: 44, height: 44)
-                            .offset(x: 44, y: -max(0, playerY))
-                            .sbGlowShadow()
-
-                        RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous)
-                            .fill(SBColor.ice)
-                            .frame(width: 34, height: 72)
-                            .offset(x: obstacleX, y: 0)
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        jump()
-                    }
-                    .onReceive(timer) { _ in
-                        tick(width: proxy.size.width)
-                    }
-                }
-                .frame(height: 330)
+                gameTrack
+                    .frame(height: 330)
 
                 SBPrimaryButton(title: running ? settings.t("lounge.jump") : settings.t("lounge.start"), systemImage: "bolt.fill") {
                     running ? jump() : start()
                 }
             }
         }
+    }
+
+    private var gameTrack: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .bottomLeading) {
+                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                    .fill(SBColor.charcoal)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                            .stroke(SBColor.line, lineWidth: 1)
+                    )
+
+                Capsule()
+                    .fill(LinearGradient.sbPrimary)
+                    .frame(width: 44, height: 44)
+                    .offset(x: 44, y: -max(0, playerY))
+                    .sbGlowShadow()
+
+                RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous)
+                    .fill(SBColor.ice)
+                    .frame(width: 34, height: 72)
+                    .offset(x: obstacleX, y: 0)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(perform: jump)
+            .onReceive(timer) { _ in
+                tick(width: proxy.size.width, height: proxy.size.height)
+            }
+        }
+    }
+
+    private var fullscreenGame: some View {
+        GeometryReader { proxy in
+            ZStack {
+                SBColor.background.ignoresSafeArea()
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityIdentifier("lounge-game-fullscreen")
+                gameTrack
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    HStack(spacing: 14) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(settings.t("lounge.game_title"))
+                                .font(.caption.weight(.heavy))
+                                .foregroundStyle(SBColor.signal)
+                            Text(gameStatusText)
+                                .font(SBFont.display(size: 30, weight: .heavy))
+                                .foregroundStyle(SBColor.ink)
+                        }
+                        Spacer()
+                        Text("\(settings.t("lounge.score")) \(score)")
+                            .font(.title3.monospacedDigit().weight(.heavy))
+                            .foregroundStyle(SBColor.ink)
+                        Button {
+                            exitFullscreenGame()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.headline.weight(.heavy))
+                                .foregroundStyle(SBColor.ink)
+                                .frame(width: 46, height: 46)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        .buttonStyle(SBPremiumButtonStyle())
+                        .accessibilityLabel(settings.t("lounge.exit_fullscreen"))
+                        .accessibilityIdentifier("lounge-fullscreen-exit")
+                    }
+                    .padding(16)
+                    .background(.ultraThinMaterial)
+
+                    Spacer()
+
+                    SBPrimaryButton(
+                        title: running ? settings.t("lounge.jump") : settings.t("lounge.start"),
+                        systemImage: "bolt.fill"
+                    ) {
+                        running ? jump() : start()
+                    }
+                    .frame(maxWidth: min(360, proxy.size.width * 0.44))
+                    .padding(.bottom, 14)
+                }
+            }
+            .onChange(of: proxy.size) { _, size in
+                if size.height >= size.width {
+                    gameIsFullscreen = false
+                }
+            }
+        }
+        .persistentSystemOverlays(.hidden)
     }
 
     private var gameStatusText: String {
@@ -265,7 +373,7 @@ struct WaitingLoungeView: View {
         jumpVelocity = 11.8
     }
 
-    private func tick(width: CGFloat) {
+    private func tick(width: CGFloat, height: CGFloat) {
         guard running else { return }
         updatePlayerPhysics()
         obstacleX -= 4.4
@@ -274,8 +382,8 @@ struct WaitingLoungeView: View {
             score += 1
         }
 
-        let playerFrame = CGRect(x: 44, y: 288 - playerY, width: 44, height: 44)
-        let obstacleFrame = CGRect(x: obstacleX, y: 288, width: 34, height: 72)
+        let playerFrame = CGRect(x: 44, y: height - 44 - playerY, width: 44, height: 44)
+        let obstacleFrame = CGRect(x: obstacleX, y: height - 72, width: 34, height: 72)
         if playerFrame.intersects(obstacleFrame) {
             running = false
             crashed = true
@@ -296,6 +404,43 @@ struct WaitingLoungeView: View {
     private func stopTimer() {
         timerConnection?.cancel()
         timerConnection = nil
+    }
+
+    private func allowLoungeLandscape() {
+        SarjBulAppDelegate.supportedOrientations = [.portrait, .landscapeLeft, .landscapeRight]
+        activeWindowScene?.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+    }
+
+    private func enterFullscreenGame() {
+        Haptic.tap()
+        allowLoungeLandscape()
+        gameIsFullscreen = true
+        requestOrientation(.landscapeRight)
+    }
+
+    private func exitFullscreenGame() {
+        Haptic.tap()
+        gameIsFullscreen = false
+        restorePortraitOrientation()
+    }
+
+    private func restorePortraitOrientation() {
+        SarjBulAppDelegate.supportedOrientations = .portrait
+        requestOrientation(.portrait)
+    }
+
+    private func requestOrientation(_ orientations: UIInterfaceOrientationMask) {
+        guard let scene = activeWindowScene else { return }
+        scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+        scene.requestGeometryUpdate(.iOS(interfaceOrientations: orientations)) { error in
+            AppLogger.data.debug("Orientation update skipped: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private var activeWindowScene: UIWindowScene? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
     }
 
     private func toggleReminder() async {
