@@ -61,6 +61,8 @@ protocol AppPersistence: AnyObject {
     var cachedCommunityInsights: [String: StationCommunityInsight] { get set }
     var automationReports: [AutomationReport] { get set }
     var pendingOfflineMutations: [PendingOfflineMutation] { get set }
+    var executionProofs: [ExecutionProof] { get set }
+    var contextualRelationGraph: ContextualRelationGraph { get set }
 }
 
 protocol SecureStorage {
@@ -106,6 +108,8 @@ final class SystemAppPersistence: AppPersistence {
         static let cachedCommunityInsights = "cachedCommunityInsights"
         static let automationReports = "automationReports"
         static let pendingOfflineMutations = "pendingOfflineMutations"
+        static let executionProofs = "executionProofs"
+        static let contextualRelationGraph = "contextualRelationGraph"
     }
 
     private let defaults: UserDefaults
@@ -298,6 +302,16 @@ final class SystemAppPersistence: AppPersistence {
             }
             secureStorage.set(data, for: Key.pendingOfflineMutations)
         }
+    }
+
+    var executionProofs: [ExecutionProof] {
+        get { decode([ExecutionProof].self, key: Key.executionProofs) ?? [] }
+        set { encode(Array(newValue.prefix(200)), key: Key.executionProofs) }
+    }
+
+    var contextualRelationGraph: ContextualRelationGraph {
+        get { decode(ContextualRelationGraph.self, key: Key.contextualRelationGraph) ?? ContextualRelationGraph() }
+        set { encode(newValue, key: Key.contextualRelationGraph) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

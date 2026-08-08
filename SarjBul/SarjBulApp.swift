@@ -49,6 +49,7 @@ struct SarjBulApp: App {
                 .environment(appState.chargingHistory)
                 .environment(appState.chargingSession)
                 .environment(appState.habits)
+                .environment(appState.executionTrust)
                 .environment(appState.autonomousAgent)
                 .environment(appState.contextIntelligence)
                 .environment(appState.offlineSync)

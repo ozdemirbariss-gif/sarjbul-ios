@@ -9,10 +9,14 @@ struct AccountView: View {
     @Environment(ChargingHistoryStore.self) private var chargingHistory
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
+    @Environment(ExecutionTrustStore.self) private var executionTrust
     @Environment(NavigationCoordinator.self) private var navigation
     @State private var isDeletingData = false
     @State private var deleteConfirmationPresented = false
     @State private var legalDocument: LegalDocument?
+    @State private var automationExpanded = false
+    @State private var insightsExpanded = false
+    @State private var privacyExpanded = false
 
     var body: some View {
         NavigationStack {
@@ -23,19 +27,44 @@ struct AccountView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         profileTopBar
                         profileHeader
-                        autonomousAssistantPanel
-                        contextIntelligencePanel
+                        outcomeValuePanel
+                        collapsibleSection(
+                            title: settings.t("profile.automation_group"),
+                            subtitle: settings.t("profile.automation_group_hint"),
+                            icon: "sparkles",
+                            accessibilityIdentifier: "profile-automation-toggle",
+                            isExpanded: $automationExpanded
+                        ) {
+                            autonomousAssistantPanel
+                            contextIntelligencePanel
+                        }
                         stationLibraryPanel
 
-                        ChargingInsightsView()
-                            .environment(settings)
-                            .environment(chargingHistory)
-                            .environment(favorites)
-                            .environment(auth)
+                        collapsibleSection(
+                            title: settings.t("profile.insights_group"),
+                            subtitle: settings.t("profile.insights_group_hint"),
+                            icon: "chart.line.uptrend.xyaxis",
+                            accessibilityIdentifier: "profile-insights-toggle",
+                            isExpanded: $insightsExpanded
+                        ) {
+                            ChargingInsightsView()
+                                .environment(settings)
+                                .environment(chargingHistory)
+                                .environment(favorites)
+                                .environment(auth)
+                        }
 
                         if auth.isConfigured {
-                            privacyPanel
-                            dataPanel
+                            collapsibleSection(
+                                title: settings.t("profile.privacy_group"),
+                                subtitle: settings.t("profile.privacy_group_hint"),
+                                icon: "hand.raised.fill",
+                                accessibilityIdentifier: "profile-privacy-toggle",
+                                isExpanded: $privacyExpanded
+                            ) {
+                                privacyPanel
+                                dataPanel
+                            }
                         }
 
                         legalFooter
@@ -100,6 +129,112 @@ struct AccountView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 12)
+    }
+
+    private var outcomeValuePanel: some View {
+        let value = executionTrust.value
+        return SBSecondaryPanel {
+            VStack(alignment: .leading, spacing: 16) {
+                Label(settings.t("proof.value_title"), systemImage: "checkmark.shield.fill")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.ink)
+
+                HStack(spacing: 10) {
+                    valueMetric(
+                        value: "\(value.completedActions)",
+                        title: settings.t("proof.completed_actions")
+                    )
+                    valueMetric(
+                        value: settings.t("proof.minutes_value", [
+                            "minutes": "\(value.estimatedMinutesSaved)"
+                        ]),
+                        title: settings.t("proof.time_saved")
+                    )
+                    valueMetric(
+                        value: "%\(value.averageTrustPercent)",
+                        title: settings.t("proof.average_trust")
+                    )
+                }
+
+                Text(settings.t("proof.value_hint"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SBColor.textSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityIdentifier("verified-outcome-value")
+    }
+
+    private func valueMetric(value: String, title: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(.title3.monospacedDigit().weight(.heavy))
+                .foregroundStyle(SBColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(SBColor.textSoft)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func collapsibleSection<Content: View>(
+        title: String,
+        subtitle: String,
+        icon: String,
+        accessibilityIdentifier: String,
+        isExpanded: Binding<Bool>,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(spacing: 12) {
+            Button {
+                Haptic.tap()
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) {
+                    isExpanded.wrappedValue.toggle()
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: icon)
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                        .frame(width: 42, height: 42)
+                        .background(SBColor.signal.opacity(0.10), in: Circle())
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(title)
+                            .font(.headline.weight(.heavy))
+                            .foregroundStyle(SBColor.ink)
+                        Text(subtitle)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(SBColor.textSoft)
+                            .lineLimit(2)
+                    }
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.down")
+                        .font(.subheadline.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                        .rotationEffect(.degrees(isExpanded.wrappedValue ? 180 : 0))
+                }
+                .padding(.horizontal, 18)
+                .frame(minHeight: 68)
+                .background(
+                    SBColor.surfaceSolid,
+                    in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                        .stroke(SBColor.line, lineWidth: 1)
+                )
+            }
+            .buttonStyle(SBPremiumButtonStyle())
+            .accessibilityIdentifier(accessibilityIdentifier)
+
+            if isExpanded.wrappedValue {
+                content()
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
     }
 
     private var privacyPanel: some View {

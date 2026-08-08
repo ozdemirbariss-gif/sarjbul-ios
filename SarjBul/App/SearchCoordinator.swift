@@ -34,6 +34,7 @@ final class SearchCoordinator {
     private let messages: AppMessagePresenter
     private let habits: HabitStore
     private let offlineSync: OfflineSyncCoordinator
+    private let executionTrust: ExecutionTrustStore
     private let journeyRouteService = JourneyRouteService()
     private let tripPlanner = ChargingTripPlanner()
     private var pendingStationKey: String?
@@ -54,7 +55,8 @@ final class SearchCoordinator {
         navigation: NavigationCoordinator,
         messages: AppMessagePresenter,
         habits: HabitStore,
-        offlineSync: OfflineSyncCoordinator
+        offlineSync: OfflineSyncCoordinator,
+        executionTrust: ExecutionTrustStore
     ) {
         self.stationData = stationData
         self.settings = settings
@@ -64,6 +66,7 @@ final class SearchCoordinator {
         self.messages = messages
         self.habits = habits
         self.offlineSync = offlineSync
+        self.executionTrust = executionTrust
     }
 
     var routeCandidates: [StationCandidate] { state.candidates }
@@ -119,8 +122,16 @@ final class SearchCoordinator {
     }
 
     func findStations() async {
+        let startedAt = Date()
         guard let userLocation else {
             state = .failed(.localized(key: "route.location_required", kind: .error))
+            recordSearchProof(
+                status: .failed,
+                resultKey: "missing-location",
+                candidates: [],
+                location: nil,
+                startedAt: startedAt
+            )
             return
         }
         guard !isSearching else { return }
@@ -134,28 +145,17 @@ final class SearchCoordinator {
         guard !stationData.stations.isEmpty else {
             state = .failed(.localized(key: "data.recovery_failed", kind: .error))
             navigation.select(.routes)
+            recordSearchProof(
+                status: .failed,
+                resultKey: "missing-dataset",
+                candidates: [],
+                location: userLocation,
+                startedAt: startedAt
+            )
             return
         }
 
-        let routePoints: [UserLocation]
-        if let destination = settings.destination {
-            do {
-                let snapshot = try await journeyRouteService.routeSnapshot(
-                    origin: userLocation,
-                    destination: destination
-                )
-                journeySnapshot = snapshot
-                routePoints = snapshot.points
-            } catch {
-                journeySnapshot = nil
-                routePoints = []
-                AppTelemetry.capture(error, operation: "journey_route_fallback")
-                AppLogger.routing.warning("Journey corridor route failed: \(error.localizedDescription, privacy: .public)")
-            }
-        } else {
-            journeySnapshot = nil
-            routePoints = []
-        }
+        let routePoints = await prepareRoutePoints(origin: userLocation)
 
         var searchFilters = settings.filters
         if settings.destination != nil {
@@ -196,6 +196,13 @@ final class SearchCoordinator {
                 AppLogger.routing.warning("Journey search found no corridor candidates after fallback")
             }
             await recordDemandIfEnabled(origin: userLocation, resultCount: 0)
+            recordSearchProof(
+                status: .failed,
+                resultKey: "no-candidate",
+                candidates: [],
+                location: userLocation,
+                startedAt: startedAt
+            )
             return
         }
 
@@ -229,6 +236,13 @@ final class SearchCoordinator {
             navigation.select(.routes)
         }
         if !result.isEmpty { habits.recordSearch(filters: settings.filters) }
+        recordSearchProof(
+            status: .completed,
+            resultKey: result[0].station.statusKey,
+            candidates: result,
+            location: userLocation,
+            startedAt: startedAt
+        )
         await recordDemandIfEnabled(origin: userLocation, resultCount: result.count)
     }
 
@@ -240,6 +254,28 @@ final class SearchCoordinator {
         relaxed.operatorFilters = []
         relaxed.rangeFilterEnabled = false
         return relaxed
+    }
+
+    private func prepareRoutePoints(origin: UserLocation) async -> [UserLocation] {
+        guard let destination = settings.destination else {
+            journeySnapshot = nil
+            return []
+        }
+        do {
+            let snapshot = try await journeyRouteService.routeSnapshot(
+                origin: origin,
+                destination: destination
+            )
+            journeySnapshot = snapshot
+            return snapshot.points
+        } catch {
+            journeySnapshot = nil
+            AppTelemetry.capture(error, operation: "journey_route_fallback")
+            AppLogger.routing.warning(
+                "Journey corridor route failed: \(error.localizedDescription, privacy: .public)"
+            )
+            return []
+        }
     }
 
     func applyRealtime(_ event: StationRealtimeEvent) {
@@ -297,6 +333,7 @@ final class SearchCoordinator {
     }
 
     func openStation(withKey key: String) async {
+        let startedAt = Date()
         guard let station = await stationData.station(withKey: key) else {
             messages.present(.localized(key: "deep_link.not_found", kind: .error))
             return
@@ -329,5 +366,96 @@ final class SearchCoordinator {
         state = .results(candidates)
         navigation.select(.routes)
         navigation.push(.station(key: key), on: .routes)
+        let selected = candidates.first(where: { $0.station.statusKey == key || $0.station.id == station.id })
+        executionTrust.record(
+            action: .routeOpened,
+            intentKey: "open-route",
+            resultKey: key,
+            status: .completed,
+            evidence: evidence(for: selected, location: origin) + [ExecutionEvidence(
+                source: .userAction,
+                reliability: 1,
+                observedAt: Date(),
+                maximumAge: 60
+            )],
+            deterministicChecks: [
+                "station-resolved": selected != nil,
+                "origin-available": true,
+                "route-visible": navigation.tab == .routes
+            ],
+            contextKeys: executionTrust.contextKeys(
+                location: origin,
+                preference: settings.filters.preference
+            ),
+            startedAt: startedAt,
+            estimatedTimeSavedSeconds: 120
+        )
+    }
+
+    private func recordSearchProof(
+        status: ExecutionProofStatus,
+        resultKey: String,
+        candidates: [StationCandidate],
+        location: UserLocation?,
+        startedAt: Date
+    ) {
+        executionTrust.record(
+            action: .stationSearch,
+            intentKey: "search:\(settings.filters.preference.rawValue)",
+            resultKey: resultKey,
+            status: status,
+            evidence: evidence(for: candidates.first, location: location),
+            deterministicChecks: [
+                "location-valid": location.map {
+                    (-90...90).contains($0.latitude) && (-180...180).contains($0.longitude)
+                } ?? false,
+                "candidate-found": !candidates.isEmpty,
+                "candidate-safe": candidates.first.map { !$0.hasRiskyStatus } ?? false
+            ],
+            contextKeys: executionTrust.contextKeys(
+                location: location,
+                preference: settings.filters.preference
+            ),
+            startedAt: startedAt,
+            estimatedTimeSavedSeconds: status == .completed ? 90 : 0
+        )
+    }
+
+    private func evidence(
+        for candidate: StationCandidate?,
+        location: UserLocation?
+    ) -> [ExecutionEvidence] {
+        let now = Date()
+        var result = [ExecutionEvidence(
+            source: .deterministicEngine,
+            reliability: 1,
+            observedAt: now,
+            maximumAge: 60
+        )]
+        if let location {
+            result.append(ExecutionEvidence(
+                source: location.source == .device ? .deviceLocation : .manualLocation,
+                reliability: location.source == .device ? 0.98 : 0.90,
+                observedAt: now,
+                maximumAge: location.source == .device ? 300 : 86_400
+            ))
+        }
+        if let candidate {
+            result.append(ExecutionEvidence(
+                source: .stationDataset,
+                reliability: candidate.station.confidenceScore,
+                observedAt: executionTrust.stationObservedAt(candidate.station, fallback: now),
+                maximumAge: 30 * 86_400
+            ))
+            if let availability = candidate.liveAvailability {
+                result.append(ExecutionEvidence(
+                    source: .realtimeAvailability,
+                    reliability: 0.98,
+                    observedAt: availability.updatedAt,
+                    maximumAge: 15 * 60
+                ))
+            }
+        }
+        return result
     }
 }

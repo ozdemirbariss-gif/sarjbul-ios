@@ -15,6 +15,7 @@ final class AutonomousChargingAgentStore {
     private let settings: UserSettingsStore
     private let search: SearchCoordinator
     private let persistence: any AppPersistence
+    private let executionTrust: ExecutionTrustStore
     private let telemetryClient: any VehicleTelemetryClient
     private let notificationService: AutonomousChargingNotificationService
     private let decisionEngine = AutonomousChargingDecisionEngine()
@@ -32,6 +33,7 @@ final class AutonomousChargingAgentStore {
         settings: UserSettingsStore,
         search: SearchCoordinator,
         persistence: any AppPersistence,
+        executionTrust: ExecutionTrustStore,
         telemetryClient: any VehicleTelemetryClient = ProfileVehicleTelemetryClient(),
         notificationService: AutonomousChargingNotificationService = AutonomousChargingNotificationService()
     ) {
@@ -39,6 +41,7 @@ final class AutonomousChargingAgentStore {
         self.settings = settings
         self.search = search
         self.persistence = persistence
+        self.executionTrust = executionTrust
         self.telemetryClient = telemetryClient
         self.notificationService = notificationService
         reports = persistence.automationReports
@@ -170,39 +173,129 @@ final class AutonomousChargingAgentStore {
             lastProposal: respectsCooldown ? persistence.lastAutonomousChargingProposal : nil,
             now: now
         )
-        switch decision {
-        case .noAction(let reason):
-            lastDecisionReason = reason
-        case .propose(let proposal):
-            lastDecisionReason = nil
-            self.proposal = proposal
-            state = .ready
-            persistence.autonomousChargingProposal = proposal
-            persistence.lastAutonomousChargingProposal = proposal
-            record(AutomationReport(
-                rule: plan.rule,
-                actions: plan.actions,
-                previousStationName: previousStationName,
-                selectedStationName: proposal.stationName,
-                createdAt: now
-            ))
-            if trigger == .backgroundRefresh
-                || trigger == .backgroundProcessing
-                || trigger == .silentPush
-                || trigger == .vehicleConnected {
-                await notificationService.schedule(
-                    proposal: proposal,
-                    title: settings.t("agent.optimized_notification_title"),
-                    body: settings.t("agent.optimized_notification_body", [
-                        "station": proposal.stationName,
-                        "minutes": "\(proposal.estimatedMinutes)"
-                    ]),
-                    openRouteTitle: settings.t("agent.open_route"),
-                    snoozeTitle: settings.t("agent.snooze"),
-                    muteTodayTitle: settings.t("agent.mute_today")
-                )
-            }
+        await applyDecision(
+            decision,
+            plan: plan,
+            telemetry: telemetry,
+            candidates: candidates,
+            location: location,
+            trigger: trigger,
+            previousStationName: previousStationName,
+            now: now
+        )
+    }
+
+    private func applyDecision(
+        _ decision: AutonomousChargingDecision,
+        plan: AutomationPlan,
+        telemetry: VehicleTelemetrySnapshot,
+        candidates: [StationCandidate],
+        location: UserLocation,
+        trigger: ChargingAgentTrigger,
+        previousStationName: String?,
+        now: Date
+    ) async {
+        guard case .propose(let proposal) = decision else {
+            if case .noAction(let reason) = decision { lastDecisionReason = reason }
+            return
         }
+        guard let selectedCandidate = candidates.first(where: {
+            $0.station.statusKey == proposal.stationKey
+        }) else {
+            lastDecisionReason = .noSafeStation
+            return
+        }
+        let evidence = proposalEvidence(
+            telemetry: telemetry,
+            candidate: selectedCandidate,
+            location: location,
+            now: now
+        )
+        let checks = [
+            "arrival-safe": proposal.arrivalChargePercent >= settings.autonomousChargingPolicy.minimumArrivalPercent,
+            "station-score": proposal.stationScore >= settings.autonomousChargingPolicy.minimumStationScore,
+            "station-not-risky": !selectedCandidate.hasRiskyStatus,
+            "proposal-fresh": proposal.expiresAt > now
+        ]
+        let trust = executionTrust.assess(
+            action: .routePrepared,
+            evidence: evidence,
+            deterministicChecks: checks,
+            now: now
+        )
+        guard trust.isVerified else {
+            lastDecisionReason = .noSafeStation
+            return
+        }
+        persistVerifiedProposal(
+            proposal,
+            plan: plan,
+            evidence: evidence,
+            checks: checks,
+            location: location,
+            trigger: trigger,
+            previousStationName: previousStationName,
+            now: now
+        )
+        guard shouldNotify(for: trigger) else { return }
+        await notificationService.schedule(
+            proposal: proposal,
+            title: settings.t("agent.optimized_notification_title"),
+            body: settings.t("agent.optimized_notification_body", [
+                "station": proposal.stationName,
+                "minutes": "\(proposal.estimatedMinutes)"
+            ]),
+            openRouteTitle: settings.t("agent.open_route"),
+            snoozeTitle: settings.t("agent.snooze"),
+            muteTodayTitle: settings.t("agent.mute_today")
+        )
+    }
+
+    private func persistVerifiedProposal(
+        _ proposal: AutonomousChargingProposal,
+        plan: AutomationPlan,
+        evidence: [ExecutionEvidence],
+        checks: [String: Bool],
+        location: UserLocation,
+        trigger: ChargingAgentTrigger,
+        previousStationName: String?,
+        now: Date
+    ) {
+        lastDecisionReason = nil
+        self.proposal = proposal
+        state = .ready
+        persistence.autonomousChargingProposal = proposal
+        persistence.lastAutonomousChargingProposal = proposal
+        record(AutomationReport(
+            rule: plan.rule,
+            actions: plan.actions,
+            previousStationName: previousStationName,
+            selectedStationName: proposal.stationName,
+            createdAt: now
+        ))
+        executionTrust.record(
+            action: .routePrepared,
+            intentKey: "autonomous:\(trigger.rawValue)",
+            resultKey: proposal.stationKey,
+            status: .completed,
+            evidence: evidence,
+            deterministicChecks: checks,
+            contextKeys: executionTrust.contextKeys(
+                location: location,
+                preference: settings.filters.preference,
+                date: now
+            ),
+            startedAt: now,
+            completedAt: Date(),
+            estimatedTimeSavedSeconds: 180
+        )
+    }
+
+    private func shouldNotify(for trigger: ChargingAgentTrigger) -> Bool {
+        trigger == .backgroundRefresh
+            || trigger == .backgroundProcessing
+            || trigger == .silentPush
+            || trigger == .vehicleConnected
     }
 
     private func candidate(
@@ -229,6 +322,49 @@ final class AutonomousChargingAgentStore {
         reports.insert(report, at: 0)
         reports = Array(reports.prefix(20))
         persistence.automationReports = reports
+    }
+
+    private func proposalEvidence(
+        telemetry: VehicleTelemetrySnapshot,
+        candidate: StationCandidate,
+        location: UserLocation,
+        now: Date
+    ) -> [ExecutionEvidence] {
+        var evidence = [
+            ExecutionEvidence(
+                source: .deterministicEngine,
+                reliability: 1,
+                observedAt: now,
+                maximumAge: 60
+            ),
+            ExecutionEvidence(
+                source: .vehicleTelemetry,
+                reliability: telemetry.isVehicleConnected ? 0.99 : 0.84,
+                observedAt: telemetry.capturedAt,
+                maximumAge: telemetry.isVehicleConnected ? 15 * 60 : 6 * 3_600
+            ),
+            ExecutionEvidence(
+                source: location.source == .device ? .deviceLocation : .manualLocation,
+                reliability: location.source == .device ? 0.98 : 0.90,
+                observedAt: now,
+                maximumAge: location.source == .device ? 300 : 86_400
+            ),
+            ExecutionEvidence(
+                source: .stationDataset,
+                reliability: candidate.station.confidenceScore,
+                observedAt: executionTrust.stationObservedAt(candidate.station, fallback: now),
+                maximumAge: 30 * 86_400
+            )
+        ]
+        if let availability = candidate.liveAvailability {
+            evidence.append(ExecutionEvidence(
+                source: .realtimeAvailability,
+                reliability: 0.98,
+                observedAt: availability.updatedAt,
+                maximumAge: 15 * 60
+            ))
+        }
+        return evidence
     }
 
     func acceptProposal() async {

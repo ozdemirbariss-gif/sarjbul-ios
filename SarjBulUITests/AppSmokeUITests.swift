@@ -26,6 +26,32 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
     }
 
+    func testHomeShowsOutcomeBeforeAdvancedControls() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-home"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons["find-stations-button"].waitForExistence(timeout: 12))
+        let fineTune = app.buttons["home-fine-tune-toggle"]
+        XCTAssertTrue(fineTune.exists)
+        XCTAssertFalse(app.descendants(matching: .any)["home-preference-card"].exists)
+        fineTune.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["home-preference-card"].waitForExistence(timeout: 5))
+    }
+
+    func testProfileKeepsComplexSettingsCollapsedByDefault() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-profile"]
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["verified-outcome-value"].waitForExistence(timeout: 12))
+        let automation = app.buttons["profile-automation-toggle"]
+        XCTAssertTrue(automation.exists)
+        XCTAssertFalse(app.switches["Benim için rota hazırla"].exists)
+        automation.tap()
+        XCTAssertTrue(app.switches["Benim için rota hazırla"].waitForExistence(timeout: 5))
+    }
+
     func testManualLocationInputHidesWhenDeviceLocationIsAvailable() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-device-location"]
@@ -65,6 +91,10 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-home-en"]
         app.launch()
 
+        let fineTune = app.buttons["home-fine-tune-toggle"]
+        XCTAssertTrue(fineTune.waitForExistence(timeout: 12))
+        XCTAssertFalse(app.staticTexts["DRIVING PROFILE"].exists)
+        fineTune.tap()
         XCTAssertTrue(app.staticTexts["DRIVING PROFILE"].waitForExistence(timeout: 12))
         XCTAssertFalse(app.staticTexts["DRİVİNG PROFİLE"].exists)
     }
@@ -74,6 +104,9 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-home-en"]
         app.launch()
 
+        let fineTune = app.buttons["home-fine-tune-toggle"]
+        XCTAssertTrue(fineTune.waitForExistence(timeout: 12))
+        fineTune.tap()
         let profile = app.buttons["driving-profile-toggle"]
         XCTAssertTrue(profile.waitForExistence(timeout: 12))
         profile.tap()

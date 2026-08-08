@@ -15,6 +15,7 @@ final class AppState {
     let chargingHistory: ChargingHistoryStore
     let chargingSession: ChargingSessionStore
     let habits: HabitStore
+    let executionTrust: ExecutionTrustStore
     let autonomousAgent: AutonomousChargingAgentStore
     let contextIntelligence: ContextIntelligenceStore
     let offlineSync: OfflineSyncCoordinator
@@ -66,6 +67,7 @@ final class AppState {
             messages: messages
         )
         let habits = HabitStore(persistence: persistence)
+        let executionTrust = ExecutionTrustStore(persistence: persistence)
         let search = SearchCoordinator(
             stationData: stationData,
             settings: settings,
@@ -74,7 +76,8 @@ final class AppState {
             navigation: navigation,
             messages: messages,
             habits: habits,
-            offlineSync: offlineSync
+            offlineSync: offlineSync,
+            executionTrust: executionTrust
         )
 
         self.messages = messages
@@ -85,18 +88,21 @@ final class AppState {
         self.search = search
         self.navigation = navigation
         self.habits = habits
+        self.executionTrust = executionTrust
         self.offlineSync = offlineSync
         autonomousAgent = AutonomousChargingAgentStore(
             stationData: stationData,
             settings: settings,
             search: search,
             persistence: persistence,
+            executionTrust: executionTrust,
             telemetryClient: vehicleTelemetryClient
         )
         contextIntelligence = ContextIntelligenceStore(
             persistence: persistence,
             habits: habits,
-            settings: settings
+            settings: settings,
+            executionTrust: executionTrust
         )
         deepLinks = DeepLinkRouter(search: search, navigation: navigation)
         lounge = LoungeStore(persistence: persistence)

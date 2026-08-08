@@ -9,6 +9,7 @@ final class ContextIntelligenceStore {
     private let persistence: any AppPersistence
     private let habits: HabitStore
     private let settings: UserSettingsStore
+    private let executionTrust: ExecutionTrustStore
     private let calendar: CalendarContextClient
     private let health: HealthContextClient
     private let weather: WeatherContextClient
@@ -31,6 +32,7 @@ final class ContextIntelligenceStore {
         persistence: any AppPersistence,
         habits: HabitStore,
         settings: UserSettingsStore,
+        executionTrust: ExecutionTrustStore,
         calendar: CalendarContextClient = CalendarContextClient(),
         health: HealthContextClient = HealthContextClient(),
         weather: WeatherContextClient = WeatherContextClient()
@@ -38,6 +40,7 @@ final class ContextIntelligenceStore {
         self.persistence = persistence
         self.habits = habits
         self.settings = settings
+        self.executionTrust = executionTrust
         self.calendar = calendar
         self.health = health
         self.weather = weather
@@ -137,12 +140,52 @@ final class ContextIntelligenceStore {
 
     private func applyCalendarDeferral(outcome: ContextActionOutcome, now: Date) async {
         guard let recommendation, let item = currentCalendarItem else { return }
+        let evidence = [
+            ExecutionEvidence(
+                source: .deterministicEngine,
+                reliability: 1,
+                observedAt: now,
+                maximumAge: 60
+            ),
+            ExecutionEvidence(
+                source: .systemCalendar,
+                reliability: 0.99,
+                observedAt: now,
+                maximumAge: 5 * 60
+            )
+        ]
+        let checks = [
+            "calendar-item-exists": true,
+            "delay-positive": recommendation.delaySeconds > 0,
+            "permission-policy": outcome != .automaticallyCompleted || policy.allowsAutomaticCalendarChanges
+        ]
         do {
             try calendar.deferItem(item, by: recommendation.delaySeconds)
             record(ContextActionReport(action: .offerCalendarDeferral, outcome: outcome, createdAt: now))
+            executionTrust.record(
+                action: .calendarDeferred,
+                intentKey: "calendar-deferral",
+                resultKey: item.identifier,
+                status: .completed,
+                evidence: evidence,
+                deterministicChecks: checks,
+                contextKeys: ["calendar", "delay:\(Int(recommendation.delaySeconds / 60))"],
+                startedAt: now,
+                estimatedTimeSavedSeconds: 120
+            )
             self.recommendation = nil
             await notifyCalendarOptimized()
         } catch {
+            executionTrust.record(
+                action: .calendarDeferred,
+                intentKey: "calendar-deferral",
+                resultKey: item.identifier,
+                status: .failed,
+                evidence: evidence,
+                deterministicChecks: checks,
+                contextKeys: ["calendar"],
+                startedAt: now
+            )
             AppTelemetry.capture(error, operation: "context_calendar_deferral")
         }
     }

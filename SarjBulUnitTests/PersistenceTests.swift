@@ -203,6 +203,48 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(persistence.contextActionReports, [report])
     }
 
+    func testVerifiedExecutionPersistsAndCompletesInsideDecisionBudget() throws {
+        let persistence = try makePersistence()
+        let store = ExecutionTrustStore(persistence: persistence)
+        let now = Date()
+
+        let proof = store.record(
+            action: .stationSearch,
+            intentKey: "search:fastest",
+            resultKey: "station-1",
+            status: .completed,
+            evidence: [
+                ExecutionEvidence(
+                    source: .deterministicEngine,
+                    reliability: 1,
+                    observedAt: now,
+                    maximumAge: 60
+                ),
+                ExecutionEvidence(
+                    source: .deviceLocation,
+                    reliability: 0.98,
+                    observedAt: now,
+                    maximumAge: 300
+                ),
+                ExecutionEvidence(
+                    source: .stationDataset,
+                    reliability: 0.94,
+                    observedAt: now,
+                    maximumAge: 86_400
+                )
+            ],
+            deterministicChecks: ["location": true, "candidate": true],
+            contextKeys: ["period:2", "cell:38.39:27.19"],
+            startedAt: now,
+            estimatedTimeSavedSeconds: 120
+        )
+
+        XCTAssertTrue(proof.verified)
+        XCTAssertEqual(persistence.executionProofs.first?.id, proof.id)
+        XCTAssertEqual(store.value.estimatedMinutesSaved, 2)
+        XCTAssertLessThan(store.lastDecisionLatencyMilliseconds, 200)
+    }
+
     private func makePersistence() throws -> SystemAppPersistence {
         let suiteName = "StoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

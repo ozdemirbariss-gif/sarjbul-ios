@@ -10,6 +10,7 @@ struct HomeView: View {
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @Environment(ChargingSessionStore.self) private var chargingSession
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
+    @Environment(ExecutionTrustStore.self) private var executionTrust
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -18,6 +19,7 @@ struct HomeView: View {
     @State private var locationRequestTimedOut = false
     @State private var drivingProfileExpanded = false
     @State private var settingsExpanded = false
+    @State private var advancedHomeExpanded = false
     @State private var placeSearchMode: PlaceSearchMode?
     @State private var intentPrediction: SearchIntentPrediction?
     @State private var filtersBeforePrediction: StationFilters?
@@ -32,37 +34,19 @@ struct HomeView: View {
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 22) {
-                            topControls
                             if search.userLocation?.source != .device || search.locationNeedsReview {
                                 locationInput
                                     .transition(.opacity.combined(with: .move(edge: .top)))
                             }
-                            if chargingSession.isActive {
-                                activeChargingContextCard
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                            } else if settings.profile.chargePercent <= 20 {
-                                criticalRangeContextCard
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                            } else if let proposal = autonomousAgent.proposal {
-                                autonomousProposalCard(proposal)
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                            } else if let recommendation = contextIntelligence.recommendation {
-                                contextRecommendationCard(recommendation)
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                            } else if contextIntelligence.recentAutomaticReport != nil {
-                                contextAutomationReportCard
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
-                            } else if let suggestion = habits.suggestion() {
-                                habitSuggestionCard(suggestion)
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            primaryOutcome
+                            advancedHomeControls
+                            if advancedHomeExpanded {
+                                topControls
+                                drivingProfile
+                                    .id("driving-profile")
+                                filtersAndSettings
+                                    .id("filters-and-settings")
                             }
-                            if !chargingSession.isActive && settings.profile.chargePercent > 20 {
-                                routeAction
-                            }
-                            drivingProfile
-                                .id("driving-profile")
-                            filtersAndSettings
-                                .id("filters-and-settings")
                         }
                         .padding(.horizontal, 18)
                         .padding(.top, 22)
@@ -140,6 +124,68 @@ struct HomeView: View {
         .sbCardShadow()
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier("home-preference-card")
+    }
+
+    @ViewBuilder
+    private var primaryOutcome: some View {
+        if chargingSession.isActive {
+            activeChargingContextCard
+        } else if let proposal = autonomousAgent.proposal {
+            autonomousProposalCard(proposal)
+        } else if settings.profile.chargePercent <= 20 {
+            criticalRangeContextCard
+        } else if let recommendation = contextIntelligence.recommendation {
+            contextRecommendationCard(recommendation)
+        } else if contextIntelligence.recentAutomaticReport != nil {
+            contextAutomationReportCard
+        } else if let suggestion = habits.suggestion() {
+            habitSuggestionCard(suggestion)
+        } else {
+            routeAction
+        }
+    }
+
+    private var advancedHomeControls: some View {
+        Button {
+            Haptic.tap()
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) {
+                advancedHomeExpanded.toggle()
+                if !advancedHomeExpanded {
+                    drivingProfileExpanded = false
+                    settingsExpanded = false
+                }
+            }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(SBColor.signal)
+                    .frame(width: 42, height: 42)
+                    .background(SBColor.signal.opacity(0.10), in: Circle())
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(settings.t("home.fine_tune"))
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(SBColor.ink)
+                    Text(preferenceTitle(settings.filters.preference))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(SBColor.textSoft)
+                }
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .font(.subheadline.weight(.heavy))
+                    .foregroundStyle(SBColor.signal)
+                    .rotationEffect(.degrees(advancedHomeExpanded ? 180 : 0))
+            }
+            .padding(.horizontal, 18)
+            .frame(minHeight: 64)
+            .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
+                    .stroke(SBColor.line, lineWidth: 1)
+            )
+        }
+        .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityIdentifier("home-fine-tune-toggle")
     }
 
     private var activeChargingContextCard: some View {
@@ -874,6 +920,17 @@ struct HomeView: View {
                     ]))
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(SBColor.muted)
+
+                    if let proof = executionTrust.latestVerifiedProof {
+                        Label(
+                            settings.t("proof.verified_compact", [
+                                "confidence": "\(Int((proof.trustScore * 100).rounded()))"
+                            ]),
+                            systemImage: "checkmark.shield.fill"
+                        )
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(SBColor.signal)
+                    }
                 }
                 Spacer(minLength: 0)
             }
@@ -936,10 +993,31 @@ struct HomeView: View {
     private func applyIntentPrefillIfEligible() {
         guard !didEvaluateIntentPrediction else { return }
         didEvaluateIntentPrediction = true
-        guard case .idle = search.state, let prediction = habits.searchPrediction() else { return }
+        guard case .idle = search.state else { return }
+        let prediction = habits.searchPrediction() ?? graphIntentPrediction()
+        guard let prediction else { return }
         filtersBeforePrediction = settings.filters
         settings.filters = prediction.parameters.applying(to: settings.filters)
         intentPrediction = prediction
+    }
+
+    private func graphIntentPrediction() -> SearchIntentPrediction? {
+        let contexts = executionTrust.contextKeys(
+            location: search.userLocation,
+            preference: settings.filters.preference
+        )
+        guard let prediction = executionTrust.prediction(for: contexts),
+              prediction.intentKey.hasPrefix("search:"),
+              let rawPreference = prediction.intentKey.split(separator: ":").last,
+              let preference = RoutePreference(rawValue: String(rawPreference)) else { return nil }
+        var filters = settings.filters
+        filters.preference = preference
+        return SearchIntentPrediction(
+            parameters: SearchIntentParameters(filters: filters),
+            confidence: prediction.confidence,
+            supportingSamples: prediction.supportingSuccesses,
+            distinctDays: 0
+        )
     }
 
     private func undoIntentPrefill() {
