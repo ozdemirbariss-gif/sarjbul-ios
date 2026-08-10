@@ -10,6 +10,7 @@ struct AccountView: View {
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(ExecutionTrustStore.self) private var executionTrust
+    @Environment(FrictionTelemetryStore.self) private var frictionTelemetry
     @Environment(NavigationCoordinator.self) private var navigation
     @State private var isDeletingData = false
     @State private var deleteConfirmationPresented = false
@@ -151,8 +152,8 @@ struct AccountView: View {
                         title: settings.t("proof.time_saved")
                     )
                     valueMetric(
-                        value: "%\(value.averageTrustPercent)",
-                        title: settings.t("proof.average_trust")
+                        value: "\(frictionTelemetry.summary.completedJourneys)",
+                        title: settings.t("proof.routes_started")
                     )
                 }
 

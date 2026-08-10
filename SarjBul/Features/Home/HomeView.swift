@@ -11,6 +11,7 @@ struct HomeView: View {
     @Environment(ChargingSessionStore.self) private var chargingSession
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(ExecutionTrustStore.self) private var executionTrust
+    @Environment(FrictionTelemetryStore.self) private var frictionTelemetry
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -82,10 +83,14 @@ struct HomeView: View {
                 }
             }
             .onAppear {
-                guard !isDeterministicUITest else { return }
                 settings.destination = nil
                 applyIntentPrefillIfEligible()
                 syncWidgetContext()
+                if search.userLocation != nil {
+                    frictionTelemetry.record(.locationReady)
+                    Task { await search.prepareOutcome() }
+                }
+                guard !isDeterministicUITest else { return }
                 guard !didRequestDeviceLocation, search.userLocation == nil else { return }
                 requestDeviceLocation()
             }
@@ -134,14 +139,17 @@ struct HomeView: View {
             autonomousProposalCard(proposal)
         } else if settings.profile.chargePercent <= 20 {
             criticalRangeContextCard
-        } else if let recommendation = contextIntelligence.recommendation {
-            contextRecommendationCard(recommendation)
-        } else if contextIntelligence.recentAutomaticReport != nil {
-            contextAutomationReportCard
-        } else if let suggestion = habits.suggestion() {
-            habitSuggestionCard(suggestion)
         } else {
-            routeAction
+            VStack(spacing: 14) {
+                routeAction
+                if let recommendation = contextIntelligence.recommendation {
+                    contextRecommendationCard(recommendation)
+                } else if contextIntelligence.recentAutomaticReport != nil {
+                    contextAutomationReportCard
+                } else if let suggestion = habits.suggestion() {
+                    habitSuggestionCard(suggestion)
+                }
+            }
         }
     }
 
@@ -153,6 +161,7 @@ struct HomeView: View {
                 if !advancedHomeExpanded {
                     drivingProfileExpanded = false
                     settingsExpanded = false
+                    Task { await search.prepareOutcome() }
                 }
             }
         } label: {
@@ -595,6 +604,7 @@ struct HomeView: View {
             Task { await search.openStation(withKey: stationKey) }
         case .routePreference(let preference, _):
             settings.filters.preference = preference
+            Task { await search.prepareOutcome() }
             Task { await search.findStations() }
         }
     }
@@ -896,7 +906,124 @@ struct HomeView: View {
         }
     }
 
+    @ViewBuilder
     private var routeAction: some View {
+        if let candidate = search.preparedCandidate {
+            preparedRouteAction(candidate)
+        } else {
+            rangeAction
+        }
+    }
+
+    private func preparedRouteAction(_ candidate: StationCandidate) -> some View {
+        let arrivalPercent = max(0, Int(candidate.arrivalChargePercent.rounded()))
+        return VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(alignment: .top, spacing: 16) {
+                    Image(systemName: "location.fill")
+                        .font(.title2.weight(.heavy))
+                        .foregroundStyle(SBColor.onSignal)
+                        .frame(width: 58, height: 58)
+                        .background(SBColor.signal, in: RoundedRectangle(
+                            cornerRadius: SBRadius.md,
+                            style: .continuous
+                        ))
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Label(settings.t("home.ready_verified"), systemImage: "checkmark.shield.fill")
+                            .font(.caption.weight(.heavy))
+                            .foregroundStyle(SBColor.signal)
+                            .accessibilityIdentifier("prepared-route-card")
+                        Text(candidate.station.name)
+                            .font(.title3.weight(.heavy))
+                            .foregroundStyle(SBColor.ink)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.78)
+                        Text(candidate.station.operatorName)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(SBColor.textSoft)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                HStack(spacing: 8) {
+                    preparedMetric(
+                        value: candidate.distanceKm.formatted(.number.precision(.fractionLength(1))) + " km",
+                        title: settings.t("home.ready_distance")
+                    )
+                    preparedMetric(
+                        value: settings.t("decision.minutes", ["minutes": "\(candidate.estimatedMinutes)"]),
+                        title: settings.t("home.ready_duration")
+                    )
+                    preparedMetric(
+                        value: "%\(arrivalPercent)",
+                        title: settings.t("decision.arrival")
+                    )
+                }
+            }
+            .padding(20)
+
+            Button {
+                Haptic.success()
+                search.startNavigation(to: candidate)
+            } label: {
+                HStack {
+                    Text(settings.t("feed.start_route"))
+                        .font(.headline.weight(.heavy))
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.headline.weight(.heavy))
+                }
+                .foregroundStyle(SBColor.onSignal)
+                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity)
+                .frame(height: 68)
+                .background(SBColor.signal)
+            }
+            .buttonStyle(SBPremiumButtonStyle())
+            .accessibilityIdentifier("prepared-route-button")
+
+            Button {
+                Haptic.tap()
+                search.presentPreparedResults()
+            } label: {
+                Text(settings.t("home.ready_alternatives"))
+                    .font(.caption.weight(.heavy))
+                    .foregroundStyle(SBColor.textSoft)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 42)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("prepared-route-alternatives")
+        }
+        .background(SBColor.surfaceSolid)
+        .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
+                .stroke(SBColor.signal.opacity(0.55), lineWidth: 1.5)
+        )
+        .sbGlowShadow()
+    }
+
+    private func preparedMetric(value: String, title: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(.subheadline.monospacedDigit().weight(.heavy))
+                .foregroundStyle(SBColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(SBColor.textSoft)
+                .lineLimit(1)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(SBColor.charcoal, in: RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous))
+    }
+
+    private var rangeAction: some View {
         VStack(spacing: 0) {
             HStack(spacing: 18) {
                 Image(systemName: "bolt.fill")
@@ -1160,7 +1287,11 @@ struct HomeView: View {
             longitude: location.longitude,
             source: location.source
         )
-        Task { await autonomousAgent.updateLocation(location) }
+        frictionTelemetry.record(.locationReady)
+        Task {
+            await search.prepareOutcome()
+            await autonomousAgent.updateLocation(location)
+        }
     }
 }
 
@@ -1181,160 +1312,5 @@ private struct QuickActionStyle: ButtonStyle {
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
-    }
-}
-
-private struct ChargeVisual: View {
-    var percent: Int
-    var statusText: String
-    var chargeLabel: String
-    var selectedLevelText: String
-
-    private var clampedPercent: Int {
-        min(100, max(1, percent))
-    }
-
-    var body: some View {
-        HStack(spacing: 18) {
-            ZStack {
-                Circle()
-                    .stroke(.black.opacity(0.1), lineWidth: 14)
-                Circle()
-                    .trim(from: 0, to: Double(clampedPercent) / 100)
-                    .stroke(SBColor.electricBlue, style: StrokeStyle(lineWidth: 14, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                VStack(spacing: 2) {
-                    Text("%\(clampedPercent)")
-                        .font(.title.weight(.heavy))
-                        .foregroundStyle(.black)
-                        .contentTransition(.numericText())
-                    Text(chargeLabel)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.black.opacity(0.5))
-                }
-            }
-            .frame(width: 108, height: 108)
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text(selectedLevelText)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.black.opacity(0.5))
-                Text(statusText)
-                    .font(.title3.weight(.heavy))
-                    .foregroundStyle(.black)
-                BatteryBar(percent: clampedPercent)
-            }
-        }
-        .padding(18)
-        .background(SBColor.ice)
-        .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                .stroke(.white.opacity(0.45), lineWidth: 1)
-        )
-        .animation(.spring(response: 0.42, dampingFraction: 0.82), value: clampedPercent)
-    }
-}
-
-private struct BatteryBar: View {
-    var percent: Int
-
-    var body: some View {
-        GeometryReader { proxy in
-            let fillWidth = max(18, proxy.size.width * CGFloat(percent) / 100)
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(.black.opacity(0.1))
-                Capsule()
-                    .fill(LinearGradient.sbNeon)
-                    .frame(width: fillWidth)
-                Capsule()
-                    .stroke(.black.opacity(0.16), lineWidth: 1)
-            }
-        }
-        .frame(height: 30)
-        .animation(.spring(response: 0.38, dampingFraction: 0.8), value: percent)
-        .overlay(alignment: .trailing) {
-            Capsule()
-                .fill(.black.opacity(0.28))
-                .frame(width: 8, height: 18)
-                .offset(x: 6)
-        }
-    }
-}
-
-private enum ManualLocationPreset: String, CaseIterable, Identifiable {
-    case istanbulKadikoy
-    case istanbulMaslak
-    case ankaraCankaya
-    case izmirAlsancak
-    case izmirBuca
-    case bursaNilufer
-    case antalyaMuratpasa
-    case muglaFethiye
-    case kocaeliGebze
-    case eskisehirOdunpazari
-    case konyaSelcuklu
-    case adanaSeyhan
-    case mersinYenisehir
-    case samsunAtakum
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .istanbulKadikoy: "İstanbul (Kadıköy)"
-        case .istanbulMaslak: "İstanbul (Maslak)"
-        case .ankaraCankaya: "Ankara (Çankaya)"
-        case .izmirAlsancak: "İzmir (Alsancak)"
-        case .izmirBuca: "İzmir (Buca)"
-        case .bursaNilufer: "Bursa (Nilüfer)"
-        case .antalyaMuratpasa: "Antalya (Muratpaşa)"
-        case .muglaFethiye: "Muğla (Fethiye)"
-        case .kocaeliGebze: "Kocaeli (Gebze)"
-        case .eskisehirOdunpazari: "Eskişehir (Odunpazarı)"
-        case .konyaSelcuklu: "Konya (Selçuklu)"
-        case .adanaSeyhan: "Adana (Seyhan)"
-        case .mersinYenisehir: "Mersin (Yenişehir)"
-        case .samsunAtakum: "Samsun (Atakum)"
-        }
-    }
-
-    var latitude: Double {
-        switch self {
-        case .istanbulKadikoy: 40.9901
-        case .istanbulMaslak: 41.1082
-        case .ankaraCankaya: 39.9208
-        case .izmirAlsancak: 38.4374
-        case .izmirBuca: 38.3844
-        case .bursaNilufer: 40.2140
-        case .antalyaMuratpasa: 36.8841
-        case .muglaFethiye: 36.6217
-        case .kocaeliGebze: 40.8028
-        case .eskisehirOdunpazari: 39.7667
-        case .konyaSelcuklu: 37.9464
-        case .adanaSeyhan: 36.9914
-        case .mersinYenisehir: 36.8121
-        case .samsunAtakum: 41.3452
-        }
-    }
-
-    var longitude: Double {
-        switch self {
-        case .istanbulKadikoy: 29.0284
-        case .istanbulMaslak: 29.0195
-        case .ankaraCankaya: 32.8541
-        case .izmirAlsancak: 27.1422
-        case .izmirBuca: 27.1748
-        case .bursaNilufer: 28.9847
-        case .antalyaMuratpasa: 30.7056
-        case .muglaFethiye: 29.1164
-        case .kocaeliGebze: 29.4307
-        case .eskisehirOdunpazari: 30.5256
-        case .konyaSelcuklu: 32.4932
-        case .adanaSeyhan: 35.3308
-        case .mersinYenisehir: 34.6415
-        case .samsunAtakum: 36.2496
-        }
     }
 }

@@ -63,6 +63,7 @@ protocol AppPersistence: AnyObject {
     var pendingOfflineMutations: [PendingOfflineMutation] { get set }
     var executionProofs: [ExecutionProof] { get set }
     var contextualRelationGraph: ContextualRelationGraph { get set }
+    var frictionEvents: [FrictionEvent] { get set }
 }
 
 protocol SecureStorage {
@@ -110,6 +111,7 @@ final class SystemAppPersistence: AppPersistence {
         static let pendingOfflineMutations = "pendingOfflineMutations"
         static let executionProofs = "executionProofs"
         static let contextualRelationGraph = "contextualRelationGraph"
+        static let frictionEvents = "frictionEvents"
     }
 
     private let defaults: UserDefaults
@@ -312,6 +314,11 @@ final class SystemAppPersistence: AppPersistence {
     var contextualRelationGraph: ContextualRelationGraph {
         get { decode(ContextualRelationGraph.self, key: Key.contextualRelationGraph) ?? ContextualRelationGraph() }
         set { encode(newValue, key: Key.contextualRelationGraph) }
+    }
+
+    var frictionEvents: [FrictionEvent] {
+        get { decode([FrictionEvent].self, key: Key.frictionEvents) ?? [] }
+        set { encode(Array(newValue.suffix(240)), key: Key.frictionEvents) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

@@ -13,7 +13,6 @@ struct RootView: View {
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(OfflineSyncCoordinator.self) private var offlineSync
-    @State private var bottomNavigationExpanded = false
     @State private var didSetInitialTab = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -66,9 +65,6 @@ struct RootView: View {
             }
         }
         .sensoryFeedback(.selection, trigger: navigation.tab)
-        .onChange(of: navigation.tab) { _, _ in
-            bottomNavigationExpanded = false
-        }
         .onOpenURL { url in
             Task { await deepLinks.handle(url) }
         }
@@ -109,7 +105,7 @@ struct RootView: View {
     }
 
     private var showsBottomNavigation: Bool {
-        navigation.tab == .home || navigation.tab == .lounge || navigation.tab == .account
+        true
     }
 
     @ViewBuilder
@@ -128,13 +124,8 @@ struct RootView: View {
 
     @ViewBuilder
     private var bottomNavigation: some View {
-        if bottomNavigationExpanded {
-            expandedBottomNavigation
-                .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.96)))
-        } else {
-            collapsedBottomNavigation
-                .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.92)))
-        }
+        expandedBottomNavigation
+            .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.96)))
     }
 
     private var expandedBottomNavigation: some View {
@@ -167,35 +158,6 @@ struct RootView: View {
         navigation.select(.home)
     }
 
-    private var collapsedBottomNavigation: some View {
-        Button {
-            Haptic.tap()
-            if reduceMotion {
-                bottomNavigationExpanded = true
-            } else {
-                withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
-                    bottomNavigationExpanded = true
-                }
-            }
-        } label: {
-            Image(systemName: "square.grid.2x2.fill")
-                .font(.headline.weight(.heavy))
-                .symbolEffect(.bounce, value: navigation.tab)
-            .foregroundStyle(SBColor.onSignal)
-            .frame(width: 54, height: 54)
-            .background(SBColor.signal, in: Circle())
-            .shadow(color: SBColor.signal.opacity(0.20), radius: 20, x: 0, y: 10)
-        }
-        .buttonStyle(SBPremiumButtonStyle())
-        .accessibilityLabel(settings.t("navigation.open"))
-        .accessibilityIdentifier("bottom-navigation-open")
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .padding(.trailing, 18)
-        .padding(.top, 10)
-        .padding(.bottom, 14)
-        .background(SBColor.background.opacity(0.98))
-    }
-
     private func tabButton(_ tab: AppTab) -> some View {
         let isSelected = navigation.tab == tab
         let selectedColor = tab == .lounge ? SBColor.loungeAccent : SBColor.signal
@@ -203,28 +165,28 @@ struct RootView: View {
             Haptic.tap()
             if reduceMotion {
                 navigation.tab = tab
-                bottomNavigationExpanded = false
             } else {
                 withAnimation(.spring(response: 0.36, dampingFraction: 0.82)) {
                     navigation.tab = tab
-                    bottomNavigationExpanded = false
                 }
             }
         } label: {
-            VStack(spacing: 5) {
+            HStack(spacing: 7) {
                 Image(systemName: tabIcon(tab))
                     .font(.headline.weight(.heavy))
-                    .frame(height: 18)
+                    .frame(width: 20, height: 20)
                     .symbolEffect(.bounce, value: isSelected)
-                Text(tabTitle(tab))
-                    .font(.caption2.weight(.heavy))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.68)
-                    .allowsTightening(true)
+                if isSelected {
+                    Text(tabTitle(tab))
+                        .font(.caption.weight(.heavy))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.74)
+                }
             }
             .foregroundStyle(isSelected ? SBColor.onSignal : SBColor.textSoft)
-            .frame(maxWidth: .infinity)
-            .frame(height: 58)
+            .padding(.horizontal, isSelected ? 14 : 0)
+            .frame(minWidth: 50, maxWidth: isSelected ? .infinity : 50)
+            .frame(height: 54)
             .background(isSelected ? selectedColor : SBColor.surface.opacity(0.72))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(

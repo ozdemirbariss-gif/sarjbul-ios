@@ -16,6 +16,7 @@ final class AppState {
     let chargingSession: ChargingSessionStore
     let habits: HabitStore
     let executionTrust: ExecutionTrustStore
+    let frictionTelemetry: FrictionTelemetryStore
     let autonomousAgent: AutonomousChargingAgentStore
     let contextIntelligence: ContextIntelligenceStore
     let offlineSync: OfflineSyncCoordinator
@@ -68,6 +69,7 @@ final class AppState {
         )
         let habits = HabitStore(persistence: persistence)
         let executionTrust = ExecutionTrustStore(persistence: persistence)
+        let frictionTelemetry = FrictionTelemetryStore(persistence: persistence)
         let search = SearchCoordinator(
             stationData: stationData,
             settings: settings,
@@ -77,7 +79,8 @@ final class AppState {
             messages: messages,
             habits: habits,
             offlineSync: offlineSync,
-            executionTrust: executionTrust
+            executionTrust: executionTrust,
+            frictionTelemetry: frictionTelemetry
         )
 
         self.messages = messages
@@ -89,6 +92,7 @@ final class AppState {
         self.navigation = navigation
         self.habits = habits
         self.executionTrust = executionTrust
+        self.frictionTelemetry = frictionTelemetry
         self.offlineSync = offlineSync
         autonomousAgent = AutonomousChargingAgentStore(
             stationData: stationData,

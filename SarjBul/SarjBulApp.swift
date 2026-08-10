@@ -50,6 +50,7 @@ struct SarjBulApp: App {
                 .environment(appState.chargingSession)
                 .environment(appState.habits)
                 .environment(appState.executionTrust)
+                .environment(appState.frictionTelemetry)
                 .environment(appState.autonomousAgent)
                 .environment(appState.contextIntelligence)
                 .environment(appState.offlineSync)

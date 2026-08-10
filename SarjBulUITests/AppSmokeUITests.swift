@@ -31,7 +31,8 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-home"]
         app.launch()
 
-        XCTAssertTrue(app.buttons["find-stations-button"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.descendants(matching: .any)["prepared-route-card"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.buttons["prepared-route-button"].exists)
         let fineTune = app.buttons["home-fine-tune-toggle"]
         XCTAssertTrue(fineTune.exists)
         XCTAssertFalse(app.descendants(matching: .any)["home-preference-card"].exists)
@@ -194,10 +195,6 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-profile"]
         app.launch()
 
-        let openNavigation = app.buttons["bottom-navigation-open"]
-        XCTAssertTrue(openNavigation.waitForExistence(timeout: 10))
-        openNavigation.tap()
-
         let home = app.buttons["bottom-navigation-tab-home"]
         let routes = app.buttons["bottom-navigation-tab-routes"]
         let lounge = app.buttons["bottom-navigation-tab-lounge"]
@@ -232,10 +229,9 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-device-location"]
         app.launch()
 
-        let findStations = app.buttons["find-stations-button"]
-        XCTAssertTrue(findStations.waitForExistence(timeout: 20))
-        XCTAssertTrue(findStations.isEnabled)
-        findStations.tap()
+        let preparedCard = app.descendants(matching: .any)["prepared-route-card"]
+        XCTAssertTrue(preparedCard.waitForExistence(timeout: 20))
+        app.buttons["prepared-route-alternatives"].tap()
 
         let routeCard = app.descendants(matching: .any)["station-route-card"]
         XCTAssertTrue(routeCard.waitForExistence(timeout: 20))
@@ -246,9 +242,8 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-filter-recovery"]
         app.launch()
 
-        let findStations = app.buttons["find-stations-button"]
-        XCTAssertTrue(findStations.waitForExistence(timeout: 15))
-        findStations.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["prepared-route-card"].waitForExistence(timeout: 20))
+        app.buttons["prepared-route-alternatives"].tap()
 
         XCTAssertTrue(app.descendants(matching: .any)["station-route-card"].waitForExistence(timeout: 15))
     }
@@ -258,13 +253,8 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-outside-coverage"]
         app.launch()
 
-        XCTAssertFalse(app.descendants(matching: .any)["location-input"].exists)
-        let findStations = app.buttons["find-stations-button"]
-        XCTAssertTrue(findStations.waitForExistence(timeout: 15))
-        findStations.tap()
-
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.descendants(matching: .any)["location-input"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["location-input"].waitForExistence(timeout: 20))
         XCTAssertFalse(app.descendants(matching: .any)["station-route-card"].exists)
     }
 }

@@ -571,16 +571,7 @@ struct StationCard: View {
     }
 
     private func openInAppleMaps() {
-        favorites.recordRouteOpened(candidate.station)
-        habits.recordRouteOpened(candidate)
-        let destination = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
-            latitude: candidate.station.latitude,
-            longitude: candidate.station.longitude
-        )))
-        destination.name = candidate.station.name
-        destination.openInMaps(launchOptions: [
-            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
-        ])
+        search.startNavigation(to: candidate)
     }
 
     private func openInGoogleMaps() {

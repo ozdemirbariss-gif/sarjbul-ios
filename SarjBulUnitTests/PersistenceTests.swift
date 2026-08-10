@@ -245,6 +245,23 @@ final class PersistenceTests: XCTestCase {
         XCTAssertLessThan(store.lastDecisionLatencyMilliseconds, 200)
     }
 
+    func testFrictionTelemetryPersistsOutcomeAndRouteMilestones() throws {
+        let persistence = try makePersistence()
+        let store = FrictionTelemetryStore(persistence: persistence)
+        let now = Date()
+
+        store.record(.locationReady, at: now.addingTimeInterval(0.1))
+        store.record(.stationSearchStarted, at: now.addingTimeInterval(0.15))
+        store.record(.outcomeReady, at: now.addingTimeInterval(0.25))
+        store.record(.routeStarted, at: now.addingTimeInterval(0.5))
+
+        XCTAssertEqual(store.summary.completedJourneys, 1)
+        XCTAssertEqual(persistence.frictionEvents.last?.kind, .routeStarted)
+        XCTAssertNotNil(store.summary.medianOutcomeReadyMilliseconds)
+        XCTAssertNotNil(store.summary.medianRouteStartMilliseconds)
+        XCTAssertEqual(store.summary.noOutcomeRate, 0)
+    }
+
     private func makePersistence() throws -> SystemAppPersistence {
         let suiteName = "StoreTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

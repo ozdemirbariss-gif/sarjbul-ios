@@ -8,6 +8,7 @@ struct StationFeedView: View {
     @State private var filterSheetPresented = false
     @State private var mode: FeedMode = .cards
     @State private var tripPlanPresented = false
+    @State private var alternativesExpanded = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -161,15 +162,28 @@ struct StationFeedView: View {
                 message: settings.t("route.idle_hint")
             )
         case .searching:
-            VStack(spacing: 18) {
-                ProgressView()
-                    .tint(SBColor.electricBlue)
-                    .scaleEffect(1.2)
-                Text(settings.t("route.searching"))
-                    .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.muted)
+            if search.previousCandidates.isEmpty {
+                VStack(spacing: 18) {
+                    ProgressView()
+                        .tint(SBColor.electricBlue)
+                        .scaleEffect(1.2)
+                    Text(settings.t("route.searching"))
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(SBColor.muted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ZStack(alignment: .top) {
+                    resultContent(search.previousCandidates)
+                    Label(settings.t("route.refreshing"), systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption.weight(.heavy))
+                        .foregroundStyle(SBColor.ink)
+                        .padding(.horizontal, 14)
+                        .frame(height: 38)
+                        .sbPremiumGlass(radius: 19)
+                        .padding(.top, 70)
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed(let message):
             emptyState(
                 settings.t("route.failed"),
@@ -184,34 +198,82 @@ struct StationFeedView: View {
                     message: settings.t("route.empty_hint")
                 )
             } else {
-                let shouldReduceMotion = reduceMotion
-                Group {
-                    if mode == .cards {
-                        ScrollView {
-                            LazyVStack(spacing: 18) {
-                                Color.clear.frame(height: 22)
-                                ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                                    StationCard(candidate: candidate, rank: index + 1, total: candidates.count)
-                                        .frame(maxWidth: 680)
-                                        .containerRelativeFrame(.vertical, count: 1, spacing: 22)
-                                        .scrollTransition { content, phase in
-                                            content
-                                                .opacity(shouldReduceMotion || phase.isIdentity ? 1 : 0.84)
-                                                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.97)
-                                        }
-                                }
-                            }
-                            .scrollTargetLayout()
-                            .padding(.horizontal, 18)
-                        }
-                        .scrollTargetBehavior(.viewAligned)
-                    } else {
-                        StationOverviewMap(candidates: candidates)
-                            .padding(.top, 82)
-                    }
-                }
+                resultContent(candidates)
             }
         }
+    }
+
+    @ViewBuilder
+    private func resultContent(_ candidates: [StationCandidate]) -> some View {
+        if mode == .cards {
+            ScrollView {
+                LazyVStack(spacing: 18) {
+                    Color.clear.frame(height: 22)
+                    if let best = candidates.first {
+                        resultCard(best, rank: 1, total: candidates.count)
+                    }
+
+                    if candidates.count > 1 {
+                        Button {
+                            Haptic.tap()
+                            withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) {
+                                alternativesExpanded.toggle()
+                            }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "rectangle.stack")
+                                    .foregroundStyle(SBColor.signal)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(settings.t("feed.alternatives_title"))
+                                        .font(.headline.weight(.heavy))
+                                        .foregroundStyle(SBColor.ink)
+                                    Text(settings.t("feed.alternatives_hint", [
+                                        "count": "\(min(2, candidates.count - 1))"
+                                    ]))
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(SBColor.textSoft)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .foregroundStyle(SBColor.signal)
+                                    .rotationEffect(.degrees(alternativesExpanded ? 180 : 0))
+                            }
+                            .padding(.horizontal, 18)
+                            .frame(minHeight: 66)
+                            .background(SBColor.surfaceSolid, in: RoundedRectangle(
+                                cornerRadius: SBRadius.lg,
+                                style: .continuous
+                            ))
+                            .overlay(RoundedRectangle(cornerRadius: SBRadius.lg).stroke(SBColor.line))
+                        }
+                        .buttonStyle(SBPremiumButtonStyle())
+                        .accessibilityIdentifier("station-alternatives-toggle")
+                    }
+
+                    if alternativesExpanded {
+                        ForEach(Array(candidates.dropFirst().prefix(2).enumerated()), id: \.element.id) { index, candidate in
+                            resultCard(candidate, rank: index + 2, total: candidates.count)
+                        }
+                    }
+                }
+                .padding(.horizontal, 18)
+                .padding(.bottom, 110)
+            }
+        } else {
+            StationOverviewMap(candidates: candidates)
+                .padding(.top, 82)
+        }
+    }
+
+    private func resultCard(_ candidate: StationCandidate, rank: Int, total: Int) -> some View {
+        let shouldReduceMotion = reduceMotion
+        return StationCard(candidate: candidate, rank: rank, total: total)
+            .frame(maxWidth: 680)
+            .scrollTransition { content, phase in
+                content
+                    .opacity(shouldReduceMotion || phase.isIdentity ? 1 : 0.88)
+                    .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.98)
+            }
     }
 
     private func emptyState(_ title: String, icon: String, message: String) -> some View {

@@ -1,4 +1,5 @@
 import Observation
+import MapKit
 import SarjBulCore
 import SwiftUI
 
@@ -35,17 +36,20 @@ final class SearchCoordinator {
     private let habits: HabitStore
     private let offlineSync: OfflineSyncCoordinator
     private let executionTrust: ExecutionTrustStore
+    private let frictionTelemetry: FrictionTelemetryStore
     private let journeyRouteService = JourneyRouteService()
     private let tripPlanner = ChargingTripPlanner()
     private var pendingStationKey: String?
     private var pendingQuickAction: PendingQuickAction?
     private var prepared = false
+    private var isPreparingOutcome = false
 
-    var userLocation: UserLocation?
+    var userLocation: SarjBulCore.UserLocation?
     var state: SearchState = .idle
     private(set) var journeySnapshot: JourneyRouteSnapshot?
     private(set) var tripPlan: ChargingTripPlan?
     private(set) var locationNeedsReview = false
+    private(set) var previousCandidates: [StationCandidate] = []
 
     init(
         stationData: StationDataStore,
@@ -56,7 +60,8 @@ final class SearchCoordinator {
         messages: AppMessagePresenter,
         habits: HabitStore,
         offlineSync: OfflineSyncCoordinator,
-        executionTrust: ExecutionTrustStore
+        executionTrust: ExecutionTrustStore,
+        frictionTelemetry: FrictionTelemetryStore
     ) {
         self.stationData = stationData
         self.settings = settings
@@ -67,9 +72,11 @@ final class SearchCoordinator {
         self.habits = habits
         self.offlineSync = offlineSync
         self.executionTrust = executionTrust
+        self.frictionTelemetry = frictionTelemetry
     }
 
     var routeCandidates: [StationCandidate] { state.candidates }
+    var preparedCandidate: StationCandidate? { routeCandidates.first ?? previousCandidates.first }
     var isSearching: Bool { state.isSearching }
     var canSearch: Bool { userLocation != nil && !isSearching }
 
@@ -93,8 +100,8 @@ final class SearchCoordinator {
         await stationData.retry(statusIDToken: session?.idToken)
     }
 
-    func updateLocation(latitude: Double, longitude: Double, source: UserLocation.Source) {
-        userLocation = UserLocation(latitude: latitude, longitude: longitude, source: source)
+    func updateLocation(latitude: Double, longitude: Double, source: SarjBulCore.UserLocation.Source) {
+        userLocation = SarjBulCore.UserLocation(latitude: latitude, longitude: longitude, source: source)
         locationNeedsReview = false
         state = .idle
         journeySnapshot = nil
@@ -121,7 +128,14 @@ final class SearchCoordinator {
         await findStations()
     }
 
-    func findStations() async {
+    func prepareOutcome() async {
+        guard !isPreparingOutcome, userLocation != nil else { return }
+        isPreparingOutcome = true
+        defer { isPreparingOutcome = false }
+        await findStations(presentResults: false)
+    }
+
+    func findStations(presentResults: Bool = true) async {
         let startedAt = Date()
         guard let userLocation else {
             state = .failed(.localized(key: "route.location_required", kind: .error))
@@ -137,113 +151,203 @@ final class SearchCoordinator {
         guard !isSearching else { return }
 
         locationNeedsReview = false
-        state = .searching
-        if stationData.stations.isEmpty {
-            let session = try? await auth.validSession()
-            await stationData.retry(statusIDToken: session?.idToken)
+        frictionTelemetry.record(.stationSearchStarted)
+        if presentResults {
+            previousCandidates = routeCandidates
+            state = .searching
         }
-        guard !stationData.stations.isEmpty else {
-            state = .failed(.localized(key: "data.recovery_failed", kind: .error))
-            navigation.select(.routes)
-            recordSearchProof(
-                status: .failed,
-                resultKey: "missing-dataset",
-                candidates: [],
-                location: userLocation,
-                startedAt: startedAt
-            )
-            return
-        }
+        guard await ensureDataset(
+            presentResults: presentResults,
+            location: userLocation,
+            startedAt: startedAt
+        ) else { return }
 
         let routePoints = await prepareRoutePoints(origin: userLocation)
-
         var searchFilters = settings.filters
         if settings.destination != nil {
             searchFilters.rangeFilterEnabled = false
         }
-        var rawCandidates = await stationData.candidates(
+        let rawCandidates = await searchCandidates(
             origin: userLocation,
-            destination: settings.destination,
             routePoints: routePoints,
-            profile: settings.profile,
-            filters: searchFilters,
-            limit: settings.destination == nil ? 80 : 240
+            filters: searchFilters
         )
-        let recoveryFilters = relaxedFilters(from: searchFilters)
-        if rawCandidates.isEmpty, recoveryFilters != searchFilters {
-            rawCandidates = await stationData.candidates(
-                origin: userLocation,
-                destination: settings.destination,
-                routePoints: routePoints,
-                profile: settings.profile,
-                filters: recoveryFilters,
-                limit: settings.destination == nil ? 80 : 240
-            )
-            if !rawCandidates.isEmpty {
-                AppLogger.routing.notice("Station search recovered with safe fallback filters")
-            }
-        }
 
         guard !rawCandidates.isEmpty else {
-            if settings.destination == nil {
-                locationNeedsReview = true
-                state = .idle
-                navigation.select(.home)
-                AppLogger.routing.warning("Station search found no nearby candidates after fallback")
-            } else {
-                state = .results([])
-                navigation.select(.routes)
-                AppLogger.routing.warning("Journey search found no corridor candidates after fallback")
-            }
-            await recordDemandIfEnabled(origin: userLocation, resultCount: 0)
-            recordSearchProof(
-                status: .failed,
-                resultKey: "no-candidate",
-                candidates: [],
+            await handleNoCandidates(
+                presentResults: presentResults,
                 location: userLocation,
                 startedAt: startedAt
             )
             return
         }
 
-        let planningCandidates = habits.personalize(rawCandidates)
-        if let snapshot = journeySnapshot {
-            tripPlan = tripPlanner.plan(
-                routeDistanceKm: snapshot.distanceKm,
-                candidates: planningCandidates,
-                profile: settings.profile,
-                estimatedDrivingMinutes: snapshot.estimatedMinutes,
-                elevation: snapshot.elevation
-            )
-        } else {
-            tripPlan = nil
+        await completeSearch(
+            rawCandidates,
+            presentResults: presentResults,
+            location: userLocation,
+            startedAt: startedAt
+        )
+    }
+
+    private func ensureDataset(
+        presentResults: Bool,
+        location: SarjBulCore.UserLocation,
+        startedAt: Date
+    ) async -> Bool {
+        if stationData.stations.isEmpty {
+            let session = try? await auth.validSession()
+            await stationData.retry(statusIDToken: session?.idToken)
         }
-        let result = Array(planningCandidates.prefix(80))
-        if let nearestFast = result
-            .filter({ $0.station.powerKW >= 50 })
-            .min(by: { $0.distanceKm < $1.distanceKm }) {
-            WidgetSnapshotStore.save(WidgetSnapshot(
-                stationName: nearestFast.station.name,
-                distanceKm: nearestFast.distanceKm,
-                power: nearestFast.station.power,
-                safeRangeKm: Int(profileSafeRange.rounded()),
-                updatedAt: Date(),
-                languageCode: settings.language.rawValue
-            ))
-        }
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-            state = .results(result)
+        guard stationData.stations.isEmpty else { return true }
+        if presentResults, previousCandidates.isEmpty {
+            state = .failed(.localized(key: "data.recovery_failed", kind: .error))
             navigation.select(.routes)
         }
-        if !result.isEmpty { habits.recordSearch(filters: settings.filters) }
+        frictionTelemetry.record(.noOutcome)
+        recordSearchProof(
+            status: .failed,
+            resultKey: "missing-dataset",
+            candidates: [],
+            location: location,
+            startedAt: startedAt
+        )
+        return false
+    }
+
+    private func searchCandidates(
+        origin: SarjBulCore.UserLocation,
+        routePoints: [SarjBulCore.UserLocation],
+        filters: StationFilters
+    ) async -> [StationCandidate] {
+        let limit = settings.destination == nil ? 24 : 120
+        var candidates = await stationData.candidates(
+            origin: origin,
+            destination: settings.destination,
+            routePoints: routePoints,
+            profile: settings.profile,
+            filters: filters,
+            limit: limit
+        )
+        let recoveryFilters = relaxedFilters(from: filters)
+        if candidates.isEmpty, recoveryFilters != filters {
+            candidates = await stationData.candidates(
+                origin: origin,
+                destination: settings.destination,
+                routePoints: routePoints,
+                profile: settings.profile,
+                filters: recoveryFilters,
+                limit: limit
+            )
+            if !candidates.isEmpty {
+                AppLogger.routing.notice("Station search recovered with safe fallback filters")
+            }
+        }
+        return candidates
+    }
+
+    private func handleNoCandidates(
+        presentResults: Bool,
+        location: SarjBulCore.UserLocation,
+        startedAt: Date
+    ) async {
+        if settings.destination == nil {
+            locationNeedsReview = true
+            if previousCandidates.isEmpty { state = .idle }
+            if presentResults { navigation.select(.home) }
+            AppLogger.routing.warning("Station search found no nearby candidates after fallback")
+        } else {
+            if presentResults {
+                state = .results([])
+                navigation.select(.routes)
+            }
+            AppLogger.routing.warning("Journey search found no corridor candidates after fallback")
+        }
+        await recordDemandIfEnabled(origin: location, resultCount: 0)
+        frictionTelemetry.record(.noOutcome)
+        recordSearchProof(
+            status: .failed,
+            resultKey: "no-candidate",
+            candidates: [],
+            location: location,
+            startedAt: startedAt
+        )
+    }
+
+    private func completeSearch(
+        _ rawCandidates: [StationCandidate],
+        presentResults: Bool,
+        location: SarjBulCore.UserLocation,
+        startedAt: Date
+    ) async {
+        let planningCandidates = habits.personalize(rawCandidates)
+        updateTripPlan(with: planningCandidates)
+        let result = Array(planningCandidates.prefix(24))
+        saveWidgetSnapshot(from: result)
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+            state = .results(result)
+            if presentResults { navigation.select(.routes) }
+        }
+        previousCandidates = result
+        frictionTelemetry.record(.outcomeReady)
+        habits.recordSearch(filters: settings.filters)
         recordSearchProof(
             status: .completed,
             resultKey: result[0].station.statusKey,
             candidates: result,
-            location: userLocation,
+            location: location,
             startedAt: startedAt
         )
-        await recordDemandIfEnabled(origin: userLocation, resultCount: result.count)
+        await recordDemandIfEnabled(origin: location, resultCount: result.count)
+    }
+
+    private func updateTripPlan(with candidates: [StationCandidate]) {
+        guard let snapshot = journeySnapshot else {
+            tripPlan = nil
+            return
+        }
+        tripPlan = tripPlanner.plan(
+            routeDistanceKm: snapshot.distanceKm,
+            candidates: candidates,
+            profile: settings.profile,
+            estimatedDrivingMinutes: snapshot.estimatedMinutes,
+            elevation: snapshot.elevation
+        )
+    }
+
+    private func saveWidgetSnapshot(from candidates: [StationCandidate]) {
+        guard let nearestFast = candidates
+            .filter({ $0.station.powerKW >= 50 })
+            .min(by: { $0.distanceKm < $1.distanceKm }) else { return }
+        WidgetSnapshotStore.save(WidgetSnapshot(
+            stationName: nearestFast.station.name,
+            distanceKm: nearestFast.distanceKm,
+            power: nearestFast.station.power,
+            safeRangeKm: Int(profileSafeRange.rounded()),
+            updatedAt: Date(),
+            languageCode: settings.language.rawValue
+        ))
+    }
+
+    func presentPreparedResults() {
+        guard !routeCandidates.isEmpty || !previousCandidates.isEmpty else { return }
+        if routeCandidates.isEmpty { state = .results(previousCandidates) }
+        navigation.select(.routes)
+    }
+
+    func startNavigation(to candidate: StationCandidate) {
+        favorites.recordRouteOpened(candidate.station)
+        habits.recordRouteOpened(candidate)
+        frictionTelemetry.record(.routeStarted)
+        let coordinate = CLLocationCoordinate2D(
+            latitude: candidate.station.latitude,
+            longitude: candidate.station.longitude
+        )
+        let destination = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+        destination.name = candidate.station.name
+        destination.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
     }
 
     private func relaxedFilters(from filters: StationFilters) -> StationFilters {
@@ -256,7 +360,7 @@ final class SearchCoordinator {
         return relaxed
     }
 
-    private func prepareRoutePoints(origin: UserLocation) async -> [UserLocation] {
+    private func prepareRoutePoints(origin: SarjBulCore.UserLocation) async -> [SarjBulCore.UserLocation] {
         guard let destination = settings.destination else {
             journeySnapshot = nil
             return []
@@ -307,7 +411,7 @@ final class SearchCoordinator {
 
     private var profileSafeRange: Double { settings.profile.safeRangeKm }
 
-    private func recordDemandIfEnabled(origin: UserLocation, resultCount: Int) async {
+    private func recordDemandIfEnabled(origin: SarjBulCore.UserLocation, resultCount: Int) async {
         guard settings.demandAnalyticsEnabled else { return }
         let event = SearchDemandEvent(
             location: origin,
@@ -396,7 +500,7 @@ final class SearchCoordinator {
         status: ExecutionProofStatus,
         resultKey: String,
         candidates: [StationCandidate],
-        location: UserLocation?,
+        location: SarjBulCore.UserLocation?,
         startedAt: Date
     ) {
         executionTrust.record(
@@ -423,7 +527,7 @@ final class SearchCoordinator {
 
     private func evidence(
         for candidate: StationCandidate?,
-        location: UserLocation?
+        location: SarjBulCore.UserLocation?
     ) -> [ExecutionEvidence] {
         let now = Date()
         var result = [ExecutionEvidence(
