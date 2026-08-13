@@ -137,6 +137,7 @@ final class AppState {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes-idle")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-filter-recovery")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-outside-coverage") {
@@ -212,6 +213,7 @@ final class AppState {
         } else if arguments.contains("--ui-testing-home")
                     || arguments.contains("--ui-testing-home-en")
                     || arguments.contains("--ui-testing-routes")
+                    || arguments.contains("--ui-testing-navigation-picker")
                     || arguments.contains("--ui-testing-habit")
                     || arguments.contains("--ui-testing-agent")
                     || arguments.contains("--ui-testing-context-critical") {

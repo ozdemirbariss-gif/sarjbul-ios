@@ -336,9 +336,27 @@ final class SearchCoordinator {
     }
 
     func startNavigation(to candidate: StationCandidate) {
+        guard let preference = settings.navigationAppPreference else { return }
+        startNavigation(to: candidate, using: preference)
+    }
+
+    func startNavigation(to candidate: StationCandidate, using preference: NavigationAppPreference) {
+        settings.navigationAppPreference = preference
         favorites.recordRouteOpened(candidate.station)
         habits.recordRouteOpened(candidate)
         frictionTelemetry.record(.routeStarted)
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker") { return }
+        #endif
+        switch preference {
+        case .appleMaps:
+            openInAppleMaps(candidate)
+        case .googleMaps:
+            openInGoogleMaps(candidate)
+        }
+    }
+
+    private func openInAppleMaps(_ candidate: StationCandidate) {
         let coordinate = CLLocationCoordinate2D(
             latitude: candidate.station.latitude,
             longitude: candidate.station.longitude
@@ -348,6 +366,21 @@ final class SearchCoordinator {
         destination.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
+    }
+
+    private func openInGoogleMaps(_ candidate: StationCandidate) {
+        var components = URLComponents(string: "https://www.google.com/maps/dir/")
+        components?.queryItems = [
+            URLQueryItem(name: "api", value: "1"),
+            URLQueryItem(
+                name: "destination",
+                value: "\(candidate.station.latitude),\(candidate.station.longitude)"
+            ),
+            URLQueryItem(name: "travelmode", value: "driving"),
+            URLQueryItem(name: "dir_action", value: "navigate")
+        ]
+        guard let url = components?.url else { return }
+        UIApplication.shared.open(url)
     }
 
     private func relaxedFilters(from filters: StationFilters) -> StationFilters {

@@ -9,6 +9,9 @@ final class UserSettingsStore {
     var language: AppLanguage {
         didSet { persistence.language = language }
     }
+    var navigationAppPreference: NavigationAppPreference? {
+        didSet { persistence.navigationAppPreference = navigationAppPreference }
+    }
     var profile: DrivingProfile {
         didSet { persistence.profile = profile }
     }
@@ -27,6 +30,7 @@ final class UserSettingsStore {
     init(persistence: any AppPersistence, externalLinks: AppExternalLinks) {
         self.persistence = persistence
         language = persistence.language
+        navigationAppPreference = persistence.navigationAppPreference
         profile = persistence.profile
         destination = persistence.destination
         demandAnalyticsEnabled = persistence.demandAnalyticsEnabled

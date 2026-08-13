@@ -12,6 +12,7 @@ struct HomeView: View {
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(ExecutionTrustStore.self) private var executionTrust
     @Environment(FrictionTelemetryStore.self) private var frictionTelemetry
+    @Environment(\.openURL) private var openURL
     @StateObject private var locationManager = LocationManager()
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
@@ -25,7 +26,7 @@ struct HomeView: View {
     @State private var intentPrediction: SearchIntentPrediction?
     @State private var filtersBeforePrediction: StationFilters?
     @State private var didEvaluateIntentPrediction = false
-    @Environment(\.openURL) private var openURL
+    @State private var navigationPickerPresented = false
 
     var body: some View {
         NavigationStack {
@@ -965,8 +966,11 @@ struct HomeView: View {
             .padding(20)
 
             Button {
-                Haptic.success()
-                search.startNavigation(to: candidate)
+                if settings.navigationAppPreference == nil {
+                    navigationPickerPresented = true
+                } else {
+                    search.startNavigation(to: candidate)
+                }
             } label: {
                 HStack {
                     Text(settings.t("feed.start_route"))
@@ -983,6 +987,21 @@ struct HomeView: View {
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("prepared-route-button")
+            .confirmationDialog(
+                settings.t("feed.choose_navigation"),
+                isPresented: $navigationPickerPresented,
+                titleVisibility: .visible
+            ) {
+                Button(settings.t("feed.apple_maps")) {
+                    search.startNavigation(to: candidate, using: .appleMaps)
+                }
+                Button(settings.t("feed.google_maps")) {
+                    search.startNavigation(to: candidate, using: .googleMaps)
+                }
+                Button(settings.t("status.cancel"), role: .cancel) {}
+            } message: {
+                Text(settings.t("feed.choose_navigation_hint"))
+            }
 
             Button {
                 Haptic.tap()
@@ -1219,6 +1238,7 @@ struct HomeView: View {
         #if DEBUG
         ProcessInfo.processInfo.arguments.contains("--ui-testing-home")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-device-location")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-habit")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")

@@ -11,7 +11,6 @@ struct StationCard: View {
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(RouteStore.self) private var routeStore
     @Environment(HabitStore.self) private var habits
-    @Environment(\.openURL) private var openURL
     var candidate: StationCandidate
     var rank: Int
     var total: Int
@@ -23,6 +22,7 @@ struct StationCard: View {
     @State private var storyShareItem: StationStoryShareItem?
     @State private var isGeneratingStory = false
     @State private var storyErrorPresented = false
+    @State private var navigationPickerPresented = false
     @ScaledMetric(relativeTo: .largeTitle) private var distanceTextSize = 54
     @ScaledMetric(relativeTo: .title) private var stationTitleSize = 25
 
@@ -172,7 +172,7 @@ struct StationCard: View {
         HStack(spacing: 0) {
             Button {
                 Haptic.tap()
-                openInAppleMaps()
+                startPreferredNavigation()
             } label: {
                 HStack(spacing: 10) {
                     Text(settings.t("feed.start_route"))
@@ -189,14 +189,25 @@ struct StationCard: View {
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("station-primary-route-button")
+            .confirmationDialog(
+                settings.t("feed.choose_navigation"),
+                isPresented: $navigationPickerPresented,
+                titleVisibility: .visible
+            ) {
+                navigationButton(.appleMaps)
+                navigationButton(.googleMaps)
+                Button(settings.t("status.cancel"), role: .cancel) {}
+            } message: {
+                Text(settings.t("feed.choose_navigation_hint"))
+            }
 
             Rectangle()
                 .fill(.black.opacity(0.14))
                 .frame(width: 1, height: 30)
 
             Menu {
-                Button(settings.t("feed.apple_maps"), systemImage: "apple.logo", action: openInAppleMaps)
-                Button(settings.t("feed.google_maps"), systemImage: "map", action: openInGoogleMaps)
+                navigationButton(.appleMaps)
+                navigationButton(.googleMaps)
             } label: {
                 Image(systemName: "chevron.down")
                     .font(.subheadline.weight(.heavy))
@@ -570,23 +581,24 @@ struct StationCard: View {
         settings.profile.arrivalChargePercent(distanceKm: displayDistanceKm)
     }
 
-    private func openInAppleMaps() {
-        search.startNavigation(to: candidate)
+    private func startPreferredNavigation() {
+        if settings.navigationAppPreference == nil {
+            navigationPickerPresented = true
+        } else {
+            search.startNavigation(to: candidate)
+        }
     }
 
-    private func openInGoogleMaps() {
-        favorites.recordRouteOpened(candidate.station)
-        habits.recordRouteOpened(candidate)
-        var components = URLComponents(string: "https://www.google.com/maps/dir/")
-        components?.queryItems = [
-            URLQueryItem(name: "api", value: "1"),
-            URLQueryItem(
-                name: "destination",
-                value: "\(candidate.station.latitude),\(candidate.station.longitude)"
-            ),
-            URLQueryItem(name: "travelmode", value: "driving")
-        ]
-        if let url = components?.url { openURL(url) }
+    private func navigationButton(_ preference: NavigationAppPreference) -> some View {
+        let isApple = preference == .appleMaps
+        return Button {
+            search.startNavigation(to: candidate, using: preference)
+        } label: {
+            Label(
+                settings.t(isApple ? "feed.apple_maps" : "feed.google_maps"),
+                systemImage: isApple ? "apple.logo" : "map"
+            )
+        }
     }
 
     private var reportCooldownRemaining: Int {

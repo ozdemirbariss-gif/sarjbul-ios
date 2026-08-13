@@ -13,6 +13,16 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(AppLanguage.tr.uppercased("sürüş profili"), "SÜRÜŞ PROFİLİ")
     }
 
+    func testNavigationAppPreferencePersistsAndCanBeReset() throws {
+        let persistence = try makePersistence()
+
+        XCTAssertNil(persistence.navigationAppPreference)
+        persistence.navigationAppPreference = .googleMaps
+        XCTAssertEqual(persistence.navigationAppPreference, .googleMaps)
+        persistence.navigationAppPreference = nil
+        XCTAssertNil(persistence.navigationAppPreference)
+    }
+
     func testLegacyAuthSessionMigratesFromDefaultsToSecureStorage() throws {
         let suiteName = "PersistenceTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

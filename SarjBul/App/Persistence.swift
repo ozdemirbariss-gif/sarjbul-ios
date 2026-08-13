@@ -36,6 +36,7 @@ protocol AppPersistence: AnyObject {
     var profile: DrivingProfile { get set }
     var authSession: FirebaseAuthSession? { get set }
     var language: AppLanguage { get set }
+    var navigationAppPreference: NavigationAppPreference? { get set }
     var destination: JourneyDestination? { get set }
     var recentRoutes: [RecentStationRoute] { get set }
     var favoriteStationKeys: Set<String> { get set }
@@ -84,6 +85,7 @@ final class SystemAppPersistence: AppPersistence {
         static let profile = "drivingProfile"
         static let authSession = "firebaseAuthSession"
         static let language = "appLanguage"
+        static let navigationAppPreference = "navigationAppPreference"
         static let destination = "journeyDestination"
         static let recentRoutes = "recentStationRoutes"
         static let favoriteStationKeys = "favoriteStationKeys"
@@ -159,6 +161,14 @@ final class SystemAppPersistence: AppPersistence {
     var language: AppLanguage {
         get { AppLanguage(code: defaults.string(forKey: Key.language) ?? AppLanguage.tr.rawValue) }
         set { defaults.set(newValue.rawValue, forKey: Key.language) }
+    }
+
+    var navigationAppPreference: NavigationAppPreference? {
+        get {
+            guard let rawValue = defaults.string(forKey: Key.navigationAppPreference) else { return nil }
+            return NavigationAppPreference(rawValue: rawValue)
+        }
+        set { defaults.set(newValue?.rawValue, forKey: Key.navigationAppPreference) }
     }
 
     var destination: JourneyDestination? {

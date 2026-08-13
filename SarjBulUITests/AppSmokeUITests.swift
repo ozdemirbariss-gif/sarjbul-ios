@@ -40,6 +40,21 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["home-preference-card"].waitForExistence(timeout: 5))
     }
 
+    func testFirstRouteTapAsksForNavigationAppAndRemembersSelection() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-navigation-picker"]
+        app.launch()
+
+        let routeButton = app.buttons["prepared-route-button"]
+        XCTAssertTrue(routeButton.waitForExistence(timeout: 20))
+        routeButton.tap()
+        XCTAssertTrue(app.buttons["Apple Maps"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Google Maps"].exists)
+        app.buttons["Google Maps"].tap()
+        routeButton.tap()
+        XCTAssertFalse(app.buttons["Apple Maps"].waitForExistence(timeout: 1))
+    }
+
     func testProfileKeepsComplexSettingsCollapsedByDefault() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-profile"]
