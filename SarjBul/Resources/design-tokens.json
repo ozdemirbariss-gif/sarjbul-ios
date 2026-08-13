@@ -5,15 +5,15 @@
     "surface": { "hex": "#1C1D1D", "opacity": 1.0 },
     "surfaceSoft": { "hex": "#292A2A", "opacity": 1.0 },
     "line": { "hex": "#FFFFFF", "opacity": 0.10 },
-    "lineStrong": { "hex": "#E7FF78", "opacity": 0.42 },
+    "lineStrong": { "hex": "#F7F8F3", "opacity": 0.34 },
     "text": { "hex": "#F7F8F3", "opacity": 1.0 },
     "textSoft": { "hex": "#FFFFFF", "opacity": 0.70 },
     "textMuted": { "hex": "#FFFFFF", "opacity": 0.48 },
-    "primary": { "hex": "#E7FF78", "opacity": 1.0 },
+    "primary": { "hex": "#F7F8F3", "opacity": 1.0 },
     "primaryDeep": { "hex": "#D8DFE9", "opacity": 1.0 },
     "danger": { "hex": "#FF8585", "opacity": 1.0 },
     "warning": { "hex": "#F0D77B", "opacity": 1.0 },
-    "electricBlue": { "hex": "#E7FF78", "opacity": 1.0 },
+    "electricBlue": { "hex": "#F7F8F3", "opacity": 1.0 },
     "loungeAccent": { "hex": "#B8A7FF", "opacity": 1.0 },
     "glass": { "hex": "#1C1D1D", "opacity": 0.82 },
     "glassStrong": { "hex": "#252626", "opacity": 0.96 }
@@ -29,7 +29,7 @@
   },
   "shadows": {
     "soft": { "color": "#000000", "opacity": 0.34, "radius": 24, "x": 0, "y": 16 },
-    "glow": { "color": "#E7FF78", "opacity": 0.16, "radius": 32, "x": 0, "y": 14 },
+    "glow": { "color": "#F7F8F3", "opacity": 0.10, "radius": 28, "x": 0, "y": 12 },
     "card": { "color": "#000000", "opacity": 0.46, "radius": 30, "x": 0, "y": 22 }
   },
   "fonts": {

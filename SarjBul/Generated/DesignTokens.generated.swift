@@ -21,15 +21,15 @@ enum SBGeneratedTokens {
     static let surface = SBGeneratedColorToken(hex: "#1C1D1D", opacity: 1.0)
     static let surfaceSoft = SBGeneratedColorToken(hex: "#292A2A", opacity: 1.0)
     static let line = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.1)
-    static let lineStrong = SBGeneratedColorToken(hex: "#E7FF78", opacity: 0.42)
+    static let lineStrong = SBGeneratedColorToken(hex: "#F7F8F3", opacity: 0.34)
     static let text = SBGeneratedColorToken(hex: "#F7F8F3", opacity: 1.0)
     static let textSoft = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.7)
     static let textMuted = SBGeneratedColorToken(hex: "#FFFFFF", opacity: 0.48)
-    static let primary = SBGeneratedColorToken(hex: "#E7FF78", opacity: 1.0)
+    static let primary = SBGeneratedColorToken(hex: "#F7F8F3", opacity: 1.0)
     static let primaryDeep = SBGeneratedColorToken(hex: "#D8DFE9", opacity: 1.0)
     static let danger = SBGeneratedColorToken(hex: "#FF8585", opacity: 1.0)
     static let warning = SBGeneratedColorToken(hex: "#F0D77B", opacity: 1.0)
-    static let electricBlue = SBGeneratedColorToken(hex: "#E7FF78", opacity: 1.0)
+    static let electricBlue = SBGeneratedColorToken(hex: "#F7F8F3", opacity: 1.0)
     static let loungeAccent = SBGeneratedColorToken(hex: "#B8A7FF", opacity: 1.0)
     static let glass = SBGeneratedColorToken(hex: "#1C1D1D", opacity: 0.82)
     static let glassStrong = SBGeneratedColorToken(hex: "#252626", opacity: 0.96)
@@ -43,7 +43,7 @@ enum SBGeneratedTokens {
     static let radiusPill = 999.0
 
     static let shadowSoft = SBGeneratedShadowToken(color: "#000000", opacity: 0.34, radius: 24.0, x: 0.0, y: 16.0)
-    static let shadowGlow = SBGeneratedShadowToken(color: "#E7FF78", opacity: 0.16, radius: 32.0, x: 0.0, y: 14.0)
+    static let shadowGlow = SBGeneratedShadowToken(color: "#F7F8F3", opacity: 0.1, radius: 28.0, x: 0.0, y: 12.0)
     static let shadowCard = SBGeneratedShadowToken(color: "#000000", opacity: 0.46, radius: 30.0, x: 0.0, y: 22.0)
 
     static let displayFont = "Space Grotesk"
