@@ -1,6 +1,6 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-08-14T05:48:48+00:00",
+  "generated_at": "2026-08-15T04:50:23+00:00",
   "license_count": 181,
   "licenses": [
     {
@@ -1035,7 +1035,7 @@
       "brands": [
         "MYZCO"
       ],
-      "holder": "MYZ BİLGİSAYAR OTOMOTİV İNŞAAT PETROL SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+      "holder": "MYZ ENERJİ ANONİM ŞİRKETİ",
       "license_number": "ŞH/12229-1/00154",
       "valid_from": "2023-12-07T00:00:00Z",
       "valid_until": "2072-12-07T00:00:00Z"
