@@ -246,6 +246,24 @@ struct ProductIntelligenceTests {
     }
 
     @Test
+    func frictionEventContainsOnlyBucketedAnonymousContext() throws {
+        let event = FrictionAnalyticsEvent(
+            kind: "outcomeReady",
+            elapsedMilliseconds: 2_450,
+            journeyPhase: "decision",
+            date: Date(timeIntervalSince1970: 1_768_780_800)
+        )
+        let object = try #require(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(event)) as? [String: Any]
+        )
+
+        #expect(event.elapsedBucket == "1_3s")
+        #expect(Set(object.keys) == Set([
+            "kind", "elapsedBucket", "journeyPhase", "createdAtMilliseconds", "source"
+        ]))
+    }
+
+    @Test
     func licensedOperatorMatchingUsesRegistryBrands() {
         let records = [LicensedOperatorRecord(
             licenseNumber: "ŞH/1",

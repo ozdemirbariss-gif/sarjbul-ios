@@ -14,6 +14,7 @@ enum OfflineMutationPayload: Codable, Sendable {
     case stationReport(stationKey: String, status: String)
     case contribution(stationKey: String, contribution: StationContribution)
     case demand(SearchDemandEvent)
+    case friction(FrictionAnalyticsEvent)
 }
 
 struct PendingOfflineMutation: Codable, Identifiable, Sendable {

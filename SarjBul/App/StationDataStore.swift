@@ -56,6 +56,11 @@ final class StationDataStore {
         return false
     }
 
+    var isOperational: Bool {
+        if case .failed = loadState { return !stations.isEmpty }
+        return true
+    }
+
     func load(statusIDToken: String? = nil) async {
         if let loadTask {
             await loadTask.value

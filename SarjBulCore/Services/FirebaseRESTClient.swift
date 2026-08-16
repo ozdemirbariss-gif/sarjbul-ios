@@ -241,6 +241,21 @@ public struct FirebaseRESTClient: Sendable {
         )
     }
 
+    public func recordFrictionEvent(
+        event: FrictionAnalyticsEvent,
+        uid: String,
+        idToken: String,
+        context: ServiceMutationContext
+    ) async throws {
+        var payload = event
+        payload.createdAtMilliseconds = Int64(context.createdAt.timeIntervalSince1970 * 1_000)
+        try await putJSON(
+            path: "friction_events/\(context.idempotencyKey.lowercased()).json",
+            idToken: idToken,
+            body: payload
+        )
+    }
+
     private func authRequest(endpoint: String, body: [String: Any]) async throws -> FirebaseAuthSession {
         let data = try await authRequestData(endpoint: endpoint, body: body)
         return try JSONDecoder().decode(FirebaseAuthSession.self, from: data)

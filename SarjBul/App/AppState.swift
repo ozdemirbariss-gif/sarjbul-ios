@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import SarjBulCore
 
@@ -20,6 +21,8 @@ final class AppState {
     let autonomousAgent: AutonomousChargingAgentStore
     let contextIntelligence: ContextIntelligenceStore
     let offlineSync: OfflineSyncCoordinator
+    let locationManager: LocationManager
+    private var cancellables = Set<AnyCancellable>()
 
     init(
         repository: any StationRepository,
@@ -70,6 +73,7 @@ final class AppState {
         let habits = HabitStore(persistence: persistence)
         let executionTrust = ExecutionTrustStore(persistence: persistence)
         let frictionTelemetry = FrictionTelemetryStore(persistence: persistence)
+        let locationManager = LocationManager()
         let search = SearchCoordinator(
             stationData: stationData,
             settings: settings,
@@ -94,7 +98,8 @@ final class AppState {
         self.executionTrust = executionTrust
         self.frictionTelemetry = frictionTelemetry
         self.offlineSync = offlineSync
-        autonomousAgent = AutonomousChargingAgentStore(
+        self.locationManager = locationManager
+        let autonomousAgent = AutonomousChargingAgentStore(
             stationData: stationData,
             settings: settings,
             search: search,
@@ -102,6 +107,7 @@ final class AppState {
             executionTrust: executionTrust,
             telemetryClient: vehicleTelemetryClient
         )
+        self.autonomousAgent = autonomousAgent
         contextIntelligence = ContextIntelligenceStore(
             persistence: persistence,
             habits: habits,
@@ -115,6 +121,24 @@ final class AppState {
             persistence: persistence,
             frictionTelemetry: frictionTelemetry
         )
+
+        locationManager.$lastLocation
+            .compactMap { $0 }
+            .sink { [weak frictionTelemetry, weak autonomousAgent] location in
+                frictionTelemetry?.observeLocation(location)
+                Task { await autonomousAgent?.updateLocation(location) }
+            }
+            .store(in: &cancellables)
+
+        frictionTelemetry.onRecord = { event in
+            guard settings.demandAnalyticsEnabled else { return }
+            Task {
+                await offlineSync.submit(
+                    .friction(event.analyticsEvent),
+                    deduplicationKey: "friction:\(event.id.uuidString.lowercased())"
+                ) { _ in }
+            }
+        }
 
         stationData.onRealtimeEvent = { [weak search] event in
             search?.applyRealtime(event)

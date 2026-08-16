@@ -13,7 +13,7 @@ struct HomeView: View {
     @Environment(ExecutionTrustStore.self) private var executionTrust
     @Environment(FrictionTelemetryStore.self) private var frictionTelemetry
     @Environment(\.openURL) private var openURL
-    @StateObject private var locationManager = LocationManager()
+    @EnvironmentObject private var locationManager: LocationManager
     @State private var manualLatitude = 38.3939
     @State private var manualLongitude = 27.1891
     @State private var selectedPreset: ManualLocationPreset?
@@ -75,7 +75,6 @@ struct HomeView: View {
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 guard !isDeterministicUITest else { return }
-                frictionTelemetry.observeLocation(location)
                 applyLocation(location)
                 Task {
                     await contextIntelligence.evaluate(
@@ -1320,7 +1319,9 @@ struct HomeView: View {
         frictionTelemetry.record(.locationReady)
         Task {
             await search.prepareOutcome()
-            await autonomousAgent.updateLocation(location)
+            if location.source == .manual {
+                await autonomousAgent.updateLocation(location)
+            }
         }
     }
 }

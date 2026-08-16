@@ -74,38 +74,44 @@ final class AutonomousChargingAgentStore {
         await evaluate(trigger: .locationUpdate, location: location)
     }
 
-    func refreshInBackground() async {
+    func refreshInBackground() async -> Bool {
         defer { AutonomousBackgroundScheduler.scheduleAll() }
-        await runWorker(trigger: .backgroundRefresh, location: persistence.lastKnownLocation)
+        return await runWorker(trigger: .backgroundRefresh, location: persistence.lastKnownLocation)
     }
 
-    func processInBackground() async {
+    func processInBackground() async -> Bool {
         defer { AutonomousBackgroundScheduler.scheduleAll() }
-        await runWorker(trigger: .backgroundProcessing, location: persistence.lastKnownLocation)
+        return await runWorker(trigger: .backgroundProcessing, location: persistence.lastKnownLocation)
     }
 
-    func handleSilentPush() async {
-        await runWorker(trigger: .silentPush, location: persistence.lastKnownLocation)
+    func handleSilentPush() async -> Bool {
+        return await runWorker(trigger: .silentPush, location: persistence.lastKnownLocation)
     }
 
     func evaluate(trigger: ChargingAgentTrigger, location: UserLocation?) async {
-        await runWorker(trigger: trigger, location: location)
+        _ = await runWorker(trigger: trigger, location: location)
     }
 
-    private func runWorker(trigger: ChargingAgentTrigger, location: UserLocation?) async {
-        guard settings.autonomousChargingPolicy.isEnabled, let location else { return }
-        guard persistence.autonomousChargingMutedUntil.map({ $0 <= Date() }) ?? true else { return }
-        guard state != .evaluating else { return }
+    private func runWorker(trigger: ChargingAgentTrigger, location: UserLocation?) async -> Bool {
+        guard settings.autonomousChargingPolicy.isEnabled else { return true }
+        guard let location else { return false }
+        guard persistence.autonomousChargingMutedUntil.map({ $0 <= Date() }) ?? true else { return true }
+        guard state != .evaluating else { return true }
+        let now = Date()
+        let maximumLocationAge: TimeInterval = location.source == .device ? 15 * 60 : 60 * 60
+        guard now.timeIntervalSince(location.capturedAt) <= maximumLocationAge else {
+            lastDecisionReason = .staleLocation
+            return false
+        }
         state = .evaluating
         defer { if state == .evaluating { state = proposal == nil ? .idle : .ready } }
 
         guard let telemetry = await telemetryClient.latestSnapshot(fallbackProfile: settings.profile) else {
             lastDecisionReason = .staleTelemetry
-            return
+            return false
         }
         persistence.lastVehicleTelemetry = telemetry
 
-        let now = Date()
         var filters = settings.filters
         filters.searchText = ""
         filters.rangeFilterEnabled = true
@@ -117,6 +123,7 @@ final class AutonomousChargingAgentStore {
             filters: filters,
             limit: 20
         )
+        guard stationData.isOperational else { return false }
         let currentProposal = proposal ?? persistence.autonomousChargingProposal
         let currentCandidate = await candidate(
             for: currentProposal,
@@ -139,7 +146,7 @@ final class AutonomousChargingAgentStore {
             lastDecisionReason = telemetry.chargePercent > settings.autonomousChargingPolicy.triggerChargePercent
                 ? .chargeSufficient
                 : .cooldownActive
-            return
+            return true
         }
 
         if plan.actions.contains(.refreshStationData) {
@@ -160,7 +167,7 @@ final class AutonomousChargingAgentStore {
         guard routeAction != nil else {
             record(AutomationReport(rule: plan.rule, actions: plan.actions, createdAt: now))
             lastDecisionReason = nil
-            return
+            return true
         }
 
         let previousStationName = currentProposal?.stationName
@@ -183,6 +190,7 @@ final class AutonomousChargingAgentStore {
             previousStationName: previousStationName,
             now: now
         )
+        return true
     }
 
     private func applyDecision(
@@ -346,7 +354,7 @@ final class AutonomousChargingAgentStore {
             ExecutionEvidence(
                 source: location.source == .device ? .deviceLocation : .manualLocation,
                 reliability: location.source == .device ? 0.98 : 0.90,
-                observedAt: now,
+                observedAt: location.capturedAt,
                 maximumAge: location.source == .device ? 300 : 86_400
             ),
             ExecutionEvidence(

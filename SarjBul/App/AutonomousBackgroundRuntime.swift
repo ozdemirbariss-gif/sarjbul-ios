@@ -2,12 +2,12 @@ import Foundation
 
 @MainActor
 enum AutonomousBackgroundRuntime {
-    static var silentPushHandler: (() async -> Void)?
-    static var processingHandler: (() async -> Void)?
+    static var silentPushHandler: (() async -> Bool)?
+    static var processingHandler: (() async -> Bool)?
 
     static func install(
-        silentPushHandler: @escaping () async -> Void,
-        processingHandler: @escaping () async -> Void
+        silentPushHandler: @escaping () async -> Bool,
+        processingHandler: @escaping () async -> Bool
     ) {
         self.silentPushHandler = silentPushHandler
         self.processingHandler = processingHandler

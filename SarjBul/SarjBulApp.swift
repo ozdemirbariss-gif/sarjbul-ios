@@ -18,18 +18,20 @@ struct SarjBulApp: App {
             silentPushHandler: {
                 await appState.search.prepare()
                 await appState.offlineSync.syncPending()
-                await appState.autonomousAgent.handleSilentPush()
+                let agentSucceeded = await appState.autonomousAgent.handleSilentPush()
                 await appState.contextIntelligence.refreshInBackground(
                     location: appState.search.userLocation
                 )
+                return agentSucceeded && !appState.offlineSync.isReadOnlySafeMode
             },
             processingHandler: {
                 await appState.search.prepare()
                 await appState.offlineSync.syncPending()
-                await appState.autonomousAgent.processInBackground()
+                let agentSucceeded = await appState.autonomousAgent.processInBackground()
                 await appState.contextIntelligence.refreshInBackground(
                     location: appState.search.userLocation
                 )
+                return agentSucceeded && !appState.offlineSync.isReadOnlySafeMode
             }
         )
     }
@@ -54,17 +56,21 @@ struct SarjBulApp: App {
                 .environment(appState.autonomousAgent)
                 .environment(appState.contextIntelligence)
                 .environment(appState.offlineSync)
+                .environmentObject(appState.locationManager)
                 .environment(routeStore)
                 .environment(networkMonitor)
         }
         .onChange(of: scenePhase) { _, phase in
-            guard phase == .background else { return }
-            AutonomousBackgroundScheduler.scheduleAll()
+            if phase == .active {
+                appState.locationManager.requestFreshLocation()
+            } else if phase == .background {
+                AutonomousBackgroundScheduler.scheduleAll()
+            }
         }
         .backgroundTask(.appRefresh(AutonomousBackgroundScheduler.refreshIdentifier)) {
             await appState.search.prepare()
             await appState.offlineSync.syncPending()
-            await appState.autonomousAgent.refreshInBackground()
+            _ = await appState.autonomousAgent.refreshInBackground()
             await appState.contextIntelligence.refreshInBackground(
                 location: appState.search.userLocation
             )

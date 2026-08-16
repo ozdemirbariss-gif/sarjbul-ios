@@ -45,6 +45,21 @@ public protocol DemandAnalyticsClient: Sendable {
         idToken: String,
         context: ServiceMutationContext
     ) async throws
+    func recordFrictionEvent(
+        event: FrictionAnalyticsEvent,
+        uid: String,
+        idToken: String,
+        context: ServiceMutationContext
+    ) async throws
+}
+
+public extension DemandAnalyticsClient {
+    func recordFrictionEvent(
+        event: FrictionAnalyticsEvent,
+        uid: String,
+        idToken: String,
+        context: ServiceMutationContext
+    ) async throws {}
 }
 
 public protocol RealtimeStationClient: Sendable {

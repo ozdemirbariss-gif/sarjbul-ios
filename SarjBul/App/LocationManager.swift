@@ -32,6 +32,13 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
         }
     }
 
+    func requestFreshLocation() {
+        lastError = nil
+        authorizationStatus = manager.authorizationStatus
+        guard locationAccessGranted else { return }
+        manager.requestLocation()
+    }
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
         if locationAccessGranted {
@@ -43,7 +50,12 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
         guard let location = locations.last else { return }
         let coordinate = location.coordinate
         lastError = nil
-        lastLocation = UserLocation(latitude: coordinate.latitude, longitude: coordinate.longitude, source: .device)
+        lastLocation = UserLocation(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            source: .device,
+            capturedAt: location.timestamp
+        )
         movementSpeedMetersPerSecond = location.speed >= 0 ? location.speed : nil
     }
 

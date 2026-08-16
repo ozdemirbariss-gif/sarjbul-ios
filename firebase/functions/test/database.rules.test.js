@@ -89,3 +89,23 @@ test("anonymous users cannot write private data", async () => {
     source: "ios",
   }));
 });
+
+test("friction analytics accepts only anonymous opt-in buckets", async () => {
+  const owner = testEnvironment.authenticatedContext("owner").database();
+  const anonymous = testEnvironment.unauthenticatedContext().database();
+  const event = {
+    kind: "outcomeReady",
+    elapsedBucket: "1_3s",
+    journeyPhase: "decision",
+    createdAtMilliseconds: Date.now(),
+    source: "ios_opt_in",
+  };
+
+  await assertSucceeds(set(ref(owner, "friction_events/event-1"), event));
+  await assertFails(get(ref(owner, "friction_events/event-1")));
+  await assertFails(set(ref(anonymous, "friction_events/event-2"), event));
+  await assertFails(set(ref(owner, "friction_events/event-3"), {
+    ...event,
+    latitude: 38.4,
+  }));
+});

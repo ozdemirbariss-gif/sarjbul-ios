@@ -6,6 +6,7 @@ public enum ExecutedActionKind: String, Codable, CaseIterable, Sendable {
     case routeOpened
     case calendarDeferred
     case stationDataRefreshed
+    case chargingVerified
 }
 
 public enum ExecutionProofStatus: String, Codable, Sendable {
@@ -23,6 +24,7 @@ public enum ExecutionEvidenceSource: String, Codable, Hashable, Sendable {
     case vehicleTelemetry
     case systemCalendar
     case userAction
+    case chargingReceipt
 }
 
 public struct ExecutionEvidence: Codable, Equatable, Identifiable, Sendable {

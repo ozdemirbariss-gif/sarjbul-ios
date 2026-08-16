@@ -17,7 +17,10 @@ enum FrictionEventKind: String, Codable, Sendable {
     case routeStarted
     case stationArrived
     case chargingStarted
-    case chargingCompleted
+    case chargingCompleted // Legacy persisted event; no longer treated as verified.
+    case chargingStopped
+    case chargingEstimatedEnded
+    case chargingVerified
 }
 
 struct FrictionEvent: Codable, Identifiable, Sendable {
@@ -38,7 +41,7 @@ struct ActiveRouteJourney: Codable, Sendable {
 
 struct FrictionSummary: Sendable {
     var completedJourneys: Int
-    var completedCharges: Int
+    var verifiedCharges: Int
     var medianOutcomeReadyMilliseconds: Int?
     var medianRouteStartMilliseconds: Int?
     var noOutcomeRate: Double
@@ -53,6 +56,7 @@ final class FrictionTelemetryStore {
     private let sessionID = UUID()
     private let launchedAt = Date()
     private var recordedKinds = Set<FrictionEventKind>()
+    var onRecord: (@MainActor (FrictionEvent) -> Void)?
 
     private(set) var events: [FrictionEvent]
     private(set) var activeJourney: ActiveRouteJourney?
@@ -76,15 +80,17 @@ final class FrictionTelemetryStore {
     ) {
         if oncePerSession, recordedKinds.contains(kind) { return }
         recordedKinds.insert(kind)
-        events.append(FrictionEvent(
+        let event = FrictionEvent(
             sessionID: sessionID,
             kind: kind,
             occurredAt: date,
             elapsedSinceLaunchMilliseconds: max(0, Int(date.timeIntervalSince(launchedAt) * 1_000)),
             journeyID: journeyID
-        ))
+        )
+        events.append(event)
         events = Array(events.suffix(240))
         persistence.frictionEvents = events
+        onRecord?(event)
     }
 
     func navigationChoicePresented() {
@@ -129,13 +135,23 @@ final class FrictionTelemetryStore {
         record(.chargingStarted, oncePerSession: false, journeyID: journeyID)
     }
 
-    func chargingCompleted() {
+    func chargingStopped() {
         let journeyID = activeJourney.flatMap { journey in
             events.contains { $0.kind == .chargingStarted && $0.journeyID == journey.id }
                 ? journey.id
                 : nil
         }
-        record(.chargingCompleted, oncePerSession: false, journeyID: journeyID)
+        record(.chargingStopped, oncePerSession: false, journeyID: journeyID)
+    }
+
+    func chargingEstimatedEnded(at station: Station?) {
+        let journeyID = matchingJourneyID(for: station)
+        record(.chargingEstimatedEnded, oncePerSession: false, journeyID: journeyID)
+    }
+
+    func chargingVerified(at station: Station?) {
+        let journeyID = matchingJourneyID(for: station)
+        record(.chargingVerified, oncePerSession: false, journeyID: journeyID)
         if journeyID != nil {
             activeJourney = nil
             persistence.activeRouteJourney = nil
@@ -160,7 +176,7 @@ final class FrictionTelemetryStore {
         let chargedJourneys = Set(events.filter { $0.kind == .chargingStarted }.compactMap(\.journeyID))
         return FrictionSummary(
             completedJourneys: routeTimes.count,
-            completedCharges: events.filter { $0.kind == .chargingCompleted }.count,
+            verifiedCharges: events.filter { $0.kind == .chargingVerified }.count,
             medianOutcomeReadyMilliseconds: median(outcomeTimes),
             medianRouteStartMilliseconds: median(routeTimes),
             noOutcomeRate: searches == 0 ? 0 : Double(failures) / Double(searches),
@@ -171,6 +187,14 @@ final class FrictionTelemetryStore {
         )
     }
 
+    private func matchingJourneyID(for station: Station?) -> UUID? {
+        guard let journey = activeJourney else { return nil }
+        guard station == nil || station?.statusKey == journey.station.statusKey else { return nil }
+        return events.contains { $0.kind == .chargingStarted && $0.journeyID == journey.id }
+            ? journey.id
+            : nil
+    }
+
     private func median(_ values: [Int]) -> Int? {
         guard !values.isEmpty else { return nil }
         let sorted = values.sorted()
@@ -179,5 +203,29 @@ final class FrictionTelemetryStore {
             return (sorted[middle - 1] + sorted[middle]) / 2
         }
         return sorted[middle]
+    }
+}
+
+extension FrictionEvent {
+    var analyticsEvent: FrictionAnalyticsEvent {
+        let phase: String
+        switch kind {
+        case .appOpened, .locationReady, .locationPermissionDenied:
+            phase = "entry"
+        case .stationSearchStarted, .outcomeReady, .noOutcome, .recommendationCorrected:
+            phase = "decision"
+        case .navigationChoicePresented, .navigationChoiceCompleted,
+             .navigationHandoffSucceeded, .navigationHandoffFailed, .routeStarted:
+            phase = "route"
+        case .stationArrived, .chargingStarted, .chargingCompleted, .chargingStopped,
+             .chargingEstimatedEnded, .chargingVerified:
+            phase = "charge"
+        }
+        return FrictionAnalyticsEvent(
+            kind: kind.rawValue,
+            elapsedMilliseconds: elapsedSinceLaunchMilliseconds,
+            journeyPhase: phase,
+            date: occurredAt
+        )
     }
 }

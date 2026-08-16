@@ -14,6 +14,7 @@ struct RootView: View {
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(OfflineSyncCoordinator.self) private var offlineSync
     @State private var didSetInitialTab = false
+    @State private var isBottomNavigationExpanded = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -65,6 +66,12 @@ struct RootView: View {
             }
         }
         .sensoryFeedback(.selection, trigger: navigation.tab)
+        .onChange(of: navigation.tab) { _, _ in
+            guard didSetInitialTab else { return }
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.20)) {
+                isBottomNavigationExpanded = false
+            }
+        }
         .onOpenURL { url in
             Task { await deepLinks.handle(url) }
         }
@@ -124,8 +131,34 @@ struct RootView: View {
 
     @ViewBuilder
     private var bottomNavigation: some View {
-        expandedBottomNavigation
-            .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.96)))
+        Group {
+            if isBottomNavigationExpanded {
+                expandedBottomNavigation
+            } else {
+                HStack {
+                    Spacer()
+                    Button {
+                        withAnimation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.86)) {
+                            isBottomNavigationExpanded = true
+                        }
+                    } label: {
+                        Image(systemName: "square.grid.2x2.fill")
+                            .font(.headline.weight(.heavy))
+                            .foregroundStyle(SBColor.onSignal)
+                            .frame(width: 54, height: 54)
+                            .background(SBColor.signal, in: Circle())
+                            .overlay(Circle().stroke(SBColor.line, lineWidth: 1))
+                            .shadow(color: .black.opacity(0.42), radius: 18, y: 10)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(settings.t("navigation.open"))
+                    .accessibilityIdentifier("bottom-navigation-reveal")
+                }
+                .padding(.horizontal, 18)
+                .padding(.bottom, 12)
+            }
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.96)))
     }
 
     private var expandedBottomNavigation: some View {

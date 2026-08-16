@@ -24,8 +24,8 @@ final class SarjBulAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificat
                     task.setTaskCompleted(success: false)
                     return
                 }
-                await handler()
-                task.setTaskCompleted(success: !Task.isCancelled)
+                let succeeded = await handler()
+                task.setTaskCompleted(success: succeeded && !Task.isCancelled)
             }
             task.expirationHandler = { operation.cancel() }
         }
@@ -50,8 +50,8 @@ final class SarjBulAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificat
                 completionHandler(.noData)
                 return
             }
-            await handler()
-            completionHandler(.newData)
+            let succeeded = await handler()
+            completionHandler(succeeded ? .newData : .failed)
         }
     }
 

@@ -299,11 +299,11 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(store.summary.navigationHandoffRate, 1)
         XCTAssertEqual(store.summary.routeToChargeRate, 1)
 
-        store.chargingCompleted()
+        store.chargingVerified(at: station)
 
         XCTAssertNil(store.activeJourney)
         XCTAssertNil(persistence.activeRouteJourney)
-        XCTAssertEqual(store.summary.completedCharges, 1)
+        XCTAssertEqual(store.summary.verifiedCharges, 1)
     }
 
     func testDifferentChargingSessionDoesNotCloseActiveRouteJourney() throws {
@@ -327,11 +327,35 @@ final class PersistenceTests: XCTestCase {
 
         store.navigationHandoff(succeeded: true, station: destination, correctedRecommendation: false)
         store.chargingStarted(at: differentStation)
-        store.chargingCompleted()
+        store.chargingVerified(at: differentStation)
 
         XCTAssertNotNil(store.activeJourney)
         XCTAssertNotNil(persistence.activeRouteJourney)
         XCTAssertEqual(store.summary.routeToChargeRate, 0)
+    }
+
+    func testStoppingTimerDoesNotClaimAVerifiedCharge() throws {
+        let persistence = try makePersistence()
+        let store = FrictionTelemetryStore(persistence: persistence)
+        let station = Station(
+            id: "manual-stop-station",
+            name: "Manual Stop Station",
+            address: "Izmir",
+            latitude: 38.3939,
+            longitude: 27.1891,
+            power: "180 kW",
+            operatorName: "Test",
+            socket: "CCS2",
+            price: "10 TL",
+            source: "test"
+        )
+
+        store.navigationHandoff(succeeded: true, station: station, correctedRecommendation: false)
+        store.chargingStarted(at: station)
+        store.chargingStopped()
+
+        XCTAssertNotNil(store.activeJourney)
+        XCTAssertEqual(store.summary.verifiedCharges, 0)
     }
 
     private func makePersistence() throws -> SystemAppPersistence {

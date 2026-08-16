@@ -153,6 +153,13 @@ final class OfflineSyncCoordinator {
                     idToken: session.idToken,
                     context: context
                 )
+            case .friction(let event):
+                try await self.demandClient.recordFrictionEvent(
+                    event: event,
+                    uid: session.uid,
+                    idToken: session.idToken,
+                    context: context
+                )
             }
         }
     }

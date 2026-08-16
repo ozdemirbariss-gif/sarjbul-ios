@@ -34,6 +34,19 @@
         "$other": { ".validate": false }
       }
     },
+    "friction_events": {
+      "$eventId": {
+        ".read": false,
+        ".write": "auth != null && ((!data.exists()) || newData.val() === data.val())",
+        ".validate": "newData.hasChildren(['kind', 'elapsedBucket', 'journeyPhase', 'createdAtMilliseconds', 'source']) && newData.numChildren() === 5",
+        "kind": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "elapsedBucket": { ".validate": "newData.val() === 'under_1s' || newData.val() === '1_3s' || newData.val() === '3_10s' || newData.val() === '10_30s' || newData.val() === '30s_plus'" },
+        "journeyPhase": { ".validate": "newData.val() === 'entry' || newData.val() === 'decision' || newData.val() === 'route' || newData.val() === 'charge'" },
+        "createdAtMilliseconds": { ".validate": "newData.isNumber() && newData.val() >= now - 604800000 && newData.val() <= now + 5000" },
+        "source": { ".validate": "newData.val() === 'ios_opt_in'" },
+        "$other": { ".validate": false }
+      }
+    },
     "demand_heatmap": {
       ".read": false,
       ".write": false

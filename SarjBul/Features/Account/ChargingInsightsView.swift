@@ -8,6 +8,8 @@ struct ChargingInsightsView: View {
     @Environment(ChargingHistoryStore.self) private var history
     @Environment(FavoritesStore.self) private var favorites
     @Environment(StationDataStore.self) private var stationData
+    @Environment(ExecutionTrustStore.self) private var executionTrust
+    @Environment(FrictionTelemetryStore.self) private var frictionTelemetry
 
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var parsedReceipt: ParsedChargingReceipt?
@@ -243,6 +245,7 @@ struct ChargingInsightsView: View {
     private func saveReceipt() {
         let station = selectedStation
         let unitPrice = energyKWh > 0 ? totalCostTRY / energyKWh : parsedReceipt?.unitPriceTRY
+        let savedAt = Date()
         history.add(ChargingSessionRecord(
             stationID: station?.id,
             stationName: station?.name ?? settings.t("history.station_unknown"),
@@ -252,6 +255,41 @@ struct ChargingInsightsView: View {
             totalCostTRY: totalCostTRY,
             unitPriceTRY: unitPrice
         ))
+        let checks = [
+            "positive-energy": energyKWh > 0,
+            "nonnegative-cost": totalCostTRY >= 0
+        ]
+        let proof = executionTrust.record(
+            action: .chargingVerified,
+            intentKey: "charging-receipt",
+            resultKey: station?.statusKey ?? "unknown-station",
+            status: .completed,
+            evidence: [
+                ExecutionEvidence(
+                    source: .chargingReceipt,
+                    reliability: parsedReceipt == nil ? 0.86 : 0.98,
+                    observedAt: savedAt,
+                    maximumAge: 300
+                ),
+                ExecutionEvidence(
+                    source: .userAction,
+                    reliability: 1,
+                    observedAt: savedAt,
+                    maximumAge: 300
+                )
+            ],
+            deterministicChecks: checks,
+            contextKeys: executionTrust.contextKeys(
+                location: nil,
+                preference: settings.filters.preference,
+                date: savedAt
+            ),
+            startedAt: savedAt,
+            completedAt: savedAt
+        )
+        if proof.verified {
+            frictionTelemetry.chargingVerified(at: station)
+        }
         receiptEditorPresented = false
         Haptic.success()
 

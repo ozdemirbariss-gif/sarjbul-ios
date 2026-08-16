@@ -43,7 +43,9 @@ final class ChargingSessionStore {
     init(persistence: any AppPersistence, frictionTelemetry: FrictionTelemetryStore) {
         self.persistence = persistence
         self.frictionTelemetry = frictionTelemetry
-        guard let saved = persistence.activeChargingSession, saved.endDate > Date() else {
+        guard let saved = persistence.activeChargingSession else { return }
+        guard saved.endDate > Date() else {
+            frictionTelemetry.chargingEstimatedEnded(at: saved.station)
             persistence.activeChargingSession = nil
             return
         }
@@ -113,7 +115,7 @@ final class ChargingSessionStore {
     }
 
     func stop() async {
-        frictionTelemetry.chargingCompleted()
+        frictionTelemetry.chargingStopped()
         station = nil
         endDate = nil
         startedAt = nil

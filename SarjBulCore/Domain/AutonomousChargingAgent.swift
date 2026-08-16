@@ -123,6 +123,7 @@ public enum AutonomousChargingDecision: Equatable, Sendable {
 
     public enum Reason: Equatable, Sendable {
         case disabled
+        case staleLocation
         case staleTelemetry
         case vehicleConnectionRequired
         case chargeSufficient
