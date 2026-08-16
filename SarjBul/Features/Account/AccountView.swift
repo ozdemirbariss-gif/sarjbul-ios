@@ -152,8 +152,8 @@ struct AccountView: View {
                         title: settings.t("proof.time_saved")
                     )
                     valueMetric(
-                        value: "\(frictionTelemetry.summary.completedJourneys)",
-                        title: settings.t("proof.routes_started")
+                        value: "\(frictionTelemetry.summary.completedCharges)",
+                        title: settings.t("proof.charges_completed")
                     )
                 }
 

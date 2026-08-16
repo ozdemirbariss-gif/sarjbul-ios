@@ -133,7 +133,10 @@ final class PersistenceTests: XCTestCase {
         )
         persistence.activeChargingSession = saved
 
-        let store = ChargingSessionStore(persistence: persistence)
+        let store = ChargingSessionStore(
+            persistence: persistence,
+            frictionTelemetry: FrictionTelemetryStore(persistence: persistence)
+        )
 
         XCTAssertTrue(store.isActive)
         XCTAssertEqual(store.station?.id, station.id)
@@ -270,6 +273,65 @@ final class PersistenceTests: XCTestCase {
         XCTAssertNotNil(store.summary.medianOutcomeReadyMilliseconds)
         XCTAssertNotNil(store.summary.medianRouteStartMilliseconds)
         XCTAssertEqual(store.summary.noOutcomeRate, 0)
+    }
+
+    func testJourneyClosesFromNavigationThroughArrivalAndCharging() throws {
+        let persistence = try makePersistence()
+        let store = FrictionTelemetryStore(persistence: persistence)
+        let station = Station(
+            id: "journey-station",
+            name: "Journey Station",
+            address: "Izmir",
+            latitude: 38.3939,
+            longitude: 27.1891,
+            power: "180 kW",
+            operatorName: "Test",
+            socket: "CCS2",
+            price: "10 TL",
+            source: "test"
+        )
+
+        store.navigationHandoff(succeeded: true, station: station, correctedRecommendation: false)
+        store.observeLocation(UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device))
+        store.chargingStarted(at: station)
+
+        XCTAssertNotNil(store.activeJourney?.arrivedAt)
+        XCTAssertEqual(store.summary.navigationHandoffRate, 1)
+        XCTAssertEqual(store.summary.routeToChargeRate, 1)
+
+        store.chargingCompleted()
+
+        XCTAssertNil(store.activeJourney)
+        XCTAssertNil(persistence.activeRouteJourney)
+        XCTAssertEqual(store.summary.completedCharges, 1)
+    }
+
+    func testDifferentChargingSessionDoesNotCloseActiveRouteJourney() throws {
+        let persistence = try makePersistence()
+        let store = FrictionTelemetryStore(persistence: persistence)
+        let destination = Station(
+            id: "route-station",
+            name: "Route Station",
+            address: "Izmir",
+            latitude: 38.3939,
+            longitude: 27.1891,
+            power: "180 kW",
+            operatorName: "Test",
+            socket: "CCS2",
+            price: "10 TL",
+            source: "test"
+        )
+        var differentStation = destination
+        differentStation.id = "different-station"
+        differentStation.name = "Different Station"
+
+        store.navigationHandoff(succeeded: true, station: destination, correctedRecommendation: false)
+        store.chargingStarted(at: differentStation)
+        store.chargingCompleted()
+
+        XCTAssertNotNil(store.activeJourney)
+        XCTAssertNotNil(persistence.activeRouteJourney)
+        XCTAssertEqual(store.summary.routeToChargeRate, 0)
     }
 
     private func makePersistence() throws -> SystemAppPersistence {

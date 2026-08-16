@@ -111,7 +111,10 @@ final class AppState {
         deepLinks = DeepLinkRouter(search: search, navigation: navigation)
         lounge = LoungeStore(persistence: persistence)
         chargingHistory = ChargingHistoryStore(persistence: persistence)
-        chargingSession = ChargingSessionStore(persistence: persistence)
+        chargingSession = ChargingSessionStore(
+            persistence: persistence,
+            frictionTelemetry: frictionTelemetry
+        )
 
         stationData.onRealtimeEvent = { [weak search] event in
             search?.applyRealtime(event)
@@ -138,6 +141,7 @@ final class AppState {
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes-idle")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-arrived")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-filter-recovery")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-outside-coverage") {
@@ -210,6 +214,29 @@ final class AppState {
         } else if arguments.contains("--ui-testing-device-location") {
             navigation.tab = .home
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
+        } else if arguments.contains("--ui-testing-arrived") {
+            navigation.tab = .home
+            settings.filters = StationFilters(rangeFilterEnabled: false)
+            let station = Station(
+                id: "ui-test-arrived-station",
+                name: "Buca Hızlı Şarj",
+                address: "Buca, İzmir",
+                latitude: 38.3939,
+                longitude: 27.1891,
+                power: "180 kW",
+                operatorName: "wat mobilite",
+                socket: "CCS2",
+                price: "8,90 TL/kWh",
+                source: "ui-test"
+            )
+            let location = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
+            search.userLocation = location
+            frictionTelemetry.navigationHandoff(
+                succeeded: true,
+                station: station,
+                correctedRecommendation: false
+            )
+            frictionTelemetry.observeLocation(location)
         } else if arguments.contains("--ui-testing-home")
                     || arguments.contains("--ui-testing-home-en")
                     || arguments.contains("--ui-testing-routes")

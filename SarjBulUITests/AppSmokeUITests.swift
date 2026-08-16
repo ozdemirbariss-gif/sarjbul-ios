@@ -55,6 +55,18 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Apple Maps"].waitForExistence(timeout: 1))
     }
 
+    func testArrivalOutcomeStartsChargingWithOneTap() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-arrived"]
+        app.launch()
+
+        let startCharging = app.buttons["arrived-start-charging-card"]
+        XCTAssertTrue(startCharging.waitForExistence(timeout: 12))
+        startCharging.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
+    }
+
     func testProfileKeepsComplexSettingsCollapsedByDefault() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-profile"]

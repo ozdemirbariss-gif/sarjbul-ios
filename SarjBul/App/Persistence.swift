@@ -65,6 +65,7 @@ protocol AppPersistence: AnyObject {
     var executionProofs: [ExecutionProof] { get set }
     var contextualRelationGraph: ContextualRelationGraph { get set }
     var frictionEvents: [FrictionEvent] { get set }
+    var activeRouteJourney: ActiveRouteJourney? { get set }
 }
 
 protocol SecureStorage {
@@ -114,6 +115,7 @@ final class SystemAppPersistence: AppPersistence {
         static let executionProofs = "executionProofs"
         static let contextualRelationGraph = "contextualRelationGraph"
         static let frictionEvents = "frictionEvents"
+        static let activeRouteJourney = "activeRouteJourney"
     }
 
     private let defaults: UserDefaults
@@ -329,6 +331,11 @@ final class SystemAppPersistence: AppPersistence {
     var frictionEvents: [FrictionEvent] {
         get { decode([FrictionEvent].self, key: Key.frictionEvents) ?? [] }
         set { encode(Array(newValue.suffix(240)), key: Key.frictionEvents) }
+    }
+
+    var activeRouteJourney: ActiveRouteJourney? {
+        get { decode(ActiveRouteJourney.self, key: Key.activeRouteJourney) }
+        set { encodeOptional(newValue, key: Key.activeRouteJourney) }
     }
 
     private func decode<T: Decodable>(_ type: T.Type, key: String) -> T? {

@@ -75,6 +75,7 @@ struct HomeView: View {
             .sbInlineNavigationTitle()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 guard !isDeterministicUITest else { return }
+                frictionTelemetry.observeLocation(location)
                 applyLocation(location)
                 Task {
                     await contextIntelligence.evaluate(
@@ -97,6 +98,11 @@ struct HomeView: View {
             }
             .onChange(of: settings.profile.chargePercent) { _, _ in syncWidgetContext() }
             .onChange(of: chargingSession.isActive) { _, _ in syncWidgetContext() }
+            .onChange(of: locationManager.authorizationStatus) { _, status in
+                if status == .denied || status == .restricted {
+                    frictionTelemetry.record(.locationPermissionDenied)
+                }
+            }
             .sheet(item: $placeSearchMode) { mode in
                 PlaceSearchSheet(mode: mode) { place in
                     switch mode {
@@ -136,6 +142,8 @@ struct HomeView: View {
     private var primaryOutcome: some View {
         if chargingSession.isActive {
             activeChargingContextCard
+        } else if let journey = frictionTelemetry.activeJourney, journey.arrivedAt != nil {
+            ArrivedAtStationCard(journey: journey)
         } else if let proposal = autonomousAgent.proposal {
             autonomousProposalCard(proposal)
         } else if settings.profile.chargePercent <= 20 {
@@ -967,6 +975,7 @@ struct HomeView: View {
 
             Button {
                 if settings.navigationAppPreference == nil {
+                    frictionTelemetry.navigationChoicePresented()
                     navigationPickerPresented = true
                 } else {
                     search.startNavigation(to: candidate)
@@ -1239,6 +1248,7 @@ struct HomeView: View {
         ProcessInfo.processInfo.arguments.contains("--ui-testing-home")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-routes")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker")
+            || ProcessInfo.processInfo.arguments.contains("--ui-testing-arrived")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-device-location")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-habit")
             || ProcessInfo.processInfo.arguments.contains("--ui-testing-agent")
@@ -1312,25 +1322,5 @@ struct HomeView: View {
             await search.prepareOutcome()
             await autonomousAgent.updateLocation(location)
         }
-    }
-}
-
-private struct QuickActionStyle: ButtonStyle {
-    var active: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline.weight(.bold))
-            .foregroundStyle(active ? SBColor.onSignal : SBColor.textSoft)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(active ? SBColor.signal : .clear)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(active ? .black.opacity(0.12) : .clear, lineWidth: 1)
-            )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }

@@ -11,6 +11,7 @@ struct StationCard: View {
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(RouteStore.self) private var routeStore
     @Environment(HabitStore.self) private var habits
+    @Environment(FrictionTelemetryStore.self) private var frictionTelemetry
     var candidate: StationCandidate
     var rank: Int
     var total: Int
@@ -273,13 +274,13 @@ struct StationCard: View {
             }
 
             Button {
+                navigation.select(.lounge)
                 Task {
                     await chargingSession.start(
                         station: candidate.station,
                         initialPercent: settings.profile.chargePercent,
                         languageCode: settings.language.rawValue
                     )
-                    navigation.select(.lounge)
                 }
             } label: {
                 Label(settings.t("break.start"), systemImage: "cup.and.saucer")
@@ -583,6 +584,7 @@ struct StationCard: View {
 
     private func startPreferredNavigation() {
         if settings.navigationAppPreference == nil {
+            frictionTelemetry.navigationChoicePresented()
             navigationPickerPresented = true
         } else {
             search.startNavigation(to: candidate)

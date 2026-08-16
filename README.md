@@ -6,6 +6,12 @@ SarjBul, Türkiye genelindeki elektrikli araç şarj noktalarını menzil, rota,
 
 ![SarjBul iOS ekranları](Docs/screenshots/sarjbul-ios-preview.png)
 
+### Varış Sonucu
+
+Uygulama, açılan rotadaki istasyona 250 metre içinde ulaşıldığını cihaz konumuyla doğrular ve ana ekranı tek bir sonraki adıma indirger. Şarj molası tek dokunuşla başlar.
+
+<img src="Docs/screenshots/arrival-outcome.png" alt="SarjBul doğrulanmış varış sonucu" width="320">
+
 ### Şarj Hikâyesi
 
 Rota kartındaki paylaş düğmesi, harita ve istasyon verilerinden Instagram Story oranında 1080×1920 PNG üretir. Kullanıcı önce tam görseli inceler; onay verirse iOS paylaşım ekranından istediği uygulamaya gönderir veya vazgeçer.

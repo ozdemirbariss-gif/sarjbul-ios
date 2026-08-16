@@ -28,6 +28,7 @@ struct PersistedChargingSession: Codable, Equatable, Sendable {
 final class ChargingSessionStore {
     private let poiService = ChargingBreakPOIService()
     private let persistence: any AppPersistence
+    private let frictionTelemetry: FrictionTelemetryStore
     private var prepared = false
 
     private(set) var station: Station?
@@ -39,8 +40,9 @@ final class ChargingSessionStore {
     private(set) var initialPercent = 20
     private(set) var languageCode = "tr"
 
-    init(persistence: any AppPersistence) {
+    init(persistence: any AppPersistence, frictionTelemetry: FrictionTelemetryStore) {
         self.persistence = persistence
+        self.frictionTelemetry = frictionTelemetry
         guard let saved = persistence.activeChargingSession, saved.endDate > Date() else {
             persistence.activeChargingSession = nil
             return
@@ -97,6 +99,7 @@ final class ChargingSessionStore {
             initialPercent: initialPercent,
             languageCode: languageCode
         )
+        frictionTelemetry.chargingStarted(at: station)
         await loadPlaces(near: station)
         await ChargingActivityManager.shared.start(
             stationName: station.name,
@@ -110,6 +113,7 @@ final class ChargingSessionStore {
     }
 
     func stop() async {
+        frictionTelemetry.chargingCompleted()
         station = nil
         endDate = nil
         startedAt = nil

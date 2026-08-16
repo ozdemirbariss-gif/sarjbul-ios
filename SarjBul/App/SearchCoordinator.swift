@@ -341,34 +341,46 @@ final class SearchCoordinator {
     }
 
     func startNavigation(to candidate: StationCandidate, using preference: NavigationAppPreference) {
+        let isFirstChoice = settings.navigationAppPreference == nil
         settings.navigationAppPreference = preference
-        favorites.recordRouteOpened(candidate.station)
-        habits.recordRouteOpened(candidate)
-        frictionTelemetry.record(.routeStarted)
+        if isFirstChoice { frictionTelemetry.navigationChoiceCompleted() }
+        let correctedRecommendation = preparedCandidate?.station.statusKey != candidate.station.statusKey
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker") { return }
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker") {
+            navigationDidOpen(candidate, correctedRecommendation: correctedRecommendation)
+            return
+        }
         #endif
         switch preference {
         case .appleMaps:
-            openInAppleMaps(candidate)
+            let succeeded = openInAppleMaps(candidate)
+            if succeeded {
+                navigationDidOpen(candidate, correctedRecommendation: correctedRecommendation)
+            } else {
+                frictionTelemetry.navigationHandoff(
+                    succeeded: false,
+                    station: candidate.station,
+                    correctedRecommendation: correctedRecommendation
+                )
+            }
         case .googleMaps:
-            openInGoogleMaps(candidate)
+            openInGoogleMaps(candidate, correctedRecommendation: correctedRecommendation)
         }
     }
 
-    private func openInAppleMaps(_ candidate: StationCandidate) {
+    private func openInAppleMaps(_ candidate: StationCandidate) -> Bool {
         let coordinate = CLLocationCoordinate2D(
             latitude: candidate.station.latitude,
             longitude: candidate.station.longitude
         )
         let destination = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
         destination.name = candidate.station.name
-        destination.openInMaps(launchOptions: [
+        return destination.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
     }
 
-    private func openInGoogleMaps(_ candidate: StationCandidate) {
+    private func openInGoogleMaps(_ candidate: StationCandidate, correctedRecommendation: Bool) {
         var components = URLComponents(string: "https://www.google.com/maps/dir/")
         components?.queryItems = [
             URLQueryItem(name: "api", value: "1"),
@@ -379,8 +391,38 @@ final class SearchCoordinator {
             URLQueryItem(name: "travelmode", value: "driving"),
             URLQueryItem(name: "dir_action", value: "navigate")
         ]
-        guard let url = components?.url else { return }
-        UIApplication.shared.open(url)
+        guard let url = components?.url else {
+            frictionTelemetry.navigationHandoff(
+                succeeded: false,
+                station: candidate.station,
+                correctedRecommendation: correctedRecommendation
+            )
+            return
+        }
+        UIApplication.shared.open(url) { [weak self] succeeded in
+            Task { @MainActor in
+                guard let self else { return }
+                if succeeded {
+                    self.navigationDidOpen(candidate, correctedRecommendation: correctedRecommendation)
+                } else {
+                    self.frictionTelemetry.navigationHandoff(
+                        succeeded: false,
+                        station: candidate.station,
+                        correctedRecommendation: correctedRecommendation
+                    )
+                }
+            }
+        }
+    }
+
+    private func navigationDidOpen(_ candidate: StationCandidate, correctedRecommendation: Bool) {
+        favorites.recordRouteOpened(candidate.station)
+        habits.recordRouteOpened(candidate)
+        frictionTelemetry.navigationHandoff(
+            succeeded: true,
+            station: candidate.station,
+            correctedRecommendation: correctedRecommendation
+        )
     }
 
     private func relaxedFilters(from filters: StationFilters) -> StationFilters {
