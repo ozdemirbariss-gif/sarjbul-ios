@@ -56,7 +56,7 @@ final class FrictionTelemetryStore {
     private let sessionID = UUID()
     private let launchedAt = Date()
     private var recordedKinds = Set<FrictionEventKind>()
-    var onRecord: (@MainActor (FrictionEvent) -> Void)?
+    private var analyticsSink: (@MainActor (FrictionEvent) -> Void)?
 
     private(set) var events: [FrictionEvent]
     private(set) var activeJourney: ActiveRouteJourney?
@@ -70,6 +70,15 @@ final class FrictionTelemetryStore {
             persistence.activeRouteJourney = nil
         }
         record(.appOpened)
+    }
+
+    func installAnalyticsSink(_ sink: @escaping @MainActor (FrictionEvent) -> Void) {
+        analyticsSink = sink
+        if let openingEvent = events.last(where: {
+            $0.sessionID == sessionID && $0.kind == .appOpened
+        }) {
+            sink(openingEvent)
+        }
     }
 
     func record(
@@ -90,7 +99,7 @@ final class FrictionTelemetryStore {
         events.append(event)
         events = Array(events.suffix(240))
         persistence.frictionEvents = events
-        onRecord?(event)
+        analyticsSink?(event)
     }
 
     func navigationChoicePresented() {

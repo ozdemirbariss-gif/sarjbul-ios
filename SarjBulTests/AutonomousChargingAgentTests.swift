@@ -4,6 +4,33 @@ import Testing
 
 @Suite
 struct AutonomousChargingAgentTests {
+    @Test
+    func locationFreshnessRejectsOldAndFutureSamples() {
+        let now = Date()
+        let fresh = UserLocation(
+            latitude: 38.3939,
+            longitude: 27.1891,
+            source: .device,
+            capturedAt: now.addingTimeInterval(-60)
+        )
+        let old = UserLocation(
+            latitude: 38.3939,
+            longitude: 27.1891,
+            source: .device,
+            capturedAt: now.addingTimeInterval(-901)
+        )
+        let future = UserLocation(
+            latitude: 38.3939,
+            longitude: 27.1891,
+            source: .device,
+            capturedAt: now.addingTimeInterval(60)
+        )
+
+        #expect(fresh.isFresh(at: now, maximumAge: 900))
+        #expect(!old.isFresh(at: now, maximumAge: 900))
+        #expect(!future.isFresh(at: now, maximumAge: 900))
+    }
+
     private let now = Date(timeIntervalSince1970: 1_800_000_000)
 
     @Test

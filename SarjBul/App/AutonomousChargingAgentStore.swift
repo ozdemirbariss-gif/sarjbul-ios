@@ -11,6 +11,11 @@ enum AutonomousAgentState: Equatable {
 @MainActor
 @Observable
 final class AutonomousChargingAgentStore {
+    private struct PendingEvaluation {
+        var trigger: ChargingAgentTrigger
+        var location: UserLocation
+    }
+
     private let stationData: StationDataStore
     private let settings: UserSettingsStore
     private let search: SearchCoordinator
@@ -20,6 +25,8 @@ final class AutonomousChargingAgentStore {
     private let notificationService: AutonomousChargingNotificationService
     private let decisionEngine = AutonomousChargingDecisionEngine()
     private let triggerEngine = TriggerActionEngine()
+    private var evaluationInProgress = false
+    private var pendingEvaluation: PendingEvaluation?
 
     private(set) var proposal: AutonomousChargingProposal?
     private(set) var state: AutonomousAgentState = .idle
@@ -95,16 +102,38 @@ final class AutonomousChargingAgentStore {
     private func runWorker(trigger: ChargingAgentTrigger, location: UserLocation?) async -> Bool {
         guard settings.autonomousChargingPolicy.isEnabled else { return true }
         guard let location else { return false }
+        let request = PendingEvaluation(trigger: trigger, location: location)
+        guard !evaluationInProgress else {
+            pendingEvaluation = request
+            return true
+        }
+
+        evaluationInProgress = true
+        var nextRequest: PendingEvaluation? = request
+        var result = true
+        while let currentRequest = nextRequest {
+            pendingEvaluation = nil
+            state = .evaluating
+            result = await performWorker(
+                trigger: currentRequest.trigger,
+                location: currentRequest.location
+            )
+            nextRequest = pendingEvaluation
+        }
+        evaluationInProgress = false
+        state = proposal == nil ? .idle : .ready
+        return result
+    }
+
+    private func performWorker(trigger: ChargingAgentTrigger, location: UserLocation) async -> Bool {
+        guard settings.autonomousChargingPolicy.isEnabled else { return true }
         guard persistence.autonomousChargingMutedUntil.map({ $0 <= Date() }) ?? true else { return true }
-        guard state != .evaluating else { return true }
         let now = Date()
         let maximumLocationAge: TimeInterval = location.source == .device ? 15 * 60 : 60 * 60
-        guard now.timeIntervalSince(location.capturedAt) <= maximumLocationAge else {
+        guard location.isFresh(at: now, maximumAge: maximumLocationAge) else {
             lastDecisionReason = .staleLocation
             return false
         }
-        state = .evaluating
-        defer { if state == .evaluating { state = proposal == nil ? .idle : .ready } }
 
         guard let telemetry = await telemetryClient.latestSnapshot(fallbackProfile: settings.profile) else {
             lastDecisionReason = .staleTelemetry
@@ -271,7 +300,6 @@ final class AutonomousChargingAgentStore {
     ) {
         lastDecisionReason = nil
         self.proposal = proposal
-        state = .ready
         persistence.autonomousChargingProposal = proposal
         persistence.lastAutonomousChargingProposal = proposal
         record(AutomationReport(
@@ -413,6 +441,8 @@ final class AutonomousChargingAgentStore {
     func resetForUITesting() {
         proposal = nil
         state = .idle
+        evaluationInProgress = false
+        pendingEvaluation = nil
         persistence.autonomousChargingProposal = nil
         persistence.lastAutonomousChargingProposal = nil
         persistence.autonomousChargingMutedUntil = nil

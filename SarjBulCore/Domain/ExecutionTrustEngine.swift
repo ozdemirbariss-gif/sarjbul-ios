@@ -49,7 +49,8 @@ public struct ExecutionEvidence: Codable, Equatable, Identifiable, Sendable {
     }
 
     public func freshness(at date: Date) -> Double {
-        let age = max(0, date.timeIntervalSince(observedAt))
+        let age = date.timeIntervalSince(observedAt)
+        guard age >= -5 else { return 0 }
         return min(1, max(0, 1 - age / maximumAge))
     }
 }

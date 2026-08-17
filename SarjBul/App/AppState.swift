@@ -130,7 +130,7 @@ final class AppState {
             }
             .store(in: &cancellables)
 
-        frictionTelemetry.onRecord = { event in
+        frictionTelemetry.installAnalyticsSink { event in
             guard settings.demandAnalyticsEnabled else { return }
             Task {
                 await offlineSync.submit(

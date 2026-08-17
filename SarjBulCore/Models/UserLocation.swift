@@ -18,6 +18,15 @@ public struct UserLocation: Codable, Hashable, Sendable {
         self.capturedAt = capturedAt
     }
 
+    public func isFresh(
+        at date: Date = Date(),
+        maximumAge: TimeInterval,
+        allowedFutureSkew: TimeInterval = 5
+    ) -> Bool {
+        let age = date.timeIntervalSince(capturedAt)
+        return age >= -max(0, allowedFutureSkew) && age <= max(0, maximumAge)
+    }
+
     private enum CodingKeys: String, CodingKey {
         case latitude
         case longitude

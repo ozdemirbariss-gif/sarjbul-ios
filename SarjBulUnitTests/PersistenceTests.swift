@@ -144,6 +144,39 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(store.targetPercent, 85)
     }
 
+    func testChargingSessionExpiresWithoutRelaunch() async throws {
+        let persistence = try makePersistence()
+        let station = Station(
+            id: "expiring-session",
+            name: "Expiring Station",
+            address: "Izmir",
+            latitude: 38.3939,
+            longitude: 27.1891,
+            power: "180 kW",
+            operatorName: "Test",
+            socket: "CCS2",
+            price: "10 TL",
+            source: "test"
+        )
+        let endDate = Date().addingTimeInterval(60)
+        persistence.activeChargingSession = PersistedChargingSession(
+            station: station,
+            endDate: endDate,
+            targetPercent: 80,
+            startedAt: Date(),
+            initialPercent: 20,
+            languageCode: "tr"
+        )
+        let telemetry = FrictionTelemetryStore(persistence: persistence)
+        let store = ChargingSessionStore(persistence: persistence, frictionTelemetry: telemetry)
+
+        await store.reconcileExpiredSession(at: endDate.addingTimeInterval(1))
+
+        XCTAssertFalse(store.isActive)
+        XCTAssertNil(persistence.activeChargingSession)
+        XCTAssertEqual(telemetry.events.last?.kind, .chargingEstimatedEnded)
+    }
+
     func testAutonomousMuteWindowPersists() throws {
         let persistence = try makePersistence()
         let mutedUntil = Date(timeIntervalSince1970: 1_800_000_000)
@@ -273,6 +306,18 @@ final class PersistenceTests: XCTestCase {
         XCTAssertNotNil(store.summary.medianOutcomeReadyMilliseconds)
         XCTAssertNotNil(store.summary.medianRouteStartMilliseconds)
         XCTAssertEqual(store.summary.noOutcomeRate, 0)
+    }
+
+    func testFrictionTelemetryReplaysOpeningEventWhenAnalyticsSinkIsInstalled() throws {
+        let persistence = try makePersistence()
+        let store = FrictionTelemetryStore(persistence: persistence)
+        var received: [FrictionEvent] = []
+
+        store.installAnalyticsSink { received.append($0) }
+        store.record(.locationReady)
+
+        XCTAssertEqual(received.map(\.kind), [.appOpened, .locationReady])
+        XCTAssertEqual(received.first?.sessionID, received.last?.sessionID)
     }
 
     func testJourneyClosesFromNavigationThroughArrivalAndCharging() throws {

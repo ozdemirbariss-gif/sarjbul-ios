@@ -95,7 +95,8 @@ final class AppSmokeUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
-        XCTAssertFalse(app.staticTexts["Salon"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["lounge-page-title"].exists)
+        XCTAssertTrue(app.buttons["bottom-navigation-tab-lounge"].exists)
     }
 
     func testLoungeRotatesIntoFullscreenGame() throws {

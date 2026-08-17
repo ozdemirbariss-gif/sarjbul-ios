@@ -65,6 +65,19 @@ struct ExecutionTrustEngineTests {
     }
 
     @Test
+    func futureDatedEvidenceIsNotTreatedAsFresh() {
+        let now = Date()
+        let evidence = ExecutionEvidence(
+            source: .deviceLocation,
+            reliability: 1,
+            observedAt: now.addingTimeInterval(60),
+            maximumAge: 300
+        )
+
+        #expect(evidence.freshness(at: now) == 0)
+    }
+
+    @Test
     func relationGraphPredictsOnlyRepeatedVerifiedOutcomes() {
         var graph = ContextualRelationGraph()
         for index in 0..<4 {

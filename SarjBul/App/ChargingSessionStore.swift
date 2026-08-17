@@ -30,6 +30,7 @@ final class ChargingSessionStore {
     private let persistence: any AppPersistence
     private let frictionTelemetry: FrictionTelemetryStore
     private var prepared = false
+    private var expirationTask: Task<Void, Never>?
 
     private(set) var station: Station?
     private(set) var endDate: Date?
@@ -55,18 +56,27 @@ final class ChargingSessionStore {
         startedAt = saved.startedAt ?? Date()
         initialPercent = saved.initialPercent ?? 20
         languageCode = saved.languageCode ?? "tr"
+        scheduleExpiration(at: saved.endDate)
     }
 
-    var isActive: Bool { station != nil && endDate != nil }
+    var isActive: Bool {
+        guard station != nil, let endDate else { return false }
+        return endDate > Date()
+    }
 
     func prepare() async {
         guard !prepared else { return }
         prepared = true
+        await reconcileExpiredSession()
         guard let station, let endDate, let startedAt, endDate > Date() else {
             persistence.activeChargingSession = nil
             return
         }
         await loadPlaces(near: station)
+        guard self.station?.statusKey == station.statusKey, endDate > Date() else {
+            await reconcileExpiredSession()
+            return
+        }
         await ChargingActivityManager.shared.start(
             stationName: station.name,
             startedAt: startedAt,
@@ -103,6 +113,10 @@ final class ChargingSessionStore {
         )
         frictionTelemetry.chargingStarted(at: station)
         await loadPlaces(near: station)
+        guard self.station?.statusKey == station.statusKey, endDate > Date() else {
+            await reconcileExpiredSession()
+            return
+        }
         await ChargingActivityManager.shared.start(
             stationName: station.name,
             startedAt: startedAt,
@@ -112,16 +126,23 @@ final class ChargingSessionStore {
             languageCode: languageCode
         )
         saveWidgetContext(station: station, endDate: endDate)
+        scheduleExpiration(at: endDate)
     }
 
     func stop() async {
+        expirationTask?.cancel()
+        expirationTask = nil
         frictionTelemetry.chargingStopped()
-        station = nil
-        endDate = nil
-        startedAt = nil
-        nearbyPlaces = []
-        persistence.activeChargingSession = nil
-        WidgetContextSnapshotStore.clear(kind: .activeCharging)
+        clearSession()
+        await ChargingActivityManager.shared.stop()
+    }
+
+    func reconcileExpiredSession(at date: Date = Date()) async {
+        guard let station, let endDate, endDate <= date else { return }
+        expirationTask?.cancel()
+        expirationTask = nil
+        frictionTelemetry.chargingEstimatedEnded(at: station)
+        clearSession()
         await ChargingActivityManager.shared.stop()
     }
 
@@ -139,9 +160,31 @@ final class ChargingSessionStore {
         ))
     }
 
+    private func scheduleExpiration(at endDate: Date) {
+        expirationTask?.cancel()
+        let delay = max(0, endDate.timeIntervalSinceNow)
+        expirationTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled else { return }
+            await self?.reconcileExpiredSession()
+        }
+    }
+
+    private func clearSession() {
+        station = nil
+        endDate = nil
+        startedAt = nil
+        nearbyPlaces = []
+        persistence.activeChargingSession = nil
+        WidgetContextSnapshotStore.clear(kind: .activeCharging)
+    }
+
     private func loadPlaces(near station: Station) async {
         isLoadingPlaces = true
-        nearbyPlaces = await poiService.places(near: station, radiusMeters: 400)
+        let places = await poiService.places(near: station, radiusMeters: 400)
+        if self.station?.statusKey == station.statusKey {
+            nearbyPlaces = places
+        }
         isLoadingPlaces = false
     }
 }
