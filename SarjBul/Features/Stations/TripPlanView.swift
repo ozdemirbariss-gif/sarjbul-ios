@@ -22,7 +22,7 @@ struct TripPlanView: View {
                             systemImage: "exclamationmark.road.lanes"
                         )
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(SBColor.warning.opacity(0.24))
@@ -32,7 +32,7 @@ struct TripPlanView: View {
                     if plan.stops.isEmpty {
                         Label(settings.t("planner.no_stop"), systemImage: "checkmark.circle.fill")
                             .font(.headline.weight(.bold))
-                            .foregroundStyle(SBColor.electricBlue)
+                            .foregroundStyle(SBColor.actionPrimary)
                             .padding(18)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .sbPremiumGlass(radius: SBRadius.lg)
@@ -48,7 +48,7 @@ struct TripPlanView: View {
                         ? settings.t("planner.elevation_attribution")
                         : settings.t("planner.elevation_unavailable"))
                         .font(.caption)
-                        .foregroundStyle(SBColor.textSoft)
+                        .foregroundStyle(SBColor.contentSecondary)
                 }
                 .padding(20)
             }
@@ -67,10 +67,10 @@ struct TripPlanView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(settings.t("planner.fastest_plan"))
                 .font(.subheadline.weight(.heavy))
-                .foregroundStyle(SBColor.signal)
+                .foregroundStyle(SBColor.actionPrimary)
             Text(duration(plan.totalMinutes))
                 .font(SBFont.display(size: 52, weight: .heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
             HStack(spacing: 10) {
                 metric(settings.t("planner.distance"), String(format: "%.0f km", plan.distanceKm))
                 metric(settings.t("planner.charge_time"), duration(plan.chargingMinutes))
@@ -86,9 +86,9 @@ struct TripPlanView: View {
         HStack(spacing: 14) {
             Text("\(number)")
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(.black)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .frame(width: 42, height: 42)
-                .background(SBColor.electricBlue)
+                .background(SBColor.actionPrimary)
                 .clipShape(Circle())
             VStack(alignment: .leading, spacing: 5) {
                 Text(stop.candidate.station.name)
@@ -100,7 +100,7 @@ struct TripPlanView: View {
                     "minutes": "\(stop.chargingMinutes)"
                 ]))
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
             }
             Spacer(minLength: 0)
         }
@@ -112,10 +112,10 @@ struct TripPlanView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption2.weight(.heavy))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
             Text(value)
                 .font(.subheadline.weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }

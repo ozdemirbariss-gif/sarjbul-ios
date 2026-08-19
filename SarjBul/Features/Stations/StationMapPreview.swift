@@ -18,10 +18,10 @@ struct StationMapPreview: View {
                     longitude: origin.longitude
                 )) {
                     Circle()
-                        .fill(SBColor.ink)
+                        .fill(SBColor.contentPrimary)
                         .frame(width: 18, height: 18)
-                        .overlay(Circle().stroke(.white, lineWidth: 4))
-                        .shadow(color: SBColor.ink.opacity(0.28), radius: 12)
+                        .overlay(Circle().stroke(SBColor.surfaceInverted, lineWidth: 4))
+                        .shadow(color: SBColor.contentPrimary.opacity(0.28), radius: 12)
                 }
             }
 
@@ -33,11 +33,11 @@ struct StationMapPreview: View {
                     longitude: station.longitude
                 )
             )
-            .tint(SBColor.electricBlue)
+            .tint(SBColor.actionPrimary)
 
             if let route {
                 MapPolyline(route.polyline)
-                    .stroke(SBColor.electricBlue, style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
+                    .stroke(SBColor.actionPrimary, style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
             }
         }
         .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll, showsTraffic: true))

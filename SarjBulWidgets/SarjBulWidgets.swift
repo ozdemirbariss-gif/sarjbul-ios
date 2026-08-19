@@ -16,7 +16,7 @@ struct SarjBulNearestWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: NearestStationProvider()) { entry in
             NearestStationWidgetView(entry: entry)
-                .containerBackground(for: .widget) { Color(white: 0.96) }
+                .containerBackground(for: .widget) { SBColor.surfaceInverted }
         }
         .configurationDisplayName("SarjBul")
         .description("En yakın hızlı şarjı ve güvenli menzilini gösterir.")
@@ -107,36 +107,36 @@ private struct NearestStationWidgetView: View {
             VStack(alignment: .leading, spacing: 7) {
                 HStack {
                     Image(systemName: context.icon)
-                        .foregroundStyle(context.kind == .criticalRange ? Color.orange : Color.white)
+                        .foregroundStyle(context.kind == .criticalRange ? SBColor.warning : SBColor.contentPrimary)
                     Text(context.title)
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(.white.opacity(0.72))
+                        .foregroundStyle(SBColor.contentPrimary.opacity(0.72))
                     Spacer(minLength: 0)
                     Text(context.value)
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(SBColor.contentPrimary)
                 }
                 Text(context.subtitle)
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(SBColor.contentPrimary)
                     .lineLimit(2)
                 Spacer(minLength: 0)
                 if let endDate = context.endDate {
                     Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
                         .font(.caption.monospacedDigit().weight(.bold))
-                        .foregroundStyle(.white.opacity(0.72))
+                        .foregroundStyle(SBColor.contentPrimary.opacity(0.72))
                 }
             }
         }
-        .containerBackground(Color.black, for: .widget)
+        .containerBackground(SBColor.canvas, for: .widget)
     }
 
     private func deepLinkURL(_ value: String) -> URL {
         URL(string: value) ?? URL(fileURLWithPath: "/")
     }
 
-    private var accent: Color { .black }
-    private var ink: Color { .black }
+    private var accent: Color { SBColor.onActionPrimary }
+    private var ink: Color { SBColor.onActionPrimary }
     private var isEnglish: Bool { entry.snapshot?.languageCode == "en" }
     private var emptyMessage: String {
         isEnglish ? "Open SarjBul and search from your location." : "SarjBul'u açıp konumunla bir arama yap."
@@ -153,7 +153,7 @@ struct ChargingLiveActivityWidget: Widget {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(chargingTitle(context.attributes.languageCode))
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(.white.opacity(0.68))
+                            .foregroundStyle(SBColor.contentPrimary.opacity(0.68))
                         Text(context.attributes.stationName)
                             .font(.headline.weight(.heavy))
                             .lineLimit(1)
@@ -174,11 +174,11 @@ struct ChargingLiveActivityWidget: Widget {
                         .monospacedDigit()
                 }
                 .font(.caption.weight(.bold))
-                .foregroundStyle(.white.opacity(0.72))
+                .foregroundStyle(SBColor.contentPrimary.opacity(0.72))
             }
             .padding(.horizontal, 4)
-            .activityBackgroundTint(Color.black)
-            .activitySystemActionForegroundColor(.white)
+            .activityBackgroundTint(SBColor.canvas)
+            .activitySystemActionForegroundColor(SBColor.contentPrimary)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -215,7 +215,7 @@ struct ChargingLiveActivityWidget: Widget {
         }
     }
 
-    private var activityAccent: Color { .white }
+    private var activityAccent: Color { SBColor.contentPrimary }
 
     private func chargingTitle(_ languageCode: String) -> String {
         languageCode == "en" ? "Charging" : "Şarj devam ediyor"

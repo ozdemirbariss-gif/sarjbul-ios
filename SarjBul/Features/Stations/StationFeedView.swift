@@ -83,8 +83,8 @@ struct StationFeedView: View {
                     }
                 }
                 .padding(5)
-                .background(SBColor.charcoal.opacity(0.98), in: Capsule())
-                .overlay(Capsule().stroke(SBColor.line, lineWidth: 1))
+                .background(SBColor.surfaceRaised.opacity(0.98), in: Capsule())
+                .overlay(Capsule().stroke(SBColor.divider, lineWidth: 1))
                 .sbCardShadow()
             }
         }
@@ -99,9 +99,9 @@ struct StationFeedView: View {
         } label: {
             Image(systemName: icon)
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(mode == targetMode ? SBColor.onSignal : SBColor.textSoft)
+                .foregroundStyle(mode == targetMode ? SBColor.onActionPrimary : SBColor.contentSecondary)
                 .frame(width: 46, height: 46)
-                .background(mode == targetMode ? SBColor.signal : .clear, in: Circle())
+                .background(mode == targetMode ? SBColor.actionPrimary : .clear, in: Circle())
         }
         .buttonStyle(SBPremiumButtonStyle())
         .accessibilityLabel(label)
@@ -119,7 +119,7 @@ struct StationFeedView: View {
         } label: {
             Image(systemName: icon)
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(SBColor.textSoft)
+                .foregroundStyle(SBColor.contentSecondary)
                 .frame(width: 46, height: 46)
         }
         .buttonStyle(SBPremiumButtonStyle())
@@ -165,11 +165,11 @@ struct StationFeedView: View {
             if search.previousCandidates.isEmpty {
                 VStack(spacing: 18) {
                     ProgressView()
-                        .tint(SBColor.electricBlue)
+                        .tint(SBColor.actionPrimary)
                         .scaleEffect(1.2)
                     Text(settings.t("route.searching"))
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -177,7 +177,7 @@ struct StationFeedView: View {
                     resultContent(search.previousCandidates)
                     Label(settings.t("route.refreshing"), systemImage: "arrow.triangle.2.circlepath")
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                         .padding(.horizontal, 14)
                         .frame(height: 38)
                         .sbPremiumGlass(radius: 19)
@@ -222,29 +222,29 @@ struct StationFeedView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "rectangle.stack")
-                                    .foregroundStyle(SBColor.signal)
+                                    .foregroundStyle(SBColor.actionPrimary)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(settings.t("feed.alternatives_title"))
                                         .font(.headline.weight(.heavy))
-                                        .foregroundStyle(SBColor.ink)
+                                        .foregroundStyle(SBColor.contentPrimary)
                                     Text(settings.t("feed.alternatives_hint", [
                                         "count": "\(min(2, candidates.count - 1))"
                                     ]))
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(SBColor.textSoft)
+                                    .foregroundStyle(SBColor.contentSecondary)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.down")
-                                    .foregroundStyle(SBColor.signal)
+                                    .foregroundStyle(SBColor.actionPrimary)
                                     .rotationEffect(.degrees(alternativesExpanded ? 180 : 0))
                             }
                             .padding(.horizontal, 18)
                             .frame(minHeight: 66)
-                            .background(SBColor.surfaceSolid, in: RoundedRectangle(
+                            .background(SBColor.surfaceBase, in: RoundedRectangle(
                                 cornerRadius: SBRadius.lg,
                                 style: .continuous
                             ))
-                            .overlay(RoundedRectangle(cornerRadius: SBRadius.lg).stroke(SBColor.line))
+                            .overlay(RoundedRectangle(cornerRadius: SBRadius.lg).stroke(SBColor.divider))
                         }
                         .buttonStyle(SBPremiumButtonStyle())
                         .accessibilityIdentifier("station-alternatives-toggle")
@@ -283,13 +283,13 @@ struct StationFeedView: View {
                 VStack(spacing: 16) {
                     Image(systemName: icon)
                         .font(.largeTitle.weight(.heavy))
-                        .foregroundStyle(SBColor.primaryDeep)
+                        .foregroundStyle(SBColor.stationMediumPower)
                     Text(title)
                         .font(SBFont.display(size: 30, weight: .heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                     Text(message)
                         .font(.headline.weight(.bold))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                         .multilineTextAlignment(.center)
                     SBDarkButton(title: settings.t("route.back_home"), systemImage: "house") {
                         navigation.tab = .home
@@ -331,7 +331,7 @@ private struct StationFilterSheet: View {
                         Text(t("filters.minimum_power", ["power": "\(Int(filters.minimumPowerKW))"]))
                             .font(.headline)
                         Slider(value: $filters.minimumPowerKW, in: 0...180, step: 10)
-                            .tint(SBColor.electricBlue)
+                            .tint(SBColor.actionPrimary)
                     }
                 }
 
@@ -349,7 +349,7 @@ private struct StationFilterSheet: View {
                                     .font(.subheadline.weight(.bold))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
-                                    .background(filters.socketFilters.contains(socket) ? SBColor.accent : SBColor.glass)
+                                    .background(filters.socketFilters.contains(socket) ? SBColor.actionPrimary : SBColor.surfaceGlass)
                                     .clipShape(Capsule())
                             }
                             .buttonStyle(.plain)

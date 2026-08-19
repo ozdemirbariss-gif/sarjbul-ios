@@ -47,7 +47,7 @@ struct StationStoryPreviewSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                SBColor.background.ignoresSafeArea()
+                SBColor.canvas.ignoresSafeArea()
 
                 VStack(spacing: 18) {
                     Image(uiImage: item.image)
@@ -56,9 +56,9 @@ struct StationStoryPreviewSheet: View {
                         .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                                .stroke(SBColor.line, lineWidth: 1)
+                                .stroke(SBColor.divider, lineWidth: 1)
                         )
-                        .shadow(color: SBColor.signal.opacity(0.12), radius: 24, y: 10)
+                        .shadow(color: SBColor.actionPrimary.opacity(0.12), radius: 24, y: 10)
                         .accessibilityLabel(settings.t("story.preview_title"))
 
                     SBPrimaryButton(
@@ -128,11 +128,11 @@ private final class StationStoryActivityItem: NSObject, UIActivityItemSource {
 enum StationStoryRenderer {
     private static let canvasSize = CGSize(width: 1_080, height: 1_920)
     private static let mapSize = CGSize(width: 1_080, height: 1_160)
-    private static let signal = UIColor(sbHex: SBGeneratedTokens.primary.hex)
-    private static let background = UIColor(sbHex: SBGeneratedTokens.background.hex)
-    private static let surface = UIColor(sbHex: SBGeneratedTokens.surface.hex)
-    private static let ink = UIColor(sbHex: SBGeneratedTokens.text.hex)
-    private static let muted = UIColor(sbHex: SBGeneratedTokens.textMuted.hex)
+    private static let signal = UIColor(sbHex: SBGeneratedTokens.actionPrimary.hex)
+    private static let background = UIColor(sbHex: SBGeneratedTokens.canvas.hex)
+    private static let surface = UIColor(sbHex: SBGeneratedTokens.surfaceBase.hex)
+    private static let ink = UIColor(sbHex: SBGeneratedTokens.contentPrimary.hex)
+    private static let muted = UIColor(sbHex: SBGeneratedTokens.contentTertiary.hex)
 
     static func render(_ content: StationStoryContent) async throws -> UIImage {
         let options = MKMapSnapshotter.Options()
@@ -189,7 +189,7 @@ enum StationStoryRenderer {
 
         let configuration = UIImage.SymbolConfiguration(pointSize: 50, weight: .black)
         let bolt = UIImage(systemName: "bolt.fill", withConfiguration: configuration)?.withTintColor(
-            .black,
+            UIColor(SBColor.onActionPrimary),
             renderingMode: .alwaysOriginal
         )
         bolt?.draw(in: pinRect.insetBy(dx: 31, dy: 28))

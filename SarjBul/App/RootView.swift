@@ -36,7 +36,7 @@ struct RootView: View {
                     }
                 }
         }
-        .tint(SBColor.signal)
+        .tint(SBColor.actionPrimary)
         .environment(\.locale, settings.language.locale)
         .preferredColorScheme(.dark)
         .task {
@@ -94,20 +94,20 @@ struct RootView: View {
     private var offlineBanner: some View {
         Label(settings.t("network.offline"), systemImage: "wifi.slash")
             .font(.caption.weight(.heavy))
-            .foregroundStyle(SBColor.onSignal)
+            .foregroundStyle(SBColor.onActionPrimary)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 34)
-            .background(SBColor.signal)
+            .background(SBColor.actionPrimary)
             .accessibilityAddTraits(.isStaticText)
     }
 
     private var safeModeBanner: some View {
         Label(settings.t("recovery.safe_mode"), systemImage: "shield.lefthalf.filled")
             .font(.caption.weight(.heavy))
-            .foregroundStyle(SBColor.ink)
+            .foregroundStyle(SBColor.contentPrimary)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 34)
-            .background(SBColor.surface)
+            .background(SBColor.surfaceInteractive)
             .accessibilityAddTraits(.isStaticText)
     }
 
@@ -144,11 +144,11 @@ struct RootView: View {
                     } label: {
                         Image(systemName: "square.grid.2x2.fill")
                             .font(.headline.weight(.heavy))
-                            .foregroundStyle(SBColor.onSignal)
+                            .foregroundStyle(SBColor.onActionPrimary)
                             .frame(width: 54, height: 54)
-                            .background(SBColor.signal, in: Circle())
-                            .overlay(Circle().stroke(SBColor.line, lineWidth: 1))
-                            .shadow(color: .black.opacity(0.42), radius: 18, y: 10)
+                            .background(SBColor.actionPrimary, in: Circle())
+                            .overlay(Circle().stroke(SBColor.divider, lineWidth: 1))
+                            .shadow(color: SBColor.canvas.opacity(0.42), radius: 18, y: 10)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(settings.t("navigation.open"))
@@ -169,11 +169,11 @@ struct RootView: View {
             tabButton(.account)
         }
         .padding(7)
-        .background(SBColor.charcoal.opacity(0.98), in: Capsule())
-        .overlay(Capsule().stroke(SBColor.line, lineWidth: 1))
+        .background(SBColor.surfaceRaised.opacity(0.98), in: Capsule())
+        .overlay(Capsule().stroke(SBColor.divider, lineWidth: 1))
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
-        .shadow(color: .black.opacity(0.54), radius: 26, x: 0, y: 16)
+        .shadow(color: SBColor.canvas.opacity(0.54), radius: 26, x: 0, y: 16)
     }
 
     private func setInitialTabIfNeeded() {
@@ -193,7 +193,7 @@ struct RootView: View {
 
     private func tabButton(_ tab: AppTab) -> some View {
         let isSelected = navigation.tab == tab
-        let selectedColor = tab == .lounge ? SBColor.loungeAccent : SBColor.signal
+        let selectedColor = tab == .lounge ? SBColor.loungeAccent : SBColor.actionPrimary
         return Button {
             Haptic.tap()
             if reduceMotion {
@@ -216,15 +216,15 @@ struct RootView: View {
                         .minimumScaleFactor(0.74)
                 }
             }
-            .foregroundStyle(isSelected ? SBColor.onSignal : SBColor.textSoft)
+            .foregroundStyle(isSelected ? SBColor.onActionPrimary : SBColor.contentSecondary)
             .padding(.horizontal, isSelected ? 14 : 0)
             .frame(minWidth: 50, maxWidth: isSelected ? .infinity : 50)
             .frame(height: 54)
-            .background(isSelected ? selectedColor : SBColor.surface.opacity(0.72))
+            .background(isSelected ? selectedColor : SBColor.surfaceInteractive.opacity(0.72))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(isSelected ? .black.opacity(0.12) : SBColor.line, lineWidth: 1)
+                    .stroke(isSelected ? SBColor.onActionPrimary.opacity(0.12) : SBColor.divider, lineWidth: 1)
             )
         }
         .buttonStyle(SBPremiumButtonStyle())

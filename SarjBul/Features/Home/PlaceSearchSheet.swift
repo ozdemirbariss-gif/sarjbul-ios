@@ -92,15 +92,15 @@ struct PlaceSearchSheet: View {
                     } label: {
                         HStack(spacing: 14) {
                             Image(systemName: "mappin.and.ellipse")
-                                .foregroundStyle(SBColor.electricBlue)
+                                .foregroundStyle(SBColor.actionPrimary)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(result.title)
                                     .font(.headline)
-                                    .foregroundStyle(SBColor.ink)
+                                    .foregroundStyle(SBColor.contentPrimary)
                                 if !result.subtitle.isEmpty {
                                     Text(result.subtitle)
                                         .font(.caption)
-                                        .foregroundStyle(SBColor.muted)
+                                        .foregroundStyle(SBColor.contentTertiary)
                                         .lineLimit(2)
                                 }
                             }

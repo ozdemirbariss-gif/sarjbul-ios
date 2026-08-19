@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SBScreenBackground: View {
     var body: some View {
-        SBColor.background
+        SBColor.canvas
         .ignoresSafeArea()
     }
 }
@@ -18,15 +18,15 @@ struct SBBackButton: View {
         } label: {
             Image(systemName: "arrow.left")
                 .font(.title2.weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .frame(width: 58, height: 58)
-                .background(SBColor.glassStrong)
+                .background(SBColor.surfaceGlassStrong)
                 .clipShape(Circle())
                 .overlay(
                     Circle()
-                        .stroke(SBColor.line, lineWidth: 1)
+                        .stroke(SBColor.divider, lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.42), radius: 22, x: 0, y: 12)
+                .shadow(color: SBColor.canvas.opacity(0.42), radius: 22, x: 0, y: 12)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
@@ -41,26 +41,26 @@ struct SBBrandMark: View {
                 .frame(width: 28, height: 28)
                 .overlay(alignment: .trailing) {
                     Circle()
-                        .fill(SBColor.accent)
+                        .fill(SBColor.actionPrimary)
                         .frame(width: 34, height: 34)
                         .opacity(0.22)
                         .offset(x: 22)
                 }
             Circle()
-                .fill(SBColor.ink)
+                .fill(SBColor.contentPrimary)
                 .frame(width: 14, height: 14)
                 .padding(.leading, 8)
             Text("ŞarjBul")
                 .font(SBFont.display(size: 26, weight: .heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 13)
-        .background(SBColor.glassStrong)
+        .background(SBColor.surfaceGlassStrong)
         .clipShape(Capsule())
         .overlay(
             Capsule()
-                .stroke(SBColor.line, lineWidth: 1)
+                .stroke(SBColor.divider, lineWidth: 1)
         )
         .sbSoftShadow()
     }
@@ -85,9 +85,9 @@ struct SBLanguageSwitch: View {
         } label: {
             Text(language)
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(selectedLanguage == language ? SBColor.onSignal : SBColor.muted)
+                .foregroundStyle(selectedLanguage == language ? SBColor.onActionPrimary : SBColor.contentTertiary)
                 .frame(width: 62, height: 48)
-                .background(selectedLanguage == language ? SBColor.signal : .clear)
+                .background(selectedLanguage == language ? SBColor.actionPrimary : .clear)
                 .clipShape(Capsule())
         }
         .buttonStyle(SBPremiumButtonStyle())
@@ -125,8 +125,8 @@ struct SBSecondaryPanel<Content: View>: View {
         }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(22)
-            .background(SBColor.surface, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous).stroke(SBColor.line, lineWidth: 1))
+            .background(SBColor.surfaceInteractive, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous).stroke(SBColor.divider, lineWidth: 1))
             .sbSoftShadow()
     }
 }
@@ -149,14 +149,14 @@ struct SBPrimaryButton: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
             }
-            .foregroundStyle(SBColor.onSignal)
+            .foregroundStyle(SBColor.onActionPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(SBColor.signal)
+            .background(SBColor.actionPrimary)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .stroke(.black.opacity(0.12), lineWidth: 1)
+                    .stroke(SBColor.onActionPrimary.opacity(0.12), lineWidth: 1)
             )
             .sbGlowShadow()
         }
@@ -179,10 +179,10 @@ struct SBDarkButton: View {
                 Text(title)
                     .font(.headline.weight(.heavy))
             }
-            .foregroundStyle(SBColor.onSignal)
+            .foregroundStyle(SBColor.onActionPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: 68)
-            .background(SBColor.ice)
+            .background(SBColor.surfaceInverted)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -217,7 +217,7 @@ struct MetricInput: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
                 .lineLimit(2)
                 .minimumScaleFactor(0.84)
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .bottomLeading)
@@ -225,7 +225,7 @@ struct MetricInput: View {
             HStack(alignment: .center, spacing: 8) {
                 TextField(title, value: $value, format: .number.precision(.fractionLength(step < 1 ? 1 : 0)))
                     .font(SBFont.display(size: 28, weight: .heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
                     .multilineTextAlignment(.center)
                     .monospacedDigit()
                     .sbDecimalKeyboard()
@@ -235,10 +235,10 @@ struct MetricInput: View {
                     .accessibilityIdentifier(accessibilityIdentifier ?? "")
                 Text(unit)
                     .font(.caption2.weight(.heavy))
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
-                    .background(SBColor.surface)
+                    .background(SBColor.surfaceInteractive)
                     .clipShape(Capsule())
             }
             .padding(.horizontal, 14)

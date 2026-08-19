@@ -29,7 +29,7 @@ struct ChargingInsightsView: View {
                         .font(.title2.weight(.heavy))
                     Text(settings.t("history.subtitle"))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                 }
                 Spacer(minLength: 8)
                 if isReading {
@@ -39,9 +39,9 @@ struct ChargingInsightsView: View {
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     Image(systemName: "doc.viewfinder")
                         .font(.title3.weight(.heavy))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(SBColor.onActionPrimary)
                         .frame(width: 48, height: 48)
-                        .background(SBColor.accent)
+                        .background(SBColor.actionPrimary)
                         .clipShape(Circle())
                 }
                 .accessibilityLabel(settings.t("history.scan_receipt"))
@@ -60,7 +60,7 @@ struct ChargingInsightsView: View {
                 }
             }
             .font(.subheadline.weight(.heavy))
-            .foregroundStyle(SBColor.electricBlue)
+            .foregroundStyle(SBColor.actionPrimary)
 
             collectionProgress
 
@@ -72,7 +72,7 @@ struct ChargingInsightsView: View {
             }
 
             if !history.records.isEmpty {
-                Divider().overlay(SBColor.line)
+                Divider().overlay(SBColor.divider)
                 ForEach(history.records.prefix(3)) { record in
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
@@ -81,7 +81,7 @@ struct ChargingInsightsView: View {
                                 .lineLimit(1)
                             Text(record.date.formatted(date: .abbreviated, time: .omitted))
                                 .font(.caption)
-                                .foregroundStyle(SBColor.muted)
+                                .foregroundStyle(SBColor.contentTertiary)
                         }
                         Spacer()
                         Text(String(format: "%.1f kWh · %.0f TL", record.energyKWh, record.totalCostTRY))
@@ -121,7 +121,7 @@ struct ChargingInsightsView: View {
                         HStack(spacing: 10) {
                             Image(systemName: item.isComplete ? "checkmark.seal.fill" : item.symbol)
                                 .font(.headline.weight(.heavy))
-                                .foregroundStyle(item.isComplete ? SBColor.primaryDeep : SBColor.electricBlue)
+                                .foregroundStyle(item.isComplete ? SBColor.stationMediumPower : SBColor.actionPrimary)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(collectionTitle(item.kind))
                                     .font(.caption.weight(.heavy))
@@ -133,7 +133,7 @@ struct ChargingInsightsView: View {
                                         "total": "\(item.provinces.count)"
                                      ]))
                                     .font(.caption2.weight(.bold))
-                                    .foregroundStyle(SBColor.muted)
+                                    .foregroundStyle(SBColor.contentTertiary)
                             }
                         }
                         .padding(.horizontal, 12)
@@ -165,7 +165,7 @@ struct ChargingInsightsView: View {
                 .minimumScaleFactor(0.72)
             Text(title)
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -43,7 +43,8 @@ targets:
     preBuildScripts:
       - name: Generate Design Tokens
         script: |
-          python3 "$SRCROOT/Scripts/generate_design_tokens.py"
+          python3 "$SRCROOT/Scripts/generate_design_tokens.py" \
+            --output "$SRCROOT/SarjBul/Generated/DesignTokens.generated.swift"
         inputFiles:
           - $(SRCROOT)/SarjBul/Resources/design-tokens.json
           - $(SRCROOT)/Scripts/generate_design_tokens.py
@@ -56,6 +57,8 @@ targets:
       - SarjBulWidgets
       - SarjBul/App/ChargingActivityAttributes.swift
       - SarjBul/App/WidgetSnapshot.swift
+      - SarjBulWidgets/Generated/DesignTokens.generated.swift
+      - SarjBul/DesignSystem/SBColor.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul.widgets
@@ -63,6 +66,16 @@ targets:
         CODE_SIGN_ENTITLEMENTS: SarjBulWidgets/SarjBulWidgets.entitlements
         APPLICATION_EXTENSION_API_ONLY: YES
         SKIP_INSTALL: YES
+    preBuildScripts:
+      - name: Generate Widget Design Tokens
+        script: |
+          python3 "$SRCROOT/Scripts/generate_design_tokens.py" \
+            --output "$SRCROOT/SarjBulWidgets/Generated/DesignTokens.generated.swift"
+        inputFiles:
+          - $(SRCROOT)/SarjBul/Resources/design-tokens.json
+          - $(SRCROOT)/Scripts/generate_design_tokens.py
+        outputFiles:
+          - $(SRCROOT)/SarjBulWidgets/Generated/DesignTokens.generated.swift
   SarjBulUITests:
     type: bundle.ui-testing
     platform: iOS

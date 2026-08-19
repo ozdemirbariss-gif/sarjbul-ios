@@ -26,29 +26,27 @@ private extension Color {
 }
 
 enum SBColor {
-    static let background = SBGeneratedTokens.background.color
-    static let surface = SBGeneratedTokens.surfaceSoft.color
-    static let surfaceSolid = SBGeneratedTokens.surface.color
-    static let line = SBGeneratedTokens.line.color
-    static let lineStrong = SBGeneratedTokens.lineStrong.color
-    static let ink = SBGeneratedTokens.text.color
-    static let muted = SBGeneratedTokens.textMuted.color
-    static let textSoft = SBGeneratedTokens.textSoft.color
-    static let accent = SBGeneratedTokens.primary.color
-    static let primaryDeep = SBGeneratedTokens.primaryDeep.color
+    static let canvas = SBGeneratedTokens.canvas.color
+    static let surfaceBase = SBGeneratedTokens.surfaceBase.color
+    static let surfaceRaised = SBGeneratedTokens.surfaceRaised.color
+    static let surfaceInteractive = SBGeneratedTokens.surfaceInteractive.color
+    static let surfaceInverted = SBGeneratedTokens.surfaceInverted.color
+    static let surfaceGlass = SBGeneratedTokens.surfaceGlass.color
+    static let surfaceGlassStrong = SBGeneratedTokens.surfaceGlassStrong.color
+    static let divider = SBGeneratedTokens.divider.color
+    static let dividerStrong = SBGeneratedTokens.dividerStrong.color
+    static let contentPrimary = SBGeneratedTokens.contentPrimary.color
+    static let contentSecondary = SBGeneratedTokens.contentSecondary.color
+    static let contentTertiary = SBGeneratedTokens.contentTertiary.color
+    static let actionPrimary = SBGeneratedTokens.actionPrimary.color
+    static let onActionPrimary = SBGeneratedTokens.onActionPrimary.color
+    static let stationHighPower = SBGeneratedTokens.stationHighPower.color
+    static let stationMediumPower = SBGeneratedTokens.stationMediumPower.color
+    static let stationStandardPower = SBGeneratedTokens.stationStandardPower.color
+    static let statusAvailable = SBGeneratedTokens.statusAvailable.color
     static let danger = SBGeneratedTokens.danger.color
     static let warning = SBGeneratedTokens.warning.color
-    static let electricBlue = SBGeneratedTokens.electricBlue.color
     static let loungeAccent = SBGeneratedTokens.loungeAccent.color
-    static let glass = SBGeneratedTokens.glass.color
-    static let glassStrong = SBGeneratedTokens.glassStrong.color
-    static let signal = accent
-    static let onSignal = Color.black
-    static let ice = Color(hex: "#D8DFE9")
-    static let charcoal = Color(hex: "#212222")
-
-    static let navy = electricBlue
-    static let purple = primaryDeep
 }
 
 enum SBRadius {
@@ -136,10 +134,10 @@ private struct SBPremiumGlassModifier: ViewModifier {
         if #available(iOS 26.0, *) {
             content
                 .background(LinearGradient.sbSoftPanel.opacity(0.72), in: shape)
-                .glassEffect(.regular.tint(SBColor.glassStrong).interactive(interactive), in: shape)
+                .glassEffect(.regular.tint(SBColor.surfaceGlassStrong).interactive(interactive), in: shape)
                 .overlay(
                     shape
-                        .stroke(SBColor.line, lineWidth: 1)
+                        .stroke(SBColor.divider, lineWidth: 1)
                 )
         } else {
             content
@@ -147,7 +145,7 @@ private struct SBPremiumGlassModifier: ViewModifier {
                 .background(LinearGradient.sbSoftPanel, in: shape)
                 .overlay(
                     shape
-                        .stroke(SBColor.line, lineWidth: 1)
+                        .stroke(SBColor.divider, lineWidth: 1)
                 )
         }
         #else
@@ -156,7 +154,7 @@ private struct SBPremiumGlassModifier: ViewModifier {
             .background(LinearGradient.sbSoftPanel, in: shape)
             .overlay(
                 shape
-                    .stroke(SBColor.line, lineWidth: 1)
+                    .stroke(SBColor.divider, lineWidth: 1)
             )
         #endif
     }
@@ -165,15 +163,7 @@ private struct SBPremiumGlassModifier: ViewModifier {
 extension LinearGradient {
     static var sbPrimary: LinearGradient {
         LinearGradient(
-            colors: [SBColor.signal, SBColor.signal],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-    }
-
-    static var sbNeon: LinearGradient {
-        LinearGradient(
-            colors: [SBColor.signal, SBColor.signal],
+            colors: [SBColor.actionPrimary, SBColor.actionPrimary],
             startPoint: .leading,
             endPoint: .trailing
         )
@@ -181,7 +171,7 @@ extension LinearGradient {
 
     static var sbSoftPanel: LinearGradient {
         LinearGradient(
-            colors: [SBColor.glassStrong, SBColor.surfaceSolid],
+            colors: [SBColor.surfaceGlassStrong, SBColor.surfaceBase],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

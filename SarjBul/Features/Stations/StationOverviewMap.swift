@@ -17,8 +17,8 @@ struct StationOverviewMap: View {
         Map(position: $position, selection: $selectedID) {
             if isochrone.count >= 3 {
                 MapPolygon(coordinates: isochrone)
-                    .foregroundStyle(SBColor.ink.opacity(0.08))
-                    .stroke(SBColor.ink.opacity(0.55), lineWidth: 2)
+                    .foregroundStyle(SBColor.contentPrimary.opacity(0.08))
+                    .stroke(SBColor.contentPrimary.opacity(0.55), lineWidth: 2)
             }
 
             if let origin = search.userLocation {
@@ -28,26 +28,29 @@ struct StationOverviewMap: View {
                 )) {
                     ZStack {
                         Circle()
-                            .fill(SBColor.ink.opacity(0.16))
+                            .fill(SBColor.contentPrimary.opacity(0.16))
                             .frame(width: 38, height: 38)
                         Circle()
-                            .fill(SBColor.ink)
+                            .fill(SBColor.contentPrimary)
                             .frame(width: 16, height: 16)
-                            .overlay(Circle().stroke(.white, lineWidth: 3))
+                            .overlay(Circle().stroke(SBColor.surfaceInverted, lineWidth: 3))
                     }
                 }
             }
 
             ForEach(candidates) { candidate in
-                Marker(
+                Annotation(
                     candidate.station.name,
-                    systemImage: candidate.hasRiskyStatus ? "exclamationmark.triangle.fill" : "bolt.fill",
                     coordinate: CLLocationCoordinate2D(
                         latitude: candidate.station.latitude,
                         longitude: candidate.station.longitude
                     )
-                )
-                .tint(candidate.hasRiskyStatus ? SBColor.danger : pinColor(for: candidate))
+                ) {
+                    StationPowerPin(
+                        candidate: candidate,
+                        isSelected: selectedID == candidate.id
+                    )
+                }
                 .tag(candidate.id)
             }
         }
@@ -101,26 +104,26 @@ struct StationOverviewMap: View {
             HStack(spacing: 14) {
                 Image(systemName: "bolt.fill")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(width: 48, height: 48)
-                    .background(SBColor.electricBlue)
+                    .background(SBColor.actionPrimary)
                     .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(candidate.station.name)
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                         .lineLimit(1)
                     Text(String(format: "%.1f km · %@", candidate.distanceKm, candidate.station.power))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                         .lineLimit(1)
                 }
 
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right")
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(SBColor.electricBlue)
+                    .foregroundStyle(SBColor.actionPrimary)
             }
             .padding(12)
             .sbPremiumGlass(radius: SBRadius.lg, interactive: true)
@@ -145,14 +148,73 @@ struct StationOverviewMap: View {
         position = .rect(rect.insetBy(dx: -6_000, dy: -6_000))
     }
 
-    private func pinColor(for candidate: StationCandidate) -> Color {
-        if candidate.station.powerKW >= 100 { return SBColor.electricBlue }
-        if candidate.station.powerKW >= 50 { return SBColor.primaryDeep }
-        return SBColor.electricBlue
-    }
-
     private var isochroneTaskID: String {
         guard let location = search.userLocation else { return "none" }
         return "\(location.latitude)-\(location.longitude)-\(Int(settings.profile.safeRangeKm))"
+    }
+}
+
+private struct StationPowerPin: View {
+    let candidate: StationCandidate
+    let isSelected: Bool
+
+    var body: some View {
+        VStack(spacing: 3) {
+            ZStack {
+                RoundedRectangle(cornerRadius: isSelected ? 14 : 12, style: .continuous)
+                    .fill(fillColor)
+                RoundedRectangle(cornerRadius: isSelected ? 14 : 12, style: .continuous)
+                    .stroke(borderColor, lineWidth: candidate.station.powerKW < 50 ? 2 : 1)
+                Image(systemName: symbol)
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(foregroundColor)
+            }
+            .frame(width: isSelected ? 42 : 36, height: isSelected ? 42 : 36)
+
+            Text(powerLabel)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .foregroundStyle(SBColor.contentPrimary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(SBColor.surfaceGlassStrong, in: Capsule())
+                .overlay(Capsule().stroke(SBColor.divider, lineWidth: 1))
+        }
+        .shadow(color: SBColor.canvas.opacity(0.34), radius: 8, y: 5)
+        .scaleEffect(isSelected ? 1.06 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(candidate.station.name), \(candidate.station.power)")
+    }
+
+    private var fillColor: Color {
+        if candidate.hasRiskyStatus { return SBColor.danger }
+        if candidate.station.powerKW >= 100 { return SBColor.stationHighPower }
+        if candidate.station.powerKW >= 50 { return SBColor.stationMediumPower }
+        return SBColor.surfaceInteractive
+    }
+
+    private var borderColor: Color {
+        if candidate.hasRiskyStatus { return SBColor.danger }
+        if candidate.station.powerKW < 50 { return SBColor.stationStandardPower }
+        return SBColor.dividerStrong
+    }
+
+    private var foregroundColor: Color {
+        candidate.station.powerKW < 50 && !candidate.hasRiskyStatus
+            ? SBColor.contentPrimary
+            : SBColor.onActionPrimary
+    }
+
+    private var symbol: String {
+        if candidate.hasRiskyStatus { return "exclamationmark.triangle.fill" }
+        if candidate.station.powerKW >= 100 { return "bolt.fill" }
+        if candidate.station.powerKW >= 50 { return "bolt" }
+        return "powerplug"
+    }
+
+    private var powerLabel: String {
+        if candidate.station.powerKW >= 100 { return "HPC" }
+        if candidate.station.powerKW >= 50 { return "DC" }
+        if candidate.station.powerKW > 0 { return "<50" }
+        return "?"
     }
 }

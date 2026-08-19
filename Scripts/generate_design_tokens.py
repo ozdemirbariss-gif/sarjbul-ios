@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
+import argparse
 import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "SarjBul" / "Resources" / "design-tokens.json"
-OUTPUT = ROOT / "SarjBul" / "Generated" / "DesignTokens.generated.swift"
+APP_OUTPUT = ROOT / "SarjBul" / "Generated" / "DesignTokens.generated.swift"
+WIDGET_OUTPUT = ROOT / "SarjBulWidgets" / "Generated" / "DesignTokens.generated.swift"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path)
+    return parser.parse_args()
 
 
 def swift_string(value: str) -> str:
@@ -72,8 +80,12 @@ def generate(tokens: dict) -> str:
 
 def main() -> None:
     tokens = json.loads(SOURCE.read_text(encoding="utf-8"))
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(generate(tokens), encoding="utf-8")
+    requested_output = parse_args().output
+    outputs = [requested_output] if requested_output else [APP_OUTPUT, WIDGET_OUTPUT]
+    generated = generate(tokens)
+    for output in outputs:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(generated, encoding="utf-8")
 
 
 if __name__ == "__main__":

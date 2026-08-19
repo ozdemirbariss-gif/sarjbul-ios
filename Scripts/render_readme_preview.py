@@ -49,10 +49,10 @@ def main() -> None:
         raise SystemExit(f"Eksik simulator ekran goruntuleri: {names}")
 
     tokens = json.loads(TOKENS_PATH.read_text(encoding="utf-8"))
-    background = hex_color(tokens["colors"]["background"]["hex"])
-    ink = hex_color(tokens["colors"]["text"]["hex"])
-    muted = hex_color(tokens["colors"]["textMuted"]["hex"])
-    accent = hex_color(tokens["colors"]["primary"]["hex"])
+    background = hex_color(tokens["colors"]["canvas"]["hex"])
+    ink = hex_color(tokens["colors"]["contentPrimary"]["hex"])
+    muted = hex_color(tokens["colors"]["contentTertiary"]["hex"])
+    accent = hex_color(tokens["colors"]["actionPrimary"]["hex"])
 
     canvas = Image.new("RGB", (1600, 1040), background)
     draw = ImageDraw.Draw(canvas)

@@ -95,14 +95,14 @@ struct WaitingLoungeView: View {
                             .font(.title3.weight(.heavy))
                         Text(chargingSession.station?.name ?? "")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(SBColor.muted)
+                            .foregroundStyle(SBColor.contentTertiary)
                             .lineLimit(1)
                     }
                     Spacer()
                     if let endDate = chargingSession.endDate {
                         Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
                             .font(.headline.monospacedDigit().weight(.heavy))
-                            .foregroundStyle(SBColor.electricBlue)
+                            .foregroundStyle(SBColor.actionPrimary)
                     }
                 }
 
@@ -111,7 +111,7 @@ struct WaitingLoungeView: View {
                 } else if chargingSession.nearbyPlaces.isEmpty {
                     Text(settings.t("break.empty"))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                 } else {
                     ScrollView(.horizontal) {
                         HStack(spacing: 10) {
@@ -122,13 +122,13 @@ struct WaitingLoungeView: View {
                                     VStack(alignment: .leading, spacing: 5) {
                                         Image(systemName: icon(for: place.category))
                                             .font(.headline.weight(.heavy))
-                                            .foregroundStyle(SBColor.electricBlue)
+                                            .foregroundStyle(SBColor.actionPrimary)
                                         Text(place.name)
                                             .font(.subheadline.weight(.heavy))
                                             .lineLimit(1)
                                         Text("\(place.distanceMeters) m")
                                             .font(.caption.weight(.bold))
-                                            .foregroundStyle(SBColor.muted)
+                                            .foregroundStyle(SBColor.contentTertiary)
                                     }
                                     .frame(width: 132, alignment: .leading)
                                     .padding(12)
@@ -156,10 +156,10 @@ struct WaitingLoungeView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Label(settings.t("reminder.title"), systemImage: "bell.badge")
                     .font(.title3.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
                 Text(settings.t("reminder.hint"))
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
 
                 Picker(settings.t("reminder.title"), selection: $reminderMinutes) {
                     ForEach([15, 30, 45], id: \.self) { minutes in
@@ -178,17 +178,17 @@ struct WaitingLoungeView: View {
                         systemImage: reminderScheduled ? "bell.slash.fill" : "bell.fill"
                     )
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(reminderScheduled ? SBColor.ink : .black)
+                    .foregroundStyle(reminderScheduled ? SBColor.contentPrimary : SBColor.onActionPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: 48)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(reminderScheduled ? SBColor.muted : SBColor.electricBlue)
+                .tint(reminderScheduled ? SBColor.contentTertiary : SBColor.actionPrimary)
 
                 if let reminderMessage {
                     Text(reminderMessage)
                         .font(.footnote.weight(.semibold))
-                        .foregroundStyle(reminderScheduled ? SBColor.electricBlue : SBColor.muted)
+                        .foregroundStyle(reminderScheduled ? SBColor.actionPrimary : SBColor.contentTertiary)
                         .accessibilityAddTraits(.isStaticText)
                 }
             }
@@ -202,7 +202,7 @@ struct WaitingLoungeView: View {
                 .foregroundStyle(SBColor.loungeAccent)
             Text(settings.t("lounge.subtitle"))
                 .font(.headline.weight(.bold))
-                .foregroundStyle(SBColor.textSoft)
+                .foregroundStyle(SBColor.contentSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -214,10 +214,10 @@ struct WaitingLoungeView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(settings.t("lounge.game_title"))
                             .font(.caption.weight(.heavy))
-                            .foregroundStyle(SBColor.signal)
+                            .foregroundStyle(SBColor.actionPrimary)
                         Text(gameStatusText)
                             .font(SBFont.display(size: min(statusSize, 50), weight: .heavy))
-                            .foregroundStyle(SBColor.ink)
+                            .foregroundStyle(SBColor.contentPrimary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.78)
                     }
@@ -228,16 +228,16 @@ struct WaitingLoungeView: View {
                                 .font(.headline.weight(.heavy))
                             Text("\(settings.t("lounge.best")) \(lounge.bestScore)")
                                 .font(.caption.weight(.heavy))
-                                .foregroundStyle(SBColor.muted)
+                                .foregroundStyle(SBColor.contentTertiary)
                         }
                         Button {
                             enterFullscreenGame()
                         } label: {
                             Image(systemName: "arrow.up.left.and.arrow.down.right")
                                 .font(.headline.weight(.heavy))
-                                .foregroundStyle(SBColor.ink)
+                                .foregroundStyle(SBColor.contentPrimary)
                                 .frame(width: 44, height: 44)
-                                .background(SBColor.surface, in: Circle())
+                                .background(SBColor.surfaceInteractive, in: Circle())
                         }
                         .buttonStyle(SBPremiumButtonStyle())
                         .accessibilityLabel(settings.t("lounge.fullscreen"))
@@ -259,10 +259,10 @@ struct WaitingLoungeView: View {
         GeometryReader { proxy in
             ZStack(alignment: .bottomLeading) {
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .fill(SBColor.charcoal)
+                    .fill(SBColor.surfaceRaised)
                     .overlay(
                         RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                            .stroke(SBColor.line, lineWidth: 1)
+                            .stroke(SBColor.divider, lineWidth: 1)
                     )
 
                 Capsule()
@@ -272,7 +272,7 @@ struct WaitingLoungeView: View {
                     .sbGlowShadow()
 
                 RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous)
-                    .fill(SBColor.ice)
+                    .fill(SBColor.surfaceInverted)
                     .frame(width: 34, height: 72)
                     .offset(x: obstacleX, y: 0)
             }
@@ -287,7 +287,7 @@ struct WaitingLoungeView: View {
     private var fullscreenGame: some View {
         GeometryReader { proxy in
             ZStack {
-                SBColor.background.ignoresSafeArea()
+                SBColor.canvas.ignoresSafeArea()
                 Color.clear
                     .frame(width: 1, height: 1)
                     .accessibilityIdentifier("lounge-game-fullscreen")
@@ -299,21 +299,21 @@ struct WaitingLoungeView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(settings.t("lounge.game_title"))
                                 .font(.caption.weight(.heavy))
-                                .foregroundStyle(SBColor.signal)
+                                .foregroundStyle(SBColor.actionPrimary)
                             Text(gameStatusText)
                                 .font(SBFont.display(size: 30, weight: .heavy))
-                                .foregroundStyle(SBColor.ink)
+                                .foregroundStyle(SBColor.contentPrimary)
                         }
                         Spacer()
                         Text("\(settings.t("lounge.score")) \(score)")
                             .font(.title3.monospacedDigit().weight(.heavy))
-                            .foregroundStyle(SBColor.ink)
+                            .foregroundStyle(SBColor.contentPrimary)
                         Button {
                             exitFullscreenGame()
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.headline.weight(.heavy))
-                                .foregroundStyle(SBColor.ink)
+                                .foregroundStyle(SBColor.contentPrimary)
                                 .frame(width: 46, height: 46)
                                 .background(.ultraThinMaterial, in: Circle())
                         }

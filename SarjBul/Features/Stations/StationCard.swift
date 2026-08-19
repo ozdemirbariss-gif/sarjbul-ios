@@ -32,11 +32,11 @@ struct StationCard: View {
             mapHero
             zeroUIDetails
         }
-        .background(SBColor.surfaceSolid)
+        .background(SBColor.surfaceBase)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
+                .stroke(SBColor.divider, lineWidth: 1)
         )
         .sbCardShadow()
         .accessibilityIdentifier("station-route-card")
@@ -81,7 +81,7 @@ struct StationCard: View {
             HStack(alignment: .top) {
                 Text("\(rank) / \(total)")
                     .font(.subheadline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
                     .padding(.horizontal, 14)
                     .frame(height: 42)
                     .sbPremiumGlass(radius: 21)
@@ -116,11 +116,11 @@ struct StationCard: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(rank == 1 ? settings.t("feed.best_match") : settings.t("feed.nearby_option"))
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.electricBlue)
+                .foregroundStyle(SBColor.actionPrimary)
 
             Text(candidate.station.name)
                 .font(SBFont.display(size: min(stationTitleSize, 32), weight: .heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .lineLimit(2)
                 .minimumScaleFactor(0.72)
 
@@ -133,7 +133,7 @@ struct StationCard: View {
                 }
             }
             .font(.subheadline.weight(.bold))
-            .foregroundStyle(SBColor.textSoft)
+            .foregroundStyle(SBColor.contentSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -143,7 +143,7 @@ struct StationCard: View {
         return HStack(alignment: .bottom, spacing: 16) {
             Text(String(format: "%.1f km", displayDistanceKm))
                 .font(SBFont.display(size: min(distanceTextSize, 64), weight: .heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.66)
 
@@ -152,7 +152,7 @@ struct StationCard: View {
             VStack(alignment: .trailing, spacing: 6) {
                 Text("\(displayMinutes) \(settings.t("feed.minute"))")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
 
                 HStack(spacing: 7) {
                     Circle()
@@ -163,7 +163,7 @@ struct StationCard: View {
                         .minimumScaleFactor(0.72)
                 }
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.textSoft)
+                .foregroundStyle(SBColor.contentSecondary)
             }
         }
         .accessibilityElement(children: .combine)
@@ -182,7 +182,7 @@ struct StationCard: View {
                     Image(systemName: "arrow.up.right")
                         .font(.headline.weight(.heavy))
                 }
-                .foregroundStyle(SBColor.onSignal)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .padding(.leading, 18)
                 .padding(.trailing, 14)
                 .frame(maxWidth: .infinity)
@@ -203,7 +203,7 @@ struct StationCard: View {
             }
 
             Rectangle()
-                .fill(.black.opacity(0.14))
+                .fill(SBColor.onActionPrimary.opacity(0.14))
                 .frame(width: 1, height: 30)
 
             Menu {
@@ -212,12 +212,12 @@ struct StationCard: View {
             } label: {
                 Image(systemName: "chevron.down")
                     .font(.subheadline.weight(.heavy))
-                    .foregroundStyle(SBColor.onSignal)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(width: 54, height: 58)
             }
             .accessibilityLabel(settings.t("feed.route_options"))
         }
-        .background(SBColor.signal)
+        .background(SBColor.actionPrimary)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         .sbGlowShadow()
     }
@@ -295,11 +295,11 @@ struct StationCard: View {
             Group {
                 if isGeneratingStory {
                     ProgressView()
-                        .tint(SBColor.ink)
+                        .tint(SBColor.contentPrimary)
                 } else {
                     Image(systemName: "ellipsis")
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                 }
             }
             .frame(width: 44, height: 44)
@@ -334,7 +334,7 @@ struct StationCard: View {
                             ["seconds": "\(reportCooldownRemaining)"]
                         ))
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(SBColor.textSoft)
+                        .foregroundStyle(SBColor.contentSecondary)
                     }
                 }
                 .padding(20)
@@ -376,7 +376,7 @@ struct StationCard: View {
             )
         }
         .padding(.vertical, 14)
-        .background(SBColor.surface.opacity(0.72))
+        .background(SBColor.surfaceInteractive.opacity(0.72))
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
         .accessibilityElement(children: .combine)
     }
@@ -385,15 +385,15 @@ struct StationCard: View {
         VStack(alignment: .leading, spacing: 6) {
             Image(systemName: icon)
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.electricBlue)
+                .foregroundStyle(SBColor.actionPrimary)
             Text(value)
                 .font(.subheadline.weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)
             Text(title)
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
@@ -403,7 +403,7 @@ struct StationCard: View {
 
     private var decisionDivider: some View {
         Rectangle()
-            .fill(SBColor.line)
+            .fill(SBColor.divider)
             .frame(width: 1, height: 54)
     }
 
@@ -419,7 +419,7 @@ struct StationCard: View {
                         ? "bolt.circle.fill"
                         : "clock.badge.exclamationmark"
                 )
-                .foregroundStyle(availability.availableConnectors > 0 ? SBColor.electricBlue : SBColor.warning)
+                .foregroundStyle(availability.availableConnectors > 0 ? SBColor.statusAvailable : SBColor.warning)
             } else {
                 let prediction = OccupancyPredictor.predict(
                     station: candidate.station,
@@ -431,7 +431,7 @@ struct StationCard: View {
                     ]),
                     systemImage: "chart.xyaxis.line"
                 )
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
             }
 
             Label(
@@ -440,11 +440,11 @@ struct StationCard: View {
                 ]),
                 systemImage: "checkmark.shield"
             )
-            .foregroundStyle(SBColor.textSoft)
+            .foregroundStyle(SBColor.contentSecondary)
 
             if !nightSafetyText.isEmpty {
                 Label(nightSafetyText, systemImage: "moon.stars.fill")
-                    .foregroundStyle(SBColor.electricBlue)
+                    .foregroundStyle(SBColor.actionPrimary)
             }
         }
         .font(.caption.weight(.heavy))
@@ -503,17 +503,17 @@ struct StationCard: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title)
                 .font(.caption2.weight(.heavy))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
             Text(value)
                 .font(.caption.weight(.bold))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .lineLimit(2)
                 .minimumScaleFactor(0.76)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .frame(minHeight: 62)
-        .background(SBColor.surface)
+        .background(SBColor.surfaceInteractive)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
     }
 
@@ -557,11 +557,11 @@ struct StationCard: View {
         case .risky, .predictedBusy:
             SBColor.warning
         case .live(let available, _):
-            available > 0 ? SBColor.electricBlue : SBColor.warning
+            available > 0 ? SBColor.statusAvailable : SBColor.warning
         case .predictedAvailable:
-            SBColor.electricBlue
+            SBColor.statusAvailable
         case .unknown:
-            SBColor.muted
+            SBColor.contentTertiary
         }
     }
 

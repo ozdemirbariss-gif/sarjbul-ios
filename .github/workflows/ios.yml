@@ -28,7 +28,9 @@ jobs:
       - name: Validate generated design tokens
         run: |
           python3 Scripts/generate_design_tokens.py
-          git diff --exit-code -- SarjBul/Generated/DesignTokens.generated.swift
+          git diff --exit-code -- \
+            SarjBul/Generated/DesignTokens.generated.swift \
+            SarjBulWidgets/Generated/DesignTokens.generated.swift
       - name: Validate Firebase backend
         working-directory: firebase/functions
         run: |

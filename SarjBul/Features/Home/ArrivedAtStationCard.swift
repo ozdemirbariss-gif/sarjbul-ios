@@ -21,9 +21,9 @@ struct ArrivedAtStationCard: View {
             HStack(spacing: 16) {
                 Image(systemName: "bolt.car.fill")
                     .font(.title2.weight(.heavy))
-                    .foregroundStyle(SBColor.onSignal)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(width: 56, height: 56)
-                    .background(SBColor.signal, in: RoundedRectangle(
+                    .background(SBColor.actionPrimary, in: RoundedRectangle(
                         cornerRadius: SBRadius.md,
                         style: .continuous
                     ))
@@ -31,28 +31,28 @@ struct ArrivedAtStationCard: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(settings.t("journey.arrived_kicker"))
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                     Text(journey.station.name)
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                         .lineLimit(2)
                     Text(settings.t("journey.start_charging"))
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(SBColor.textSoft)
+                        .foregroundStyle(SBColor.contentSecondary)
                 }
 
                 Spacer(minLength: 4)
                 Image(systemName: "arrow.right")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(SBColor.surfaceSolid, in: RoundedRectangle(
+            .background(SBColor.surfaceBase, in: RoundedRectangle(
                 cornerRadius: SBRadius.card,
                 style: .continuous
             ))
-            .overlay(RoundedRectangle(cornerRadius: SBRadius.card).stroke(SBColor.lineStrong))
+            .overlay(RoundedRectangle(cornerRadius: SBRadius.card).stroke(SBColor.dividerStrong))
         }
         .buttonStyle(SBPremiumButtonStyle())
         .accessibilityIdentifier("arrived-start-charging-card")

@@ -116,16 +116,16 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(settings.t("profile.eyebrow"))
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.signal)
+                .foregroundStyle(SBColor.actionPrimary)
 
             Text(settings.t("profile.title"))
                 .font(SBFont.display(size: 48, weight: .heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .minimumScaleFactor(0.72)
 
             Text(settings.t("profile.subtitle"))
                 .font(.headline.weight(.semibold))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -138,7 +138,7 @@ struct AccountView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Label(settings.t("proof.value_title"), systemImage: "checkmark.shield.fill")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
 
                 HStack(spacing: 10) {
                     valueMetric(
@@ -159,7 +159,7 @@ struct AccountView: View {
 
                 Text(settings.t("proof.value_hint"))
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(SBColor.textSoft)
+                    .foregroundStyle(SBColor.contentSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -170,12 +170,12 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
                 .font(.title3.monospacedDigit().weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
             Text(title)
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(SBColor.textSoft)
+                .foregroundStyle(SBColor.contentSecondary)
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -199,33 +199,33 @@ struct AccountView: View {
                 HStack(spacing: 14) {
                     Image(systemName: icon)
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                         .frame(width: 42, height: 42)
-                        .background(SBColor.signal.opacity(0.10), in: Circle())
+                        .background(SBColor.actionPrimary.opacity(0.10), in: Circle())
                     VStack(alignment: .leading, spacing: 3) {
                         Text(title)
                             .font(.headline.weight(.heavy))
-                            .foregroundStyle(SBColor.ink)
+                            .foregroundStyle(SBColor.contentPrimary)
                         Text(subtitle)
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(SBColor.textSoft)
+                            .foregroundStyle(SBColor.contentSecondary)
                             .lineLimit(2)
                     }
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.down")
                         .font(.subheadline.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                         .rotationEffect(.degrees(isExpanded.wrappedValue ? 180 : 0))
                 }
                 .padding(.horizontal, 18)
                 .frame(minHeight: 68)
                 .background(
-                    SBColor.surfaceSolid,
+                    SBColor.surfaceBase,
                     in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                        .stroke(SBColor.line, lineWidth: 1)
+                        .stroke(SBColor.divider, lineWidth: 1)
                 )
             }
             .buttonStyle(SBPremiumButtonStyle())
@@ -243,18 +243,18 @@ struct AccountView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Label(settings.t("profile.privacy_title"), systemImage: "hand.raised.fill")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
 
                 Toggle(settings.t("auth.demand_analytics"), isOn: Binding(
                     get: { settings.demandAnalyticsEnabled },
                     set: { settings.demandAnalyticsEnabled = $0 }
                 ))
                 .font(.subheadline.weight(.bold))
-                .tint(SBColor.electricBlue)
+                .tint(SBColor.actionPrimary)
 
                 Text(settings.t("auth.demand_analytics_hint"))
                     .font(.caption)
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -265,11 +265,11 @@ struct AccountView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Label(settings.t("agent.settings_title"), systemImage: "sparkles")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
 
                 Text(settings.t("agent.settings_hint"))
                     .font(.subheadline)
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Toggle(settings.t("agent.enable"), isOn: Binding(
@@ -277,10 +277,10 @@ struct AccountView: View {
                     set: { enabled in Task { await autonomousAgent.setEnabled(enabled) } }
                 ))
                 .font(.subheadline.weight(.bold))
-                .tint(SBColor.signal)
+                .tint(SBColor.actionPrimary)
 
                 if settings.autonomousChargingPolicy.isEnabled {
-                    Divider().overlay(SBColor.line)
+                    Divider().overlay(SBColor.divider)
 
                     Stepper(
                         settings.t("agent.threshold", [
@@ -294,11 +294,11 @@ struct AccountView: View {
 
                     Toggle(settings.t("agent.profile_fallback"), isOn: profileFallbackBinding)
                         .font(.subheadline.weight(.bold))
-                        .tint(SBColor.signal)
+                        .tint(SBColor.actionPrimary)
 
                     Text(settings.t("agent.profile_fallback_hint"))
                         .font(.caption)
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -321,11 +321,11 @@ struct AccountView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Label(settings.t("context.settings_title"), systemImage: "brain.head.profile")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
 
                 Text(settings.t("context.settings_hint"))
                     .font(.caption)
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Toggle(settings.t("context.enable"), isOn: Binding(
@@ -333,35 +333,35 @@ struct AccountView: View {
                     set: { enabled in Task { await contextIntelligence.setEnabled(enabled) } }
                 ))
                 .font(.subheadline.weight(.bold))
-                .tint(SBColor.signal)
+                .tint(SBColor.actionPrimary)
 
                 if contextIntelligence.policy.isEnabled {
-                    Divider().overlay(SBColor.line)
+                    Divider().overlay(SBColor.divider)
 
                     Toggle(settings.t("context.health"), isOn: Binding(
                         get: { contextIntelligence.policy.usesHealthSignals },
                         set: { enabled in Task { await contextIntelligence.setUsesHealthSignals(enabled) } }
                     ))
                     .font(.subheadline.weight(.bold))
-                    .tint(SBColor.signal)
+                    .tint(SBColor.actionPrimary)
 
                     Toggle(settings.t("context.weather"), isOn: Binding(
                         get: { contextIntelligence.policy.usesWeather },
                         set: { contextIntelligence.setUsesWeather($0) }
                     ))
                     .font(.subheadline.weight(.bold))
-                    .tint(SBColor.signal)
+                    .tint(SBColor.actionPrimary)
 
                     Toggle(settings.t("context.calendar_auto"), isOn: Binding(
                         get: { contextIntelligence.policy.allowsAutomaticCalendarChanges },
                         set: { enabled in Task { await contextIntelligence.setAutomaticCalendarChanges(enabled) } }
                     ))
                     .font(.subheadline.weight(.bold))
-                    .tint(SBColor.signal)
+                    .tint(SBColor.actionPrimary)
 
                     Text(settings.t("context.calendar_auto_hint"))
                         .font(.caption2)
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -384,11 +384,11 @@ struct AccountView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Label(settings.t("profile.data_title"), systemImage: "lock.shield.fill")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
 
                 Text(settings.t("profile.data_hint"))
                     .font(.subheadline)
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Button(role: .destructive) {
@@ -432,7 +432,7 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
 
             ForEach(Array(stations.prefix(4))) { station in
                 Button {
@@ -441,24 +441,24 @@ struct AccountView: View {
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "bolt.fill")
-                            .foregroundStyle(.black)
+                            .foregroundStyle(SBColor.onActionPrimary)
                             .frame(width: 38, height: 38)
-                            .background(SBColor.electricBlue)
+                            .background(SBColor.actionPrimary)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 3) {
                             Text(station.name)
                                 .font(.subheadline.weight(.heavy))
-                                .foregroundStyle(SBColor.ink)
+                                .foregroundStyle(SBColor.contentPrimary)
                                 .lineLimit(1)
                             Text(station.operatorName)
                                 .font(.caption.weight(.semibold))
-                                .foregroundStyle(SBColor.muted)
+                                .foregroundStyle(SBColor.contentTertiary)
                                 .lineLimit(1)
                         }
                         Spacer(minLength: 8)
                         Image(systemName: "chevron.right")
                             .font(.caption.weight(.heavy))
-                            .foregroundStyle(SBColor.electricBlue)
+                            .foregroundStyle(SBColor.actionPrimary)
                     }
                     .padding(12)
                     .sbPremiumGlass(radius: SBRadius.md, interactive: true)
@@ -479,7 +479,7 @@ struct AccountView: View {
 
             Text(settings.t("auth.version", ["version": appVersion]))
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(SBColor.muted)
+                .foregroundStyle(SBColor.contentTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.bottom, 110)
@@ -491,7 +491,7 @@ struct AccountView: View {
             legalDocument = document
         }
         .font(.caption.weight(.bold))
-        .foregroundStyle(SBColor.electricBlue)
+        .foregroundStyle(SBColor.actionPrimary)
     }
 
     private var appVersion: String {

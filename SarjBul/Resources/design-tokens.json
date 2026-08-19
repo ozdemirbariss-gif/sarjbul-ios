@@ -1,22 +1,27 @@
 {
-  "source": "elektriklisarj/style.css",
+  "source": "SarjBul/Resources/design-tokens.json",
   "colors": {
-    "background": { "hex": "#090A0A", "opacity": 1.0 },
-    "surface": { "hex": "#1C1D1D", "opacity": 1.0 },
-    "surfaceSoft": { "hex": "#292A2A", "opacity": 1.0 },
-    "line": { "hex": "#FFFFFF", "opacity": 0.10 },
-    "lineStrong": { "hex": "#F7F8F3", "opacity": 0.34 },
-    "text": { "hex": "#F7F8F3", "opacity": 1.0 },
-    "textSoft": { "hex": "#FFFFFF", "opacity": 0.70 },
-    "textMuted": { "hex": "#FFFFFF", "opacity": 0.48 },
-    "primary": { "hex": "#F7F8F3", "opacity": 1.0 },
-    "primaryDeep": { "hex": "#D8DFE9", "opacity": 1.0 },
+    "canvas": { "hex": "#090A0A", "opacity": 1.0 },
+    "surfaceBase": { "hex": "#171818", "opacity": 1.0 },
+    "surfaceRaised": { "hex": "#202121", "opacity": 1.0 },
+    "surfaceInteractive": { "hex": "#292A2A", "opacity": 1.0 },
+    "surfaceInverted": { "hex": "#F7F8F3", "opacity": 1.0 },
+    "surfaceGlass": { "hex": "#1C1D1D", "opacity": 0.82 },
+    "surfaceGlassStrong": { "hex": "#252626", "opacity": 0.96 },
+    "divider": { "hex": "#FFFFFF", "opacity": 0.12 },
+    "dividerStrong": { "hex": "#FFFFFF", "opacity": 0.24 },
+    "contentPrimary": { "hex": "#F7F8F3", "opacity": 1.0 },
+    "contentSecondary": { "hex": "#C2C3C0", "opacity": 1.0 },
+    "contentTertiary": { "hex": "#9A9C98", "opacity": 1.0 },
+    "actionPrimary": { "hex": "#F7F8F3", "opacity": 1.0 },
+    "onActionPrimary": { "hex": "#090A0A", "opacity": 1.0 },
+    "stationHighPower": { "hex": "#F7F8F3", "opacity": 1.0 },
+    "stationMediumPower": { "hex": "#BFC1BE", "opacity": 1.0 },
+    "stationStandardPower": { "hex": "#777A76", "opacity": 1.0 },
+    "statusAvailable": { "hex": "#B7D9C2", "opacity": 1.0 },
     "danger": { "hex": "#FF8585", "opacity": 1.0 },
-    "warning": { "hex": "#F0D77B", "opacity": 1.0 },
-    "electricBlue": { "hex": "#F7F8F3", "opacity": 1.0 },
-    "loungeAccent": { "hex": "#B8A7FF", "opacity": 1.0 },
-    "glass": { "hex": "#1C1D1D", "opacity": 0.82 },
-    "glassStrong": { "hex": "#252626", "opacity": 0.96 }
+    "warning": { "hex": "#E6C66F", "opacity": 1.0 },
+    "loungeAccent": { "hex": "#B8A7FF", "opacity": 1.0 }
   },
   "radius": {
     "sm": 10,
@@ -29,7 +34,7 @@
   },
   "shadows": {
     "soft": { "color": "#000000", "opacity": 0.34, "radius": 24, "x": 0, "y": 16 },
-    "glow": { "color": "#F7F8F3", "opacity": 0.10, "radius": 28, "x": 0, "y": 12 },
+    "glow": { "color": "#F7F8F3", "opacity": 0.08, "radius": 28, "x": 0, "y": 12 },
     "card": { "color": "#000000", "opacity": 0.46, "radius": 30, "x": 0, "y": 22 }
   },
   "fonts": {

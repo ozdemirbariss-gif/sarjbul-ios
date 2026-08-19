@@ -97,7 +97,7 @@ Veri pipeline actor'ü yükleme sırasında 12 bin üzeri istasyon için hücre 
 
 `AppState` yalnızca bağımlılıkları kuran composition root'tur. Auth, favoriler, istasyon verisi, arama ve deep link akışları ayrı `@Observable` store/router nesnelerindedir. Firebase REST istemcisi `AuthClient`, `FavoritesClient`, `StatusClient` ve `DemandAnalyticsClient` protokollerinin arkasındadır; oturum `.guest`, `.signedIn` ve `.refreshing` durumlarıyla yönetilir.
 
-Tasarım tokenları için `SarjBul/Resources/design-tokens.json` tek kaynaktır. Xcode build phase `Scripts/generate_design_tokens.py` ile `SarjBul/Generated/DesignTokens.generated.swift` dosyasını üretir.
+Tasarım tokenları için `SarjBul/Resources/design-tokens.json` tek kaynaktır. Xcode build phase `Scripts/generate_design_tokens.py` ile `SarjBul/Generated/DesignTokens.generated.swift` dosyasını üretir; Widget/Live Activity hedefi ve Streamlit deposunun üretilmiş tema katmanı da aynı kaynağı tüketir.
 
 ## Doğrulama
 

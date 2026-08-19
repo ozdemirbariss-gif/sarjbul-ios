@@ -22,18 +22,18 @@ struct LegalView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         Image(systemName: icon)
                             .font(.system(size: 34, weight: .heavy))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(SBColor.onActionPrimary)
                             .frame(width: 72, height: 72)
-                            .background(SBColor.electricBlue)
+                            .background(SBColor.actionPrimary)
                             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
 
                         Text(title)
                             .font(SBFont.display(size: 36, weight: .heavy))
-                            .foregroundStyle(SBColor.ink)
+                            .foregroundStyle(SBColor.contentPrimary)
 
                         Text(bodyText)
                             .font(.body)
-                            .foregroundStyle(SBColor.textSoft)
+                            .foregroundStyle(SBColor.contentSecondary)
                             .lineSpacing(6)
                             .textSelection(.enabled)
 
@@ -108,10 +108,10 @@ struct LegalView: View {
         Button(action: action) {
             Label(title, systemImage: icon)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(.black)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(SBColor.electricBlue)
+                .background(SBColor.actionPrimary)
                 .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         }
         .buttonStyle(SBPremiumButtonStyle())

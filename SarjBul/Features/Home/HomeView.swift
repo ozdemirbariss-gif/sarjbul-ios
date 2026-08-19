@@ -127,10 +127,10 @@ struct HomeView: View {
             preferenceButton(.economical, icon: "fuelpump")
         }
         .padding(6)
-        .background(SBColor.charcoal, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(SBColor.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
+                .stroke(SBColor.divider, lineWidth: 1)
         )
         .sbCardShadow()
         .frame(maxWidth: .infinity)
@@ -176,29 +176,29 @@ struct HomeView: View {
             HStack(spacing: 14) {
                 Image(systemName: "slider.horizontal.3")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.signal)
+                    .foregroundStyle(SBColor.actionPrimary)
                     .frame(width: 42, height: 42)
-                    .background(SBColor.signal.opacity(0.10), in: Circle())
+                    .background(SBColor.actionPrimary.opacity(0.10), in: Circle())
                 VStack(alignment: .leading, spacing: 3) {
                     Text(settings.t("home.fine_tune"))
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                     Text(preferenceTitle(settings.filters.preference))
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(SBColor.textSoft)
+                        .foregroundStyle(SBColor.contentSecondary)
                 }
                 Spacer()
                 Image(systemName: "chevron.down")
                     .font(.subheadline.weight(.heavy))
-                    .foregroundStyle(SBColor.signal)
+                    .foregroundStyle(SBColor.actionPrimary)
                     .rotationEffect(.degrees(advancedHomeExpanded ? 180 : 0))
             }
             .padding(.horizontal, 18)
             .frame(minHeight: 64)
-            .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+            .background(SBColor.surfaceBase, in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .stroke(SBColor.line, lineWidth: 1)
+                    .stroke(SBColor.divider, lineWidth: 1)
             )
         }
         .buttonStyle(SBPremiumButtonStyle())
@@ -217,12 +217,12 @@ struct HomeView: View {
                 detail: settings.t("context.charging_target", [
                     "percent": "\(chargingSession.targetPercent)"
                 ]),
-                tint: SBColor.ice
+                tint: SBColor.surfaceInverted
             ) {
                 if let endDate = chargingSession.endDate {
                     Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
                         .font(.headline.monospacedDigit().weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                 }
             }
         }
@@ -250,7 +250,7 @@ struct HomeView: View {
             ) {
                 Image(systemName: "arrow.right")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
             }
         }
         .buttonStyle(SBPremiumButtonStyle())
@@ -261,21 +261,21 @@ struct HomeView: View {
         HStack(spacing: 16) {
             Image(systemName: recommendation.elevatedPhysiologicalLoad ? "heart.text.square.fill" : "cloud.rain.fill")
                 .font(.title2.weight(.heavy))
-                .foregroundStyle(.black)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .frame(width: 56, height: 56)
-                .background(SBColor.signal, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                .background(SBColor.actionPrimary, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(settings.language.uppercased(settings.t("context.smart_kicker")))
                     .font(.caption.weight(.heavy))
-                    .foregroundStyle(SBColor.signal)
+                    .foregroundStyle(SBColor.actionPrimary)
                 Text(contextRecommendationTitle(recommendation))
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
                     .lineLimit(2)
                 Text(settings.t("context.health_disclaimer"))
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(SBColor.textSoft)
+                    .foregroundStyle(SBColor.contentSecondary)
                     .lineLimit(2)
             }
 
@@ -287,8 +287,8 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: recommendation.action == .suggestRecoveryPause ? "checkmark" : "clock.arrow.circlepath")
                         .frame(width: 38, height: 38)
-                        .background(SBColor.signal, in: Circle())
-                        .foregroundStyle(SBColor.onSignal)
+                        .background(SBColor.actionPrimary, in: Circle())
+                        .foregroundStyle(SBColor.onActionPrimary)
                 }
                 .buttonStyle(SBPremiumButtonStyle())
                 .accessibilityLabel(settings.t("context.accept"))
@@ -300,13 +300,13 @@ struct HomeView: View {
                         .font(.caption.weight(.heavy))
                         .frame(width: 32, height: 32)
                 }
-                .foregroundStyle(SBColor.textSoft)
+                .foregroundStyle(SBColor.contentSecondary)
                 .accessibilityLabel(settings.t("context.dismiss"))
             }
         }
         .padding(18)
-        .background(SBColor.signal.opacity(0.08), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: SBRadius.xl).stroke(SBColor.signal.opacity(0.36)))
+        .background(SBColor.actionPrimary.opacity(0.08), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: SBRadius.xl).stroke(SBColor.actionPrimary.opacity(0.36)))
     }
 
     private func contextRecommendationTitle(_ recommendation: ContextRecommendation) -> String {
@@ -326,11 +326,11 @@ struct HomeView: View {
             kicker: settings.t("context.completed_kicker"),
             title: settings.t("context.defer_completed"),
             detail: settings.t("context.completed_detail"),
-            tint: SBColor.signal
+            tint: SBColor.actionPrimary
         ) {
             Image(systemName: "calendar.badge.checkmark")
                 .font(.headline.weight(.heavy))
-                .foregroundStyle(SBColor.signal)
+                .foregroundStyle(SBColor.actionPrimary)
         }
     }
 
@@ -345,7 +345,7 @@ struct HomeView: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2.weight(.heavy))
-                .foregroundStyle(.black)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .frame(width: 56, height: 56)
                 .background(tint, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
@@ -355,11 +355,11 @@ struct HomeView: View {
                     .foregroundStyle(tint)
                 Text(title)
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
                     .lineLimit(2)
                 Text(detail)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(SBColor.textSoft)
+                    .foregroundStyle(SBColor.contentSecondary)
                     .lineLimit(2)
             }
             Spacer(minLength: 8)
@@ -400,13 +400,13 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 Image(systemName: "sparkles")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.onSignal)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(width: 42, height: 42)
-                    .background(SBColor.signal, in: Circle())
+                    .background(SBColor.actionPrimary, in: Circle())
 
                 Text(settings.language.uppercased(settings.t("habit.kicker")))
                     .font(.caption.weight(.heavy))
-                    .foregroundStyle(SBColor.signal)
+                    .foregroundStyle(SBColor.actionPrimary)
 
                 Spacer()
 
@@ -416,7 +416,7 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.textSoft)
+                        .foregroundStyle(SBColor.contentSecondary)
                         .frame(width: 36, height: 36)
                 }
                 .buttonStyle(SBPremiumButtonStyle())
@@ -425,12 +425,12 @@ struct HomeView: View {
 
             Text(habitSuggestionText(suggestion))
                 .font(.title3.weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(settings.t("habit.local_note"))
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(SBColor.textSoft)
+                .foregroundStyle(SBColor.contentSecondary)
 
             Button {
                 applyHabitSuggestion(suggestion)
@@ -442,18 +442,18 @@ struct HomeView: View {
                     Image(systemName: "arrow.right")
                         .font(.subheadline.weight(.heavy))
                 }
-                .foregroundStyle(SBColor.onSignal)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .padding(.horizontal, 18)
                 .frame(height: 52)
-                .background(SBColor.signal, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                .background(SBColor.actionPrimary, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
         }
         .padding(20)
-        .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .background(SBColor.surfaceBase, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
-                .stroke(SBColor.signal.opacity(0.5), lineWidth: 1)
+                .stroke(SBColor.actionPrimary.opacity(0.5), lineWidth: 1)
         )
         .sbGlowShadow()
         .accessibilityIdentifier("habit-suggestion-card")
@@ -464,17 +464,17 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 Image(systemName: "bolt.car.fill")
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.onSignal)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(width: 44, height: 44)
-                    .background(SBColor.signal, in: Circle())
+                    .background(SBColor.actionPrimary, in: Circle())
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(settings.t("agent.ready_kicker"))
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                     Text(settings.t("agent.ready_title"))
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                         .lineLimit(2)
                 }
                 Spacer()
@@ -483,7 +483,7 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.subheadline.weight(.heavy))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(SBPremiumButtonStyle())
@@ -492,7 +492,7 @@ struct HomeView: View {
 
             Text(proposal.stationName)
                 .font(.title3.weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
@@ -505,18 +505,18 @@ struct HomeView: View {
                 proposal.telemetrySource == .manualProfile ? "agent.source_profile" : "agent.source_vehicle"
             ))
             .font(.caption.weight(.semibold))
-            .foregroundStyle(SBColor.muted)
+            .foregroundStyle(SBColor.contentTertiary)
 
             if let report = autonomousAgent.latestReport,
                report.selectedStationName == proposal.stationName {
                 Text(automationReportText(report))
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(SBColor.ink)
+                    .foregroundStyle(SBColor.contentPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(SBColor.surfaceSolid, in: RoundedRectangle(
+                    .background(SBColor.surfaceBase, in: RoundedRectangle(
                         cornerRadius: SBRadius.sm,
                         style: .continuous
                     ))
@@ -533,19 +533,19 @@ struct HomeView: View {
                     Image(systemName: "arrow.right")
                         .font(.headline.weight(.heavy))
                 }
-                .foregroundStyle(SBColor.onSignal)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .padding(.horizontal, 18)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 56)
-                .background(SBColor.signal, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                .background(SBColor.actionPrimary, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
         }
         .padding(22)
-        .background(SBColor.charcoal, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .background(SBColor.surfaceRaised, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
-                .stroke(SBColor.signal.opacity(0.6), lineWidth: 1)
+                .stroke(SBColor.actionPrimary.opacity(0.6), lineWidth: 1)
         )
         .sbGlowShadow()
         .accessibilityIdentifier("autonomous-proposal-card")
@@ -567,12 +567,12 @@ struct HomeView: View {
     private func agentMetric(_ text: String) -> some View {
         Text(text)
             .font(.caption.weight(.heavy))
-            .foregroundStyle(SBColor.ink)
+            .foregroundStyle(SBColor.contentPrimary)
             .lineLimit(1)
             .minimumScaleFactor(0.75)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 34)
-            .background(SBColor.surfaceSolid, in: Capsule())
+            .background(SBColor.surfaceBase, in: Capsule())
     }
 
     private func habitSuggestionText(_ suggestion: HabitSuggestion) -> String {
@@ -643,7 +643,7 @@ struct HomeView: View {
             if search.locationNeedsReview {
                 Label(settings.t("route.location_review"), systemImage: "location.magnifyingglass")
                     .font(.footnote.weight(.bold))
-                    .foregroundStyle(SBColor.muted)
+                    .foregroundStyle(SBColor.contentTertiary)
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
                     .accessibilityIdentifier("location-review-message")
@@ -651,10 +651,10 @@ struct HomeView: View {
             originJourneyButton
         }
         .padding(8)
-        .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .background(SBColor.surfaceBase, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
-                .stroke(SBColor.line, lineWidth: 1)
+                .stroke(SBColor.divider, lineWidth: 1)
         )
         .sbSoftShadow()
         .accessibilityIdentifier("location-input")
@@ -685,18 +685,18 @@ struct HomeView: View {
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(SBColor.onSignal)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(width: 38, height: 38)
-                    .background(SBColor.signal)
+                    .background(SBColor.actionPrimary)
                     .clipShape(Circle())
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.subheadline.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                         .lineLimit(1)
                     Text(subtitle)
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -717,16 +717,16 @@ struct HomeView: View {
                     HStack {
                         Image(systemName: "scope")
                             .font(.title2)
-                            .foregroundStyle(SBColor.onSignal)
+                            .foregroundStyle(SBColor.onActionPrimary)
                             .frame(width: 52, height: 52)
-                            .background(SBColor.signal)
+                            .background(SBColor.actionPrimary)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 4) {
                             Text(settings.t("home.search_title"))
                                 .font(.title3.weight(.bold))
                             Text(locationLabel)
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(SBColor.muted)
+                                .foregroundStyle(SBColor.contentTertiary)
                         }
                         Spacer()
                     }
@@ -751,7 +751,7 @@ struct HomeView: View {
                     } else {
                         Text(locationWaitingText)
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(SBColor.muted)
+                            .foregroundStyle(SBColor.contentTertiary)
                     }
                 }
             }
@@ -774,26 +774,26 @@ struct HomeView: View {
                 HStack(spacing: 12) {
                     Text(settings.language.uppercased(settings.t("catalog.kicker")))
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
 
                     Spacer(minLength: 12)
 
                     Text("%\(settings.profile.chargePercent) · \(safeRangeKm) km")
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.textSoft)
+                        .foregroundStyle(SBColor.contentSecondary)
                         .lineLimit(1)
 
                     Image(systemName: "chevron.down")
                         .font(.subheadline.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                         .rotationEffect(.degrees(drivingProfileExpanded ? 180 : 0))
                 }
                 .padding(.horizontal, 18)
                 .frame(height: 60)
-                .background(SBColor.surfaceSolid, in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+                .background(SBColor.surfaceBase, in: RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                        .stroke(SBColor.line, lineWidth: 1)
+                        .stroke(SBColor.divider, lineWidth: 1)
                 )
             }
             .buttonStyle(SBPremiumButtonStyle())
@@ -805,11 +805,11 @@ struct HomeView: View {
                         HStack {
                             Text(settings.t("catalog.charge_percent"))
                                 .font(.title3.weight(.bold))
-                                .foregroundStyle(SBColor.muted)
+                                .foregroundStyle(SBColor.contentTertiary)
                             Spacer()
                             Text("\(settings.profile.chargePercent)")
                                 .font(.title2.weight(.heavy))
-                                .foregroundStyle(SBColor.muted)
+                                .foregroundStyle(SBColor.contentTertiary)
                         }
                         Slider(
                             value: Binding(
@@ -819,7 +819,7 @@ struct HomeView: View {
                             in: 1...100,
                             step: 1
                         )
-                        .tint(SBColor.signal)
+                        .tint(SBColor.actionPrimary)
                     }
 
                     ChargeVisual(
@@ -829,7 +829,7 @@ struct HomeView: View {
                         selectedLevelText: settings.t("charge.selected_level")
                     )
 
-                    Divider().overlay(SBColor.line)
+                    Divider().overlay(SBColor.divider)
 
                     HStack(alignment: .top, spacing: 12) {
                         MetricInput(
@@ -872,11 +872,11 @@ struct HomeView: View {
                 HStack(spacing: 12) {
                     Text(settings.t("filters.title"))
                         .font(.title3.weight(.heavy))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                     Spacer(minLength: 12)
                     Image(systemName: "chevron.down")
                         .font(.subheadline.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                         .rotationEffect(.degrees(settingsExpanded ? 180 : 0))
                 }
                 .contentShape(Rectangle())
@@ -892,7 +892,7 @@ struct HomeView: View {
                         set: { settings.filters.rangeFilterEnabled = $0 }
                     ))
                     .font(.headline.weight(.semibold))
-                    .tint(SBColor.electricBlue)
+                    .tint(SBColor.actionPrimary)
                 }
                 .padding(.top, 16)
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -930,9 +930,9 @@ struct HomeView: View {
                 HStack(alignment: .top, spacing: 16) {
                     Image(systemName: "location.fill")
                         .font(.title2.weight(.heavy))
-                        .foregroundStyle(SBColor.onSignal)
+                        .foregroundStyle(SBColor.onActionPrimary)
                         .frame(width: 58, height: 58)
-                        .background(SBColor.signal, in: RoundedRectangle(
+                        .background(SBColor.actionPrimary, in: RoundedRectangle(
                             cornerRadius: SBRadius.md,
                             style: .continuous
                         ))
@@ -940,16 +940,16 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 5) {
                         Label(settings.t("home.ready_verified"), systemImage: "checkmark.shield.fill")
                             .font(.caption.weight(.heavy))
-                            .foregroundStyle(SBColor.signal)
+                            .foregroundStyle(SBColor.actionPrimary)
                             .accessibilityIdentifier("prepared-route-card")
                         Text(candidate.station.name)
                             .font(.title3.weight(.heavy))
-                            .foregroundStyle(SBColor.ink)
+                            .foregroundStyle(SBColor.contentPrimary)
                             .lineLimit(2)
                             .minimumScaleFactor(0.78)
                         Text(candidate.station.operatorName)
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(SBColor.textSoft)
+                            .foregroundStyle(SBColor.contentSecondary)
                             .lineLimit(1)
                     }
                     Spacer(minLength: 0)
@@ -987,11 +987,11 @@ struct HomeView: View {
                     Image(systemName: "arrow.up.right")
                         .font(.headline.weight(.heavy))
                 }
-                .foregroundStyle(SBColor.onSignal)
+                .foregroundStyle(SBColor.onActionPrimary)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
                 .frame(height: 68)
-                .background(SBColor.signal)
+                .background(SBColor.actionPrimary)
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("prepared-route-button")
@@ -1017,18 +1017,18 @@ struct HomeView: View {
             } label: {
                 Text(settings.t("home.ready_alternatives"))
                     .font(.caption.weight(.heavy))
-                    .foregroundStyle(SBColor.textSoft)
+                    .foregroundStyle(SBColor.contentSecondary)
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: 42)
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("prepared-route-alternatives")
         }
-        .background(SBColor.surfaceSolid)
+        .background(SBColor.surfaceBase)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                .stroke(SBColor.signal.opacity(0.55), lineWidth: 1.5)
+                .stroke(SBColor.actionPrimary.opacity(0.55), lineWidth: 1.5)
         )
         .sbGlowShadow()
     }
@@ -1037,17 +1037,17 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
                 .font(.subheadline.monospacedDigit().weight(.heavy))
-                .foregroundStyle(SBColor.ink)
+                .foregroundStyle(SBColor.contentPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
             Text(title)
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(SBColor.textSoft)
+                .foregroundStyle(SBColor.contentSecondary)
                 .lineLimit(1)
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SBColor.charcoal, in: RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous))
+        .background(SBColor.surfaceRaised, in: RoundedRectangle(cornerRadius: SBRadius.sm, style: .continuous))
     }
 
     private var rangeAction: some View {
@@ -1055,25 +1055,25 @@ struct HomeView: View {
             HStack(spacing: 18) {
                 Image(systemName: "bolt.fill")
                     .font(.title2.weight(.heavy))
-                    .foregroundStyle(SBColor.onSignal)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(width: 72, height: 72)
-                    .background(SBColor.signal)
+                    .background(SBColor.actionPrimary)
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 7) {
                     Text(settings.t("home.insight_kicker"))
                         .font(.subheadline.weight(.heavy))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
                     Text(settings.t("home.insight_title", ["range": "\(safeRangeKm)"]))
                         .font(.title3.weight(.heavy))
-                        .foregroundStyle(SBColor.ink)
+                        .foregroundStyle(SBColor.contentPrimary)
                         .lineLimit(2)
                     Text(settings.t("summary.safe_range_value", [
                         "percent": "\(settings.profile.chargePercent)",
                         "range": "\(safeRangeKm)"
                     ]))
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(SBColor.muted)
+                        .foregroundStyle(SBColor.contentTertiary)
 
                     if let proof = executionTrust.latestVerifiedProof {
                         Label(
@@ -1083,7 +1083,7 @@ struct HomeView: View {
                             systemImage: "checkmark.shield.fill"
                         )
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                     }
                 }
                 Spacer(minLength: 0)
@@ -1094,22 +1094,22 @@ struct HomeView: View {
             if let intentPrediction {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                     Text(settings.t("intent_prefill.applied", [
                         "confidence": "\(Int((intentPrediction.confidence * 100).rounded()))"
                     ]))
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.textSoft)
+                        .foregroundStyle(SBColor.contentSecondary)
                         .lineLimit(2)
                     Spacer(minLength: 4)
                     Button(settings.t("intent_prefill.undo"), action: undoIntentPrefill)
                         .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.signal)
+                        .foregroundStyle(SBColor.actionPrimary)
                         .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 22)
                 .padding(.vertical, 12)
-                .background(SBColor.charcoal)
+                .background(SBColor.surfaceRaised)
                 .accessibilityIdentifier("intent-prefill-indicator")
             }
 
@@ -1125,10 +1125,10 @@ struct HomeView: View {
             } label: {
                 Text(search.isSearching ? settings.t("location.calculating") : settings.t("location.find_charger"))
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.onSignal)
+                    .foregroundStyle(SBColor.onActionPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 76)
-                    .background(SBColor.signal)
+                    .background(SBColor.actionPrimary)
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
@@ -1139,7 +1139,7 @@ struct HomeView: View {
         .sbPremiumGlass(radius: SBRadius.card)
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.card, style: .continuous)
-                .stroke(SBColor.signal.opacity(0.55), lineWidth: 1.5)
+                .stroke(SBColor.actionPrimary.opacity(0.55), lineWidth: 1.5)
         )
         .sbGlowShadow()
     }
@@ -1269,11 +1269,11 @@ struct HomeView: View {
             }
             .pickerStyle(.menu)
             .padding(14)
-            .background(SBColor.glass)
+            .background(SBColor.surfaceGlass)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
-                    .stroke(SBColor.line, lineWidth: 1)
+                    .stroke(SBColor.divider, lineWidth: 1)
             )
             .onChange(of: selectedPreset) { _, preset in
                 guard let preset else { return }
@@ -1290,11 +1290,11 @@ struct HomeView: View {
             }
             .textFieldStyle(.plain)
             .padding(14)
-            .background(SBColor.glass)
+            .background(SBColor.surfaceGlass)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous)
-                    .stroke(SBColor.line, lineWidth: 1)
+                    .stroke(SBColor.divider, lineWidth: 1)
             )
 
             Button {
@@ -1306,7 +1306,7 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(SBColor.electricBlue)
+            .tint(SBColor.actionPrimary)
         }
     }
 
