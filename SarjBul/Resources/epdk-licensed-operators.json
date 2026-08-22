@@ -1,7 +1,7 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-08-21T04:57:03+00:00",
-  "license_count": 181,
+  "generated_at": "2026-08-22T04:53:23+00:00",
+  "license_count": 180,
   "licenses": [
     {
       "brands": [
@@ -104,16 +104,6 @@
       "license_number": "ŞH/11577-1/00086",
       "valid_from": "2023-01-19T00:00:00Z",
       "valid_until": "2072-01-19T00:00:00Z"
-    },
-    {
-      "brands": [
-        "ART-IN SYSTEMS",
-        "XŞARJ"
-      ],
-      "holder": "ART IN SYSTEMS BİLİŞİM TEKNOLOJİLERİ TİCARET LİMİTED ŞİRKETİ",
-      "license_number": "ŞH/11719-1/00120",
-      "valid_from": "2023-03-16T00:00:00Z",
-      "valid_until": "2072-03-16T00:00:00Z"
     },
     {
       "brands": [
@@ -483,7 +473,7 @@
     },
     {
       "brands": [
-        "CLIXOLAR"
+        "ENH ŞARJ"
       ],
       "holder": "ENH ŞARJ ANONİM ŞİRKETİ",
       "license_number": "ŞH/11333-2/00054",
@@ -1544,8 +1534,8 @@
     },
     {
       "brands": [
-        "Ecojet",
         "ecojet",
+        "Ecojet",
         "ekojet",
         "EVE"
       ],
