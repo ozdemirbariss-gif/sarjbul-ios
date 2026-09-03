@@ -1,6 +1,6 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-09-02T08:49:53+00:00",
+  "generated_at": "2026-09-03T08:58:53+00:00",
   "license_count": 180,
   "licenses": [
     {
@@ -1534,8 +1534,8 @@
     },
     {
       "brands": [
-        "Ecojet",
         "ecojet",
+        "Ecojet",
         "ekojet",
         "EVE"
       ],
