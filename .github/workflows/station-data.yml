@@ -25,13 +25,29 @@ jobs:
           curl --fail --location --retry 3
           https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json
           --output /tmp/stations.json
+      - name: Test EPDK importer
+        run: python3 -m unittest discover -s Scripts/tests -p 'test_epdk_stations.py' -v
+      - name: Merge official EPDK public stations
+        run: >-
+          python3 Scripts/update_epdk_stations.py
+          --base /tmp/stations.json
+          --output /tmp/merged-stations.json
+          --raw-output /tmp/epdk-response.json
+      - name: Archive EPDK source and quality report
+        uses: actions/upload-artifact@v4
+        with:
+          name: epdk-inventory-${{ github.run_id }}
+          retention-days: 7
+          path: |
+            /tmp/epdk-response.json
+            Data/epdk-ingestion-report.json
       - name: Validate dataset quality
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
 
-          incoming = json.loads(Path("/tmp/stations.json").read_text(encoding="utf-8"))
+          incoming = json.loads(Path("/tmp/merged-stations.json").read_text(encoding="utf-8"))
           manifest = json.loads(Path("SarjBul/Resources/StationTiles/station-tiles-manifest.json").read_text())
           previous = int(manifest["total_records"])
           minimum = max(1_000, int(previous * 0.85))
@@ -46,7 +62,7 @@ jobs:
       - name: Build geohash tiles
         run: >-
           python3 Scripts/build_station_tiles.py
-          /tmp/stations.json
+          /tmp/merged-stations.json
           SarjBul/Resources/StationTiles
           --base-url
           https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/
@@ -54,12 +70,12 @@ jobs:
         run: python3 Scripts/update_epdk_operators.py
       - name: Commit refreshed data
         run: |
-          if git diff --quiet -- SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json; then
+          git add SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json Data/epdk-identities.json Data/epdk-ingestion-report.json
+          if git diff --cached --quiet; then
             echo "Station data is already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json
           git commit -m "data: refresh station tiles"
           git push

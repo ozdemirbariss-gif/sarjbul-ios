@@ -45,6 +45,8 @@ jobs:
           "npm --prefix firebase/functions run test:rules"
       - name: Core tests
         run: swift test
+      - name: EPDK data pipeline tests
+        run: python3 -m unittest discover -s Scripts/tests -p 'test_epdk_stations.py' -v
       - name: SwiftLint
         run: swiftlint lint --strict --no-cache
       - name: Generate project
