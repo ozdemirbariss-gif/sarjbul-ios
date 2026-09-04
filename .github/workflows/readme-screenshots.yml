@@ -1,0 +1,73 @@
+name: Capture README screenshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Xcode and tools
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+          brew install xcodegen
+          xcodegen generate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Select iPhone simulator
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); devices=[x for key, rows in d["devices"].items() if "iOS" in key for x in rows if x["name"].startswith("iPhone")]; devices.sort(key=lambda x: (x["name"] != "iPhone 17 Pro", x["name"])); print(devices[0]["udid"])')
+          echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl status_bar "$DEVICE_ID" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState charged --batteryLevel 100
+      - name: Capture current UI
+        run: >-
+          xcodebuild -quiet -project SarjBul.xcodeproj -scheme SarjBul
+          -destination "platform=iOS Simulator,id=$DEVICE_ID"
+          -derivedDataPath /tmp/ReadmeDerivedData
+          -resultBundlePath /tmp/Readme.xcresult
+          -parallel-testing-enabled NO
+          -only-testing:SarjBulUITests/ReadmeScreenshotTests
+          CODE_SIGNING_ALLOWED=NO test
+      - name: Export screenshots
+        run: |
+          xcrun xcresulttool export attachments --path /tmp/Readme.xcresult --output-path /tmp/readme-attachments
+          python3 Scripts/export_readme_attachments.py /tmp/readme-attachments Docs/screenshots
+          APP_DATA=$(xcrun simctl get_app_container "$DEVICE_ID" com.ozdemirbaris.sarjbul data)
+          cp "$APP_DATA/tmp/station-story.png" Docs/screenshots/station-story.png
+          python3 -m pip install Pillow
+          python3 Scripts/render_readme_preview.py
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          from PIL import Image
+          names = ['home', 'routes', 'lounge', 'account', 'arrival-outcome', 'station-story', 'sarjbul-ios-preview']
+          for name in names:
+              with Image.open(f'Docs/screenshots/{name}.png') as image:
+                  image.verify()
+          Path('Docs/screenshots/capture.json').write_text(json.dumps({
+              'commit': os.environ['GITHUB_SHA'], 'run_id': os.environ['GITHUB_RUN_ID'],
+              'xcode': subprocess.check_output(['xcodebuild', '-version'], text=True).strip(),
+              'source': 'Native iPhone simulator; deterministic UI-test scenarios'
+          }, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: readme-screenshots
+          path: Docs/screenshots
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: readme-capture-diagnostics
+          path: |
+            /tmp/Readme.xcresult
+            /tmp/readme-attachments
+          retention-days: 3
