@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct QuickActionStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var active: Bool
 
     func makeBody(configuration: Configuration) -> some View {
@@ -15,7 +17,8 @@ struct QuickActionStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(active ? SBColor.onActionPrimary.opacity(0.12) : .clear, lineWidth: 1)
             )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+            .sbButtonShadow(isPressed: configuration.isPressed, enabled: active && isEnabled)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }

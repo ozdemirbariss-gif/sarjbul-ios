@@ -26,9 +26,8 @@ struct SBBackButton: View {
                     Circle()
                         .stroke(SBColor.divider, lineWidth: 1)
                 )
-                .shadow(color: SBColor.canvas.opacity(0.42), radius: 22, x: 0, y: 12)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
         .accessibilityLabel(accessibilityLabel)
     }
 }
@@ -90,7 +89,7 @@ struct SBLanguageSwitch: View {
                 .background(selectedLanguage == language ? SBColor.actionPrimary : .clear)
                 .clipShape(Capsule())
         }
-        .buttonStyle(SBPremiumButtonStyle())
+        .buttonStyle(SBPremiumButtonStyle(elevated: selectedLanguage == language))
     }
 }
 
@@ -158,7 +157,6 @@ struct SBPrimaryButton: View {
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
                     .stroke(SBColor.onActionPrimary.opacity(0.12), lineWidth: 1)
             )
-            .sbGlowShadow()
         }
         .buttonStyle(SBPremiumButtonStyle())
         .accessibilityIdentifier(accessibilityIdentifier ?? "")
@@ -185,7 +183,7 @@ struct SBDarkButton: View {
             .background(SBColor.surfaceInverted)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SBPremiumButtonStyle())
     }
 }
 
@@ -250,11 +248,16 @@ struct MetricInput: View {
 }
 
 struct SBPremiumButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var elevated = true
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.965 : 1)
+            .sbButtonShadow(isPressed: configuration.isPressed, enabled: elevated && isEnabled)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.965 : 1)
             .brightness(configuration.isPressed ? -0.03 : 0)
-            .animation(.spring(response: 0.24, dampingFraction: 0.72), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : .spring(response: 0.24, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }
 

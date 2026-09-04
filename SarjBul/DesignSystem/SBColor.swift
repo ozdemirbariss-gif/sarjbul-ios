@@ -63,6 +63,9 @@ enum SBShadow {
     static let soft = SBGeneratedTokens.shadowSoft
     static let glow = SBGeneratedTokens.shadowGlow
     static let card = SBGeneratedTokens.shadowCard
+    static let button = SBGeneratedTokens.shadowButton
+    static let contact = SBGeneratedTokens.shadowContact
+    static let pressed = SBGeneratedTokens.shadowPressed
 }
 
 enum SBFont {
@@ -88,6 +91,21 @@ enum SBFont {
 }
 
 extension View {
+    func sbButtonShadow(isPressed: Bool = false, enabled: Bool = true) -> some View {
+        let ambient = isPressed ? SBShadow.pressed : SBShadow.button
+        let contact = SBShadow.contact
+        return self
+            .compositingGroup()
+            .shadow(
+                color: enabled ? ambient.shadowColor : .clear,
+                radius: CGFloat(ambient.radius), x: CGFloat(ambient.x), y: CGFloat(ambient.y)
+            )
+            .shadow(
+                color: enabled && !isPressed ? contact.shadowColor : .clear,
+                radius: CGFloat(contact.radius), x: CGFloat(contact.x), y: CGFloat(contact.y)
+            )
+    }
+
     func sbPremiumGlass(radius: CGFloat, interactive: Bool = false) -> some View {
         modifier(SBPremiumGlassModifier(radius: radius, interactive: interactive))
     }

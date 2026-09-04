@@ -148,9 +148,8 @@ struct RootView: View {
                             .frame(width: 54, height: 54)
                             .background(SBColor.actionPrimary, in: Circle())
                             .overlay(Circle().stroke(SBColor.divider, lineWidth: 1))
-                            .shadow(color: SBColor.canvas.opacity(0.42), radius: 18, y: 10)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SBPremiumButtonStyle())
                     .accessibilityLabel(settings.t("navigation.open"))
                     .accessibilityIdentifier("bottom-navigation-reveal")
                 }

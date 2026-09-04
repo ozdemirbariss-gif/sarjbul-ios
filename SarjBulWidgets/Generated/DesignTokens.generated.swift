@@ -50,6 +50,9 @@ enum SBGeneratedTokens {
     static let shadowSoft = SBGeneratedShadowToken(color: "#000000", opacity: 0.34, radius: 24.0, x: 0.0, y: 16.0)
     static let shadowGlow = SBGeneratedShadowToken(color: "#F7F8F3", opacity: 0.08, radius: 28.0, x: 0.0, y: 12.0)
     static let shadowCard = SBGeneratedShadowToken(color: "#000000", opacity: 0.46, radius: 30.0, x: 0.0, y: 22.0)
+    static let shadowButton = SBGeneratedShadowToken(color: "#000000", opacity: 0.3, radius: 10.0, x: 0.0, y: 5.0)
+    static let shadowContact = SBGeneratedShadowToken(color: "#000000", opacity: 0.22, radius: 2.0, x: 0.0, y: 1.0)
+    static let shadowPressed = SBGeneratedShadowToken(color: "#000000", opacity: 0.18, radius: 3.0, x: 0.0, y: 1.0)
 
     static let displayFont = "Space Grotesk"
     static let bodyFont = "Inter"
