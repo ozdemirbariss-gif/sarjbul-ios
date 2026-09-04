@@ -31,7 +31,8 @@ def main():
         title = item.get("suggestedHumanReadableName", "")
         filename = item.get("exportedFileName")
         for name in NAMES:
-            if filename and (title == f"readme-{name}" or title.startswith(f"readme-{name}.")):
+            prefix = f"readme-{name}"
+            if filename and (title == prefix or title.startswith((prefix + ".", prefix + "_"))):
                 source = (args.attachments / filename).resolve()
                 if not source.is_relative_to(args.attachments.resolve()):
                     raise ValueError("Invalid attachment path")

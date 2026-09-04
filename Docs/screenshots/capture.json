@@ -1,0 +1,15 @@
+{
+  "commit": "ba3431888721a3d4345ac4dd7c4add26a77c6e98",
+  "run_id": "33889401841",
+  "run_url": "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/actions/runs/33889401841",
+  "captured_on": "2026-09-04",
+  "device": "iPhone 17 Pro",
+  "runner_image": "macos-26-arm64/20260831.0337.3",
+  "source": "Native simulator screenshots from passing ReadmeScreenshotTests",
+  "updated_screenshots": ["home.png", "routes.png", "lounge.png", "account.png", "arrival-outcome.png"],
+  "derived_preview": "sarjbul-ios-preview.png",
+  "export": "Recovered from xcresult attachments after fixing Xcode filename suffix handling",
+  "retained_assets": {
+    "station-story.png": "Previous image retained; the new story PNG was not exported by this run"
+  }
+}

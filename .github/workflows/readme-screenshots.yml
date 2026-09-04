@@ -38,10 +38,10 @@ jobs:
           CODE_SIGNING_ALLOWED=NO test
       - name: Export screenshots
         run: |
-          xcrun xcresulttool export attachments --path /tmp/Readme.xcresult --output-path /tmp/readme-attachments
-          python3 Scripts/export_readme_attachments.py /tmp/readme-attachments Docs/screenshots
           APP_DATA=$(xcrun simctl get_app_container "$DEVICE_ID" com.ozdemirbaris.sarjbul data)
           cp "$APP_DATA/tmp/station-story.png" Docs/screenshots/station-story.png
+          xcrun xcresulttool export attachments --path /tmp/Readme.xcresult --output-path /tmp/readme-attachments
+          python3 Scripts/export_readme_attachments.py /tmp/readme-attachments Docs/screenshots
           python3 -m pip install Pillow
           python3 Scripts/render_readme_preview.py
           python3 - <<'PY'
@@ -70,4 +70,5 @@ jobs:
           path: |
             /tmp/Readme.xcresult
             /tmp/readme-attachments
+            Docs/screenshots
           retention-days: 3
