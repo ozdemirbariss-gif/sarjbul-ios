@@ -112,6 +112,32 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(persistence.authSession?.uid, "replacement-driver")
     }
 
+    func testPushTokenRegistrationUsesCanonicalHexAndAuthenticatedUID() async throws {
+        let client = RecordingPushTokenClient()
+        let store = PushTokenRegistrationStore(client: client)
+        let registration = APNsDeviceRegistration(
+            deviceToken: Data([0x00, 0x0f, 0xa5, 0xff]),
+            environment: .sandbox
+        )
+        let session = FirebaseAuthSession(
+            idToken: "id-token",
+            refreshToken: "refresh-token",
+            localId: "anonymous-driver"
+        )
+
+        await store.register(registration, session: session)
+        await store.register(registration, session: session)
+
+        XCTAssertEqual(registration.token, "000fa5ff")
+        let request = await client.lastRequest
+        XCTAssertEqual(request?.token, "000fa5ff")
+        XCTAssertEqual(request?.environment, .sandbox)
+        XCTAssertEqual(request?.uid, "anonymous-driver")
+        XCTAssertEqual(request?.idToken, "id-token")
+        let requestCount = await client.requestCount
+        XCTAssertEqual(requestCount, 1)
+    }
+
     func testActiveChargingSessionRestoresFromPersistence() throws {
         let persistence = try makePersistence()
         let station = Station(
@@ -446,4 +472,31 @@ private struct RefreshFailingAuthClient: AuthClient {
     func initiateAccountDeletion(uid: String, idToken: String) async throws {}
     func deleteAccount(idToken: String) async throws {}
     func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession { throw error }
+}
+
+private actor RecordingPushTokenClient: PushTokenClient {
+    struct Request: Sendable {
+        var token: String
+        var environment: PushTokenEnvironment
+        var uid: String
+        var idToken: String
+    }
+
+    private(set) var lastRequest: Request?
+    private(set) var requestCount = 0
+
+    func registerPushToken(
+        _ token: String,
+        environment: PushTokenEnvironment,
+        uid: String,
+        idToken: String
+    ) async throws {
+        requestCount += 1
+        lastRequest = Request(
+            token: token,
+            environment: environment,
+            uid: uid,
+            idToken: idToken
+        )
+    }
 }

@@ -119,6 +119,28 @@
         }
       }
     },
+    "push_tokens": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "!newData.exists() || (newData.hasChildren(['token', 'platform', 'environment', 'updatedAtMilliseconds']) && newData.numChildren() === 4)",
+        "token": {
+          ".validate": "newData.isString() && newData.val().length >= 32 && newData.val().length <= 512"
+        },
+        "platform": {
+          ".validate": "newData.val() === 'ios'"
+        },
+        "environment": {
+          ".validate": "newData.val() === 'sandbox' || newData.val() === 'production'"
+        },
+        "updatedAtMilliseconds": {
+          ".validate": "newData.isNumber() && newData.val() >= now - 604800000 && newData.val() <= now + 5000"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
     "kullanici_yorum_meta": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

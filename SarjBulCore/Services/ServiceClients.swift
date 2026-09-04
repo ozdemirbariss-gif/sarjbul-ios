@@ -66,6 +66,20 @@ public protocol RealtimeStationClient: Sendable {
     func events(idToken: String?) -> AsyncThrowingStream<StationRealtimeEvent, any Error>
 }
 
+public enum PushTokenEnvironment: String, Codable, Sendable {
+    case sandbox
+    case production
+}
+
+public protocol PushTokenClient: Sendable {
+    func registerPushToken(
+        _ token: String,
+        environment: PushTokenEnvironment,
+        uid: String,
+        idToken: String
+    ) async throws
+}
+
 public enum ServiceClientError: LocalizedError, Equatable, Sendable {
     case notConfigured
 
@@ -148,6 +162,19 @@ public struct UnavailableRealtimeStationClient: RealtimeStationClient {
     }
 }
 
+public struct UnavailablePushTokenClient: PushTokenClient {
+    public init() {}
+
+    public func registerPushToken(
+        _ token: String,
+        environment: PushTokenEnvironment,
+        uid: String,
+        idToken: String
+    ) async throws {
+        throw ServiceClientError.notConfigured
+    }
+}
+
 public enum AuthError: LocalizedError, Equatable, Sendable {
     case tooManyAttempts
     case network
@@ -191,4 +218,5 @@ public enum AuthError: LocalizedError, Equatable, Sendable {
     }
 }
 
-extension FirebaseRESTClient: AuthClient, FavoritesClient, StatusClient, DemandAnalyticsClient, RealtimeStationClient {}
+extension FirebaseRESTClient: AuthClient, FavoritesClient, StatusClient, DemandAnalyticsClient,
+    RealtimeStationClient, PushTokenClient {}

@@ -65,6 +65,7 @@ public struct FirebaseRESTClient: Sendable {
         let requestedAt = ISO8601DateFormatter().string(from: Date())
         try await delete(path: "favoriler/\(uid).json", idToken: idToken)
         try await delete(path: "kullanici_yorum_meta/\(uid).json", idToken: idToken)
+        try await delete(path: "push_tokens/\(uid).json", idToken: idToken)
         try await putJSON(
             path: "account_deletion_requests/\(uid).json",
             idToken: idToken,
@@ -253,6 +254,24 @@ public struct FirebaseRESTClient: Sendable {
             path: "friction_events/\(context.idempotencyKey.lowercased()).json",
             idToken: idToken,
             body: payload
+        )
+    }
+
+    public func registerPushToken(
+        _ token: String,
+        environment: PushTokenEnvironment,
+        uid: String,
+        idToken: String
+    ) async throws {
+        try await putJSON(
+            path: "push_tokens/\(uid).json",
+            idToken: idToken,
+            body: PushTokenPayload(
+                token: token,
+                platform: "ios",
+                environment: environment.rawValue,
+                updatedAtMilliseconds: Int64(Date().timeIntervalSince1970 * 1_000)
+            )
         )
     }
 
@@ -499,6 +518,13 @@ private struct FirebaseErrorEnvelope: Decodable {
     }
 
     var error: Body
+}
+
+private struct PushTokenPayload: Encodable {
+    var token: String
+    var platform: String
+    var environment: String
+    var updatedAtMilliseconds: Int64
 }
 
 private struct StationReportPayload: Encodable {

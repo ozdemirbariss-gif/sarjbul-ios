@@ -22,6 +22,7 @@ final class AppState {
     let contextIntelligence: ContextIntelligenceStore
     let offlineSync: OfflineSyncCoordinator
     let locationManager: LocationManager
+    let pushTokens: PushTokenRegistrationStore
     private var cancellables = Set<AnyCancellable>()
 
     init(
@@ -41,6 +42,7 @@ final class AppState {
             messages: messages,
             isConfigured: clients.isConfigured
         )
+        let pushTokens = PushTokenRegistrationStore(client: clients.pushTokens)
         let offlineSync = OfflineSyncCoordinator(
             auth: auth,
             favoritesClient: clients.favorites,
@@ -99,6 +101,7 @@ final class AppState {
         self.frictionTelemetry = frictionTelemetry
         self.offlineSync = offlineSync
         self.locationManager = locationManager
+        self.pushTokens = pushTokens
         let autonomousAgent = AutonomousChargingAgentStore(
             stationData: stationData,
             settings: settings,
@@ -122,16 +125,21 @@ final class AppState {
             frictionTelemetry: frictionTelemetry
         )
 
+        installBindings()
+        applyDebugLaunchMode()
+    }
+
+    private func installBindings() {
         locationManager.$lastLocation
             .compactMap { $0 }
-            .sink { [weak frictionTelemetry, weak autonomousAgent] location in
-                frictionTelemetry?.observeLocation(location)
-                Task { await autonomousAgent?.updateLocation(location) }
+            .sink { [weak self] location in
+                self?.frictionTelemetry.observeLocation(location)
+                Task { await self?.autonomousAgent.updateLocation(location) }
             }
             .store(in: &cancellables)
 
-        frictionTelemetry.installAnalyticsSink { event in
-            guard settings.demandAnalyticsEnabled else { return }
+        frictionTelemetry.installAnalyticsSink { [weak self] event in
+            guard let self, settings.demandAnalyticsEnabled else { return }
             Task {
                 await offlineSync.submit(
                     .friction(event.analyticsEvent),
@@ -140,15 +148,33 @@ final class AppState {
             }
         }
 
-        stationData.onRealtimeEvent = { [weak search] event in
-            search?.applyRealtime(event)
+        stationData.onRealtimeEvent = { [weak self] event in
+            self?.search.applyRealtime(event)
         }
-        auth.onSessionChanged = { [weak favorites, weak stationData] session in
-            await favorites?.handleSessionChanged(session)
-            await stationData?.reloadCommunityData(idToken: session?.idToken)
-            stationData?.startRealtime(idToken: session?.idToken)
+        auth.onSessionChanged = { [weak self] session in
+            guard let self else { return }
+            await favorites.handleSessionChanged(session)
+            await stationData.reloadCommunityData(idToken: session?.idToken)
+            stationData.startRealtime(idToken: session?.idToken)
+            if let session, let registration = APNsDeviceTokenInbox.latest {
+                await pushTokens.register(registration, session: session)
+            }
         }
-        applyDebugLaunchMode()
+
+        NotificationCenter.default.publisher(for: APNsDeviceTokenInbox.didUpdate)
+            .compactMap { $0.object as? APNsDeviceRegistration }
+            .sink { [weak self] registration in
+                guard let self else { return }
+                Task { await pushTokens.register(registration, using: auth) }
+            }
+            .store(in: &cancellables)
+
+        if let registration = APNsDeviceTokenInbox.latest {
+            Task { [weak self] in
+                guard let self else { return }
+                await pushTokens.register(registration, using: auth)
+            }
+        }
     }
 
     static func bootstrap() -> AppState {
@@ -176,6 +202,7 @@ final class AppState {
                 status: UnavailableStatusClient(),
                 demandAnalytics: UnavailableDemandAnalyticsClient(),
                 realtime: UnavailableRealtimeStationClient(),
+                pushTokens: UnavailablePushTokenClient(),
                 liveAvailability: UnavailableLiveAvailabilityClient(),
                 isConfigured: false
             )

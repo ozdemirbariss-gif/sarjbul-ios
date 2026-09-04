@@ -213,6 +213,7 @@ exports.deleteAccountData = onValueCreated(
       removals[`kullanici_yorum_meta/${uid}`] = null;
       removals[`kullanici_dogrulama_meta/${uid}`] = null;
       removals[`search_demand_meta/${uid}`] = null;
+      removals[`push_tokens/${uid}`] = null;
       const contributionsSnapshot = await database.ref("station_contributions").get();
       contributionsSnapshot.forEach((stationSnapshot) => {
         stationSnapshot.forEach((contributionSnapshot) => {

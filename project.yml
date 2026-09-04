@@ -35,6 +35,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul
         INFOPLIST_FILE: SarjBul/Resources/Info.plist
         ENABLE_PREVIEWS: YES
+        TARGETED_DEVICE_FAMILY: "1"
       configs:
         Debug:
           CODE_SIGN_ENTITLEMENTS: SarjBul/SarjBulDebug.entitlements
@@ -59,6 +60,8 @@ targets:
       - SarjBul/App/WidgetSnapshot.swift
       - SarjBulWidgets/Generated/DesignTokens.generated.swift
       - SarjBul/DesignSystem/SBColor.swift
+    resources:
+      - SarjBulWidgets/PrivacyInfo.xcprivacy
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul.widgets
@@ -66,6 +69,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: SarjBulWidgets/SarjBulWidgets.entitlements
         APPLICATION_EXTENSION_API_ONLY: YES
         SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1"
     preBuildScripts:
       - name: Generate Widget Design Tokens
         script: |

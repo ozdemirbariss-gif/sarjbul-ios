@@ -76,6 +76,7 @@ struct AppConfiguration {
                 status: UnavailableStatusClient(),
                 demandAnalytics: UnavailableDemandAnalyticsClient(),
                 realtime: UnavailableRealtimeStationClient(),
+                pushTokens: UnavailablePushTokenClient(),
                 liveAvailability: configuredLiveAvailabilityClient,
                 isConfigured: false
             )
@@ -101,6 +102,7 @@ struct AppConfiguration {
             status: client,
             demandAnalytics: client,
             realtime: client,
+            pushTokens: client,
             liveAvailability: configuredLiveAvailabilityClient,
             isConfigured: true
         )
@@ -150,6 +152,7 @@ struct AppServiceClients {
     let status: any StatusClient
     let demandAnalytics: any DemandAnalyticsClient
     let realtime: any RealtimeStationClient
+    let pushTokens: any PushTokenClient
     let liveAvailability: any LiveAvailabilityClient
     let isConfigured: Bool
 }

@@ -1,4 +1,5 @@
 import BackgroundTasks
+import SarjBulCore
 import UIKit
 @preconcurrency import UserNotifications
 
@@ -53,6 +54,20 @@ final class SarjBulAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificat
             let succeeded = await handler()
             completionHandler(succeeded ? .newData : .failed)
         }
+    }
+
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        #if DEBUG
+        let environment = PushTokenEnvironment.sandbox
+        #else
+        let environment = PushTokenEnvironment.production
+        #endif
+        APNsDeviceTokenInbox.receive(
+            APNsDeviceRegistration(deviceToken: deviceToken, environment: environment)
+        )
     }
 
     func application(

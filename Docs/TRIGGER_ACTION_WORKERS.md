@@ -30,6 +30,8 @@ Automatic actions are limited to refreshing data and preparing or replacing a pr
 
 The APNs payload must use `content-available: 1` and should only be sent for meaningful station-status changes. APNs delivery is opportunistic, not guaranteed.
 
+At launch, iOS registers the current APNs device token under `push_tokens/{auth.uid}` with its sandbox or production environment. Realtime Database rules restrict the record to that anonymous Firebase identity, and account deletion removes it. The notification provider must target the matching APNs environment and delete tokens rejected by APNs as unregistered.
+
 ```json
 {
   "aps": {

@@ -40,6 +40,30 @@ test("favorites are isolated by Firebase auth uid", async () => {
   await assertFails(set(ref(other, "favoriler/owner/station-2"), true));
 });
 
+test("push tokens are isolated by uid and require the canonical schema", async () => {
+  const owner = testEnvironment.authenticatedContext("owner").database();
+  const other = testEnvironment.authenticatedContext("other").database();
+  const registration = {
+    token: "a".repeat(64),
+    platform: "ios",
+    environment: "sandbox",
+    updatedAtMilliseconds: Date.now(),
+  };
+
+  await assertSucceeds(set(ref(owner, "push_tokens/owner"), registration));
+  await assertSucceeds(get(ref(owner, "push_tokens/owner")));
+  await assertFails(get(ref(other, "push_tokens/owner")));
+  await assertFails(set(ref(other, "push_tokens/owner"), registration));
+  await assertFails(set(ref(owner, "push_tokens/owner"), {
+    ...registration,
+    environment: "unknown",
+  }));
+  await assertFails(set(ref(owner, "push_tokens/owner"), {
+    ...registration,
+    unexpected: true,
+  }));
+});
+
 test("reports require the authenticated uid and canonical schema", async () => {
   const owner = testEnvironment.authenticatedContext("owner").database();
   const validReport = {
@@ -83,6 +107,12 @@ test("idempotency keys accept identical replay and reject conflicting overwrite"
 test("anonymous users cannot write private data", async () => {
   const anonymous = testEnvironment.unauthenticatedContext().database();
   await assertFails(set(ref(anonymous, "favoriler/anonymous/station-1"), true));
+  await assertFails(set(ref(anonymous, "push_tokens/anonymous"), {
+    token: "a".repeat(64),
+    platform: "ios",
+    environment: "sandbox",
+    updatedAtMilliseconds: Date.now(),
+  }));
   await assertFails(set(ref(anonymous, "account_deletion_requests/anonymous"), {
     uid: "anonymous",
     requestedAt: new Date().toISOString(),
