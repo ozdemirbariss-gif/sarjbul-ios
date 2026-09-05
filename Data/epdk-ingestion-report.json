@@ -1408,14 +1408,14 @@
   ],
   "endpoint": "https://apigateway.epdk.gov.tr/sarjIstasyonlari",
   "epdk_published_count": 13043,
-  "fetched_at": "2026-09-04T14:51:32.457880+00:00",
+  "fetched_at": "2026-09-05T08:24:08.306176+00:00",
   "invalid_coordinates": [],
-  "payload_sha256": "59e87601a4a3d96f353dda998a8d9a32b6a69148ee4128ef65d910096f25b3ba",
-  "private_count": 3724,
+  "payload_sha256": "068876d07a09ace07e8c2e30b5d51b00f9eb0aaa0012bd77899eecc403904fb4",
+  "private_count": 3725,
   "public_count": 13043,
   "public_socket_count": 35656,
   "published_count": 15445,
-  "socket_count": 48044,
+  "socket_count": 48045,
   "supplementary_source_count": 13041,
-  "total_count": 16767
+  "total_count": 16768
 }
