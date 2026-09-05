@@ -22,9 +22,9 @@ final class StationDataStore {
     private let persistence: any AppPersistence
     private let messages: AppMessagePresenter
     private var reportCooldowns: [String: Date]
-    private var realtimeTask: Task<Void, Never>?
-    private var loadTask: Task<Void, Never>?
-    private var availabilityTask: Task<Void, Never>?
+    @ObservationIgnored private var realtimeTask: Task<Void, Never>?
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var availabilityTask: Task<Void, Never>?
 
     var onRealtimeEvent: (@MainActor (StationRealtimeEvent) -> Void)?
 

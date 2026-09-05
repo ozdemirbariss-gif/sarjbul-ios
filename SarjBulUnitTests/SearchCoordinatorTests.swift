@@ -67,7 +67,7 @@ final class SearchCoordinatorTests: XCTestCase {
     private func makeApp(repository: any StationRepository) throws -> AppState {
         let name = "SearchCoordinatorTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
-        addTeardownBlock { defaults.removePersistentDomain(forName: name) }
+        addTeardownBlock { UserDefaults(suiteName: name)?.removePersistentDomain(forName: name) }
         let persistence = SystemAppPersistence(defaults: defaults, secureStorage: SearchTestSecureStorage())
         let app = AppState(repository: repository, clients: AppServiceClients(
             auth: UnavailableAuthClient(), favorites: UnavailableFavoritesClient(),

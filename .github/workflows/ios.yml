@@ -64,13 +64,14 @@ jobs:
         run: swiftlint lint --strict --no-cache
       - name: Generate project
         run: xcodegen generate
-      - name: Build app
+      - name: Build app and tests
         run: >-
           xcodebuild -quiet
           -project SarjBul.xcodeproj
           -scheme SarjBul
           -destination 'generic/platform=iOS Simulator'
-          CODE_SIGNING_ALLOWED=NO
+          -derivedDataPath DerivedData
+          ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build-for-testing
       - name: Build Release configuration
         run: >-
           xcodebuild -quiet
@@ -78,8 +79,10 @@ jobs:
           -scheme SarjBul
           -configuration Release
           -destination 'generic/platform=iOS Simulator'
-          CODE_SIGNING_ALLOWED=NO
+          -derivedDataPath DerivedData
+          ARCHS=arm64 CODE_SIGNING_ALLOWED=NO
       - name: UI smoke test
         run: |
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(device["udid"] for devices in data["devices"].values() for device in devices if device["name"].startswith("iPhone")))')
-          xcodebuild -quiet -project SarjBul.xcodeproj -scheme SarjBul -destination "platform=iOS Simulator,id=$DEVICE_ID" -skip-testing:SarjBulUITests/ReadmeScreenshotTests CODE_SIGNING_ALLOWED=NO test
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcodebuild -quiet -project SarjBul.xcodeproj -scheme SarjBul -derivedDataPath DerivedData -destination "platform=iOS Simulator,id=$DEVICE_ID" -parallel-testing-enabled NO -skip-testing:SarjBulUITests/ReadmeScreenshotTests CODE_SIGNING_ALLOWED=NO test-without-building
