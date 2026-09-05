@@ -24,6 +24,7 @@ final class StationDataStore {
     private var reportCooldowns: [String: Date]
     private var realtimeTask: Task<Void, Never>?
     private var loadTask: Task<Void, Never>?
+    private var availabilityTask: Task<Void, Never>?
 
     var onRealtimeEvent: (@MainActor (StationRealtimeEvent) -> Void)?
 
@@ -49,6 +50,17 @@ final class StationDataStore {
         reportCooldowns = persistence.reportCooldowns
         stationStatuses = persistence.cachedStationStatuses
         communityInsights = persistence.cachedCommunityInsights
+        availabilityTask = Task { [weak self, pipeline] in
+            for await event in await pipeline.availabilityUpdates() {
+                guard !Task.isCancelled, let self else { return }
+                self.onRealtimeEvent?(event)
+            }
+        }
+    }
+
+    deinit {
+        availabilityTask?.cancel()
+        realtimeTask?.cancel()
     }
 
     var canRetryLoad: Bool {

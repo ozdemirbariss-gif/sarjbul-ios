@@ -138,4 +138,32 @@ test("friction analytics accepts only anonymous opt-in buckets", async () => {
     ...event,
     latitude: 38.4,
   }));
+  const {source, ...missingField} = event;
+  await assertFails(set(ref(owner, "friction_events/event-4"), missingField));
+});
+
+test("demand events require all fields and reject extra fields", async () => {
+  const owner = testEnvironment.authenticatedContext("owner").database();
+  const event = {
+    coarseCell: "38.4:27.1", preference: "nearest", radiusBucketKm: 25,
+    resultBucket: "1-5", createdAtMilliseconds: Date.now(), source: "ios_opt_in",
+  };
+  await assertSucceeds(set(ref(owner, "search_demand_events/valid"), event));
+  const {source, ...missingField} = event;
+  await assertFails(set(ref(owner, "search_demand_events/missing"), missingField));
+  await assertFails(set(ref(owner, "search_demand_events/extra"), {...event, latitude: 38.4}));
+});
+
+test("contribution values allow only the seven supported keys", async () => {
+  const owner = testEnvironment.authenticatedContext("owner").database();
+  const contribution = {
+    uid: "owner", kaynak: "ios", tarih: new Date().toISOString(),
+    degerler: {price: "10 TL", socket: "CCS", address: "Test", operator: "Test",
+      lighting: "yes", camera: "no", open_24_hours: "yes"},
+  };
+  await assertSucceeds(set(ref(owner, "station_contributions/test/valid"), contribution));
+  await assertFails(set(ref(owner, "station_contributions/test/extra"), {
+    ...contribution, degerler: {...contribution.degerler, extra: "bad"},
+  }));
+  await assertFails(set(ref(owner, "station_contributions/test/empty"), {...contribution, degerler: {}}));
 });

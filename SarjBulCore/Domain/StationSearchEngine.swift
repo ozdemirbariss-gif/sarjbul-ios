@@ -16,6 +16,8 @@ public struct StationSearchEngine: Sendable {
         stationStatuses: [String: StationStatusSummary] = [:],
         limit: Int = 80
     ) -> [StationCandidate] {
+        guard limit > 0 else { return [] }
+        let targetCount = min(limit, richCandidateLimit)
         var latestResult: [StationCandidate] = []
         for radiusKm in radiusSteps(rangeFilterEnabled: filters.rangeFilterEnabled, safeRangeKm: profile.safeRangeKm) {
             let result = candidates(
@@ -28,7 +30,7 @@ public struct StationSearchEngine: Sendable {
                 radiusSteps: [radiusKm]
             )
             latestResult = result
-            if result.count >= richCandidateLimit || radiusKm >= maxCandidateRadiusKm {
+            if result.count >= targetCount || radiusKm >= maxCandidateRadiusKm {
                 return result
             }
         }
@@ -63,6 +65,7 @@ public struct StationSearchEngine: Sendable {
         limit: Int,
         radiusSteps: [Double]
     ) -> [StationCandidate] {
+        guard limit > 0 else { return [] }
         let normalizedSearch = filters.searchText.folding(
             options: [.diacriticInsensitive, .caseInsensitive],
             locale: Locale(identifier: "tr_TR")
@@ -103,7 +106,7 @@ public struct StationSearchEngine: Sendable {
                 ))
             }
 
-            if candidates.count >= richCandidateLimit || radiusKm >= maxCandidateRadiusKm {
+            if candidates.count >= min(limit, richCandidateLimit) || radiusKm >= maxCandidateRadiusKm {
                 break
             }
         }
@@ -129,6 +132,7 @@ public struct StationSearchEngine: Sendable {
         stationStatuses: [String: StationStatusSummary] = [:],
         limit: Int = 80
     ) -> [StationCandidate] {
+        guard limit > 0 else { return [] }
         let normalizedSearch = filters.searchText.folding(
             options: [.diacriticInsensitive, .caseInsensitive],
             locale: Locale(identifier: "tr_TR")

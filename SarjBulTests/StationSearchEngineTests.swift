@@ -196,6 +196,57 @@ struct StationSearchEngineTests {
         #expect(DeepLinkRouteParser.parse(unsupportedURL) == nil)
     }
 
+    @Test(arguments: [1, 24, 80])
+    func indexedSearchStopsWhenRequestedCountIsMet(limit: Int) throws {
+        let template = try #require(loadFixture().first)
+        let nearby = (0..<80).map { index in
+            var station = template
+            station.id = "near-\(index)"
+            station.power = "50 kW"
+            return station
+        }
+        var distant = template
+        distant.id = "distant"
+        distant.latitude += 3
+        distant.power = "400 kW"
+        let result = StationSearchEngine().candidates(
+            in: SpatialIndex(stations: nearby + [distant]),
+            origin: UserLocation(latitude: template.latitude, longitude: template.longitude, source: .manual),
+            profile: DrivingProfile(),
+            filters: StationFilters(preference: .fastest, rangeFilterEnabled: false),
+            limit: limit
+        )
+        #expect(result.count == limit)
+        #expect(result.allSatisfy { $0.station.id.hasPrefix("near-") })
+    }
+
+    @Test
+    func indexedSearchExpandsWhenInitialAreaIsInsufficient() throws {
+        let template = try #require(loadFixture().first)
+        var distant = template
+        distant.id = "distant"
+        distant.latitude += 2
+        let result = StationSearchEngine().candidates(
+            in: SpatialIndex(stations: [template, distant]),
+            origin: UserLocation(latitude: template.latitude, longitude: template.longitude, source: .manual),
+            profile: DrivingProfile(),
+            filters: StationFilters(rangeFilterEnabled: false),
+            limit: 2
+        )
+        #expect(Set(result.map { $0.station.id }) == [template.id, distant.id])
+    }
+
+    @Test(arguments: [0, -1])
+    func nonPositiveLimitsReturnNoCandidates(limit: Int) throws {
+        let stations = try loadFixture()
+        let origin = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        let engine = StationSearchEngine()
+        #expect(engine.candidates(in: SpatialIndex(stations: stations), origin: origin,
+                                  profile: DrivingProfile(), filters: StationFilters(), limit: limit).isEmpty)
+        #expect(engine.candidates(from: stations, origin: origin,
+                                  profile: DrivingProfile(), filters: StationFilters(), limit: limit).isEmpty)
+    }
+
     @Test
     func anonymousAuthErrorsAreMappedInsideClientBoundary() {
         let throttled = AuthError.map(

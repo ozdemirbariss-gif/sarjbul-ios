@@ -1314,7 +1314,8 @@ struct HomeView: View {
         search.updateLocation(
             latitude: location.latitude,
             longitude: location.longitude,
-            source: location.source
+            source: location.source,
+            capturedAt: location.capturedAt
         )
         frictionTelemetry.record(.locationReady)
         Task {

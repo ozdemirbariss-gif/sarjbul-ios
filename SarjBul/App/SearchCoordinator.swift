@@ -23,6 +23,13 @@ enum SearchState: Sendable {
 @MainActor
 @Observable
 final class SearchCoordinator {
+    private struct SearchContext: Equatable {
+        var origin: SarjBulCore.UserLocation
+        var destination: JourneyDestination?
+        var profile: DrivingProfile
+        var filters: StationFilters
+    }
+
     private enum PendingQuickAction {
         case nearestFast
     }
@@ -42,9 +49,17 @@ final class SearchCoordinator {
     private var pendingStationKey: String?
     private var pendingQuickAction: PendingQuickAction?
     private var prepared = false
-    private var isPreparingOutcome = false
+    private var searchTask: Task<Void, Never>?
+    private var activeRequestID: UUID?
+    private var activeContext: SearchContext?
+    private var resultContext: SearchContext?
+    private var shouldPresentResults = false
 
-    var userLocation: SarjBulCore.UserLocation?
+    var userLocation: SarjBulCore.UserLocation? {
+        didSet {
+            if userLocation != oldValue { reset() }
+        }
+    }
     var state: SearchState = .idle
     private(set) var journeySnapshot: JourneyRouteSnapshot?
     private(set) var tripPlan: ChargingTripPlan?
@@ -75,8 +90,18 @@ final class SearchCoordinator {
         self.frictionTelemetry = frictionTelemetry
     }
 
-    var routeCandidates: [StationCandidate] { state.candidates }
-    var preparedCandidate: StationCandidate? { routeCandidates.first ?? previousCandidates.first }
+    private var currentContext: SearchContext? {
+        userLocation.map { SearchContext(origin: $0, destination: settings.destination, profile: settings.profile, filters: settings.filters) }
+    }
+
+    var routeCandidates: [StationCandidate] {
+        guard resultContext == nil || resultContext == currentContext else { return [] }
+        return state.candidates
+    }
+    var preparedCandidate: StationCandidate? {
+        guard resultContext == nil || resultContext == currentContext else { return nil }
+        return routeCandidates.first ?? previousCandidates.first
+    }
     var isSearching: Bool { state.isSearching }
     var canSearch: Bool { userLocation != nil && !isSearching }
 
@@ -100,12 +125,13 @@ final class SearchCoordinator {
         await stationData.retry(statusIDToken: session?.idToken)
     }
 
-    func updateLocation(latitude: Double, longitude: Double, source: SarjBulCore.UserLocation.Source) {
-        userLocation = SarjBulCore.UserLocation(latitude: latitude, longitude: longitude, source: source)
-        locationNeedsReview = false
-        state = .idle
-        journeySnapshot = nil
-        tripPlan = nil
+    func updateLocation(
+        latitude: Double,
+        longitude: Double,
+        source: SarjBulCore.UserLocation.Source,
+        capturedAt: Date = Date()
+    ) {
+        userLocation = SarjBulCore.UserLocation(latitude: latitude, longitude: longitude, source: source, capturedAt: capturedAt)
         if let pendingStationKey {
             self.pendingStationKey = nil
             Task { await openStation(withKey: pendingStationKey) }
@@ -116,6 +142,12 @@ final class SearchCoordinator {
     }
 
     func reset() {
+        searchTask?.cancel()
+        searchTask = nil
+        activeRequestID = nil
+        activeContext = nil
+        resultContext = nil
+        previousCandidates = []
         state = .idle
         journeySnapshot = nil
         tripPlan = nil
@@ -129,15 +161,13 @@ final class SearchCoordinator {
     }
 
     func prepareOutcome() async {
-        guard !isPreparingOutcome, userLocation != nil else { return }
-        isPreparingOutcome = true
-        defer { isPreparingOutcome = false }
+        guard userLocation != nil else { return }
         await findStations(presentResults: false)
     }
 
     func findStations(presentResults: Bool = true) async {
         let startedAt = Date()
-        guard let userLocation else {
+        guard let context = currentContext else {
             state = .failed(.localized(key: "route.location_required", kind: .error))
             recordSearchProof(
                 status: .failed,
@@ -148,35 +178,80 @@ final class SearchCoordinator {
             )
             return
         }
-        guard !isSearching else { return }
+        if activeContext == context, let searchTask {
+            if presentResults {
+                shouldPresentResults = true
+                state = .searching
+            }
+            await searchTask.value
+            return
+        }
+
+        searchTask?.cancel()
+        if resultContext != context {
+            previousCandidates = []
+            state = .idle
+            journeySnapshot = nil
+            tripPlan = nil
+        }
+        let requestID = UUID()
+        activeRequestID = requestID
+        activeContext = context
+        shouldPresentResults = presentResults
 
         locationNeedsReview = false
         frictionTelemetry.record(.stationSearchStarted)
         if presentResults {
-            previousCandidates = routeCandidates
+            if !routeCandidates.isEmpty { previousCandidates = routeCandidates }
             state = .searching
         }
+        let task = Task { await performSearch(context: context, requestID: requestID, startedAt: startedAt) }
+        searchTask = task
+        await task.value
+    }
+
+    private func isCurrent(_ context: SearchContext, requestID: UUID) -> Bool {
+        !Task.isCancelled && activeRequestID == requestID && currentContext == context
+    }
+
+    private func performSearch(context: SearchContext, requestID: UUID, startedAt: Date) async {
+        defer {
+            if activeRequestID == requestID {
+                searchTask = nil
+                activeRequestID = nil
+                activeContext = nil
+                if currentContext != context {
+                    state = .idle
+                    previousCandidates = []
+                    resultContext = nil
+                }
+            }
+        }
         guard await ensureDataset(
-            presentResults: presentResults,
-            location: userLocation,
+            context: context,
+            requestID: requestID,
             startedAt: startedAt
         ) else { return }
 
-        let routePoints = await prepareRoutePoints(origin: userLocation)
-        var searchFilters = settings.filters
-        if settings.destination != nil {
+        let snapshot = await prepareRouteSnapshot(context: context)
+        guard isCurrent(context, requestID: requestID) else { return }
+        var searchFilters = context.filters
+        if context.destination != nil {
             searchFilters.rangeFilterEnabled = false
         }
         let rawCandidates = await searchCandidates(
-            origin: userLocation,
-            routePoints: routePoints,
+            context: context,
+            routePoints: snapshot?.points ?? [],
             filters: searchFilters
         )
+        guard isCurrent(context, requestID: requestID) else { return }
+        journeySnapshot = snapshot
+        resultContext = context
 
         guard !rawCandidates.isEmpty else {
             await handleNoCandidates(
-                presentResults: presentResults,
-                location: userLocation,
+                presentResults: shouldPresentResults,
+                location: context.origin,
                 startedAt: startedAt
             )
             return
@@ -184,23 +259,24 @@ final class SearchCoordinator {
 
         await completeSearch(
             rawCandidates,
-            presentResults: presentResults,
-            location: userLocation,
+            presentResults: shouldPresentResults,
+            location: context.origin,
             startedAt: startedAt
         )
     }
 
     private func ensureDataset(
-        presentResults: Bool,
-        location: SarjBulCore.UserLocation,
+        context: SearchContext,
+        requestID: UUID,
         startedAt: Date
     ) async -> Bool {
         if stationData.stations.isEmpty {
             let session = try? await auth.validSession()
             await stationData.retry(statusIDToken: session?.idToken)
         }
+        guard isCurrent(context, requestID: requestID) else { return false }
         guard stationData.stations.isEmpty else { return true }
-        if presentResults, previousCandidates.isEmpty {
+        if shouldPresentResults, previousCandidates.isEmpty {
             state = .failed(.localized(key: "data.recovery_failed", kind: .error))
             navigation.select(.routes)
         }
@@ -209,33 +285,33 @@ final class SearchCoordinator {
             status: .failed,
             resultKey: "missing-dataset",
             candidates: [],
-            location: location,
+            location: context.origin,
             startedAt: startedAt
         )
         return false
     }
 
     private func searchCandidates(
-        origin: SarjBulCore.UserLocation,
+        context: SearchContext,
         routePoints: [SarjBulCore.UserLocation],
         filters: StationFilters
     ) async -> [StationCandidate] {
-        let limit = settings.destination == nil ? 24 : 120
+        let limit = context.destination == nil ? 24 : 120
         var candidates = await stationData.candidates(
-            origin: origin,
-            destination: settings.destination,
+            origin: context.origin,
+            destination: context.destination,
             routePoints: routePoints,
-            profile: settings.profile,
+            profile: context.profile,
             filters: filters,
             limit: limit
         )
         let recoveryFilters = relaxedFilters(from: filters)
-        if candidates.isEmpty, recoveryFilters != filters {
+        if !Task.isCancelled, candidates.isEmpty, recoveryFilters != filters {
             candidates = await stationData.candidates(
-                origin: origin,
-                destination: settings.destination,
+                origin: context.origin,
+                destination: context.destination,
                 routePoints: routePoints,
-                profile: settings.profile,
+                profile: context.profile,
                 filters: recoveryFilters,
                 limit: limit
             )
@@ -251,9 +327,10 @@ final class SearchCoordinator {
         location: SarjBulCore.UserLocation,
         startedAt: Date
     ) async {
+        previousCandidates = []
+        state = .results([])
         if settings.destination == nil {
             locationNeedsReview = true
-            if previousCandidates.isEmpty { state = .idle }
             if presentResults { navigation.select(.home) }
             AppLogger.routing.warning("Station search found no nearby candidates after fallback")
         } else {
@@ -263,7 +340,6 @@ final class SearchCoordinator {
             }
             AppLogger.routing.warning("Journey search found no corridor candidates after fallback")
         }
-        await recordDemandIfEnabled(origin: location, resultCount: 0)
         frictionTelemetry.record(.noOutcome)
         recordSearchProof(
             status: .failed,
@@ -272,6 +348,7 @@ final class SearchCoordinator {
             location: location,
             startedAt: startedAt
         )
+        await recordDemandIfEnabled(origin: location, resultCount: 0)
     }
 
     private func completeSearch(
@@ -330,6 +407,7 @@ final class SearchCoordinator {
     }
 
     func presentPreparedResults() {
+        guard resultContext == nil || resultContext == currentContext else { return }
         guard !routeCandidates.isEmpty || !previousCandidates.isEmpty else { return }
         if routeCandidates.isEmpty { state = .results(previousCandidates) }
         navigation.select(.routes)
@@ -435,25 +513,19 @@ final class SearchCoordinator {
         return relaxed
     }
 
-    private func prepareRoutePoints(origin: SarjBulCore.UserLocation) async -> [SarjBulCore.UserLocation] {
-        guard let destination = settings.destination else {
-            journeySnapshot = nil
-            return []
-        }
+    private func prepareRouteSnapshot(context: SearchContext) async -> JourneyRouteSnapshot? {
+        guard let destination = context.destination else { return nil }
         do {
-            let snapshot = try await journeyRouteService.routeSnapshot(
-                origin: origin,
+            return try await journeyRouteService.routeSnapshot(
+                origin: context.origin,
                 destination: destination
             )
-            journeySnapshot = snapshot
-            return snapshot.points
         } catch {
-            journeySnapshot = nil
             AppTelemetry.capture(error, operation: "journey_route_fallback")
             AppLogger.routing.warning(
                 "Journey corridor route failed: \(error.localizedDescription, privacy: .public)"
             )
-            return []
+            return nil
         }
     }
 
@@ -482,6 +554,7 @@ final class SearchCoordinator {
             candidates[index].badges = StationScorer.badges(for: candidates[index])
         }
         state = .results(candidates)
+        previousCandidates = candidates
     }
 
     private var profileSafeRange: Double { settings.profile.safeRangeKm }
@@ -524,7 +597,9 @@ final class SearchCoordinator {
             return
         }
 
+        let context = currentContext
         await findStations()
+        guard context == currentContext else { return }
         var candidates = routeCandidates
         if let index = candidates.firstIndex(where: { $0.station.id == station.id }) {
             candidates.insert(candidates.remove(at: index), at: 0)
@@ -539,6 +614,7 @@ final class SearchCoordinator {
                 profile: settings.profile,
                 filters: relaxedFilters
             ) {
+                guard context == currentContext else { return }
                 candidates.insert(direct, at: 0)
             }
         }
@@ -615,7 +691,7 @@ final class SearchCoordinator {
             result.append(ExecutionEvidence(
                 source: location.source == .device ? .deviceLocation : .manualLocation,
                 reliability: location.source == .device ? 0.98 : 0.90,
-                observedAt: now,
+                observedAt: location.capturedAt,
                 maximumAge: location.source == .device ? 300 : 86_400
             ))
         }

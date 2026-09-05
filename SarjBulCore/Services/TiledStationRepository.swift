@@ -58,6 +58,7 @@ public actor TiledStationRepository: RefreshableStationRepository {
     private let cacheDirectory: URL
     private let session: URLSession
     private let decoder = JSONDecoder()
+    private var refreshTask: Task<[Station]?, Error>?
 
     public init(
         bundledManifestURL: URL,
@@ -80,13 +81,23 @@ public actor TiledStationRepository: RefreshableStationRepository {
     }
 
     public func refreshStations() async throws -> [Station]? {
+        if let refreshTask { return try await refreshTask.value }
+        let task = Task { try await performRefresh() }
+        refreshTask = task
+        defer { refreshTask = nil }
+        return try await task.value
+    }
+
+    private func performRefresh() async throws -> [Station]? {
         guard let remoteManifestURL else { return nil }
         var request = URLRequest(url: remoteManifestURL)
         request.timeoutInterval = 12
         request.cachePolicy = .reloadRevalidatingCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("SarjBul-iOS/1", forHTTPHeaderField: "User-Agent")
-        if let metadata = try? metadata(), let etag = metadata.etag {
+        if let cached = try? cachedManifest(),
+           (try? decodeStations(manifest: cached)) != nil,
+           let metadata = try? metadata(), let etag = metadata.etag {
             request.setValue(etag, forHTTPHeaderField: "If-None-Match")
         }
 
@@ -102,21 +113,22 @@ public actor TiledStationRepository: RefreshableStationRepository {
         )
         guard remoteManifest.schemaVersion == 1,
               remoteManifest.totalRecords >= minimumAcceptedCount,
-              !remoteManifest.tiles.isEmpty else {
+              !remoteManifest.tiles.isEmpty,
+              Set(remoteManifest.tiles.map(\.file)).count == remoteManifest.tiles.count,
+              remoteManifest.tiles.allSatisfy({ tile in
+                  tile.file == (tile.file as NSString).lastPathComponent
+                      && tile.file.hasPrefix("station_tile_") && tile.file.hasSuffix(".json")
+                      && tile.recordCount > 0 && tile.sha256.count == 64
+                      && tile.sha256.allSatisfy(\.isHexDigit)
+              }) else {
             throw StationRepositoryError.invalidRemoteData
         }
 
         let bundledTiles = Dictionary(uniqueKeysWithValues: bundled.tiles.map { ($0.file, $0) })
-        let cachedTiles = (try? cachedManifest()).map {
-            Dictionary(uniqueKeysWithValues: $0.tiles.map { ($0.file, $0) })
-        } ?? [:]
         try FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
 
         for tile in remoteManifest.tiles {
-            if cachedTiles[tile.file]?.sha256 == tile.sha256,
-               FileManager.default.fileExists(atPath: cacheDirectory.appending(path: tile.file).path) {
-                continue
-            }
+            if cachedTileData(tile) != nil { continue }
             if bundledTiles[tile.file]?.sha256 == tile.sha256 { continue }
             try await download(tile: tile, manifest: remoteManifest)
         }
@@ -124,11 +136,11 @@ public actor TiledStationRepository: RefreshableStationRepository {
         let stations = try decodeStations(manifest: remoteManifest)
         guard stations.count >= minimumAcceptedCount else { throw StationRepositoryError.invalidRemoteData }
         try manifestData.write(to: cacheDirectory.appending(path: "station-tiles-manifest.json"), options: .atomic)
-        try JSONEncoder().encode(RemoteTileMetadata(
+        try? JSONEncoder().encode(RemoteTileMetadata(
             etag: response.value(forHTTPHeaderField: "ETag"),
             updatedAt: Date()
         )).write(to: cacheDirectory.appending(path: "station-tiles-metadata.json"), options: .atomic)
-        removeStaleTiles(keeping: Set(remoteManifest.tiles.map(\.file)))
+        removeStaleTiles(keeping: Set(remoteManifest.tiles.flatMap { [$0.file, blobURL($0).lastPathComponent] }))
         return stations
     }
 
@@ -145,7 +157,19 @@ public actor TiledStationRepository: RefreshableStationRepository {
               sha256(data) == tile.sha256 else {
             throw StationRepositoryError.invalidRemoteData
         }
-        try data.write(to: cacheDirectory.appending(path: tile.file), options: .atomic)
+        // Content-addressed tiles keep the last committed manifest readable during a partial update.
+        try data.write(to: blobURL(tile), options: .atomic)
+    }
+
+    private func blobURL(_ tile: StationTileManifest.Tile) -> URL {
+        cacheDirectory.appending(path: "station_tile_\(tile.sha256).json")
+    }
+
+    private func cachedTileData(_ tile: StationTileManifest.Tile) -> Data? {
+        for url in [blobURL(tile), cacheDirectory.appending(path: tile.file)] {
+            if let data = try? Data(contentsOf: url), sha256(data) == tile.sha256 { return data }
+        }
+        return nil
     }
 
     private func decodeStations(manifest: StationTileManifest) throws -> [Station] {
@@ -154,17 +178,9 @@ public actor TiledStationRepository: RefreshableStationRepository {
         let bundled = try bundledManifest()
         let bundledByFile = Dictionary(uniqueKeysWithValues: bundled.tiles.map { ($0.file, $0) })
         for tile in manifest.tiles {
-            let cacheURL = cacheDirectory.appending(path: tile.file)
             let data: Data
-            if FileManager.default.fileExists(atPath: cacheURL.path) {
-                let cached = try Data(contentsOf: cacheURL)
-                if sha256(cached) == tile.sha256 {
-                    data = cached
-                } else if bundledByFile[tile.file]?.sha256 == tile.sha256 {
-                    data = try bundledTileData(tile.file)
-                } else {
-                    throw StationRepositoryError.invalidRemoteData
-                }
+            if let cached = cachedTileData(tile) {
+                data = cached
             } else if bundledByFile[tile.file]?.sha256 == tile.sha256 {
                 data = try bundledTileData(tile.file)
             } else {

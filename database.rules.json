@@ -13,8 +13,8 @@
     "search_demand_events": {
       "$eventId": {
         ".read": false,
-        ".write": "auth != null && ((!data.exists() && (!root.child('search_demand_meta').child(auth.uid).child('son_olay_zamani_ms').exists() || root.child('search_demand_meta').child(auth.uid).child('son_olay_zamani_ms').val() <= now - 300000)) || (data.exists() && newData.val() === data.val()))",
-        ".validate": "newData.hasChildren(['coarseCell', 'preference', 'radiusBucketKm', 'resultBucket', 'createdAtMilliseconds', 'source']) && newData.numChildren() === 6",
+        ".write": "auth != null && ((!data.exists() && (!root.child('search_demand_meta').child(auth.uid).child('son_olay_zamani_ms').exists() || root.child('search_demand_meta').child(auth.uid).child('son_olay_zamani_ms').val() <= now - 300000)) || (data.exists() && (newData.child('coarseCell').val() === data.child('coarseCell').val() && newData.child('preference').val() === data.child('preference').val() && newData.child('radiusBucketKm').val() === data.child('radiusBucketKm').val() && newData.child('resultBucket').val() === data.child('resultBucket').val() && newData.child('createdAtMilliseconds').val() === data.child('createdAtMilliseconds').val() && newData.child('source').val() === data.child('source').val())))",
+        ".validate": "newData.hasChildren(['coarseCell', 'preference', 'radiusBucketKm', 'resultBucket', 'createdAtMilliseconds', 'source'])",
         "coarseCell": { ".validate": "newData.isString() && newData.val().length >= 5 && newData.val().length <= 30" },
         "preference": { ".validate": "newData.val() === 'balanced' || newData.val() === 'nearest' || newData.val() === 'fastest' || newData.val() === 'economical'" },
         "radiusBucketKm": { ".validate": "newData.val() === 25 || newData.val() === 50 || newData.val() === 100 || newData.val() === 200 || newData.val() === 400 || newData.val() === 800" },
@@ -37,8 +37,8 @@
     "friction_events": {
       "$eventId": {
         ".read": false,
-        ".write": "auth != null && ((!data.exists()) || newData.val() === data.val())",
-        ".validate": "newData.hasChildren(['kind', 'elapsedBucket', 'journeyPhase', 'createdAtMilliseconds', 'source']) && newData.numChildren() === 5",
+        ".write": "auth != null && ((!data.exists()) || (newData.child('kind').val() === data.child('kind').val() && newData.child('elapsedBucket').val() === data.child('elapsedBucket').val() && newData.child('journeyPhase').val() === data.child('journeyPhase').val() && newData.child('createdAtMilliseconds').val() === data.child('createdAtMilliseconds').val() && newData.child('source').val() === data.child('source').val()))",
+        ".validate": "newData.hasChildren(['kind', 'elapsedBucket', 'journeyPhase', 'createdAtMilliseconds', 'source'])",
         "kind": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
         "elapsedBucket": { ".validate": "newData.val() === 'under_1s' || newData.val() === '1_3s' || newData.val() === '3_10s' || newData.val() === '10_30s' || newData.val() === '30s_plus'" },
         "journeyPhase": { ".validate": "newData.val() === 'entry' || newData.val() === 'decision' || newData.val() === 'route' || newData.val() === 'charge'" },
@@ -56,10 +56,10 @@
         ".indexOn": ["tarih"],
         "$contributionId": {
           ".read": "auth != null && data.child('uid').val() === auth.uid",
-          ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').exists() || root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').val() <= now - 30000)) || (data.exists() && newData.val() === data.val() && data.child('uid').val() === auth.uid))",
+          ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').exists() || root.child('kullanici_dogrulama_meta').child(auth.uid).child('son_dogrulama_zamani_ms').val() <= now - 30000)) || (data.exists() && (newData.child('degerler/price').val() === data.child('degerler/price').val() && newData.child('degerler/socket').val() === data.child('degerler/socket').val() && newData.child('degerler/address').val() === data.child('degerler/address').val() && newData.child('degerler/operator').val() === data.child('degerler/operator').val() && newData.child('degerler/lighting').val() === data.child('degerler/lighting').val() && newData.child('degerler/camera').val() === data.child('degerler/camera').val() && newData.child('degerler/open_24_hours').val() === data.child('degerler/open_24_hours').val() && newData.child('tarih').val() === data.child('tarih').val() && newData.child('uid').val() === data.child('uid').val() && newData.child('kaynak').val() === data.child('kaynak').val()) && data.child('uid').val() === auth.uid))",
           ".validate": "newData.hasChildren(['degerler', 'tarih', 'uid', 'kaynak']) && newData.child('uid').val() === auth.uid && newData.child('kaynak').val() === 'ios' && newData.child('tarih').isString() && newData.child('tarih').val().length <= 40",
           "degerler": {
-            ".validate": "newData.hasChildren() && newData.numChildren() <= 7",
+            ".validate": "newData.hasChildren()",
             "price": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
             "socket": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
             "address": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 160" },
@@ -81,7 +81,7 @@
           ".indexOn": ["tarih"],
           "$reportId": {
             ".read": "auth != null && data.child('uid').val() === auth.uid",
-            ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').exists() || root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').val() <= now - 60000)) || (data.exists() && newData.val() === data.val() && data.child('uid').val() === auth.uid) || (!newData.exists() && data.child('uid').val() === auth.uid))",
+            ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && (!root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').exists() || root.child('kullanici_yorum_meta').child(auth.uid).child('son_yorum_zamani_ms').val() <= now - 60000)) || (data.exists() && (newData.child('kullanici').val() === data.child('kullanici').val() && newData.child('yorum').val() === data.child('yorum').val() && newData.child('durum').val() === data.child('durum').val() && newData.child('durum_sinifi').val() === data.child('durum_sinifi').val() && newData.child('sinif_kaynagi').val() === data.child('sinif_kaynagi').val() && newData.child('tarih').val() === data.child('tarih').val() && newData.child('uid').val() === data.child('uid').val()) && data.child('uid').val() === auth.uid) || (!newData.exists() && data.child('uid').val() === auth.uid))",
             ".validate": "!newData.exists() || (newData.hasChildren(['kullanici', 'yorum', 'durum', 'durum_sinifi', 'sinif_kaynagi', 'tarih', 'uid']) && newData.child('uid').isString() && newData.child('uid').val() === auth.uid && newData.child('yorum').isString() && newData.child('yorum').val().length <= 240 && newData.child('durum').isString() && newData.child('durum').val().length <= 40 && (newData.child('durum_sinifi').val() === 'bos' || newData.child('durum_sinifi').val() === 'mesgul' || newData.child('durum_sinifi').val() === 'belirsiz'))",
             "kullanici": {
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
@@ -123,7 +123,7 @@
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid",
-        ".validate": "!newData.exists() || (newData.hasChildren(['token', 'platform', 'environment', 'updatedAtMilliseconds']) && newData.numChildren() === 4)",
+        ".validate": "!newData.exists() || newData.hasChildren(['token', 'platform', 'environment', 'updatedAtMilliseconds'])",
         "token": {
           ".validate": "newData.isString() && newData.val().length >= 32 && newData.val().length <= 512"
         },

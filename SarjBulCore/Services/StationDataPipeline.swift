@@ -10,6 +10,10 @@ public actor StationDataPipeline {
     private var insights: [String: StationCommunityInsight] = [:]
     private var liveAvailability: [String: LiveStationAvailability] = [:]
     private var spatialIndex = SpatialIndex(stations: [])
+    private var availabilityTask: Task<Void, Never>?
+    private var pendingAvailabilityKeys: Set<String> = []
+    private var availabilityAttemptedAt: [String: Date] = [:]
+    private var availabilityObservers: [UUID: AsyncStream<StationRealtimeEvent>.Continuation] = [:]
 
     public init(
         repository: any StationRepository,
@@ -122,7 +126,8 @@ public actor StationDataPipeline {
                 limit: limit
             )
         }
-        return await enrich(result)
+        scheduleAvailabilityRefresh(for: result)
+        return enrich(result)
     }
 
     public func directCandidate(
@@ -139,7 +144,8 @@ public actor StationDataPipeline {
             stationStatuses: statuses,
             limit: 1
         )
-        return await enrich(result).first
+        scheduleAvailabilityRefresh(for: result)
+        return enrich(result).first
     }
 
     private func replaceStations(_ newStations: [Station]) {
@@ -147,12 +153,7 @@ public actor StationDataPipeline {
         spatialIndex = SpatialIndex(stations: newStations)
     }
 
-    private func enrich(_ candidates: [StationCandidate]) async -> [StationCandidate] {
-        let keys = candidates.map { $0.station.statusKey }
-        if let fresh = try? await liveAvailabilityClient.availability(stationKeys: keys) {
-            liveAvailability.merge(fresh) { _, new in new }
-        }
-
+    private func enrich(_ candidates: [StationCandidate]) -> [StationCandidate] {
         return candidates.map { original in
             var candidate = original
             let key = candidate.station.statusKey
@@ -163,6 +164,51 @@ public actor StationDataPipeline {
                 insight: candidate.communityInsight
             )
             return candidate
+        }
+    }
+
+    public func availabilityUpdates() -> AsyncStream<StationRealtimeEvent> {
+        let id = UUID()
+        let (stream, continuation) = AsyncStream<StationRealtimeEvent>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        availabilityObservers[id] = continuation
+        continuation.yield(.availabilitySnapshot(liveAvailability))
+        continuation.onTermination = { [weak self] _ in
+            Task { await self?.removeAvailabilityObserver(id) }
+        }
+        return stream
+    }
+
+    private func removeAvailabilityObserver(_ id: UUID) {
+        availabilityObservers[id] = nil
+    }
+
+    private func scheduleAvailabilityRefresh(for candidates: [StationCandidate]) {
+        let now = Date()
+        availabilityAttemptedAt = availabilityAttemptedAt.filter { now.timeIntervalSince($0.value) < 60 }
+        pendingAvailabilityKeys = Set(candidates.map { $0.station.statusKey }.filter {
+            availabilityAttemptedAt[$0] == nil
+        })
+        guard availabilityTask == nil, !pendingAvailabilityKeys.isEmpty else { return }
+        availabilityTask = Task { [weak self] in await self?.drainAvailabilityRefresh() }
+    }
+
+    private func drainAvailabilityRefresh() async {
+        defer { availabilityTask = nil }
+        while !pendingAvailabilityKeys.isEmpty {
+            let keys = pendingAvailabilityKeys
+            pendingAvailabilityKeys.removeAll()
+            for key in keys { availabilityAttemptedAt[key] = Date() }
+            guard let values = try? await liveAvailabilityClient.availability(stationKeys: Array(keys)) else { continue }
+            let now = Date()
+            for (key, value) in values where keys.contains(key)
+                && now.timeIntervalSince(value.updatedAt) >= -5
+                && now.timeIntervalSince(value.updatedAt) <= 15 * 60 {
+                if let current = liveAvailability[key], current.updatedAt > value.updatedAt { continue }
+                liveAvailability[key] = value
+            }
+            for observer in availabilityObservers.values {
+                observer.yield(.availabilitySnapshot(liveAvailability))
+            }
         }
     }
 }

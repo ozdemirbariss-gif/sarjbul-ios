@@ -15,5 +15,6 @@ SarjBul/Resources/GoogleService-Info.plist
 firebase/functions/node_modules/
 .firebase/
 firebase-debug.log
+database-debug.log
 __pycache__/
 *.pyc

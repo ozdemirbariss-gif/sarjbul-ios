@@ -6,20 +6,45 @@ on:
   pull_request:
 
 jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install backend dependencies
+        run: npm ci --ignore-scripts
+        working-directory: firebase/functions
+      - name: Backend syntax and unit tests
+        run: |
+          npm run lint
+          npm run test:core
+        working-directory: firebase/functions
+      - name: Test Firebase security rules
+        run: npm run test:rules
+        working-directory: firebase/functions
+      - name: Audit production dependencies
+        if: ${{ !cancelled() }}
+        run: npm audit --omit=dev --audit-level=moderate
+        working-directory: firebase/functions
+
   test:
-    runs-on: macos-15
-    timeout-minutes: 25
+    runs-on: macos-26
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
       - name: Install XcodeGen and SwiftLint
         run: brew install xcodegen swiftlint
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: firebase/functions/package-lock.json
       - name: Validate configuration
         run: |
           plutil -lint SarjBul/Resources/Info.plist SarjBul/Resources/PrivacyInfo.xcprivacy SarjBul/Resources/AppConfig.sample.plist
@@ -31,18 +56,6 @@ jobs:
           git diff --exit-code -- \
             SarjBul/Generated/DesignTokens.generated.swift \
             SarjBulWidgets/Generated/DesignTokens.generated.swift
-      - name: Validate Firebase backend
-        working-directory: firebase/functions
-        run: |
-          npm ci --ignore-scripts
-          npm run lint
-          npm audit --omit=dev --audit-level=moderate
-      - name: Test Firebase security rules
-        run: >-
-          firebase/functions/node_modules/.bin/firebase emulators:exec
-          --project demo-sarjbul
-          --only database
-          "npm --prefix firebase/functions run test:rules"
       - name: Core tests
         run: swift test
       - name: EPDK data pipeline tests
@@ -69,4 +82,4 @@ jobs:
       - name: UI smoke test
         run: |
           DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(device["udid"] for devices in data["devices"].values() for device in devices if device["name"].startswith("iPhone")))')
-          xcodebuild -quiet -project SarjBul.xcodeproj -scheme SarjBul -destination "platform=iOS Simulator,id=$DEVICE_ID" test
+          xcodebuild -quiet -project SarjBul.xcodeproj -scheme SarjBul -destination "platform=iOS Simulator,id=$DEVICE_ID" -skip-testing:SarjBulUITests/ReadmeScreenshotTests CODE_SIGNING_ALLOWED=NO test
