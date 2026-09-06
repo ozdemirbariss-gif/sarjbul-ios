@@ -5,6 +5,7 @@ struct AutonomousProposalCard: View {
     var dismiss: () -> Void
     var openRoute: () -> Void
     @State private var showsReason = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -60,7 +61,28 @@ struct AutonomousProposalCard: View {
                 .foregroundStyle(SBColor.contentSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            DisclosureGroup(isExpanded: $showsReason) {
+            Button {
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
+                    showsReason.toggle()
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    Text(presentation.text("agent.why_station"))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Image(systemName: showsReason ? "chevron.down" : "chevron.right")
+                        .accessibilityHidden(true)
+                }
+                .font(.subheadline)
+                .foregroundStyle(SBColor.contentSecondary)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(presentation.text(showsReason ? "agent.details_expanded" : "agent.details_collapsed"))
+            .accessibilityIdentifier("agent-reason-toggle")
+
+            if showsReason {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(presentation.reason)
                     Text(presentation.distance)
@@ -70,15 +92,9 @@ struct AutonomousProposalCard: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 8)
+                .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("agent-reason-details")
-            } label: {
-                Text(presentation.text("agent.why_station"))
-                    .font(.subheadline)
-                    .foregroundStyle(SBColor.contentSecondary)
-                    .frame(minHeight: 44)
             }
-            .tint(SBColor.contentSecondary)
-            .accessibilityIdentifier("agent-reason-toggle")
 
             Button(action: openRoute) {
                 HStack(spacing: 12) {
