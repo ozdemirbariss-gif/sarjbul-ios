@@ -1,4 +1,5 @@
 import Foundation
+import MapKit
 import SarjBulCore
 import XCTest
 @testable import SarjBul
@@ -62,6 +63,37 @@ final class SearchCoordinatorTests: XCTestCase {
         let observed = Date().addingTimeInterval(-300)
         app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .device, capturedAt: observed)
         XCTAssertEqual(app.search.userLocation?.capturedAt, observed)
+    }
+
+    func testManualOriginIsIncludedInExternalMapHandoffs() throws {
+        let origin = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
+        let station = SearchTestRepository.stations[0]
+
+        let appleItems = ExternalNavigationHandoff.appleMapItems(origin: origin, destination: station)
+        XCTAssertEqual(appleItems.count, 2)
+        XCTAssertEqual(appleItems[0].placemark.coordinate.latitude, origin.latitude, accuracy: 0.000_001)
+        XCTAssertEqual(appleItems[0].placemark.coordinate.longitude, origin.longitude, accuracy: 0.000_001)
+
+        let url = try XCTUnwrap(ExternalNavigationHandoff.googleMapsURL(origin: origin, destination: station))
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        let values = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).compactMap { item in
+            item.value.map { (item.name, $0) }
+        })
+        XCTAssertEqual(values["origin"], "38.3939,27.1891")
+        XCTAssertEqual(values["dir_action"], "navigate")
+    }
+
+    func testDeviceOriginUsesLiveLocationForExternalMapHandoffs() throws {
+        let origin = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .device)
+        let station = SearchTestRepository.stations[0]
+
+        let appleItems = ExternalNavigationHandoff.appleMapItems(origin: origin, destination: station)
+        XCTAssertEqual(appleItems.count, 2)
+        XCTAssertTrue(appleItems[0].isCurrentLocation)
+
+        let url = try XCTUnwrap(ExternalNavigationHandoff.googleMapsURL(origin: origin, destination: station))
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        XCTAssertFalse((components.queryItems ?? []).contains { $0.name == "origin" })
     }
 
     private func makeApp(repository: any StationRepository) throws -> AppState {

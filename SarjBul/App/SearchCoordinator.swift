@@ -20,6 +20,57 @@ enum SearchState: Sendable {
     }
 }
 
+enum ExternalNavigationHandoff {
+    static func appleMapItems(
+        origin: SarjBulCore.UserLocation?,
+        destination: Station
+    ) -> [MKMapItem] {
+        let destinationItem = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
+            latitude: destination.latitude,
+            longitude: destination.longitude
+        )))
+        destinationItem.name = destination.name
+
+        guard let origin else { return [destinationItem] }
+        let originItem: MKMapItem
+        switch origin.source {
+        case .device:
+            originItem = .forCurrentLocation()
+        case .manual:
+            originItem = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
+                latitude: origin.latitude,
+                longitude: origin.longitude
+            )))
+        }
+        return [originItem, destinationItem]
+    }
+
+    static func googleMapsURL(
+        origin: SarjBulCore.UserLocation?,
+        destination: Station
+    ) -> URL? {
+        var queryItems = [
+            URLQueryItem(name: "api", value: "1"),
+            URLQueryItem(
+                name: "destination",
+                value: "\(destination.latitude),\(destination.longitude)"
+            ),
+            URLQueryItem(name: "travelmode", value: "driving"),
+            URLQueryItem(name: "dir_action", value: "navigate")
+        ]
+        if let origin, origin.source == .manual {
+            queryItems.insert(
+                URLQueryItem(name: "origin", value: "\(origin.latitude),\(origin.longitude)"),
+                at: 1
+            )
+        }
+
+        var components = URLComponents(string: "https://www.google.com/maps/dir/")
+        components?.queryItems = queryItems
+        return components?.url
+    }
+}
+
 @MainActor
 @Observable
 final class SearchCoordinator {
@@ -447,29 +498,19 @@ final class SearchCoordinator {
     }
 
     private func openInAppleMaps(_ candidate: StationCandidate) -> Bool {
-        let coordinate = CLLocationCoordinate2D(
-            latitude: candidate.station.latitude,
-            longitude: candidate.station.longitude
-        )
-        let destination = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
-        destination.name = candidate.station.name
-        return destination.openInMaps(launchOptions: [
+        MKMapItem.openMaps(with: ExternalNavigationHandoff.appleMapItems(
+            origin: userLocation,
+            destination: candidate.station
+        ), launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
     }
 
     private func openInGoogleMaps(_ candidate: StationCandidate, correctedRecommendation: Bool) {
-        var components = URLComponents(string: "https://www.google.com/maps/dir/")
-        components?.queryItems = [
-            URLQueryItem(name: "api", value: "1"),
-            URLQueryItem(
-                name: "destination",
-                value: "\(candidate.station.latitude),\(candidate.station.longitude)"
-            ),
-            URLQueryItem(name: "travelmode", value: "driving"),
-            URLQueryItem(name: "dir_action", value: "navigate")
-        ]
-        guard let url = components?.url else {
+        guard let url = ExternalNavigationHandoff.googleMapsURL(
+            origin: userLocation,
+            destination: candidate.station
+        ) else {
             frictionTelemetry.navigationHandoff(
                 succeeded: false,
                 station: candidate.station,

@@ -92,8 +92,15 @@ struct HomeView: View {
                     Task { await search.prepareOutcome() }
                 }
                 guard !isDeterministicUITest else { return }
-                guard !didRequestDeviceLocation, search.userLocation == nil else { return }
-                requestDeviceLocation()
+                guard !didRequestDeviceLocation else { return }
+                switch locationManager.authorizationStatus {
+                case .notDetermined, .authorizedAlways, .authorizedWhenInUse:
+                    requestDeviceLocation()
+                case .denied, .restricted:
+                    break
+                @unknown default:
+                    break
+                }
             }
             .onChange(of: settings.profile.chargePercent) { _, _ in syncWidgetContext() }
             .onChange(of: chargingSession.isActive) { _, _ in syncWidgetContext() }
