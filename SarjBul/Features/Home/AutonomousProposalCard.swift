@@ -79,6 +79,7 @@ struct AutonomousProposalCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(presentation.text("agent.why_station"))
             .accessibilityValue(presentation.text(showsReason ? "agent.details_expanded" : "agent.details_collapsed"))
             .accessibilityIdentifier("agent-reason-toggle")
 
@@ -112,6 +113,7 @@ struct AutonomousProposalCard: View {
                 .background(SBColor.actionPrimary, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
+            .accessibilityLabel(presentation.text("agent.open_route"))
             .accessibilityIdentifier("agent-open-route-button")
         }
         .padding(20)
@@ -121,6 +123,7 @@ struct AutonomousProposalCard: View {
                 .stroke(SBColor.divider, lineWidth: 1)
         )
         .sbSoftShadow()
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("autonomous-proposal-card")
     }
 }

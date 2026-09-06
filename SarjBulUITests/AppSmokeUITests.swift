@@ -179,6 +179,7 @@ final class AppSmokeUITests: XCTestCase {
         let details = app.descendants(matching: .any)["agent-reason-details"]
         XCTAssertFalse(details.exists)
         let reason = app.buttons["agent-reason-toggle"]
+        XCTAssertTrue(reason.waitForExistence(timeout: 5), app.debugDescription)
         for _ in 0..<3 where !reason.isHittable { app.swipeUp() }
         XCTAssertTrue(reason.isHittable)
         reason.tap()
@@ -204,6 +205,7 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Charging suggestion"].exists)
         XCTAssertFalse(app.staticTexts["AGENT COMPLETED"].exists)
         let reason = app.buttons["agent-reason-toggle"]
+        XCTAssertTrue(reason.waitForExistence(timeout: 5), app.debugDescription)
         for _ in 0..<8 where !reason.isHittable { app.swipeUp() }
         XCTAssertTrue(reason.isHittable)
         reason.tap()

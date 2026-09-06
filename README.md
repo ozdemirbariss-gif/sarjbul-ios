@@ -8,6 +8,12 @@ SarjBul, Türkiye genelindeki elektrikli araç şarj noktalarını menzil, rota,
 
 Görseller gerçek iPhone simülatöründen, tekrarlanabilir test senaryolarıyla alınır; canlı müsaitlik veya fiyat kanıtı değildir. Çekimin commit ve ortam bilgileri [capture.json](Docs/screenshots/capture.json) dosyasındadır. Yeniden çekim için GitHub Actions içindeki **Capture README screenshots** iş akışı kullanılır.
 
+### Şarj Önerisi
+
+İstasyon adı, tahmini süre ve tahmini varış şarjı tek bir aksiyona eşlik eder: **Rotayı görüntüle**. Önerinin gerekçesi ve tahmini mesafe, başlangıçta kapalı **Neden bu istasyon?** alanındadır. Manuel sürüş değerleri araçtan ölçülmüş veri gibi sunulmaz; sarı araç şarjı uyarısı yalnızca güncel, bağlı araç verisiyle gösterilir.
+
+<img src="Docs/screenshots/charging-suggestion.png" alt="Türkçe şarj önerisi ve kapalı gerekçe alanı" width="320"> <img src="Docs/screenshots/charging-suggestion-en.png" alt="İngilizce şarj önerisi ve tahmini değerler" width="320">
+
 ### Varış Sonucu
 
 Uygulama, açılan rotadaki istasyona 250 metre içinde ulaşıldığını cihaz konumuyla doğrular ve ana ekranı tek bir sonraki adıma indirger. Şarj molası tek dokunuşla başlar.
