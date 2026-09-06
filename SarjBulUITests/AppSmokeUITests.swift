@@ -172,6 +172,50 @@ final class AppSmokeUITests: XCTestCase {
 
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
         XCTAssertTrue(app.descendants(matching: .any)["autonomous-proposal-card"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Şarj önerisi"].exists)
+        XCTAssertTrue(app.staticTexts["Girdiğin sürüş değerlerine göre hesaplandı."].exists)
+        XCTAssertFalse(app.staticTexts["AJAN TAMAMLADI"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["agent-confirmed-low-charge"].exists)
+        let details = app.descendants(matching: .any)["agent-reason-details"]
+        XCTAssertFalse(details.exists)
+        let reason = app.buttons["Neden bu istasyon?"]
+        for _ in 0..<3 where !reason.isHittable { app.swipeUp() }
+        XCTAssertTrue(reason.isHittable)
+        reason.tap()
+        XCTAssertTrue(details.waitForExistence(timeout: 5))
+        reason.tap()
+        XCTAssertFalse(details.exists)
+        let route = app.buttons["agent-open-route-button"]
+        for _ in 0..<3 where !route.isHittable { app.swipeUp() }
+        XCTAssertTrue(route.isHittable)
+        XCTAssertEqual(route.label, "Rotayı görüntüle")
+        route.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["station-route-card"].waitForExistence(timeout: 15))
+    }
+
+    func testEnglishSuggestionRemainsUsableAtAccessibilityTextSize() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "--ui-testing-agent", "--ui-testing-home-en",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"
+        ]
+        app.launch()
+        XCTAssertTrue(app.descendants(matching: .any)["autonomous-proposal-card"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["Charging suggestion"].exists)
+        XCTAssertFalse(app.staticTexts["AGENT COMPLETED"].exists)
+        let reason = app.buttons["Why this station?"]
+        for _ in 0..<8 where !reason.isHittable { app.swipeUp() }
+        XCTAssertTrue(reason.isHittable)
+        reason.tap()
+        let details = app.descendants(matching: .any)["agent-reason-details"]
+        XCTAssertTrue(details.waitForExistence(timeout: 5))
+        let route = app.buttons["agent-open-route-button"]
+        for _ in 0..<8 where !route.isHittable { app.swipeUp() }
+        XCTAssertTrue(route.isHittable)
+        XCTAssertEqual(route.label, "View route")
+        XCTAssertGreaterThanOrEqual(route.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(route.frame.minX, 0)
+        XCTAssertLessThanOrEqual(route.frame.maxX, app.frame.width)
     }
 
     func testCriticalRangeBecomesTheSinglePrimaryContext() throws {

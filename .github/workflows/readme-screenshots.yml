@@ -48,7 +48,7 @@ jobs:
           import json, os, subprocess
           from pathlib import Path
           from PIL import Image
-          names = ['home', 'routes', 'lounge', 'account', 'arrival-outcome', 'station-story', 'sarjbul-ios-preview']
+          names = ['home', 'routes', 'lounge', 'account', 'arrival-outcome', 'charging-suggestion', 'charging-suggestion-en', 'station-story', 'sarjbul-ios-preview']
           for name in names:
               with Image.open(f'Docs/screenshots/{name}.png') as image:
                   image.verify()

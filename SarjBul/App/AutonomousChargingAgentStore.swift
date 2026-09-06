@@ -34,6 +34,7 @@ final class AutonomousChargingAgentStore {
     private(set) var reports: [AutomationReport]
 
     var latestReport: AutomationReport? { reports.first }
+    var latestVehicleTelemetry: VehicleTelemetrySnapshot? { persistence.lastVehicleTelemetry }
 
     init(
         stationData: StationDataStore,
@@ -277,10 +278,11 @@ final class AutonomousChargingAgentStore {
         guard shouldNotify(for: trigger) else { return }
         await notificationService.schedule(
             proposal: proposal,
-            title: settings.t("agent.optimized_notification_title"),
-            body: settings.t("agent.optimized_notification_body", [
-                "station": proposal.stationName,
-                "minutes": "\(proposal.estimatedMinutes)"
+            title: settings.t("agent.suggestion"),
+            body: settings.t("agent.notification_body", [
+                "station": ChargingSuggestionPresentation.stationName(proposal.stationName),
+                "minutes": "\(proposal.estimatedMinutes)",
+                "percent": "\(proposal.arrivalChargePercent)"
             ]),
             openRouteTitle: settings.t("agent.open_route"),
             snoozeTitle: settings.t("agent.snooze"),

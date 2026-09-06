@@ -39,7 +39,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Favoriler, son açılan rotalar, paylaşılabilir `sarjbul://station/...` bağlantıları ve 9:16 şarj hikâyesi üretimi
 - Yalnızca cihazda tutulan geçmişten, yeterli tekrar oluştuğunda açıklanabilir ve kapatılabilir alışkanlık önerileri
 - Aynı zaman bağlamında en az %90 tutarlılık oluştuğunda arama parametrelerini önceden dolduran, geri alınabilir cihaz içi niyet tahmini
-- Düşük şarjda güvenli istasyonu önceden seçen; bildirimden rotayı açma, 15 dakika erteleme veya bugün susturma aksiyonları sunan otonom şarj ajanı
+- Şarj değerine ve tahmini menzile göre istasyon öneren; bildirimden rotayı görüntüleme, 15 dakika erteleme veya bugün susturma aksiyonları sunan şarj asistanı
 - Telegram, WhatsApp, e-posta ve browser uzantısından uygulamayı açmadan istasyon bulduran güvenli kanal gateway'i
 - Doğrusal olmayan şarj eğrisi, rakım etkisi ve toplam süre optimizasyonlu uzun yol planı
 - Yol ağına göre 16 yönlü erişilebilir menzil poligonu; dairesel menzil yanılsaması yok

@@ -11,10 +11,13 @@ final class ReadmeScreenshotTests: XCTestCase {
             ("routes", "--ui-testing-routes", "station-route-card"),
             ("lounge", "--ui-testing-lounge", "lounge-screen"),
             ("account", "--ui-testing-profile", "verified-outcome-value"),
-            ("arrival-outcome", "--ui-testing-arrived", "arrived-start-charging-card")
+            ("arrival-outcome", "--ui-testing-arrived", "arrived-start-charging-card"),
+            ("charging-suggestion", "--ui-testing-agent", "autonomous-proposal-card"),
+            ("charging-suggestion-en", "--ui-testing-agent", "autonomous-proposal-card")
         ]
         for (name, argument, identifier) in screens {
             app.launchArguments = [argument, "-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"]
+            if name == "charging-suggestion-en" { app.launchArguments.append("--ui-testing-home-en") }
             app.launch()
             XCTAssertTrue(app.descendants(matching: .any)[identifier].waitForExistence(timeout: 30))
             // Let the entrance animations and native map tiles settle before capture.

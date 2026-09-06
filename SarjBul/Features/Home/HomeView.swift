@@ -460,119 +460,20 @@ struct HomeView: View {
     }
 
     private func autonomousProposalCard(_ proposal: AutonomousChargingProposal) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "bolt.car.fill")
-                    .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.onActionPrimary)
-                    .frame(width: 44, height: 44)
-                    .background(SBColor.actionPrimary, in: Circle())
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(settings.t("agent.ready_kicker"))
-                        .font(.caption.weight(.heavy))
-                        .foregroundStyle(SBColor.actionPrimary)
-                    Text(settings.t("agent.ready_title"))
-                        .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.contentPrimary)
-                        .lineLimit(2)
-                }
-                Spacer()
-                Button {
-                    autonomousAgent.dismissProposal()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.subheadline.weight(.heavy))
-                        .foregroundStyle(SBColor.contentTertiary)
-                        .frame(width: 44, height: 44)
-                }
-                .buttonStyle(SBPremiumButtonStyle())
-                .accessibilityLabel(settings.t("agent.dismiss"))
-            }
-
-            Text(proposal.stationName)
-                .font(.title3.weight(.heavy))
-                .foregroundStyle(SBColor.contentPrimary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            HStack(spacing: 8) {
-                agentMetric("\(proposal.distanceKm.formatted(.number.precision(.fractionLength(1)))) km")
-                agentMetric(settings.t("agent.minutes", ["minutes": "\(proposal.estimatedMinutes)"]))
-                agentMetric(settings.t("agent.arrival", ["percent": "\(proposal.arrivalChargePercent)"]))
-            }
-
-            Text(settings.t(
-                proposal.telemetrySource == .manualProfile ? "agent.source_profile" : "agent.source_vehicle"
-            ))
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(SBColor.contentTertiary)
-
-            if let report = autonomousAgent.latestReport,
-               report.selectedStationName == proposal.stationName {
-                Text(automationReportText(report))
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(SBColor.contentPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(SBColor.surfaceBase, in: RoundedRectangle(
-                        cornerRadius: SBRadius.sm,
-                        style: .continuous
-                    ))
-            }
-
-            Button {
+        AutonomousProposalCard(
+            presentation: ChargingSuggestionPresentation(
+                proposal: proposal,
+                language: settings.language,
+                report: autonomousAgent.latestReport,
+                telemetry: autonomousAgent.latestVehicleTelemetry,
+                lowChargeThreshold: settings.autonomousChargingPolicy.triggerChargePercent
+            ),
+            dismiss: { autonomousAgent.dismissProposal() },
+            openRoute: {
                 Haptic.tap()
                 Task { await autonomousAgent.acceptProposal() }
-            } label: {
-                HStack {
-                    Text(settings.t("agent.open_route"))
-                        .font(.headline.weight(.heavy))
-                    Spacer()
-                    Image(systemName: "arrow.right")
-                        .font(.headline.weight(.heavy))
-                }
-                .foregroundStyle(SBColor.onActionPrimary)
-                .padding(.horizontal, 18)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: 56)
-                .background(SBColor.actionPrimary, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             }
-            .buttonStyle(SBPremiumButtonStyle())
-        }
-        .padding(22)
-        .background(SBColor.surfaceRaised, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
-                .stroke(SBColor.actionPrimary.opacity(0.6), lineWidth: 1)
         )
-        .sbGlowShadow()
-        .accessibilityIdentifier("autonomous-proposal-card")
-    }
-
-    private func automationReportText(_ report: AutomationReport) -> String {
-        switch report.rule {
-        case .preparedRouteRisky:
-            settings.t("agent.report_risky", ["station": report.selectedStationName ?? ""])
-        case .preparedRouteExpired:
-            settings.t("agent.report_expired", ["station": report.selectedStationName ?? ""])
-        case .stationDataStale:
-            settings.t("agent.report_refreshed", ["station": report.selectedStationName ?? ""])
-        case .lowCharge:
-            settings.t("agent.report_low_charge", ["station": report.selectedStationName ?? ""])
-        }
-    }
-
-    private func agentMetric(_ text: String) -> some View {
-        Text(text)
-            .font(.caption.weight(.heavy))
-            .foregroundStyle(SBColor.contentPrimary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: 34)
-            .background(SBColor.surfaceBase, in: Capsule())
     }
 
     private func habitSuggestionText(_ suggestion: HabitSuggestion) -> String {
