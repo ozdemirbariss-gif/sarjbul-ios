@@ -1,6 +1,6 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-09-06T08:42:59+00:00",
+  "generated_at": "2026-09-07T09:26:53+00:00",
   "license_count": 180,
   "licenses": [
     {
@@ -580,9 +580,7 @@
       "valid_until": "2072-02-02T00:00:00Z"
     },
     {
-      "brands": [
-        "Cavalier"
-      ],
+      "brands": [],
       "holder": "FOKS ENERJİ ANONİM ŞİRKETİ",
       "license_number": "ŞH/11864/00128",
       "valid_from": "2023-05-25T00:00:00Z",
