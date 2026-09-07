@@ -42,6 +42,13 @@ targets:
         Release:
           CODE_SIGN_ENTITLEMENTS: SarjBul/SarjBul.entitlements
     preBuildScripts:
+      - name: Validate Archive Configuration
+        basedOnDependencyAnalysis: false
+        script: |
+          if [ "$ACTION" = "install" ]; then
+            python3 "$SRCROOT/Scripts/validate_release.py" --production \
+              --bundle-id "$PRODUCT_BUNDLE_IDENTIFIER"
+          fi
       - name: Generate Design Tokens
         script: |
           python3 "$SRCROOT/Scripts/generate_design_tokens.py" \

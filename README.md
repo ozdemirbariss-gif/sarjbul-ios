@@ -123,6 +123,10 @@ GitHub Actions aynı çekirdek testleri, SwiftLint'i, plist/privacy manifest do�
 - [Gizlilik politikası](Docs/PRIVACY_POLICY.md)
 - [Kullanım koşulları](Docs/TERMS_OF_USE.md)
 - [Release kontrol listesi](Docs/RELEASE_CHECKLIST.md)
+- [App Store metinleri](Docs/APP_STORE_METADATA.md) ve [inceleme notları](Docs/APP_REVIEW_NOTES.md)
+- [Gerçek iPhone test planı](Docs/DEVICE_TEST_PLAN.md)
 - [Harici entegrasyon sınırları](Docs/INTEGRATIONS.md)
+
+Yayın arşivinden önce `python3 Scripts/validate_release.py --production` çalıştırılır. Eksik veya uyuşmayan Firebase dosyaları ve destek bilgileri Archive işlemini durdurur; simülatör geliştirmesi için bu dosyalar zorunlu değildir.
 
 Rezervasyon, şarj başlatma/durdurma, ödeme ve canlı soket uygunluğu sahte butonlarla taklit edilmez. Bu kontroller yalnızca operatörün yetkili API'si ve ticari izinleri bağlandığında açılmalıdır.

@@ -47,7 +47,9 @@ jobs:
         run: brew install xcodegen swiftlint
       - name: Validate configuration
         run: |
-          plutil -lint SarjBul/Resources/Info.plist SarjBul/Resources/PrivacyInfo.xcprivacy SarjBul/Resources/AppConfig.sample.plist
+          plutil -lint SarjBul/Resources/Info.plist SarjBul/Resources/PrivacyInfo.xcprivacy SarjBulWidgets/PrivacyInfo.xcprivacy SarjBul/Resources/AppConfig.sample.plist
+          python3 Scripts/validate_release.py
+          python3 -m unittest discover -s Scripts/tests -p 'test_release_validation.py' -v
           python3 -m json.tool SarjBul/Resources/design-tokens.json >/dev/null
           python3 -m json.tool database.rules.json >/dev/null
       - name: Validate generated design tokens

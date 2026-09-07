@@ -2,11 +2,14 @@
 
 1. Firebase Console'da iOS uygulamasını `com.ozdemirbaris.sarjbul` bundle kimliğiyle oluştur.
 2. `GoogleService-Info.plist` dosyasını indirip `SarjBul/Resources/` altına ekle. Dosya git'e alınmaz.
-3. `AppConfig.sample.plist` dosyasını `AppConfig.plist` olarak oluştur; Realtime Database URL ve Web API Key alanlarını doldur.
+3. `AppConfig.sample.plist` dosyasını `AppConfig.plist` olarak oluştur; Realtime Database URL ve Firebase iOS yapılandırmasındaki API Key alanlarını doldur. `supportEmail` alanına kullanıcılara açık destek adresini gir ve destek/gizlilik URL'lerini doğrula.
 4. Authentication içinde Anonymous sağlayıcısını aç. Email/Password sağlayıcısı bu sürümde kullanılmaz.
 5. App Check içinde iOS uygulaması için App Attest sağlayıcısını kaydet. Debug build'in konsola yazdığı debug tokenı yalnızca geliştirme ortamına ekle.
 6. Blaze planı ve Firebase CLI hazır olduğunda proje kökünde `firebase deploy --only database,functions` çalıştır. Bu adım `database.rules.json`, durum/yoğunluk özeti, istasyon doğrulama özeti, anonim talep toplama ve hesap verisi temizleme işlerini yayınlar.
 7. iOS build'inden doğrulanmış App Check istekleri geldiğini gördükten sonra Realtime Database için App Check enforcement'ı aç.
 8. Anonim oturum oluşturma, favori, rapor, token yenileme ve Profil ekranındaki bulut verisi sıfırlama akışlarını gerçek cihazda test et.
+9. `python3 Scripts/validate_release.py --production` çalıştır. Bu kontrol bundle kimliği, API key, iOS app ID/sender ID, varsa iki dosyadaki veritabanı adresi ve destek alanlarının tutarlılığını doğrular. Canlı yetkilendirme veya App Check doğrulamasının yerine geçmez.
+
+Apple Developer üyeliği olmadan Firebase Console'da iOS uygulamasını kaydedebilir ve iki yapılandırma dosyasını hazırlayabilirsin. Üretim App Attest/APNs yetkilerinin gerçek cihazda doğrulanması ise Apple imzalama adımından sonra yapılır. Firebase iOS yapılandırması istemci kimlikleri içerir; güvenlik erişim kuralları, App Check ve yetkilendirmeyle sağlanır. Servis hesabı özel anahtarı veya APNs sağlayıcı özel anahtarı uygulama paketine konulmaz.
 
 Kurallar ham yorum ve istasyon katkılarını yalnızca kaydın sahibi için okunabilir yapar; herkese açık istemci yalnızca `station_status` ve anonim `station_insights` özetlerini okuyabilir. Bu özetlere istemciden yazılamaz, ikisi de Cloud Function tarafından üretilir. Durum raporu 60 saniye, veri doğrulaması 30 saniye, açık rızalı anonim talep olayı 5 dakika kullanıcı başı hız sınırına sahiptir. `demand_heatmap` istemciler tarafından okunamaz veya yazılamaz.

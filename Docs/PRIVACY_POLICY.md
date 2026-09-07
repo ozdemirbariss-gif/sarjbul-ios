@@ -1,6 +1,6 @@
 # ŞarjBul Gizlilik Politikası
 
-Son güncelleme: 2 Eylül 2026
+Son güncelleme: 7 Eylül 2026
 
 ŞarjBul, yakındaki şarj istasyonlarını bulmak ve rota/varış şarjı hesaplamak için cihaz konumunu yalnızca kullanıcı isteğiyle kullanır. Varsayılan durumda konum bilgisi Firebase'e yazılmaz ve reklam amacıyla kullanılmaz. Kullanıcı konum izni vermeden adres, şehir veya koordinatla devam edebilir.
 
@@ -9,6 +9,10 @@ Hesap ekranındaki "Anonim talep paylaşımı" ayarı varsayılan olarak kapalı
 ŞarjBul giriş veya kayıt formu göstermez; e-posta ve şifre işlemez. Uygulama, favorileri ve bildirimleri güvenli biçimde ayırmak için ilk kullanımda anonim bir Firebase kimliği oluşturur ve oturumu cihazın Keychain alanında saklar. Uzaktan ve sessiz bildirim teslimatı için APNs cihaz token'ı bu anonim kimlikle ilişkilendirilerek Firebase'de saklanır; reklam veya kullanıcılar arası takip amacıyla kullanılmaz. Kullanıcının gönderdiği istasyon durum bildirimi, bütünlük ve kötüye kullanım önlemleri için bu anonim kimlikle ilişkilendirilir. Diğer kullanıcılar ham kimliği, cihaz token'ını ve kişisel kayıtları okuyamaz.
 
 Arama tercihleri ve filtreleri, aynı zaman bağlamındaki tekrarlanan işlemleri önceden doldurmak için en fazla 90 gün cihazda saklanabilir. Bu tahmin verisi Firebase'e veya üçüncü taraf bir yapay zeka servisine gönderilmez. Yeterli örnek ve en az %90 geçmiş eşleşme oluşmadığında uygulama parametreleri değiştirmez; kullanıcı uygulanan ön doldurmayı geri alabilir.
+
+Bağlamsal öneriler varsayılan olarak kapalıdır. Kullanıcı bu özelliği ve ilgili sistem izinlerini açarsa EventKit ile önümüzdeki üç saat içindeki takvim etkinlikleri cihazda değerlendirilir. Etkinlik başlığı ve zamanı Firebase'e veya harici yapay zeka servisine gönderilmez. Takvim değişikliği kullanıcı öneriyi kabul ettiğinde veya ayrı otomatik erteleme seçeneğini açıp uygulamanın geçmiş kabul eşiği sağlandığında yapılabilir. İşlem geçmişi ve etkinlik tanımlayıcısına bağlı doğrulama kayıtları cihazda saklanabilir. Özellik Profil ekranından kapatılabilir; takvim erişimi iOS Ayarlar'dan kaldırılabilir.
+
+HealthKit sinyalleri kullanılacaksa ayrıca Apple'ın sağlık erişim izni gerekir. İzin verilen son kalp atış hızı ve dinlenik kalp atış hızı örnekleri cihaz içinde karşılaştırılır; ŞarjBul bu sayısal örnekleri kendi veritabanına kaydetmez veya Firebase, Open-Meteo, reklam ya da yapay zeka servislerine göndermez. Sağlık verisi yazılmaz. Bu karşılaştırma tıbbi tanı veya kesin stres ölçümü değildir. Sağlık erişimi Apple Sağlık uygulamasındaki izinlerden kaldırılabilir.
 
 Fiyat, soket, adres ve gece güvenliği doğrulamaları kötüye kullanımı önlemek ve bağımsız kullanıcı sayısını hesaplamak için Firebase kullanıcı kimliğiyle ilişkilendirilir. Diğer kullanıcılar ham katkıları veya kimliği okuyamaz; yalnızca Cloud Function'ın ürettiği anonim doğrulama sayısı, güncellik ve güven özeti herkese açıktır.
 
