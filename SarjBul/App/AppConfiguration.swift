@@ -26,6 +26,7 @@ struct AppConfiguration {
     var termsOfUseURL: URL?
     var supportURL: URL?
     var supportEmail: String
+    var firebaseBackendReady: Bool = false
 
     static func load(bundle: Bundle = .main) -> AppConfiguration {
         guard
@@ -63,13 +64,14 @@ struct AppConfiguration {
             termsOfUseURL: Self.urlValue(values["termsOfUseURL"]) ?? defaultTermsURL,
             supportURL: Self.urlValue(values["supportURL"]) ?? defaultSupportURL,
             supportEmail: (values["supportEmail"] as? String)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+            firebaseBackendReady: values["firebaseBackendReady"] as? Bool ?? false
         )
     }
 
     @MainActor
     var serviceClients: AppServiceClients {
-        guard let firebaseDatabaseURL, !firebaseAPIKey.isEmpty else {
+        guard firebaseBackendReady, let firebaseDatabaseURL, !firebaseAPIKey.isEmpty else {
             return AppServiceClients(
                 auth: UnavailableAuthClient(),
                 favorites: UnavailableFavoritesClient(),

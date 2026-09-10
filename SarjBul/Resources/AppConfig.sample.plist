@@ -6,6 +6,8 @@
     <string></string>
     <key>firebaseAPIKey</key>
     <string></string>
+    <key>firebaseBackendReady</key>
+    <false/>
     <key>stationDataURL</key>
     <string>https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json</string>
     <key>stationTileManifestURL</key>

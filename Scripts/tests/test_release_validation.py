@@ -14,6 +14,7 @@ def configuration():
     return (
         {
             "firebaseAPIKey": "fixture-key-never-used-on-network",
+            "firebaseBackendReady": True,
             "firebaseDatabaseURL": "https://fixture-default-rtdb.europe-west1.firebasedatabase.app/",
             "stationTileManifestURL": "https://fixture.invalid/station-tiles-manifest.json",
             "privacyPolicyURL": "https://fixture.invalid/privacy",
@@ -32,6 +33,14 @@ def configuration():
 
 
 class ReleaseValidationTests(unittest.TestCase):
+    def test_plist_credentials_alone_do_not_mark_backend_ready(self):
+        config, firebase = configuration()
+        config.pop("firebaseBackendReady")
+        self.assertTrue(production_issues(config, firebase))
+        for value in (False, "true", 1, None):
+            with self.subTest(value=value):
+                self.assertTrue(production_issues({**config, "firebaseBackendReady": value}, firebase))
+
     def test_matching_configuration_is_accepted_without_network_access(self):
         config, firebase = configuration()
         self.assertEqual(production_issues(config, firebase), [])

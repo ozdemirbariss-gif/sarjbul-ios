@@ -64,7 +64,6 @@ public struct FirebaseRESTClient: Sendable {
     public func initiateAccountDeletion(uid: String, idToken: String) async throws {
         let requestedAt = ISO8601DateFormatter().string(from: Date())
         try await delete(path: "favoriler/\(uid).json", idToken: idToken)
-        try await delete(path: "kullanici_yorum_meta/\(uid).json", idToken: idToken)
         try await delete(path: "push_tokens/\(uid).json", idToken: idToken)
         try await putJSON(
             path: "account_deletion_requests/\(uid).json",
@@ -176,10 +175,13 @@ public struct FirebaseRESTClient: Sendable {
         let reportID = context.idempotencyKey.lowercased()
         let metadata = StationReportMetadata(
             lastReportAt: now,
-            lastReportAtMilliseconds: Int64(context.createdAt.timeIntervalSince1970 * 1_000)
+            lastMutationPath: "yorumlar/\(stationKey)/\(reportID)"
         )
-        try await patchJSON(
-            path: ".json",
+        try await patchThrottledMutation(
+            metadataPath: "kullanici_yorum_meta/\(uid)",
+            timestampKey: "son_yorum_zamani_ms",
+            mutationPath: metadata.lastMutationPath,
+            cooldown: 60,
             idToken: idToken,
             context: context,
             body: AtomicStationReportWrite(
@@ -204,10 +206,13 @@ public struct FirebaseRESTClient: Sendable {
         let contributionID = context.idempotencyKey.lowercased()
         let metadata = StationContributionMetadata(
             lastContributionAt: now,
-            lastContributionAtMilliseconds: Int64(context.createdAt.timeIntervalSince1970 * 1_000)
+            lastMutationPath: "station_contributions/\(stationKey)/\(contributionID)"
         )
-        try await patchJSON(
-            path: ".json",
+        try await patchThrottledMutation(
+            metadataPath: "kullanici_dogrulama_meta/\(uid)",
+            timestampKey: "son_dogrulama_zamani_ms",
+            mutationPath: metadata.lastMutationPath,
+            cooldown: 30,
             idToken: idToken,
             context: context,
             body: AtomicStationContributionWrite(
@@ -228,9 +233,12 @@ public struct FirebaseRESTClient: Sendable {
         let eventID = context.idempotencyKey.lowercased()
         var payload = event
         payload.createdAtMilliseconds = Int64(context.createdAt.timeIntervalSince1970 * 1_000)
-        let metadata = DemandAnalyticsMetadata(lastEventAtMilliseconds: payload.createdAtMilliseconds)
-        try await patchJSON(
-            path: ".json",
+        let metadata = DemandAnalyticsMetadata(lastMutationPath: "search_demand_events/\(eventID)")
+        try await patchThrottledMutation(
+            metadataPath: "search_demand_meta/\(uid)",
+            timestampKey: "son_olay_zamani_ms",
+            mutationPath: metadata.lastMutationPath,
+            cooldown: 300,
             idToken: idToken,
             context: context,
             body: AtomicDemandAnalyticsWrite(
@@ -308,6 +316,42 @@ public struct FirebaseRESTClient: Sendable {
         body: T
     ) async throws {
         try await sendJSON(method: "PATCH", path: path, idToken: idToken, context: context, body: body)
+    }
+
+    private func patchThrottledMutation<T: Encodable>(
+        metadataPath: String,
+        timestampKey: String,
+        mutationPath: String,
+        cooldown: TimeInterval,
+        idToken: String,
+        context: ServiceMutationContext,
+        body: T
+    ) async throws {
+        do {
+            try await patchJSON(path: ".json", idToken: idToken, context: context, body: body)
+        } catch let error as FirebaseRESTError {
+            guard case .requestFailed(_, let status) = error, status == 401 || status == 403 else { throw error }
+            var components = URLComponents(
+                url: databaseURL.appending(path: "\(metadataPath).json"), resolvingAgainstBaseURL: false
+            )
+            components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
+            guard let url = components?.url else { throw error }
+            let request = try await databaseRequest(url: url)
+            let (data, response) = try await data(for: request, partition: .communityReads)
+            guard (response as? HTTPURLResponse)?.statusCode == 200,
+                  let metadata = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let lastPath = metadata["lastMutationPath"] as? String,
+                  lastPath != mutationPath,
+                  let milliseconds = metadata[timestampKey] as? Double else { throw error }
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+            let serverDate = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Date")
+                .flatMap(formatter.date(from:)) ?? Date()
+            guard milliseconds / 1_000 + cooldown > serverDate.timeIntervalSince1970 else { throw error }
+            // RTDB reports cooldowns as permission errors. Keep offline work queued for retry.
+            throw FirebaseRESTError.requestFailed("Gönderim aralığı dolduğunda yeniden denenecek.", statusCode: 429)
+        }
     }
 
     private func sendJSON<T: Encodable>(
@@ -537,13 +581,24 @@ private struct StationReportPayload: Encodable {
     var uid: String
 }
 
+// Cooldowns use server receipt time; the original offline event date stays in its payload.
+private struct FirebaseServerTimestamp: Encodable {
+    private let serverValue = "timestamp"
+
+    private enum CodingKeys: String, CodingKey {
+        case serverValue = ".sv"
+    }
+}
+
 private struct StationReportMetadata: Encodable {
     var lastReportAt: String
-    var lastReportAtMilliseconds: Int64
+    var lastReportAtMilliseconds = FirebaseServerTimestamp()
+    var lastMutationPath: String
 
     private enum CodingKeys: String, CodingKey {
         case lastReportAt = "son_yorum_zamani"
         case lastReportAtMilliseconds = "son_yorum_zamani_ms"
+        case lastMutationPath
     }
 }
 
@@ -576,11 +631,13 @@ private struct StationContributionPayload: Encodable {
 
 private struct StationContributionMetadata: Encodable {
     var lastContributionAt: String
-    var lastContributionAtMilliseconds: Int64
+    var lastContributionAtMilliseconds = FirebaseServerTimestamp()
+    var lastMutationPath: String
 
     private enum CodingKeys: String, CodingKey {
         case lastContributionAt = "son_dogrulama_zamani"
         case lastContributionAtMilliseconds = "son_dogrulama_zamani_ms"
+        case lastMutationPath
     }
 }
 
@@ -598,10 +655,12 @@ private struct AtomicStationContributionWrite: Encodable {
 }
 
 private struct DemandAnalyticsMetadata: Encodable {
-    var lastEventAtMilliseconds: Int64
+    var lastEventAtMilliseconds = FirebaseServerTimestamp()
+    var lastMutationPath: String
 
     private enum CodingKeys: String, CodingKey {
         case lastEventAtMilliseconds = "son_olay_zamani_ms"
+        case lastMutationPath
     }
 }
 

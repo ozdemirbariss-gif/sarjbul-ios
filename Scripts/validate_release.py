@@ -57,6 +57,8 @@ def firebase_database_url(value):
 
 def production_issues(config, firebase, bundle_id=DEFAULT_BUNDLE_ID):
     errors = []
+    if config.get("firebaseBackendReady") is not True:
+        errors.append("AppConfig.plist: firebaseBackendReady must be true only after backend deployment and verification.")
     for key in ("firebaseAPIKey", "supportEmail"):
         if not populated(config.get(key)):
             errors.append(f"AppConfig.plist: configure {key}.")

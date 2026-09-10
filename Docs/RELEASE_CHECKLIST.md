@@ -28,14 +28,28 @@
 
 7 Eylül 2026'da `de19e26` için [iOS CI](https://github.com/ozdemirbariss-gif/elektriklisarj-ios/actions/runs/34043948262) ve [istasyon verisi yenilemesi](https://github.com/ozdemirbariss-gif/elektriklisarj-ios/actions/runs/34106032136) başarılı olarak doğrulandı. Bu sonuç imzalı cihaz build'i, App Attest veya App Store onayı anlamına gelmez.
 
-Bu çalışma kopyasında `AppConfig.plist` ve `GoogleService-Info.plist` henüz yok. Yerel kontrol:
+10 Eylül 2026'da iOS için ayrılmış `sarjbul-ios-f57e6` projesinin yapılandırma dosyaları bu çalışma kopyasına eklendi (Git dışında). Bundle ID `com.ozdemirbaris.sarjbul` ve API kimlikleri eşleştirildi. Realtime Database, Belçika (`europe-west1`) bölgesinde kilitli modda oluşturuldu; Anonymous sağlayıcısının etkin olduğu konsolda doğrulandı. Proje Spark planında; üretim kuralları ve Functions yayımlanmadı. Destek e-postası henüz seçilmedi.
+
+`firebaseBackendReady` varsayılan olarak `false`: yalnızca plist dosyalarının bulunması uygulamada bulut işlemlerini açmaz. Bu alan canlı backend ve cihaz doğrulamaları tamamlanmadan değiştirilmez. Yerel kontrol:
+
+Bu hazırlıkta 21 yerel RTDB kural testi, 75 Swift çekirdek testi, 8 yayın kontrol testi, 4 backend testi ve iPhone 17 Pro simülatöründe 3 yapılandırma testi geçti. SwiftLint ve imzasız iOS Simulator Release derlemesi başarılı. Her iki yerel plist dosyasının Release uygulama paketine doğru kopyalandığı doğrulandı. Bunlar gerçek cihaz, imzalı Archive veya canlı Functions testi değildir.
 
 ```bash
 python3 Scripts/validate_release.py
 python3 Scripts/validate_release.py --production
 ```
 
-İlk komut depodaki manifest/yetki uyumunu denetler. İkincisi gerçek üretim dosyalarını zorunlu tutar ve eksik bilgileri değerlerini yazdırmadan listeler. XcodeGen ile üretilen projenin Archive işlemi ikinci kontrolü otomatik çalıştırır. Normal Debug ve CI simülatör derlemeleri gerçek Firebase dosyaları gerektirmez.
+İlk komut depodaki manifest/yetki uyumunu denetler. İkincisi gerçek üretim dosyalarını, destek bilgilerini ve backend hazırlık onayını zorunlu tutar; eksikleri değerlerini yazdırmadan listeler. XcodeGen ile üretilen projenin Archive işlemi ikinci kontrolü otomatik çalıştırır. Normal Debug ve CI simülatör derlemeleri gerçek Firebase dosyaları gerektirmez.
+
+## Backend Yayını Öncesindeki Açık İşler
+
+- [ ] Cloud Functions için Blaze planı kararını hesap sahibiyle tamamla; ücretsiz hazırlık sırasında ücretli plana geçilmez.
+- [ ] Bulut sıfırlamada sunucunun temizliği tamamladığını doğrulayan akış kur. Mevcut istemci Auth kaydını silince başarı gösteriyor; isteğin kuyruğa alınması tüm kayıtların silindiği anlamına gelmez.
+- [ ] `friction_events` için sunucu tarafı hız sınırı ve saklama/temizleme süresi belirle. Bu uç tamamlanmadan analiz yazımlarını üretime açma.
+- [ ] `aggregateSearchDemand` ham olay silindikten sonra da aynı olayın tekrar sayılmasını önle; işlev tekrarları ve gecikmiş istemci tekrarları için kalıcı tekilleştirme testi ekle.
+- [ ] [Firebase kurulumundaki](FIREBASE_SETUP.md) yalnızca dört iOS işlevini ve eşleşen kuralları dağıt; kanal geçitlerini toplu Functions komutuna dahil etme.
+
+Durum bildirimi, istasyon katkısı ve arama talebi kuralları artık gönderimle aynı atomik işlemde sunucu zamanı ve tam kayıt yolunu içeren hız sınırı verisini zorunlu tutar. İstemci bu veriyi silemez veya geriye alamaz. Eski istemcilerin yalnızca cihaz zamanı yazan istekleri bu kurallarla uyumlu değildir; istemci ve kurallar birlikte sürümlenir. Bulut hizmetleri, yukarıdaki açık işler kapanana kadar kapalı kalır.
 
 ## Hesap sahibi tarafından tamamlanacaklar
 
