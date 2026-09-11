@@ -77,3 +77,17 @@ Operatör API'si veya Apple CarPlay entitlement onayı gelmeden rezervasyon, öd
 CarPlay başvurusu ilk iPhone sürümünün ön koşulu değildir; uygulama mevcut sürümde Apple/Google Maps'e aktarım yapar.
 
 Mağaza hazırlığı: [Metinler](APP_STORE_METADATA.md), [Review Notes](APP_REVIEW_NOTES.md), [Gizlilik formu](APP_STORE_PRIVACY_ANSWERS.md).
+
+
+## 11 Eylül 2026 — gizlilik ve destek incelemesi
+
+- [x] Resmi destek e-postası `sarjbul@icloud.com` uygulama, örnek/yerel konfigürasyon ve destek belgesine eklendi.
+- [x] [Gizlilik veri akışı karşılaştırması](PRIVACY_DATA_FLOW_AUDIT.md); manifest, form cevapları, politika ve TR/EN özetleri güncellendi.
+- [x] Hata kaydında URL/konum/istasyon/serbest metin aktarımı kaldırıldı; gizlilik regresyon testleri eklendi.
+- [x] Sağlayıcı atıfları ve lisans bağlantıları uygulamaya eklendi.
+- [ ] App Store Connect hesabını etkinleştir (`INVALIDITCUSER` hatası doğrulandı); [cevap setini](APP_STORE_PRIVACY_ANSWERS.md) kaydet/yayımla ve özetini doğrula.
+- [ ] Ticari yayın: [sağlayıcı hakları ve sunum koşullarını](DATA_PROVIDER_TERMS.md) çöz. Open-Meteo ücretsiz API uygun değil; ChargeIQ/EPDK yeniden dağıtım izni ve ODbL uyumu açık. MapKit adres sunumu/saklaması ayrıca kontrol edilmeli.
+- [ ] Bu kanıtlar tamamlanınca `commercialDataUseApproved=true` yap; onaylanmadan Archive kontrolü geçmez.
+- [ ] Resmi destek posta kutusuna gerçek gönderim/yanıt testi. Bu görev kullanıcı adına e-posta göndermedi.
+
+Bu maddeler mağaza yayını veya sağlayıcı sözleşmelerinin kabul edildiği anlamına gelmez. Önceki listelerdeki App Privacy ve destek için “hesap sahibi tarafından yapılacak” maddelerin güncel ayrıntısı bu bölümdür.

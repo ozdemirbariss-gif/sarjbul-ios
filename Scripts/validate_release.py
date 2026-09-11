@@ -57,6 +57,8 @@ def firebase_database_url(value):
 
 def production_issues(config, firebase, bundle_id=DEFAULT_BUNDLE_ID):
     errors = []
+    if config.get("commercialDataUseApproved") is not True:
+        errors.append("AppConfig.plist: commercial data provider rights are unresolved; see Docs/DATA_PROVIDER_TERMS.md before setting commercialDataUseApproved.")
     if config.get("firebaseBackendReady") is not True:
         errors.append("AppConfig.plist: firebaseBackendReady must be true only after backend deployment and verification.")
     for key in ("firebaseAPIKey", "supportEmail"):

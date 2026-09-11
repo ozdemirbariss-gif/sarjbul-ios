@@ -359,6 +359,10 @@ struct AccountView: View {
                     .font(.subheadline.weight(.bold))
                     .tint(SBColor.actionPrimary)
 
+                    if contextIntelligence.policy.usesWeather {
+                        OpenMeteoAttributionView()
+                    }
+
                     Text(settings.t("context.calendar_auto_hint"))
                         .font(.caption2)
                         .foregroundStyle(SBColor.contentTertiary)

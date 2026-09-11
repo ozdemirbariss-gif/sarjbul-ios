@@ -280,6 +280,9 @@ struct HomeView: View {
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.contentPrimary)
                     .lineLimit(2)
+                if contextIntelligence.policy.usesWeather {
+                    OpenMeteoAttributionView()
+                }
                 Text(settings.t("context.health_disclaimer"))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(SBColor.contentSecondary)

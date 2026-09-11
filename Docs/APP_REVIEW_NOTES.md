@@ -21,6 +21,12 @@ Widgets and Live Activities summarize the user's charging break and station info
 
 Optional context settings are off by default. If enabled with system permission, EventKit evaluates upcoming events on-device. HealthKit access, if separately allowed, reads heart rate and resting heart rate samples on-device for contextual break recommendations. These features are not medical diagnosis or stress measurement. Calendar changes require acceptance of a suggestion or separately enabled automation after the app's historical acceptance threshold is reached. No HealthKit samples or event titles are sent to our servers.
 
+Support: sarjbul@icloud.com
+
+Support and privacy choices: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md
+
+Privacy policy: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md
+
 ## Yayın Öncesi Kontrol
 
 - Bu notları gerçek Release build üzerinde uygula; çalışmayan adımı mağazaya göndermeden düzelt.

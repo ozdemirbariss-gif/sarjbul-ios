@@ -15,8 +15,9 @@ struct AppConfiguration {
         string: "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/TERMS_OF_USE.md"
     )
     private static let defaultSupportURL = URL(
-        string: "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/issues"
+        string: "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md"
     )
+    private static let defaultSupportEmail = "sarjbul@icloud.com"
     var firebaseDatabaseURL: URL?
     var firebaseAPIKey: String
     var stationDataURL: URL?
@@ -44,7 +45,7 @@ struct AppConfiguration {
                 privacyPolicyURL: defaultPrivacyPolicyURL,
                 termsOfUseURL: defaultTermsURL,
                 supportURL: defaultSupportURL,
-                supportEmail: ""
+                supportEmail: defaultSupportEmail
             )
         }
 
@@ -63,8 +64,7 @@ struct AppConfiguration {
             privacyPolicyURL: Self.urlValue(values["privacyPolicyURL"]) ?? defaultPrivacyPolicyURL,
             termsOfUseURL: Self.urlValue(values["termsOfUseURL"]) ?? defaultTermsURL,
             supportURL: Self.urlValue(values["supportURL"]) ?? defaultSupportURL,
-            supportEmail: (values["supportEmail"] as? String)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+            supportEmail: Self.supportEmailValue(values["supportEmail"]),
             firebaseBackendReady: values["firebaseBackendReady"] as? Bool ?? false
         )
     }
@@ -114,6 +114,11 @@ struct AppConfiguration {
         guard !raw.isEmpty else { return nil }
         let normalized = raw.hasSuffix("/") ? raw : "\(raw)/"
         return URL(string: normalized)
+    }
+
+    private static func supportEmailValue(_ value: Any?) -> String {
+        let email = (value as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return email.isEmpty ? defaultSupportEmail : email
     }
 
     private var configuredLiveAvailabilityClient: any LiveAvailabilityClient {

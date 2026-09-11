@@ -56,6 +56,9 @@ struct StationOverviewMap: View {
         }
         .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll, showsTraffic: true))
         .saturation(0)
+        .overlay(alignment: .topLeading) {
+            StationDataAttributionView().padding(8)
+        }
         .mapControls {
             MapCompass()
             MapScaleView()

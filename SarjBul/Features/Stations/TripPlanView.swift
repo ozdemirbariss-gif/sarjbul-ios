@@ -49,6 +49,9 @@ struct TripPlanView: View {
                         : settings.t("planner.elevation_unavailable"))
                         .font(.caption)
                         .foregroundStyle(SBColor.contentSecondary)
+                    if plan.elevationAdjusted {
+                        OpenMeteoAttributionView()
+                    }
                 }
                 .padding(20)
             }

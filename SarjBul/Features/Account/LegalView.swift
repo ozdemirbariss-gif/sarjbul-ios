@@ -44,9 +44,17 @@ struct LegalView: View {
                         }
 
                         if document == .support, let emailURL {
+                            Text(settings.externalLinks.supportEmail)
+                                .font(.body.weight(.semibold))
+                                .textSelection(.enabled)
+                                .accessibilityIdentifier("support-email-address")
                             linkButton(title: settings.t("legal.email"), icon: "envelope") {
                                 openURL(emailURL)
                             }
+                        }
+
+                        if document == .terms {
+                            DataProviderAttributionView()
                         }
                     }
                     .padding(24)

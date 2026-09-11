@@ -15,6 +15,7 @@ def configuration():
         {
             "firebaseAPIKey": "fixture-key-never-used-on-network",
             "firebaseBackendReady": True,
+            "commercialDataUseApproved": True,
             "firebaseDatabaseURL": "https://fixture-default-rtdb.europe-west1.firebasedatabase.app/",
             "stationTileManifestURL": "https://fixture.invalid/station-tiles-manifest.json",
             "privacyPolicyURL": "https://fixture.invalid/privacy",
@@ -33,6 +34,14 @@ def configuration():
 
 
 class ReleaseValidationTests(unittest.TestCase):
+    def test_commercial_release_requires_provider_rights_review(self):
+        config, firebase = configuration()
+        config.pop("commercialDataUseApproved")
+        self.assertTrue(production_issues(config, firebase))
+        for value in (False, "true", 1, None):
+            with self.subTest(value=value):
+                self.assertTrue(production_issues({**config, "commercialDataUseApproved": value}, firebase))
+
     def test_plist_credentials_alone_do_not_mark_backend_ready(self):
         config, firebase = configuration()
         config.pop("firebaseBackendReady")

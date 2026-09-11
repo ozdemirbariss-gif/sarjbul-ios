@@ -8,6 +8,8 @@
     <string></string>
     <key>firebaseBackendReady</key>
     <false/>
+    <key>commercialDataUseApproved</key>
+    <false/>
     <key>stationDataURL</key>
     <string>https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json</string>
     <key>stationTileManifestURL</key>
@@ -19,8 +21,8 @@
     <key>termsOfUseURL</key>
     <string>https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/TERMS_OF_USE.md</string>
     <key>supportURL</key>
-    <string>https://github.com/ozdemirbariss-gif/elektriklisarj-ios/issues</string>
+    <string>https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md</string>
     <key>supportEmail</key>
-    <string></string>
+    <string>sarjbul@icloud.com</string>
 </dict>
 </plist>

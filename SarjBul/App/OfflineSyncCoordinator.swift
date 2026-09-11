@@ -73,15 +73,11 @@ final class OfflineSyncCoordinator {
                 completion(.synced)
             case .failure(let error) where Self.isTransient(error):
                 self.isReadOnlySafeMode = error is ServiceResilienceError
-                AppTelemetry.capture(error, operation: "offline_mutation_queued", metadata: [
-                    "mutation": mutation.deduplicationKey
-                ])
+                AppTelemetry.capture(error, operation: "offline_mutation_queued")
                 completion(.queued)
             case .failure(let error):
                 self.remove(mutation.id)
-                AppTelemetry.capture(error, operation: "offline_mutation_rejected", metadata: [
-                    "mutation": mutation.deduplicationKey
-                ])
+                AppTelemetry.capture(error, operation: "offline_mutation_rejected")
                 completion(.rejected(error))
             }
         }

@@ -45,7 +45,8 @@ No sign-in or registration form is required. Cloud features use an anonymous app
 
 ## Tamamlanacak Alanlar
 
-- Destek e-postası ve erişilebilir destek URL'si; mevcut varsayılan GitHub Issues bağlantısının iletişim bilgisini tamamla.
+- Destek e-postası: **sarjbul@icloud.com**.
+- Destek URL'si: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md
 - Gizlilik URL'si: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md
 - App Review iletişim kişisi, telefon ve e-posta; kamuya açık destek adresinden ayrı bir formdur.
 - Güncel yaş derecelendirmesi anketi: Salon oyunu ve uygulamada gerçekten sunulan özelliklere göre cevapla.
