@@ -153,6 +153,7 @@ final class AppState {
         }
         auth.onSessionChanged = { [weak self] session in
             guard let self else { return }
+            offlineSync.refreshPendingState()
             await favorites.handleSessionChanged(session)
             await stationData.reloadCommunityData(idToken: session?.idToken)
             stationData.startRealtime(idToken: session?.idToken)

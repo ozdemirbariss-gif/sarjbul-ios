@@ -30,9 +30,11 @@
 
 10 Eylül 2026'da iOS için ayrılmış `sarjbul-ios-f57e6` projesinin yapılandırma dosyaları bu çalışma kopyasına eklendi (Git dışında). Bundle ID `com.ozdemirbaris.sarjbul` ve API kimlikleri eşleştirildi. Realtime Database, Belçika (`europe-west1`) bölgesinde kilitli modda oluşturuldu; Anonymous sağlayıcısının etkin olduğu konsolda doğrulandı. Proje Spark planında; üretim kuralları ve Functions yayımlanmadı. Destek e-postası henüz seçilmedi.
 
+Kaba konum ve ürün etkileşimi için geçici UID bağlantısı mağaza gizlilik formunda, manifestte ve TR/EN izin metninde açıkça beyan edildi.
+
 `firebaseBackendReady` varsayılan olarak `false`: yalnızca plist dosyalarının bulunması uygulamada bulut işlemlerini açmaz. Bu alan canlı backend ve cihaz doğrulamaları tamamlanmadan değiştirilmez. Yerel kontrol:
 
-Bu hazırlıkta 21 yerel RTDB kural testi, 75 Swift çekirdek testi, 8 yayın kontrol testi, 4 backend testi ve iPhone 17 Pro simülatöründe 3 yapılandırma testi geçti. SwiftLint ve imzasız iOS Simulator Release derlemesi başarılı. Her iki yerel plist dosyasının Release uygulama paketine doğru kopyalandığı doğrulandı. Bunlar gerçek cihaz, imzalı Archive veya canlı Functions testi değildir.
+11 Eylül hazırlığında 35 yerel Firebase testi (27 kural, 8 silme/analiz), 79 Swift çekirdek testi, 8 yayın kontrol testi, 4 kanal çekirdek testi ve iPhone 17 Pro / iOS 26.5 simülatöründe 53 iOS birim testi geçti. SwiftLint, üretim bağımlılık denetimi ve imzasız iOS Simulator Release derlemesi başarılı. İki gerçek plist Git dışında tutulur. Bunlar gerçek cihaz, imzalı Archive veya canlı Functions testi değildir. Önceki `04e519d` sürümünün [GitHub iOS CI çalışması](https://github.com/ozdemirbariss-gif/elektriklisarj-ios/actions/runs/34525419119) tüm adımlarıyla başarılıdır.
 
 ```bash
 python3 Scripts/validate_release.py
@@ -44,12 +46,12 @@ python3 Scripts/validate_release.py --production
 ## Backend Yayını Öncesindeki Açık İşler
 
 - [ ] Cloud Functions için Blaze planı kararını hesap sahibiyle tamamla; ücretsiz hazırlık sırasında ücretli plana geçilmez.
-- [ ] Bulut sıfırlamada sunucunun temizliği tamamladığını doğrulayan akış kur. Mevcut istemci Auth kaydını silince başarı gösteriyor; isteğin kuyruğa alınması tüm kayıtların silindiği anlamına gelmez.
-- [ ] `friction_events` için sunucu tarafı hız sınırı ve saklama/temizleme süresi belirle. Bu uç tamamlanmadan analiz yazımlarını üretime açma.
-- [ ] `aggregateSearchDemand` ham olay silindikten sonra da aynı olayın tekrar sayılmasını önle; işlev tekrarları ve gecikmiş istemci tekrarları için kalıcı tekilleştirme testi ekle.
-- [ ] [Firebase kurulumundaki](FIREBASE_SETUP.md) yalnızca dört iOS işlevini ve eşleşen kuralları dağıt; kanal geçitlerini toplu Functions komutuna dahil etme.
+- [x] Bulut sıfırlama sunucu onayını bekler; bekleyen işlem Keychain üzerinden sürdürülür ve eski UID yazımları engellenir.
+- [x] `friction_events` için kullanıcı başına 60 saniye sunucu hız sınırı ve 7 gün sonra günlük temizlik uygulandı.
+- [x] Arama talebi sayaçları ve 8 günlük tekilleştirme kaydı aynı transaction içinde güncellenir; eşzamanlı tekrar ve ham olay silme testleri eklendi.
+- [ ] [Firebase kurulumundaki](FIREBASE_SETUP.md) yalnızca beş iOS işlevini ve eşleşen kuralları dağıt; kanal geçitlerini toplu Functions komutuna dahil etme.
 
-Durum bildirimi, istasyon katkısı ve arama talebi kuralları artık gönderimle aynı atomik işlemde sunucu zamanı ve tam kayıt yolunu içeren hız sınırı verisini zorunlu tutar. İstemci bu veriyi silemez veya geriye alamaz. Eski istemcilerin yalnızca cihaz zamanı yazan istekleri bu kurallarla uyumlu değildir; istemci ve kurallar birlikte sürümlenir. Bulut hizmetleri, yukarıdaki açık işler kapanana kadar kapalı kalır.
+Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kuralları artık gönderimle aynı atomik işlemde sunucu zamanı ve tam kayıt yolunu içeren hız sınırı verisini zorunlu tutar. İstemci bu veriyi silemez veya geriye alamaz. Eski istemcilerin yalnızca cihaz zamanı yazan istekleri bu kurallarla uyumlu değildir; istemci ve kurallar birlikte sürümlenir. Bulut hizmetleri, yukarıdaki açık işler kapanana kadar kapalı kalır.
 
 ## Hesap sahibi tarafından tamamlanacaklar
 

@@ -1,6 +1,11 @@
 import Foundation
 import SarjBulCore
 
+struct PendingAccountDeletion: Codable, Equatable {
+    var uid: String
+    var serverConfirmed = false
+}
+
 struct RecentStationRoute: Codable, Hashable, Identifiable {
     var stationID: String
     var stationKey: String
@@ -36,6 +41,7 @@ struct ImplicitFeedbackEvent: Codable, Identifiable, Sendable {
 protocol AppPersistence: AnyObject {
     var profile: DrivingProfile { get set }
     var authSession: FirebaseAuthSession? { get set }
+    var pendingAccountDeletion: PendingAccountDeletion? { get set }
     var language: AppLanguage { get set }
     var navigationAppPreference: NavigationAppPreference? { get set }
     var destination: JourneyDestination? { get set }
@@ -123,6 +129,20 @@ final class SystemAppPersistence: AppPersistence {
     private let secureStorage: any SecureStorage
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+
+    var pendingAccountDeletion: PendingAccountDeletion? {
+        get {
+            guard let data = secureStorage.data(for: "pendingAccountDeletion") else { return nil }
+            return try? decoder.decode(PendingAccountDeletion.self, from: data)
+        }
+        set {
+            guard let newValue, let data = try? encoder.encode(newValue) else {
+                secureStorage.remove("pendingAccountDeletion")
+                return
+            }
+            secureStorage.set(data, for: "pendingAccountDeletion")
+        }
+    }
 
     init(
         defaults: UserDefaults = .standard,

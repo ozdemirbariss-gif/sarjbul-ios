@@ -3,8 +3,14 @@ import Foundation
 public protocol AuthClient: Sendable {
     func signInAnonymously() async throws -> FirebaseAuthSession
     func initiateAccountDeletion(uid: String, idToken: String) async throws
+    func accountDeletionStatus(uid: String, idToken: String) async throws -> AccountDeletionStatus?
     func deleteAccount(idToken: String) async throws
     func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession
+}
+
+public enum AccountDeletionStatus: String, Decodable, Sendable {
+    case pending
+    case completed
 }
 
 public protocol FavoritesClient: Sendable {
@@ -96,6 +102,9 @@ public struct UnavailableAuthClient: AuthClient {
 
     public func signInAnonymously() async throws -> FirebaseAuthSession { throw ServiceClientError.notConfigured }
     public func initiateAccountDeletion(uid: String, idToken: String) async throws { throw ServiceClientError.notConfigured }
+    public func accountDeletionStatus(uid: String, idToken: String) async throws -> AccountDeletionStatus? {
+        throw ServiceClientError.notConfigured
+    }
     public func deleteAccount(idToken: String) async throws { throw ServiceClientError.notConfigured }
     public func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession { throw ServiceClientError.notConfigured }
 }

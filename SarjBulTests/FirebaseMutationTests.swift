@@ -52,6 +52,77 @@ import Testing
         await expectReportError(session: session, status: 403)
     }
 
+    @Test(arguments: ["pending", "completed"])
+    func existingDeletionRequestIsReadWithoutDestructiveWrites(status: String) async throws {
+        let session = makeSession()
+        defer { session.invalidateAndCancel() }
+        MutationURLProtocol.handler = { request in
+            #expect(request.httpMethod == "GET")
+            #expect(request.url?.path == "/account_deletion_requests/owner.json")
+            #expect(request.value(forHTTPHeaderField: "X-Firebase-AppCheck") == "app-check")
+            return (200, Data("{\"uid\":\"owner\",\"status\":\"\(status)\"}".utf8), [:])
+        }
+        let client = try makeClient(session)
+        try await client.initiateAccountDeletion(uid: "owner", idToken: "token")
+        let actual = try await client.accountDeletionStatus(uid: "owner", idToken: "token")
+        #expect(actual?.rawValue == status)
+    }
+
+    @Test func newDeletionRequestOnlyCreatesPendingReceipt() async throws {
+        let session = makeSession()
+        defer { session.invalidateAndCancel() }
+        MutationURLProtocol.handler = { request in
+            #expect(request.url?.path == "/account_deletion_requests/owner.json")
+            if request.httpMethod == "GET" { return (200, Data("null".utf8), [:]) }
+            #expect(request.httpMethod == "PUT")
+            let body = try #require(JSONSerialization.jsonObject(with: requestData(request)) as? [String: Any])
+            #expect(body["uid"] as? String == "owner")
+            #expect(body["status"] as? String == "pending")
+            #expect(body["completedAtMilliseconds"] == nil)
+            return (200, Data("null".utf8), [:])
+        }
+        try await makeClient(session).initiateAccountDeletion(uid: "owner", idToken: "token")
+    }
+
+    @Test func receiptForAnotherIdentityIsRejected() async throws {
+        let session = makeSession()
+        defer { session.invalidateAndCancel() }
+        MutationURLProtocol.handler = { _ in
+            (200, Data("{\"uid\":\"other\",\"status\":\"completed\"}".utf8), [:])
+        }
+        do {
+            _ = try await makeClient(session).accountDeletionStatus(uid: "owner", idToken: "token")
+            Issue.record("Another user's receipt cannot confirm deletion")
+        } catch FirebaseRESTError.requestFailed { } catch { Issue.record("Unexpected error: \(error)") }
+    }
+
+    @Test func frictionWriteAtomicallyLinksRateLimitWithoutAddingUIDToEvent() async throws {
+        let session = makeSession()
+        defer { session.invalidateAndCancel() }
+        MutationURLProtocol.handler = { request in
+            #expect(request.httpMethod == "PATCH")
+            let body = try #require(JSONSerialization.jsonObject(with: requestData(request)) as? [String: Any])
+            let metadata = try #require(body["friction_meta/owner"] as? [String: Any])
+            #expect(metadata["lastMutationPath"] as? String == "friction_events/friction-id")
+            #expect((metadata["son_olay_zamani_ms"] as? [String: String])?[".sv"] == "timestamp")
+            let event = try #require(body["friction_events/friction-id"] as? [String: Any])
+            #expect(event["uid"] == nil)
+            #expect(event["kind"] as? String == "appOpened")
+            return (200, Data("null".utf8), [:])
+        }
+        try await makeClient(session).recordFrictionEvent(
+            event: FrictionAnalyticsEvent(kind: "appOpened", elapsedMilliseconds: 1, journeyPhase: "entry"),
+            uid: "owner", idToken: "token", context: ServiceMutationContext(idempotencyKey: "FRICTION-ID", createdAt: Date())
+        )
+    }
+
+    private func makeClient(_ session: URLSession) throws -> FirebaseRESTClient {
+        FirebaseRESTClient(
+            databaseURL: try #require(URL(string: "https://fixture.firebaseio.com/")), apiKey: "fixture-key",
+            session: session, appCheckTokenProvider: { "app-check" }
+        )
+    }
+
     private func expectReportError(session: URLSession, status: Int) async {
         do {
             try await sendReport(session: session)

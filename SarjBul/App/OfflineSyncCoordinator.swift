@@ -45,6 +45,10 @@ final class OfflineSyncCoordinator {
         deduplicationKey: String,
         completion: @escaping @MainActor (OfflineSubmissionResult) -> Void
     ) async {
+        guard auth.pendingDeletion == nil else {
+            completion(.rejected(AuthError.serviceUnavailable))
+            return
+        }
         var pending = persistence.pendingOfflineMutations
         pending.removeAll { $0.deduplicationKey == deduplicationKey }
         let mutation = PendingOfflineMutation(
@@ -84,7 +88,7 @@ final class OfflineSyncCoordinator {
     }
 
     func syncPending() async {
-        guard !isSyncing else { return }
+        guard !isSyncing, auth.pendingDeletion == nil else { return }
         isSyncing = true
         defer { isSyncing = false }
 
@@ -104,6 +108,10 @@ final class OfflineSyncCoordinator {
         }
     }
 
+    func refreshPendingState() {
+        pendingCount = persistence.pendingOfflineMutations.count
+    }
+
     func reconciledFavorites(remote: Set<String>) -> Set<String> {
         persistence.pendingOfflineMutations
             .sorted(by: { $0.createdAt < $1.createdAt })
@@ -115,11 +123,13 @@ final class OfflineSyncCoordinator {
 
     private func send(_ mutation: PendingOfflineMutation) async throws {
         await rateLimiter.acquire()
+        guard persistence.pendingOfflineMutations.contains(where: { $0.id == mutation.id }) else { return }
         let context = ServiceMutationContext(
             idempotencyKey: mutation.id,
             createdAt: mutation.createdAt
         )
         try await auth.authenticatedRequest { session in
+            guard self.persistence.pendingOfflineMutations.contains(where: { $0.id == mutation.id }) else { return }
             switch mutation.payload {
             case .favorite(let stationKey, let isFavorite):
                 try await self.favoritesClient.setFavorite(

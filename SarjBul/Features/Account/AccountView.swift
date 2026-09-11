@@ -391,12 +391,22 @@ struct AccountView: View {
                     .foregroundStyle(SBColor.contentTertiary)
                     .fixedSize(horizontal: false, vertical: true)
 
+                if auth.pendingDeletion != nil {
+                    Text(settings.t("service.account_deletion_pending"))
+                        .font(.footnote)
+                        .foregroundStyle(SBColor.contentSecondary)
+                }
+
                 Button(role: .destructive) {
                     Haptic.tap()
-                    deleteConfirmationPresented = true
+                    if auth.pendingDeletion != nil {
+                        Task { await resetCloudData() }
+                    } else {
+                        deleteConfirmationPresented = true
+                    }
                 } label: {
                     Label(
-                        isDeletingData ? settings.t("profile.reset_loading") : settings.t("profile.reset_action"),
+                        resetCloudDataTitle,
                         systemImage: "arrow.counterclockwise"
                     )
                     .font(.subheadline.weight(.bold))
@@ -503,5 +513,10 @@ struct AccountView: View {
         isDeletingData = true
         defer { isDeletingData = false }
         _ = await auth.deleteAccount()
+    }
+
+    private var resetCloudDataTitle: String {
+        if isDeletingData { return settings.t("profile.reset_loading") }
+        return settings.t(auth.pendingDeletion == nil ? "profile.reset_action" : "profile.reset_check")
     }
 }

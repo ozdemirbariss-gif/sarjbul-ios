@@ -1,5 +1,7 @@
 const {setGlobalOptions} = require("firebase-functions/v2");
 const {onValueCreated, onValueWritten} = require("firebase-functions/v2/database");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
+const iosBackend = require("./ios-backend");
 const {initializeApp} = require("firebase-admin/app");
 const {getAuth} = require("firebase-admin/auth");
 const {getDatabase} = require("firebase-admin/database");
@@ -162,75 +164,21 @@ exports.aggregateStationContributions = onValueWritten(
 );
 
 exports.aggregateSearchDemand = onValueCreated(
-    "/search_demand_events/{eventId}",
+    {ref: "/search_demand_events/{eventId}", retry: true},
     async (event) => {
-      const payload = event.data.val() || {};
-      const createdAt = new Date(Number(payload.createdAtMilliseconds));
-      if (Number.isNaN(createdAt.getTime())) return;
-
-      const month = createdAt.toISOString().slice(0, 7);
-      const cell = String(payload.coarseCell || "unknown").replace(/[.#$\[\]\/]/g, "_");
-      const preference = String(payload.preference || "balanced");
-      const radius = String(payload.radiusBucketKm || "unknown");
-      const resultBucket = String(payload.resultBucket || "unknown");
-      const database = getDatabase();
-      const aggregateRef = database.ref(`demand_heatmap/${month}/${cell}`);
-
-      await aggregateRef.transaction((current) => {
-        const value = current || {};
-        value.total = Number(value.total || 0) + 1;
-        value.preferences ||= {};
-        value.preferences[preference] = Number(value.preferences[preference] || 0) + 1;
-        value.radius_buckets ||= {};
-        value.radius_buckets[radius] = Number(value.radius_buckets[radius] || 0) + 1;
-        value.result_buckets ||= {};
-        value.result_buckets[resultBucket] = Number(value.result_buckets[resultBucket] || 0) + 1;
-        value.updated_at = new Date().toISOString();
-        return value;
-      });
-
+      await iosBackend.aggregateSearchDemand(getDatabase(), event.params.eventId, event.data.val() || {});
       await event.data.ref.remove();
     },
 );
 
 exports.deleteAccountData = onValueCreated(
-    "/account_deletion_requests/{uid}",
-    async (event) => {
-      const uid = event.params.uid;
-      const database = getDatabase();
-      const commentsSnapshot = await database.ref("yorumlar").get();
-      const removals = {};
+    {ref: "/account_deletion_requests/{uid}", retry: true},
+    async (event) => iosBackend.deleteAccountData(getDatabase(), event.params.uid),
+);
 
-      commentsSnapshot.forEach((stationSnapshot) => {
-        stationSnapshot.forEach((reportSnapshot) => {
-          if (reportSnapshot.child("uid").val() === uid) {
-            removals[`yorumlar/${stationSnapshot.key}/${reportSnapshot.key}`] = null;
-          }
-        });
-      });
-
-      removals[`favoriler/${uid}`] = null;
-      removals[`kullanici_yorum_meta/${uid}`] = null;
-      removals[`kullanici_dogrulama_meta/${uid}`] = null;
-      removals[`search_demand_meta/${uid}`] = null;
-      removals[`push_tokens/${uid}`] = null;
-      const contributionsSnapshot = await database.ref("station_contributions").get();
-      contributionsSnapshot.forEach((stationSnapshot) => {
-        stationSnapshot.forEach((contributionSnapshot) => {
-          if (contributionSnapshot.child("uid").val() === uid) {
-            removals[`station_contributions/${stationSnapshot.key}/${contributionSnapshot.key}`] = null;
-          }
-        });
-      });
-      removals[`account_deletion_requests/${uid}`] = null;
-      await database.ref().update(removals);
-
-      try {
-        await getAuth().deleteUser(uid);
-      } catch (error) {
-        if (error.code !== "auth/user-not-found") throw error;
-      }
-    },
+exports.cleanupAnalyticsData = onSchedule(
+    {schedule: "every 24 hours", timeZone: "Europe/Istanbul", retryCount: 3, timeoutSeconds: 540},
+    async () => iosBackend.cleanupAnalyticsData(getDatabase(), getAuth()),
 );
 
 const channelGateway = require("./channel-gateway");

@@ -460,6 +460,7 @@ private struct StubAuthClient: AuthClient {
 
     func signInAnonymously() async throws -> FirebaseAuthSession { session }
     func initiateAccountDeletion(uid: String, idToken: String) async throws {}
+    func accountDeletionStatus(uid: String, idToken: String) async throws -> AccountDeletionStatus? { nil }
     func deleteAccount(idToken: String) async throws {}
     func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession { session }
 }
@@ -470,6 +471,7 @@ private struct RefreshFailingAuthClient: AuthClient {
 
     func signInAnonymously() async throws -> FirebaseAuthSession { replacement }
     func initiateAccountDeletion(uid: String, idToken: String) async throws {}
+    func accountDeletionStatus(uid: String, idToken: String) async throws -> AccountDeletionStatus? { nil }
     func deleteAccount(idToken: String) async throws {}
     func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession { throw error }
 }

@@ -62,14 +62,33 @@ public struct FirebaseRESTClient: Sendable {
     }
 
     public func initiateAccountDeletion(uid: String, idToken: String) async throws {
+        if try await accountDeletionStatus(uid: uid, idToken: idToken) != nil { return }
         let requestedAt = ISO8601DateFormatter().string(from: Date())
-        try await delete(path: "favoriler/\(uid).json", idToken: idToken)
-        try await delete(path: "push_tokens/\(uid).json", idToken: idToken)
-        try await putJSON(
-            path: "account_deletion_requests/\(uid).json",
-            idToken: idToken,
-            body: AccountDeletionRequest(uid: uid, requestedAt: requestedAt, source: "ios")
+        do {
+            try await putJSON(
+                path: "account_deletion_requests/\(uid).json", idToken: idToken,
+                body: AccountDeletionRequest(uid: uid, requestedAt: requestedAt, source: "ios")
+            )
+        } catch {
+            // Another attempt may have created the same request before this response arrived.
+            if (try? await accountDeletionStatus(uid: uid, idToken: idToken)) != nil { return }
+            throw error
+        }
+    }
+
+    public func accountDeletionStatus(uid: String, idToken: String) async throws -> AccountDeletionStatus? {
+        var components = URLComponents(
+            url: databaseURL.appending(path: "account_deletion_requests/\(uid).json"), resolvingAgainstBaseURL: false
         )
+        components?.queryItems = [URLQueryItem(name: "auth", value: idToken)]
+        guard let url = components?.url else { throw FirebaseRESTError.invalidURL }
+        let request = try await databaseRequest(url: url)
+        let (data, response) = try await data(for: request, partition: .authentication)
+        try validate(response: response, data: data)
+        if String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) == "null" { return nil }
+        let receipt = try JSONDecoder().decode(AccountDeletionReceipt.self, from: data)
+        guard receipt.uid == uid else { throw FirebaseRESTError.requestFailed("Invalid deletion receipt") }
+        return receipt.status
     }
 
     public func deleteAccount(idToken: String) async throws {
@@ -258,10 +277,14 @@ public struct FirebaseRESTClient: Sendable {
     ) async throws {
         var payload = event
         payload.createdAtMilliseconds = Int64(context.createdAt.timeIntervalSince1970 * 1_000)
-        try await putJSON(
-            path: "friction_events/\(context.idempotencyKey.lowercased()).json",
-            idToken: idToken,
-            body: payload
+        let eventPath = "friction_events/\(context.idempotencyKey.lowercased())"
+        try await patchThrottledMutation(
+            metadataPath: "friction_meta/\(uid)", timestampKey: "son_olay_zamani_ms",
+            mutationPath: eventPath, cooldown: 60, idToken: idToken, context: context,
+            body: AtomicDemandAnalyticsWrite(
+                eventPath: eventPath, metadataPath: "friction_meta/\(uid)", event: payload,
+                metadata: DemandAnalyticsMetadata(lastMutationPath: eventPath)
+            )
         )
     }
 
@@ -664,10 +687,10 @@ private struct DemandAnalyticsMetadata: Encodable {
     }
 }
 
-private struct AtomicDemandAnalyticsWrite: Encodable {
+private struct AtomicDemandAnalyticsWrite<Event: Encodable>: Encodable {
     var eventPath: String
     var metadataPath: String
-    var event: SearchDemandEvent
+    var event: Event
     var metadata: DemandAnalyticsMetadata
 
     func encode(to encoder: Encoder) throws {
@@ -698,4 +721,10 @@ private struct AccountDeletionRequest: Encodable {
     var uid: String
     var requestedAt: String
     var source: String
+    var status = "pending"
+}
+
+private struct AccountDeletionReceipt: Decodable {
+    var uid: String
+    var status: AccountDeletionStatus
 }

@@ -61,6 +61,8 @@ final class FavoritesStore {
     func toggle(_ stationKey: String) async {
         guard !pendingKeys.contains(stationKey) else { return }
 
+        guard auth.pendingDeletion == nil else { return }
+        let submittingUID = auth.session?.uid
         pendingKeys.insert(stationKey)
         let shouldFavorite = !favorites.contains(stationKey)
         if shouldFavorite { favorites.insert(stationKey) } else { favorites.remove(stationKey) }
@@ -72,6 +74,7 @@ final class FavoritesStore {
         ) { [weak self] result in
             guard let self else { return }
             self.pendingKeys.remove(stationKey)
+            guard self.auth.pendingDeletion == nil, self.auth.session?.uid == submittingUID else { return }
             if case .rejected(let error) = result {
                 if shouldFavorite { self.favorites.remove(stationKey) } else { self.favorites.insert(stationKey) }
                 self.persistence.favoriteStationKeys = self.favorites

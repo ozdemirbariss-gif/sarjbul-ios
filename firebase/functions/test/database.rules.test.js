@@ -45,6 +45,14 @@ const cooldownKinds = [
       resultBucket: "1-5", createdAtMilliseconds: date.getTime(), source: "ios_opt_in",
     }),
   },
+  {
+    name: "friction events", root: "friction_events", meta: "friction_meta",
+    timeKey: "son_olay_zamani_ms", cooldown: 60_000,
+    payload: (_uid, date) => ({
+      kind: "appOpened", elapsedBucket: "under_1s", journeyPhase: "entry",
+      createdAtMilliseconds: date.getTime(), source: "ios_opt_in",
+    }),
+  },
 ];
 
 const mutationPath = (kind, id, station = "station-1") =>
@@ -167,15 +175,17 @@ test("friction analytics accepts only anonymous opt-in buckets", async () => {
     source: "ios_opt_in",
   };
 
-  await assertSucceeds(set(ref(owner, "friction_events/event-1"), event));
+  const kind = {root: "friction_events", meta: "friction_meta", timeKey: "son_olay_zamani_ms"};
+  await assertSucceeds(update(ref(owner), atomicMutation(kind, "event-1", event)));
   await assertFails(get(ref(owner, "friction_events/event-1")));
-  await assertFails(set(ref(anonymous, "friction_events/event-2"), event));
-  await assertFails(set(ref(owner, "friction_events/event-3"), {
-    ...event,
-    latitude: 38.4,
-  }));
+  await assertFails(update(ref(anonymous), atomicMutation(kind, "event-2", event)));
+  await assertFails(update(ref(owner), atomicMutation(kind, "event-3", {...event, latitude: 38.4})));
   const {source, ...missingField} = event;
-  await assertFails(set(ref(owner, "friction_events/event-4"), missingField));
+  await assertFails(update(ref(owner), atomicMutation(kind, "event-4", missingField)));
+  await assertFails(set(ref(owner, "friction_events/unthrottled"), event));
+  await assertFails(set(ref(owner, "friction_meta/owner"), null));
+  await assertFails(update(ref(owner), atomicMutation(kind, "too-soon", event)));
+
 });
 
 test("demand events require all fields and reject extra fields", async () => {
@@ -287,3 +297,33 @@ for (const kind of cooldownKinds) {
     await assertSucceeds(update(ref(owner), first));
   });
 }
+
+
+test("deletion requests cannot be forged, acknowledged or removed by clients", async () => {
+  const owner = testEnvironment.authenticatedContext("owner").database();
+  const other = testEnvironment.authenticatedContext("other").database();
+  const request = {uid: "owner", requestedAt: new Date().toISOString(), source: "ios", status: "pending"};
+  await assertFails(set(ref(other, "account_deletion_requests/owner"), request));
+  await assertFails(set(ref(owner, "account_deletion_requests/owner"), {...request, status: "completed"}));
+  await assertSucceeds(set(ref(owner, "account_deletion_requests/owner"), request));
+  await assertSucceeds(get(ref(owner, "account_deletion_requests/owner")));
+  await assertFails(get(ref(other, "account_deletion_requests/owner")));
+  await assertFails(set(ref(owner, "account_deletion_requests/owner"), null));
+  await assertFails(update(ref(owner, "account_deletion_requests/owner"), {status: "completed"}));
+});
+
+test("pending and completed deletion receipts block new and replayed private writes", async () => {
+  const owner = testEnvironment.authenticatedContext("owner").database();
+  const report = cooldownKinds[0].payload("owner", new Date());
+  await assertSucceeds(update(ref(owner), atomicMutation(cooldownKinds[0], "existing", report)));
+  for (const status of ["pending", "completed"]) {
+    await testEnvironment.withSecurityRulesDisabled(async (context) => {
+      await set(ref(context.database(), "account_deletion_requests/owner"), {uid: "owner", status});
+    });
+    await assertFails(set(ref(owner, "favoriler/owner/station"), true));
+    await assertFails(set(ref(owner, "yorumlar/station-1/existing"), report));
+    for (const kind of cooldownKinds) {
+      await assertFails(update(ref(owner), atomicMutation(kind, "new", kind.payload("owner", new Date()))));
+    }
+  }
+});

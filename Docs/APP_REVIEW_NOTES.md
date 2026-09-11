@@ -13,7 +13,7 @@ To test station search from outside Türkiye:
 3. Adjust the charge level and driving values under the expandable driving profile if needed.
 4. Open the suggested station or the Routes tab. The station feed and map use charging locations in Türkiye.
 5. Open a route and choose Apple Maps or Google Maps. Navigation is handed off to that application. A manual starting location is included; the external app may show a route preview or request its own location permission.
-6. Use the navigation control to open Profile. Cloud data can be reset there.
+6. Use the navigation control to open Profile. Cloud data can be reset there. The app displays pending progress until the server confirms cleanup; use Check deletion status to retry. A new anonymous identity is created after cleanup is confirmed and the old identity is deleted.
 
 Charge, range and travel time are estimates. Manual battery values are not measurements from the vehicle. Missing live availability and prices are shown as unavailable.
 
