@@ -1408,15 +1408,15 @@
     "ŞRJ/9963"
   ],
   "endpoint": "https://apigateway.epdk.gov.tr/sarjIstasyonlari",
-  "epdk_published_count": 13071,
-  "fetched_at": "2026-09-11T08:57:36.919860+00:00",
+  "epdk_published_count": 13074,
+  "fetched_at": "2026-09-12T08:40:56.718536+00:00",
   "invalid_coordinates": [],
-  "payload_sha256": "d8f90f6f96988eda1613cd123ce157fe1a57a824173214b62ea5bdd23b08785e",
+  "payload_sha256": "c80dcceae4c8fe4e7f1f9fecfcecbaac8af0e965e0efbf6ea6b5385d1b92008f",
   "private_count": 3743,
-  "public_count": 13071,
-  "public_socket_count": 35837,
-  "published_count": 15471,
-  "socket_count": 48309,
+  "public_count": 13074,
+  "public_socket_count": 35847,
+  "published_count": 15474,
+  "socket_count": 48321,
   "supplementary_source_count": 13041,
-  "total_count": 16814
+  "total_count": 16817
 }
