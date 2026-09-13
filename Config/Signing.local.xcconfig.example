@@ -1,0 +1,3 @@
+// Copy to Signing.local.xcconfig and enter the Team ID verified in Xcode.
+// Leaving this empty intentionally prevents signing with an invented team.
+DEVELOPMENT_TEAM =

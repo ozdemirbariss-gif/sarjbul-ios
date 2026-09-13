@@ -59,7 +59,7 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 - [ ] Firebase rules/functions deploy ve App Check enforcement
 - [ ] App Store Connect gizlilik cevaplarını `Docs/APP_STORE_PRIVACY_ANSWERS.md` ile birebir gir
 - [ ] Destek URL'si, gizlilik URL'si ve anonim veri sıfırlama akışının Review Notes'a eklenmesi
-- [ ] Distribution certificate/provisioning ve archive validation
+- [ ] [İmzalama eşleştirmesine](SIGNING_SETUP.md) göre ücretli Developer Team, iki dağıtım profili ve archive validation
 - [ ] [Gerçek cihaz test planını](DEVICE_TEST_PLAN.md) dağıtılacak build ile tamamla
 - [ ] App Store ekran görüntülerinin desteklenen cihaz boyutlarında yüklenmesi
 - [ ] `group.com.ozdemirbaris.sarjbul` App Group'unu App ID ve provisioning profillerinde aç

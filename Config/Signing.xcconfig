@@ -1,0 +1,3 @@
+// Both app and widget inherit the verified team from this local file.
+// See Docs/SIGNING_SETUP.md. Never place certificates or private keys here.
+#include? "Signing.local.xcconfig"

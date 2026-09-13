@@ -18,3 +18,10 @@ firebase-debug.log
 database-debug.log
 __pycache__/
 *.pyc
+
+# Local signing team and credentials
+Config/Signing.local.xcconfig
+*.mobileprovision
+*.p12
+*.p8
+*.xcarchive/
