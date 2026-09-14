@@ -1,7 +1,7 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-09-13T09:36:06+00:00",
-  "license_count": 180,
+  "generated_at": "2026-09-14T09:57:27+00:00",
+  "license_count": 181,
   "licenses": [
     {
       "brands": [
@@ -713,6 +713,15 @@
       "license_number": "ŞH/11615-5/00101",
       "valid_from": "2023-02-02T00:00:00Z",
       "valid_until": "2072-02-02T00:00:00Z"
+    },
+    {
+      "brands": [
+        "Greenwatt"
+      ],
+      "holder": "GWESİ ELEKTRİKLİ ŞARJ İSTASYONLARI VE ENERJİ ANONİM ŞİRKETİ",
+      "license_number": "ŞH/14868/00226",
+      "valid_from": "2026-09-10T00:00:00Z",
+      "valid_until": "2075-09-10T00:00:00Z"
     },
     {
       "brands": [
