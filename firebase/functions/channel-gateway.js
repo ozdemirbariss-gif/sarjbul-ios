@@ -4,6 +4,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {getDatabase} = require("firebase-admin/database");
 const {formatReply, parseCommand, searchStations} = require("./channel-core");
+const {isExtensionOrigin} = require("./channel-origin");
 
 const STATION_DATA_URL = "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json";
 const CACHE_LIFETIME_MS = 15 * 60 * 1000;
@@ -267,9 +268,8 @@ const browserCommand = onRequest({
   region: "europe-west1",
   secrets: [browserExtensionKey],
 }, async (request, response) => {
-  const origin = request.get("Origin") || "*";
-  const isExtensionOrigin = origin === "*" || /^(chrome|moz)-extension:\/\/[a-z0-9-]+$/i.test(origin);
-  if (!isExtensionOrigin) {
+  const origin = request.get("Origin");
+  if (!isExtensionOrigin(origin)) {
     response.sendStatus(403);
     return;
   }
