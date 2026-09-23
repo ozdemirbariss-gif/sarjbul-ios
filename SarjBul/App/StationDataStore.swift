@@ -146,6 +146,17 @@ final class StationDataStore {
         }
     }
 
+    func recheckStatusesForNavigation() async -> Bool {
+        do {
+            stationStatuses = try await pipeline.reloadStatuses(idToken: nil)
+            persistence.cachedStationStatuses = stationStatuses
+            return true
+        } catch {
+            AppLogger.data.warning("Proposal status recheck failed: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
+
     func startRealtime(idToken: String?) {
         realtimeTask?.cancel()
         realtimeTask = Task { [weak self, realtimeClient] in

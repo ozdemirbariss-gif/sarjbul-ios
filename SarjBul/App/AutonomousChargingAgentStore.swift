@@ -4,8 +4,10 @@ import SarjBulCore
 
 enum AutonomousAgentState: Equatable {
     case idle
-    case evaluating
-    case ready
+    case valid
+    case refreshing
+    case expired
+    case cancelled
 }
 
 @MainActor
@@ -57,8 +59,9 @@ final class AutonomousChargingAgentStore {
             persistence.autonomousChargingProposal = nil
         } else if let saved = persistence.autonomousChargingProposal, saved.expiresAt > Date() {
             proposal = saved
-            state = .ready
+            state = .valid
         } else {
+            if persistence.autonomousChargingProposal != nil { state = .expired }
             persistence.autonomousChargingProposal = nil
         }
     }
@@ -101,6 +104,7 @@ final class AutonomousChargingAgentStore {
     }
 
     private func runWorker(trigger: ChargingAgentTrigger, location: UserLocation?) async -> Bool {
+        expireProposalIfNeeded()
         guard settings.autonomousChargingPolicy.isEnabled else { return true }
         guard let location else { return false }
         let request = PendingEvaluation(trigger: trigger, location: location)
@@ -114,7 +118,7 @@ final class AutonomousChargingAgentStore {
         var result = true
         while let currentRequest = nextRequest {
             pendingEvaluation = nil
-            state = .evaluating
+            state = .refreshing
             result = await performWorker(
                 trigger: currentRequest.trigger,
                 location: currentRequest.location
@@ -122,7 +126,12 @@ final class AutonomousChargingAgentStore {
             nextRequest = pendingEvaluation
         }
         evaluationInProgress = false
-        state = proposal == nil ? .idle : .ready
+        expireProposalIfNeeded()
+        if proposal != nil {
+            state = .valid
+        } else if state == .refreshing {
+            state = .idle
+        }
         return result
     }
 
@@ -237,13 +246,20 @@ final class AutonomousChargingAgentStore {
         now: Date
     ) async {
         guard case .propose(let proposal) = decision else {
-            if case .noAction(let reason) = decision { lastDecisionReason = reason }
+            if case .noAction(let reason) = decision {
+                lastDecisionReason = reason
+                if plan.rule == .preparedRouteRisky || plan.rule == .preparedRouteExpired
+                    || reason == .noSafeStation {
+                    invalidateProposal(expired: plan.rule == .preparedRouteExpired)
+                }
+            }
             return
         }
         guard let selectedCandidate = candidates.first(where: {
             $0.station.statusKey == proposal.stationKey
         }) else {
             lastDecisionReason = .noSafeStation
+            invalidateProposal(expired: plan.rule == .preparedRouteExpired)
             return
         }
         let evidence = proposalEvidence(
@@ -266,6 +282,7 @@ final class AutonomousChargingAgentStore {
         )
         guard trust.isVerified else {
             lastDecisionReason = .noSafeStation
+            invalidateProposal(expired: plan.rule == .preparedRouteExpired)
             return
         }
         persistVerifiedProposal(
@@ -305,6 +322,7 @@ final class AutonomousChargingAgentStore {
     ) {
         lastDecisionReason = nil
         self.proposal = proposal
+        state = .valid
         persistence.autonomousChargingProposal = proposal
         persistence.lastAutonomousChargingProposal = proposal
         record(AutomationReport(
@@ -410,6 +428,11 @@ final class AutonomousChargingAgentStore {
 
     func acceptProposal() async {
         guard let proposal else { return }
+        guard proposal.expiresAt > Date() else {
+            invalidateProposal(expired: true)
+            return
+        }
+        state = .refreshing
         if search.userLocation == nil, let savedLocation = persistence.lastKnownLocation {
             search.updateLocation(
                 latitude: savedLocation.latitude,
@@ -417,25 +440,49 @@ final class AutonomousChargingAgentStore {
                 source: savedLocation.source
             )
         }
+        guard let origin = search.userLocation,
+              await stationData.recheckStatusesForNavigation() else {
+            invalidateProposal(expired: false)
+            return
+        }
+        guard proposal.expiresAt > Date(),
+              let station = await stationData.station(withKey: proposal.stationKey),
+              let candidate = await stationData.directCandidate(
+                station: station,
+                origin: origin,
+                profile: settings.profile,
+                filters: settings.filters
+              ),
+              !candidate.hasRiskyStatus,
+              candidate.arrivalChargePercent >= Double(settings.autonomousChargingPolicy.minimumArrivalPercent),
+              candidate.score >= settings.autonomousChargingPolicy.minimumStationScore else {
+            invalidateProposal(expired: proposal.expiresAt <= Date())
+            return
+        }
+        state = .valid
         await search.openStation(withKey: proposal.stationKey)
     }
 
     func openPendingRouteIfNeeded() async {
         guard let stationKey = PendingAutonomousRouteStore.consume() else { return }
-        if search.userLocation == nil, let savedLocation = persistence.lastKnownLocation {
-            search.updateLocation(
-                latitude: savedLocation.latitude,
-                longitude: savedLocation.longitude,
-                source: savedLocation.source
-            )
-        }
-        await search.openStation(withKey: stationKey)
+        guard proposal?.stationKey == stationKey else { return }
+        await acceptProposal()
     }
 
     func dismissProposal() {
+        invalidateProposal(expired: false)
+    }
+
+    private func expireProposalIfNeeded() {
+        if let proposal, proposal.expiresAt <= Date() { invalidateProposal(expired: true) }
+    }
+
+    private func invalidateProposal(expired: Bool) {
+        let wasExpired = state == .expired
         proposal = nil
-        state = .idle
+        state = expired || wasExpired ? .expired : .cancelled
         persistence.autonomousChargingProposal = nil
+        Task { await notificationService.cancelPending() }
     }
 
     func handleMutedNotificationAction() {

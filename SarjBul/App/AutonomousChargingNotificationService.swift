@@ -14,6 +14,10 @@ enum AutonomousNotificationConstants {
 actor AutonomousChargingNotificationService {
     private let center = UNUserNotificationCenter.current()
 
+    func cancelPending() {
+        center.removePendingNotificationRequests(withIdentifiers: ["autonomous-charging-proposal"])
+    }
+
     func requestAuthorization() async -> Bool {
         (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
     }
