@@ -87,15 +87,24 @@ def validate_payload(payload):
 def normalize(row, identifier, previous=None):
     coordinate(row)
     powers, sockets = [], set()
-    for socket in row["soketler"]:
+    units = []
+    for index, socket in enumerate(row["soketler"]):
+        socket_id = socket.get("soketNo") or f"socket-{index}"
+        socket_type = SOCKETS.get(socket.get("soketTuru"), UNKNOWN)
         if socket.get("soketTuru") in SOCKETS:
             sockets.add(SOCKETS[socket["soketTuru"]])
         try:
             power = float(str(socket.get("soketGucu", "")).replace(",", "."))
         except ValueError:
-            continue
-        if math.isfinite(power) and 0 < power <= 1500:
+            power = None
+        if power is not None and math.isfinite(power) and 0 < power <= 1500:
             powers.append((power, socket.get("soketTipi")))
+        else:
+            power = None
+        # The public inventory has no unit identifier. Keep each socket in its
+        # own unit rather than guessing which sockets share a charger.
+        units.append({"id": socket_id, "powerKW": power,
+                      "sockets": [{"id": socket_id, "type": socket_type}]})
     maximum = max(powers, key=lambda p: p[0]) if powers else None
     power_text = f"{maximum[0]:g} kW" if maximum else UNKNOWN
     if maximum and maximum[1] in {"AC", "DC"}:
@@ -110,6 +119,7 @@ def normalize(row, identifier, previous=None):
         "source_ids": {"epdk": row["sarjIstasyonuNo"]},
         "epdk_license": row.get("sarjAgiIsletmecisiLisansNo"),
         "epdk_sockets": row["soketler"], "guven_skoru": 0.88,
+        "sarj_uniteleri": units,
     }
     if previous:
         record["source_ids"] = {**previous.get("source_ids", {}), **record["source_ids"]}

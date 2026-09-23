@@ -2,6 +2,7 @@ import Foundation
 
 public struct StationCandidate: Identifiable, Hashable, Sendable {
     public var station: Station
+    public var chargingPowerKW: Double
     public var status: StationStatusSummary?
     public var distanceKm: Double
     public var straightLineDistanceKm: Double
@@ -18,6 +19,7 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
 
     public init(
         station: Station,
+        chargingPowerKW: Double? = nil,
         status: StationStatusSummary? = nil,
         distanceKm: Double,
         straightLineDistanceKm: Double,
@@ -31,6 +33,7 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         liveAvailability: LiveStationAvailability? = nil
     ) {
         self.station = station
+        self.chargingPowerKW = chargingPowerKW ?? station.powerKW
         self.status = status
         self.distanceKm = distanceKm
         self.straightLineDistanceKm = straightLineDistanceKm

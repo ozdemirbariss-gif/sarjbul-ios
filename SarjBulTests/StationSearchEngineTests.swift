@@ -119,6 +119,28 @@ struct StationSearchEngineTests {
     }
 
     @Test
+    func mixedSocketPowersDoNotCrossMatch() throws {
+        let json = """
+        {"id":"krempark","isim":"Krempark AVM Tekirdağ","adres":"Tekirdağ",
+         "enlem":41.3209,"boylam":27.967276,"hiz":"180 kW (DC)",
+         "soket":"CCS, Type 2","epdk_sockets":[
+           {"soketNo":"SKT/1769","soketGucu":"22","soketTuru":"AC_TYPE2"},
+           {"soketNo":"SKT/60105","soketGucu":"180","soketTuru":"DC_CCS"}]}
+        """
+        let station = try JSONDecoder().decode(Station.self, from: Data(json.utf8))
+        #expect(station.chargingUnits.count == 2)
+        #expect(!station.matches(minimumPowerKW: 100, socketFilters: ["Type 2"]))
+        #expect(station.matches(minimumPowerKW: 100, socketFilters: ["CCS"]))
+        let results = StationSearchEngine().candidates(
+            from: [station],
+            origin: UserLocation(latitude: station.latitude, longitude: station.longitude, source: .manual),
+            profile: DrivingProfile(chargePercent: 100),
+            filters: StationFilters(minimumPowerKW: 100, socketFilters: ["Type 2"], rangeFilterEnabled: false)
+        )
+        #expect(results.isEmpty)
+    }
+
+    @Test
     func authSessionExpiresBeforeFirebaseHardDeadline() {
         let almostExpired = FirebaseAuthSession(
             idToken: "token",

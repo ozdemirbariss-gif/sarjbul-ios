@@ -37,12 +37,12 @@ public enum StationDecisionEngine {
     ) -> StationDecisionSummary {
         let arrival = max(0, min(100, Int(candidate.arrivalChargePercent.rounded())))
         let target = max(arrival, min(100, targetChargePercent))
-        let chargeMinutes: Int? = if candidate.station.powerKW > 0, target > arrival {
+        let chargeMinutes: Int? = if candidate.chargingPowerKW > 0, target > arrival {
             Int(ceil(ChargingCurve.minutes(
                 from: arrival,
                 to: target,
                 batteryKWh: profile.batteryKWh,
-                stationPowerKW: candidate.station.powerKW
+                stationPowerKW: candidate.chargingPowerKW
             )))
         } else if target == arrival {
             0

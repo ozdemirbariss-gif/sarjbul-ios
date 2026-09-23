@@ -1,5 +1,27 @@
 import Foundation
 
+public struct ChargingSocket: Codable, Hashable, Sendable {
+    public var id: String
+    public var type: String
+
+    public init(id: String, type: String) {
+        self.id = id
+        self.type = type
+    }
+}
+
+public struct ChargingUnit: Codable, Hashable, Sendable {
+    public var id: String
+    public var powerKW: Double?
+    public var sockets: [ChargingSocket]
+
+    public init(id: String, powerKW: Double?, sockets: [ChargingSocket]) {
+        self.id = id
+        self.powerKW = powerKW
+        self.sockets = sockets
+    }
+}
+
 public struct Station: Codable, Identifiable, Hashable, Sendable {
     public var id: String
     public var name: String
@@ -9,6 +31,7 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
     public var power: String
     public var operatorName: String
     public var socket: String
+    public var chargingUnits: [ChargingUnit]
     public var price: String
     public var source: String
     public var sources: [String]
@@ -25,6 +48,7 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         power: String,
         operatorName: String,
         socket: String,
+        chargingUnits: [ChargingUnit] = [],
         price: String,
         source: String,
         sources: [String] = [],
@@ -39,6 +63,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         self.power = power
         self.operatorName = operatorName
         self.socket = socket
+        self.chargingUnits = chargingUnits.isEmpty
+            ? Station.legacyUnits(power: power, socket: socket) : chargingUnits
         self.price = price
         self.source = source
         self.sources = sources
@@ -62,6 +88,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         case power = "hiz"
         case operatorName = "operator"
         case socket = "soket"
+        case chargingUnits = "sarj_uniteleri"
+        case epdkSockets = "epdk_sockets"
         case price = "fiyat"
         case source = "kaynak"
         case sources = "kaynaklar"
@@ -79,6 +107,22 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         power = try container.decodeIfPresent(String.self, forKey: .power) ?? "Bilinmiyor"
         operatorName = try container.decodeIfPresent(String.self, forKey: .operatorName) ?? "Operatör bilinmiyor"
         socket = try container.decodeIfPresent(String.self, forKey: .socket) ?? "Bilinmiyor"
+        if let units = try container.decodeIfPresent([ChargingUnit].self, forKey: .chargingUnits), !units.isEmpty {
+            chargingUnits = units
+        } else if let sockets = try container.decodeIfPresent([EPDKSocket].self, forKey: .epdkSockets), !sockets.isEmpty {
+            // EPDK has socket IDs and powers, but no charging-unit ID. A unit per
+            // socket preserves every known pairing without inventing shared hardware.
+            chargingUnits = sockets.enumerated().map { index, item in
+                let id = item.number ?? "socket-\(index)"
+                return ChargingUnit(
+                    id: id,
+                    powerKW: NumberParser.firstDecimal(in: item.power ?? ""),
+                    sockets: [ChargingSocket(id: id, type: Self.socketName(item.kind))]
+                )
+            }
+        } else {
+            chargingUnits = Self.legacyUnits(power: power, socket: socket)
+        }
         price = try container.decodeIfPresent(String.self, forKey: .price) ?? "Bilinmiyor"
         source = try container.decodeIfPresent(String.self, forKey: .source) ?? ""
         sources = try container.decodeIfPresent([String].self, forKey: .sources) ?? []
@@ -91,6 +135,56 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
             socket: socket,
             power: power
         )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(address, forKey: .address)
+        try container.encode(latitude, forKey: .latitude)
+        try container.encode(longitude, forKey: .longitude)
+        try container.encode(power, forKey: .power)
+        try container.encode(operatorName, forKey: .operatorName)
+        try container.encode(socket, forKey: .socket)
+        try container.encode(chargingUnits, forKey: .chargingUnits)
+        try container.encode(price, forKey: .price)
+        try container.encode(source, forKey: .source)
+        try container.encode(sources, forKey: .sources)
+        try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
+        try container.encode(confidenceScore, forKey: .confidenceScore)
+    }
+
+    private struct EPDKSocket: Decodable {
+        let number: String?
+        let power: String?
+        let kind: String?
+
+        enum CodingKeys: String, CodingKey {
+            case number = "soketNo"
+            case power = "soketGucu"
+            case kind = "soketTuru"
+        }
+    }
+
+    private static func socketName(_ kind: String?) -> String {
+        switch kind {
+        case "AC_TYPE2": "Type 2"
+        case "DC_CCS": "CCS"
+        case "DC_CHADEMO": "CHAdeMO"
+        default: kind ?? "Bilinmiyor"
+        }
+    }
+
+    private static func legacyUnits(power: String, socket: String) -> [ChargingUnit] {
+        let types = socket.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && $0.localizedCaseInsensitiveCompare("Bilinmiyor") != .orderedSame }
+        // A station-wide maximum cannot be assigned to several socket types.
+        let knownPower = types.count == 1 ? NumberParser.firstDecimal(in: power) : nil
+        return types.enumerated().map { index, type in
+            ChargingUnit(id: "legacy-\(index)", powerKW: knownPower,
+                         sockets: [ChargingSocket(id: "legacy-\(index)", type: type)])
+        }
     }
 
     private static func makeSearchKey(
@@ -126,18 +220,25 @@ public extension Station {
     }
 
     var powerKW: Double {
-        if let value = NumberParser.firstDecimal(in: power) {
-            return value
-        }
+        chargingUnits.compactMap(\.powerKW).max() ?? 0
+    }
 
-        let normalized = power.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
-        if normalized.contains("standart") && normalized.contains("ac") {
-            return 22
+    func matchingPowerKW(socketFilters: Set<String>) -> Double {
+        chargingUnits.filter { unit in
+            socketFilters.isEmpty || unit.sockets.contains { socket in
+                socketFilters.contains { socket.type.localizedCaseInsensitiveContains($0) }
+            }
+        }.compactMap(\.powerKW).max() ?? 0
+    }
+
+    func matches(minimumPowerKW: Double, socketFilters: Set<String>) -> Bool {
+        if minimumPowerKW <= 0 && socketFilters.isEmpty { return true }
+        return chargingUnits.contains { unit in
+            (minimumPowerKW <= 0 || (unit.powerKW ?? 0) >= minimumPowerKW)
+                && (socketFilters.isEmpty || unit.sockets.contains { socket in
+                    socketFilters.contains { socket.type.localizedCaseInsensitiveContains($0) }
+                })
         }
-        if normalized.contains("ac") {
-            return 11
-        }
-        return 0
     }
 
     var priceValue: Double {
@@ -145,14 +246,11 @@ public extension Station {
     }
 
     var hasKnownPower: Bool {
-        NumberParser.firstDecimal(in: power) != nil
-            || power.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR")).contains("ac")
+        chargingUnits.contains { $0.powerKW != nil }
     }
 
     var hasKnownSocket: Bool {
-        let normalized = socket.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return !normalized.isEmpty && !normalized.contains("bilinmiyor") && !normalized.contains("unknown")
+        chargingUnits.contains { !$0.sockets.isEmpty }
     }
 
     var hasValidCoordinate: Bool {

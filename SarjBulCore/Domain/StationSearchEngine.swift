@@ -80,8 +80,7 @@ public struct StationSearchEngine: Sendable {
             for station in stations {
                 guard station.hasValidCoordinate else { continue }
                 guard isInsideBoundingBox(station: station, origin: origin, radiusKm: radiusKm) else { continue }
-                guard filters.minimumPowerKW <= 0 || !station.hasKnownPower || station.powerKW >= filters.minimumPowerKW else { continue }
-                guard filters.socketFilters.isEmpty || !station.hasKnownSocket || filters.socketFilters.contains(where: { station.socket.localizedCaseInsensitiveContains($0) }) else { continue }
+                guard station.matches(minimumPowerKW: filters.minimumPowerKW, socketFilters: filters.socketFilters) else { continue }
                 guard filters.operatorFilters.isEmpty || filters.operatorFilters.contains(station.operatorName) else { continue }
                 guard normalizedSearch.isEmpty || station.searchKey.contains(normalizedSearch) else { continue }
 
@@ -95,6 +94,7 @@ public struct StationSearchEngine: Sendable {
 
                 candidates.append(StationCandidate(
                     station: station,
+                    chargingPowerKW: station.matchingPowerKW(socketFilters: filters.socketFilters),
                     status: stationStatuses[station.statusKey] ?? stationStatuses[station.id],
                     distanceKm: (distance * 10).rounded() / 10,
                     straightLineDistanceKm: (straightLine * 10).rounded() / 10,
@@ -154,8 +154,7 @@ public struct StationSearchEngine: Sendable {
         let candidates = stations.compactMap { station -> StationCandidate? in
             guard station.hasValidCoordinate else { return nil }
             guard bounds.contains(latitude: station.latitude, longitude: station.longitude) else { return nil }
-            guard filters.minimumPowerKW <= 0 || !station.hasKnownPower || station.powerKW >= filters.minimumPowerKW else { return nil }
-            guard filters.socketFilters.isEmpty || !station.hasKnownSocket || filters.socketFilters.contains(where: { station.socket.localizedCaseInsensitiveContains($0) }) else { return nil }
+            guard station.matches(minimumPowerKW: filters.minimumPowerKW, socketFilters: filters.socketFilters) else { return nil }
             guard filters.operatorFilters.isEmpty || filters.operatorFilters.contains(station.operatorName) else { return nil }
             guard normalizedSearch.isEmpty || station.searchableText.contains(normalizedSearch) else { return nil }
 
@@ -178,6 +177,7 @@ public struct StationSearchEngine: Sendable {
 
             var candidate = StationCandidate(
                 station: station,
+                chargingPowerKW: station.matchingPowerKW(socketFilters: filters.socketFilters),
                 status: stationStatuses[station.statusKey] ?? stationStatuses[station.id],
                 distanceKm: (estimatedDistance * 10).rounded() / 10,
                 straightLineDistanceKm: (fromOriginStraight * 10).rounded() / 10,
@@ -362,14 +362,14 @@ private extension Array where Element == StationCandidate {
         case .balanced:
             sorted {
                 if $0.distanceKm != $1.distanceKm { return $0.distanceKm < $1.distanceKm }
-                if $0.station.powerKW != $1.station.powerKW { return $0.station.powerKW > $1.station.powerKW }
+                if $0.chargingPowerKW != $1.chargingPowerKW { return $0.chargingPowerKW > $1.chargingPowerKW }
                 return $0.station.priceValue < $1.station.priceValue
             }
         case .nearest:
             sorted { $0.distanceKm < $1.distanceKm }
         case .fastest:
             sorted {
-                if $0.station.powerKW != $1.station.powerKW { return $0.station.powerKW > $1.station.powerKW }
+                if $0.chargingPowerKW != $1.chargingPowerKW { return $0.chargingPowerKW > $1.chargingPowerKW }
                 return $0.distanceKm < $1.distanceKm
             }
         case .economical:
@@ -397,7 +397,7 @@ private extension Array where Element == StationCandidate {
         case .fastest:
             sorted { lhs, rhs in
                 if lhs.hasRiskyStatus != rhs.hasRiskyStatus { return !lhs.hasRiskyStatus }
-                if lhs.station.powerKW != rhs.station.powerKW { return lhs.station.powerKW > rhs.station.powerKW }
+                if lhs.chargingPowerKW != rhs.chargingPowerKW { return lhs.chargingPowerKW > rhs.chargingPowerKW }
                 return lhs.distanceKm < rhs.distanceKm
             }
         case .economical:

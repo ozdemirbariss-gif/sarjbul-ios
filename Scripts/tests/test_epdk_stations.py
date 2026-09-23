@@ -51,6 +51,8 @@ class EPDKTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["hiz"], "120 kW (DC)")
         self.assertEqual(rows[0]["soket"], "CCS")
+        self.assertEqual(rows[0]["sarj_uniteleri"][0]["powerKW"], 120)
+        self.assertEqual(rows[0]["sarj_uniteleri"][0]["sockets"][0]["type"], "CCS")
         self.assertEqual(rows[0]["fiyat"], "Bilinmiyor")
         self.assertNotIn("guncelleme_tarihi", rows[0])
         self.assertEqual(report["private_count"], 1)
@@ -110,6 +112,7 @@ class EPDKTests(unittest.TestCase):
         record = normalize(row, "epdk_1")
         self.assertEqual(record["soket"], "Bilinmiyor")
         self.assertEqual(record["hiz"], "Bilinmiyor")
+        self.assertIsNone(record["sarj_uniteleri"][0]["powerKW"])
 
     def test_inputs_not_mutated(self):
         base, mapping = [old_station()], {}

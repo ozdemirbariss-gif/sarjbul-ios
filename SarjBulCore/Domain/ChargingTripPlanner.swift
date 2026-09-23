@@ -247,8 +247,8 @@ public struct ChargingTripPlanner: Sendable {
         }
         return groups.values.compactMap { bucket in
             bucket.max {
-                if $0.station.powerKW != $1.station.powerKW {
-                    return $0.station.powerKW < $1.station.powerKW
+                if $0.chargingPowerKW != $1.chargingPowerKW {
+                    return $0.chargingPowerKW < $1.chargingPowerKW
                 }
                 if $0.routeDeviationKm != $1.routeDeviationKm {
                     return $0.routeDeviationKm > $1.routeDeviationKm
@@ -290,7 +290,7 @@ private enum PlannerNode {
     }
 
     var powerKW: Double {
-        if case .station(let candidate) = self { return candidate.station.powerKW }
+        if case .station(let candidate) = self { return candidate.chargingPowerKW }
         return 0
     }
 }

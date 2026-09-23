@@ -3,7 +3,7 @@ import Foundation
 public enum StationScorer {
     public static func score(candidate: StationCandidate) -> Int {
         let total = distanceScore(candidate.distanceKm)
-            + powerScore(candidate.station.powerKW)
+            + powerScore(candidate.chargingPowerKW)
             + arrivalChargeScore(candidate.arrivalChargePercent)
             + statusScore(candidate.status)
             + priceScore(candidate.station.priceValue)
@@ -28,9 +28,9 @@ public enum StationScorer {
             badges.append(.init(kind: .arrivalLow, tone: .warning))
         }
 
-        if candidate.station.powerKW >= 150 {
+        if candidate.chargingPowerKW >= 150 {
             badges.append(.init(kind: .fastDC, tone: .info))
-        } else if candidate.station.powerKW >= 50 {
+        } else if candidate.chargingPowerKW >= 50 {
             badges.append(.init(kind: .dc, tone: .info))
         }
 
