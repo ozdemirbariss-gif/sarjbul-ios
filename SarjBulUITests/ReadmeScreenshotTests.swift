@@ -9,7 +9,6 @@ final class ReadmeScreenshotTests: XCTestCase {
         let screens = [
             ("home", "--ui-testing-home", "prepared-route-card"),
             ("routes", "--ui-testing-routes", "station-route-card"),
-            ("lounge", "--ui-testing-lounge", "lounge-screen"),
             ("account", "--ui-testing-profile", "verified-outcome-value"),
             ("arrival-outcome", "--ui-testing-arrived", "arrived-start-charging-card"),
             ("charging-suggestion", "--ui-testing-agent", "autonomous-proposal-card"),

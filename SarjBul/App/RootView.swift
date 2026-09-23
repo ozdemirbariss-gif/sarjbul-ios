@@ -43,10 +43,19 @@ struct RootView: View {
             await chargingSession.prepare()
             await search.prepare()
             await offlineSync.syncPending()
+            #if DEBUG
+            if !ProcessInfo.processInfo.arguments.contains("--ui-testing-agent") {
+                await autonomousAgent.evaluate(
+                    trigger: .appLaunch,
+                    location: search.userLocation
+                )
+            }
+            #else
             await autonomousAgent.evaluate(
                 trigger: .appLaunch,
                 location: search.userLocation
             )
+            #endif
             await contextIntelligence.evaluate(location: search.userLocation)
             await autonomousAgent.openPendingRouteIfNeeded()
             guard PendingAppIntentStore.consume() == .nearestFast else { return }
@@ -113,8 +122,6 @@ struct RootView: View {
         switch navigation.tab {
         case .home:
             HomeView()
-        case .lounge:
-            WaitingLoungeView()
         case .routes:
             StationFeedView()
         case .saved:
@@ -196,8 +203,6 @@ struct RootView: View {
         switch tab {
         case .home:
             settings.t("bottom.home")
-        case .lounge:
-            settings.t("bottom.map")
         case .routes:
             settings.t("bottom.routes")
         case .saved:
@@ -211,8 +216,6 @@ struct RootView: View {
         switch tab {
         case .home:
             "house"
-        case .lounge:
-            "gamecontroller"
         case .routes:
             "point.topleft.down.curvedto.point.bottomright.up"
         case .saved:
@@ -225,7 +228,6 @@ struct RootView: View {
     private func tabIdentifier(_ tab: AppTab) -> String {
         switch tab {
         case .home: "home"
-        case .lounge: "lounge"
         case .routes: "routes"
         case .saved: "saved"
         case .account: "account"

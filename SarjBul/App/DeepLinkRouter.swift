@@ -20,8 +20,8 @@ final class DeepLinkRouter {
             await search.openStation(withKey: key)
         case .nearestFast:
             await search.openNearestFast()
-        case .lounge:
-            navigation.select(.lounge)
+        case .home:
+            navigation.select(.home)
         }
     }
 }

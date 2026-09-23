@@ -214,27 +214,21 @@ struct HomeView: View {
     }
 
     private var activeChargingContextCard: some View {
-        Button {
-            Haptic.tap()
-            navigation.select(.lounge)
-        } label: {
-            contextualStatusCard(
-                icon: "bolt.fill",
-                kicker: settings.t("context.charging_kicker"),
-                title: chargingSession.station?.name ?? settings.t("context.charging_title"),
-                detail: settings.t("context.charging_target", [
-                    "percent": "\(chargingSession.targetPercent)"
-                ]),
-                tint: SBColor.surfaceInverted
-            ) {
-                if let endDate = chargingSession.endDate {
-                    Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
-                        .font(.headline.monospacedDigit().weight(.heavy))
-                        .foregroundStyle(SBColor.contentPrimary)
-                }
+        contextualStatusCard(
+            icon: "bolt.fill",
+            kicker: settings.t("context.charging_kicker"),
+            title: chargingSession.station?.name ?? settings.t("context.charging_title"),
+            detail: settings.t("context.charging_target", [
+                "percent": "\(chargingSession.targetPercent)"
+            ]),
+            tint: SBColor.surfaceInverted
+        ) {
+            if let endDate = chargingSession.endDate {
+                Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
+                    .font(.headline.monospacedDigit().weight(.heavy))
+                    .foregroundStyle(SBColor.contentPrimary)
             }
         }
-        .buttonStyle(SBPremiumButtonStyle())
         .accessibilityIdentifier("active-charging-context-card")
     }
 

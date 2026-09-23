@@ -4,7 +4,6 @@ import UIKit
 @preconcurrency import UserNotifications
 
 final class SarjBulAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
-    nonisolated(unsafe) static var supportedOrientations: UIInterfaceOrientationMask = .portrait
 
     func application(
         _ application: UIApplication,
@@ -31,13 +30,6 @@ final class SarjBulAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificat
             task.expirationHandler = { operation.cancel() }
         }
         return true
-    }
-
-    func application(
-        _ application: UIApplication,
-        supportedInterfaceOrientationsFor window: UIWindow?
-    ) -> UIInterfaceOrientationMask {
-        Self.supportedOrientations
     }
 
     func application(

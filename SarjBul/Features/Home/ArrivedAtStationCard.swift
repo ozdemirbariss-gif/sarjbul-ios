@@ -2,14 +2,12 @@ import SwiftUI
 
 struct ArrivedAtStationCard: View {
     @Environment(UserSettingsStore.self) private var settings
-    @Environment(NavigationCoordinator.self) private var navigation
     @Environment(ChargingSessionStore.self) private var chargingSession
 
     var journey: ActiveRouteJourney
 
     var body: some View {
         Button {
-            navigation.select(.lounge)
             Task {
                 await chargingSession.start(
                     station: journey.station,

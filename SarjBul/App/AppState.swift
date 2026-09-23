@@ -12,7 +12,6 @@ final class AppState {
     let search: SearchCoordinator
     let navigation: NavigationCoordinator
     let deepLinks: DeepLinkRouter
-    let lounge: LoungeStore
     let chargingHistory: ChargingHistoryStore
     let chargingSession: ChargingSessionStore
     let habits: HabitStore
@@ -118,7 +117,6 @@ final class AppState {
             executionTrust: executionTrust
         )
         deepLinks = DeepLinkRouter(search: search, navigation: navigation)
-        lounge = LoungeStore(persistence: persistence)
         chargingHistory = ChargingHistoryStore(persistence: persistence)
         chargingSession = ChargingSessionStore(
             persistence: persistence,
@@ -316,9 +314,8 @@ final class AppState {
                 policy.isEnabled = true
                 policy.minimumStationScore = 1
                 settings.autonomousChargingPolicy = policy
+                autonomousAgent.seedForUITesting()
             }
-        } else if arguments.contains("--ui-testing-lounge") {
-            navigation.tab = .lounge
         } else if arguments.contains("--ui-testing-profile") {
             navigation.tab = .account
         }

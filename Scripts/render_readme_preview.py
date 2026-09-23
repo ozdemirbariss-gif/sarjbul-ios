@@ -13,7 +13,6 @@ TOKENS_PATH = ROOT / "SarjBul" / "Resources" / "design-tokens.json"
 SCREENS = (
     ("home.png", "Ana sayfa"),
     ("routes.png", "Rotalar"),
-    ("lounge.png", "Salon"),
     ("account.png", "Profil"),
 )
 
@@ -67,7 +66,7 @@ def main() -> None:
 
     phone_width = 342
     gap = 38
-    start_x = 64
+    start_x = (canvas.width - (len(SCREENS) * phone_width + (len(SCREENS) - 1) * gap)) // 2
     phone_y = 230
     shadow_layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow_layer)

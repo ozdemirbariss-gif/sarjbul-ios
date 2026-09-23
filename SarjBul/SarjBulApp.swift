@@ -47,7 +47,6 @@ struct SarjBulApp: App {
                 .environment(appState.search)
                 .environment(appState.navigation)
                 .environment(appState.deepLinks)
-                .environment(appState.lounge)
                 .environment(appState.chargingHistory)
                 .environment(appState.chargingSession)
                 .environment(appState.habits)

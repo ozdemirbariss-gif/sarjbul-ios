@@ -37,7 +37,6 @@ enum SBGeneratedTokens {
     static let statusAvailable = SBGeneratedColorToken(hex: "#B7D9C2", opacity: 1.0)
     static let danger = SBGeneratedColorToken(hex: "#FF8585", opacity: 1.0)
     static let warning = SBGeneratedColorToken(hex: "#E6C66F", opacity: 1.0)
-    static let loungeAccent = SBGeneratedColorToken(hex: "#B8A7FF", opacity: 1.0)
 
     static let radiusSm = 10.0
     static let radiusMd = 18.0

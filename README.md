@@ -6,7 +6,7 @@ SarjBul, Türkiye genelindeki elektrikli araç şarj noktalarını menzil, rota,
 
 ![SarjBul iOS ekranları](Docs/screenshots/sarjbul-ios-preview.png)
 
-Görseller gerçek iPhone simülatöründen, tekrarlanabilir test senaryolarıyla alınır; canlı müsaitlik veya fiyat kanıtı değildir. Çekimin commit ve ortam bilgileri [capture.json](Docs/screenshots/capture.json) dosyasındadır. Yeniden çekim için GitHub Actions içindeki **Capture README screenshots** iş akışı kullanılır.
+Görseller gerçek iPhone simülatöründen, tekrarlanabilir test senaryolarıyla alınır; canlı müsaitlik veya fiyat kanıtı değildir. Çekimin kaynak ve ortam bilgileri [capture.json](Docs/screenshots/capture.json) dosyasındadır. Yeniden çekim için GitHub Actions içindeki **Capture README screenshots** iş akışı kullanılır.
 
 ### Şarj Önerisi
 
@@ -57,7 +57,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Aktif şarj ve kritik menzili uygulamayı açmadan gösteren bağlamsal WidgetKit yüzeyi; ilerleme çizgili Live Activity ve Dynamic Island
 - Aktif şarj, kritik menzil, otonom rota ve alışkanlık önerisini tek öncelik sırasıyla sunan bağlamsal ana ekran
 - Şarj molasında 400 metre içindeki kahve, market, park ve diğer yürüyüş noktaları
-- Şarj hatırlatıcısı ve kısa Salon oyunu
+- Şarj hatırlatıcısı
 - Türkçe/İngilizce, Dynamic Type, Reduce Motion, VoiceOver etiketleri ve çevrimdışı durum
 
 ## Mimari

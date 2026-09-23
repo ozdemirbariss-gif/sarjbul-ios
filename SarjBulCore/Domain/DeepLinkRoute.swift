@@ -3,7 +3,7 @@ import Foundation
 public enum DeepLinkRoute: Hashable, Sendable {
     case station(key: String)
     case nearestFast
-    case lounge
+    case home
 }
 
 public enum DeepLinkRouteParser {
@@ -12,8 +12,8 @@ public enum DeepLinkRouteParser {
         if url.host?.lowercased() == "quick", url.pathComponents.dropFirst().first == "fast" {
             return .nearestFast
         }
-        if url.host?.lowercased() == "lounge" {
-            return .lounge
+        if url.host?.lowercased() == "home" {
+            return .home
         }
         guard url.host?.lowercased() == "station",
               let encodedKey = url.pathComponents.dropFirst().first,

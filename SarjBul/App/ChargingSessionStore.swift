@@ -154,7 +154,7 @@ final class ChargingSessionStore {
             subtitle: station.name,
             value: "%\(targetPercent)",
             icon: "bolt.fill",
-            deepLink: "sarjbul://lounge",
+            deepLink: "sarjbul://home",
             updatedAt: Date(),
             endDate: endDate
         ))

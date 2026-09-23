@@ -48,7 +48,6 @@ protocol AppPersistence: AnyObject {
     var recentRoutes: [RecentStationRoute] { get set }
     var favoriteStationKeys: Set<String> { get set }
     var reportCooldowns: [String: Date] { get set }
-    var loungeBestScore: Int { get set }
     var chargingSessions: [ChargingSessionRecord] { get set }
     var activeChargingSession: PersistedChargingSession? { get set }
     var demandAnalyticsEnabled: Bool { get set }
@@ -103,7 +102,6 @@ final class SystemAppPersistence: AppPersistence {
         static let recentRoutes = "recentStationRoutes"
         static let favoriteStationKeys = "favoriteStationKeys"
         static let reportCooldowns = "stationReportCooldowns"
-        static let loungeBest = "voltDashBest"
         static let chargingSessions = "chargingSessions"
         static let activeChargingSession = "activeChargingSession"
         static let demandAnalyticsEnabled = "demandAnalyticsEnabled"
@@ -222,11 +220,6 @@ final class SystemAppPersistence: AppPersistence {
     var reportCooldowns: [String: Date] {
         get { decode([String: Date].self, key: Key.reportCooldowns) ?? [:] }
         set { encode(newValue, key: Key.reportCooldowns) }
-    }
-
-    var loungeBestScore: Int {
-        get { defaults.integer(forKey: Key.loungeBest) }
-        set { defaults.set(newValue, forKey: Key.loungeBest) }
     }
 
     var chargingSessions: [ChargingSessionRecord] {

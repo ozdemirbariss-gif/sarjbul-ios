@@ -37,8 +37,6 @@
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Yakındaki şarj istasyonlarını bulmak ve varış şarjını hesaplamak için konumun kullanılır.</string>

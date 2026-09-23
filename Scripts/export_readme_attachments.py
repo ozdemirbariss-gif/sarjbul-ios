@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 
 
-NAMES = {"home", "routes", "lounge", "account", "arrival-outcome", "charging-suggestion", "charging-suggestion-en"}
+NAMES = {"home", "routes", "account", "arrival-outcome", "charging-suggestion", "charging-suggestion-en"}
 
 
 def objects(value):

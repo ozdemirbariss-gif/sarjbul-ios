@@ -236,8 +236,10 @@ struct ProductIntelligenceTests {
         let url = try #require(URL(string: "sarjbul://quick/fast"))
         #expect(DeepLinkRouteParser.parse(url) == .nearestFast)
 
-        let loungeURL = try #require(URL(string: "sarjbul://lounge"))
-        #expect(DeepLinkRouteParser.parse(loungeURL) == .lounge)
+        let homeURL = try #require(URL(string: "sarjbul://home"))
+        #expect(DeepLinkRouteParser.parse(homeURL) == .home)
+        let removedURL = try #require(URL(string: "sarjbul://lounge"))
+        #expect(DeepLinkRouteParser.parse(removedURL) == nil)
     }
 
     @Test

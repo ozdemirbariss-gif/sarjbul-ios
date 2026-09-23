@@ -81,6 +81,9 @@ final class AutonomousChargingAgentStore {
     }
 
     func updateLocation(_ location: UserLocation) async {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing-agent") { return }
+        #endif
         persistence.lastKnownLocation = location
         await evaluate(trigger: .locationUpdate, location: location)
     }
@@ -490,6 +493,25 @@ final class AutonomousChargingAgentStore {
     }
 
     #if DEBUG
+    func seedForUITesting() {
+        let now = Date()
+        let sample = AutonomousChargingProposal(
+            stationKey: "ui-test-agent-station",
+            stationName: "Buca Belediye Yedigöller Cafe",
+            distanceKm: 1.6,
+            estimatedMinutes: 4,
+            arrivalChargePercent: 30,
+            stationScore: 85,
+            telemetrySource: .manualProfile,
+            trigger: .appLaunch,
+            generatedAt: now,
+            expiresAt: now.addingTimeInterval(2 * 3_600)
+        )
+        proposal = sample
+        persistence.autonomousChargingProposal = sample
+        state = .valid
+    }
+
     func resetForUITesting() {
         proposal = nil
         state = .idle

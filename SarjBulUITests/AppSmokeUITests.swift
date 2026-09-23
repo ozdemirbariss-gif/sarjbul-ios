@@ -64,7 +64,7 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(startCharging.waitForExistence(timeout: 12))
         startCharging.tap()
 
-        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.descendants(matching: .any)["active-charging-context-card"].waitForExistence(timeout: 12))
     }
 
     func testProfileKeepsComplexSettingsCollapsedByDefault() throws {
@@ -87,32 +87,6 @@ final class AppSmokeUITests: XCTestCase {
 
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
         XCTAssertFalse(app.descendants(matching: .any)["location-input"].exists)
-    }
-
-    func testLoungeOmitsRedundantPageTitle() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing-lounge"]
-        app.launch()
-
-        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
-        XCTAssertFalse(app.descendants(matching: .any)["lounge-page-title"].exists)
-        XCTAssertTrue(app.buttons["bottom-navigation-tab-saved"].exists)
-    }
-
-    func testLoungeRotatesIntoFullscreenGame() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["--ui-testing-lounge"]
-        app.launch()
-
-        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
-        for _ in 0..<5 where !app.buttons["lounge-fullscreen-button"].isHittable { app.swipeUp() }
-        XCTAssertTrue(app.buttons["lounge-fullscreen-button"].isHittable)
-        app.buttons["lounge-fullscreen-button"].tap()
-        XCTAssertTrue(app.descendants(matching: .any)["lounge-game-fullscreen"].waitForExistence(timeout: 8))
-        let exit = app.descendants(matching: .any)["lounge-fullscreen-exit"]
-        XCTAssertTrue(exit.waitForExistence(timeout: 8))
-        exit.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 8))
     }
 
     func testEnglishHeadingsUseLatinCapitalI() throws {
@@ -173,7 +147,7 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 12))
         XCTAssertTrue(app.descendants(matching: .any)["autonomous-proposal-card"].waitForExistence(timeout: 8))
         XCTAssertTrue(app.staticTexts["Şarj önerisi"].exists)
-        XCTAssertTrue(app.staticTexts["Girdiğin sürüş değerlerine göre hesaplandı."].exists)
+        XCTAssertTrue(app.staticTexts["Manuel girdiğin değerlere göre tahmin"].exists)
         XCTAssertFalse(app.staticTexts["AJAN TAMAMLADI"].exists)
         XCTAssertFalse(app.descendants(matching: .any)["agent-confirmed-low-charge"].exists)
         let details = app.descendants(matching: .any)["agent-reason-details"]
@@ -191,7 +165,7 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(route.isHittable)
         XCTAssertEqual(route.label, "Rotayı görüntüle")
         route.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["station-route-card"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.descendants(matching: .any)["autonomous-proposal-card"].waitForNonExistence(timeout: 15))
     }
 
     func testEnglishSuggestionRemainsUsableAtAccessibilityTextSize() throws {

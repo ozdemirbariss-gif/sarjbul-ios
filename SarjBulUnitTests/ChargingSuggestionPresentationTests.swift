@@ -18,7 +18,7 @@ final class ChargingSuggestionPresentationTests: XCTestCase {
         var presentation = makePresentation()
         presentation.telemetry = telemetry(source: .manualProfile)
         XCTAssertEqual(presentation.heading, "Şarj önerisi")
-        XCTAssertEqual(presentation.source, "Girdiğin sürüş değerlerine göre hesaplandı.")
+        XCTAssertEqual(presentation.source, "Manuel girdiğin değerlere göre tahmin")
         XCTAssertEqual(presentation.duration, "Yaklaşık 1 dk")
         XCTAssertEqual(presentation.arrival, "Varış şarjı tahmini: %17")
         XCTAssertEqual(presentation.distance, "Tahmini mesafe: 0,3 km")
@@ -28,7 +28,7 @@ final class ChargingSuggestionPresentationTests: XCTestCase {
     func testEnglishCopyAndDecimalFormatting() {
         let presentation = makePresentation(language: .en)
         XCTAssertEqual(presentation.heading, "Charging suggestion")
-        XCTAssertEqual(presentation.source, "Calculated from the driving values you entered.")
+        XCTAssertEqual(presentation.source, "Estimate based on values you entered manually")
         XCTAssertEqual(presentation.duration, "About 1 min")
         XCTAssertEqual(presentation.arrival, "Estimated arrival charge: 17%")
         XCTAssertEqual(presentation.distance, "Estimated distance: 0.3 km")

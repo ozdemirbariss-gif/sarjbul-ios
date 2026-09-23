@@ -210,7 +210,7 @@ struct ChargingLiveActivityWidget: Widget {
             } minimal: {
                 Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
             }
-            .widgetURL(URL(string: "sarjbul://lounge"))
+            .widgetURL(URL(string: "sarjbul://home"))
             .keylineTint(activityAccent)
         }
     }

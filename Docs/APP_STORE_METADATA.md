@@ -49,7 +49,7 @@ No sign-in or registration form is required. Cloud features use an anonymous app
 - Destek URL'si: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md
 - Gizlilik URL'si: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md
 - App Review iletişim kişisi, telefon ve e-posta; kamuya açık destek adresinden ayrı bir formdur.
-- Güncel yaş derecelendirmesi anketi: Salon oyunu ve uygulamada gerçekten sunulan özelliklere göre cevapla.
+- Güncel yaş derecelendirmesi anketi: uygulamada gerçekten sunulan özelliklere göre cevapla.
 - Fiyat ve dağıtım ülkeleri; Avrupa Birliği seçilecekse DSA durumunu tamamla.
 - Desteklenen iPhone ekran boyutunda güncel TR/EN ekran görüntüleri; README kolajını mağaza ekran görüntüsü yerine kullanma.
 

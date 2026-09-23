@@ -20,8 +20,7 @@
     "stationStandardPower": { "hex": "#777A76", "opacity": 1.0 },
     "statusAvailable": { "hex": "#B7D9C2", "opacity": 1.0 },
     "danger": { "hex": "#FF8585", "opacity": 1.0 },
-    "warning": { "hex": "#E6C66F", "opacity": 1.0 },
-    "loungeAccent": { "hex": "#B8A7FF", "opacity": 1.0 }
+    "warning": { "hex": "#E6C66F", "opacity": 1.0 }
   },
   "radius": {
     "sm": 10,

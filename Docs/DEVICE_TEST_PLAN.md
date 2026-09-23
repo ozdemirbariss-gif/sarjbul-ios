@@ -30,7 +30,6 @@ Test eden:
 | Takvim ertelemesi | Yetki, etkinlik sahipliği ve kullanıcı onayı/otomasyon koşulları doğrulanır | Bekliyor |
 | TR / EN, büyük yazı, VoiceOver | Metinler taşmaz; kontroller adlandırılmış ve erişilebilirdir | Bekliyor |
 | Sheet ve sekmeler | Kapatma/geri, klavye ve alt navigasyon erişilebilir kalır | Bekliyor |
-| Salon yatay ekran | Tam ekran oyuna girilir; çıkışta ekran yönü toparlanır | Bekliyor |
 | Şarj hikayesi | 1080x1920 önizleme, paylaşım ve iptal akışları çalışır | Bekliyor |
 | Çökme takibi | Kontrol edilen deneme hatası Crashlytics'e düşer; hassas içerik içermez | Bekliyor |
 

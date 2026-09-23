@@ -46,7 +46,6 @@ enum SBColor {
     static let statusAvailable = SBGeneratedTokens.statusAvailable.color
     static let danger = SBGeneratedTokens.danger.color
     static let warning = SBGeneratedTokens.warning.color
-    static let loungeAccent = SBGeneratedTokens.loungeAccent.color
 }
 
 enum SBRadius {

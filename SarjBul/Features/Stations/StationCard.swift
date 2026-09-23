@@ -274,7 +274,7 @@ struct StationCard: View {
             }
 
             Button {
-                navigation.select(.lounge)
+                navigation.select(.home)
                 Task {
                     await chargingSession.start(
                         station: candidate.station,
@@ -283,7 +283,7 @@ struct StationCard: View {
                     )
                 }
             } label: {
-                Label(settings.t("break.start"), systemImage: "cup.and.saucer")
+                Label(settings.t("break.start"), systemImage: "bolt.fill")
             }
 
             Button {
