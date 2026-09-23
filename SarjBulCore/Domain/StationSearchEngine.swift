@@ -111,7 +111,7 @@ public struct StationSearchEngine: Sendable {
             }
         }
 
-        let rawCandidates = Array(candidates.roughSorted(preference: filters.preference).prefix(rawCandidateLimit))
+        let rawCandidates = Array(candidates.roughSorted(preference: filters.preference.supportedValue).prefix(rawCandidateLimit))
         let richCandidates = rawCandidates.prefix(richCandidateLimit).map { candidate in
             var candidate = candidate
             candidate.score = StationScorer.score(candidate: candidate)
@@ -119,7 +119,7 @@ public struct StationSearchEngine: Sendable {
             return candidate
         }
 
-        return richCandidates.sorted(preference: filters.preference).prefix(limit).map { $0 }
+        return richCandidates.sorted(preference: filters.preference.supportedValue).prefix(limit).map { $0 }
     }
 
     public func candidatesAlongJourney(
@@ -193,7 +193,7 @@ public struct StationSearchEngine: Sendable {
             return candidate
         }
 
-        return candidates.sorted(preference: filters.preference).prefix(limit).map { $0 }
+        return candidates.sorted(preference: filters.preference.supportedValue).prefix(limit).map { $0 }
     }
 
     private func radiusSteps(rangeFilterEnabled: Bool, safeRangeKm: Double) -> [Double] {

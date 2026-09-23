@@ -84,6 +84,7 @@ struct HomeView: View {
                 }
             }
             .onAppear {
+                settings.filters.preference = settings.filters.preference.supportedValue
                 settings.destination = nil
                 applyIntentPrefillIfEligible()
                 syncWidgetContext()
@@ -129,9 +130,9 @@ struct HomeView: View {
 
     private var topControls: some View {
         HStack(spacing: 10) {
+            preferenceButton(.balanced, icon: "slider.horizontal.3")
             preferenceButton(.nearest, icon: "location.north.line")
             preferenceButton(.fastest, icon: "bolt.fill")
-            preferenceButton(.economical, icon: "fuelpump")
         }
         .padding(6)
         .background(SBColor.surfaceRaised, in: RoundedRectangle(cornerRadius: 28, style: .continuous))

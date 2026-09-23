@@ -69,6 +69,12 @@ struct StationSearchEngineTests {
     }
 
     @Test
+    func economicPreferenceIsUnavailableWithoutTariffs() {
+        #expect(!RoutePreference.selectableCases.contains(.economical))
+        #expect(RoutePreference.economical.supportedValue == .balanced)
+    }
+
+    @Test
     func positiveStatusTextIsNotClassifiedAsRisk() {
         let statusClass = FirebaseRESTClient.statusClass(status: "Sorunsuz çalışıyor", comment: "")
 

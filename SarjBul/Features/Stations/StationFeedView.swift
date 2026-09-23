@@ -319,7 +319,7 @@ private struct StationFilterSheet: View {
             Form {
                 Section(t("filters.preference")) {
                     Picker(t("filters.preference"), selection: $filters.preference) {
-                        ForEach(RoutePreference.allCases) { preference in
+                        ForEach(RoutePreference.selectableCases) { preference in
                             Text(preferenceTitle(preference)).tag(preference)
                         }
                     }
@@ -362,6 +362,7 @@ private struct StationFilterSheet: View {
                 }
             }
             .navigationTitle(t("filters.title"))
+            .onAppear { filters.preference = filters.preference.supportedValue }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(t("filters.apply"), action: apply)
