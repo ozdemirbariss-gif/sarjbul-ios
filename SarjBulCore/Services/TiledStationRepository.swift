@@ -59,6 +59,7 @@ public actor TiledStationRepository: RefreshableStationRepository {
     private let session: URLSession
     private let decoder = JSONDecoder()
     private var refreshTask: Task<[Station]?, Error>?
+    private var loadedPublicationDate: Date?
 
     public init(
         bundledManifestURL: URL,
@@ -75,9 +76,23 @@ public actor TiledStationRepository: RefreshableStationRepository {
     public func loadStations() async throws -> [Station] {
         if let cached = try? cachedManifest(),
            let stations = try? decodeStations(manifest: cached) {
+            loadedPublicationDate = Self.parseDate(cached.generatedAt)
             return stations
         }
-        return try decodeStations(manifest: bundledManifest())
+        let manifest = try bundledManifest()
+        let stations = try decodeStations(manifest: manifest)
+        loadedPublicationDate = Self.parseDate(manifest.generatedAt)
+        return stations
+    }
+
+    public func publicationDate() async -> Date? {
+        loadedPublicationDate
+    }
+
+    private static func parseDate(_ value: String) -> Date? {
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
     }
 
     public func refreshStations() async throws -> [Station]? {
@@ -136,6 +151,7 @@ public actor TiledStationRepository: RefreshableStationRepository {
         let stations = try decodeStations(manifest: remoteManifest)
         guard stations.count >= minimumAcceptedCount else { throw StationRepositoryError.invalidRemoteData }
         try manifestData.write(to: cacheDirectory.appending(path: "station-tiles-manifest.json"), options: .atomic)
+        loadedPublicationDate = Self.parseDate(remoteManifest.generatedAt)
         try? JSONEncoder().encode(RemoteTileMetadata(
             etag: response.value(forHTTPHeaderField: "ETag"),
             updatedAt: Date()

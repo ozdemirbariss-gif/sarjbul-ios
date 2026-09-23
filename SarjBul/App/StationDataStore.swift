@@ -96,7 +96,7 @@ final class StationDataStore {
                 statuses: stationStatuses,
                 insights: communityInsights
             )
-            persistence.stationDataLastRefreshedAt = Date()
+            await recordProvenance(downloadedAt: nil)
             loadState = .loaded
             await reloadCommunityData(idToken: statusIDToken)
             await refreshStations()
@@ -125,11 +125,9 @@ final class StationDataStore {
             if let refreshed = try await pipeline.refreshStations() {
                 stations = refreshed
                 didRefresh = true
+                await recordProvenance(downloadedAt: Date())
             }
             let didRefreshCommunity = await reloadCommunityData(idToken: idToken)
-            if didRefresh || didRefreshCommunity {
-                persistence.stationDataLastRefreshedAt = Date()
-            }
             return didRefresh || didRefreshCommunity
         } catch {
             AppTelemetry.capture(error, operation: "station_automation_refresh")
@@ -329,10 +327,20 @@ final class StationDataStore {
         do {
             guard let refreshed = try await pipeline.refreshStations() else { return }
             stations = refreshed
-            persistence.stationDataLastRefreshedAt = Date()
+            await recordProvenance(downloadedAt: Date())
         } catch {
             AppLogger.data.warning("Remote station refresh skipped: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    private func recordProvenance(downloadedAt: Date?) async {
+        persistence.stationDataSourceObservedAt = stations.compactMap(\.sourceObservationDate).max()
+        persistence.stationDataSourcePublishedAt = await pipeline.publicationDate()
+        if let downloadedAt { persistence.stationDataDownloadedAt = downloadedAt }
+        persistence.stationDataLoadedAt = Date()
+        // Keep the legacy age input tied to source evidence, never device loading.
+        persistence.stationDataLastRefreshedAt = persistence.stationDataSourceObservedAt
+            ?? persistence.stationDataSourcePublishedAt
     }
 
     private func persistReportCooldowns() {

@@ -127,16 +127,8 @@ final class ExecutionTrustStore {
         return keys
     }
 
-    func stationObservedAt(_ station: Station, fallback: Date = Date()) -> Date {
-        guard let raw = station.updatedAt else {
-            return persistence.stationDataLastRefreshedAt ?? fallback
-        }
-        let fractional = ISO8601DateFormatter()
-        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return fractional.date(from: raw)
-            ?? ISO8601DateFormatter().date(from: raw)
-            ?? persistence.stationDataLastRefreshedAt
-            ?? fallback
+    func stationObservedAt(_ station: Station) -> Date {
+        station.sourceEvidenceDate ?? .distantPast
     }
 
     private func history(for action: ExecutedActionKind) -> HistoricalActionStats {

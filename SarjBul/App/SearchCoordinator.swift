@@ -740,7 +740,7 @@ final class SearchCoordinator {
             result.append(ExecutionEvidence(
                 source: .stationDataset,
                 reliability: candidate.station.confidenceScore,
-                observedAt: executionTrust.stationObservedAt(candidate.station, fallback: now),
+                observedAt: executionTrust.stationObservedAt(candidate.station),
                 maximumAge: 30 * 86_400
             ))
             if let availability = candidate.liveAvailability {

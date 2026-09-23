@@ -58,6 +58,11 @@ class EPDKTests(unittest.TestCase):
         self.assertEqual(report["private_count"], 1)
         self.assertEqual(report["socket_count"], 2)
 
+    def test_observation_time_is_supplied_by_fetch_not_replay(self):
+        record = normalize(station(), "epdk_1", observed_at="2026-09-23T21:06:21Z")
+        self.assertEqual(record["kaynak_gozlem_tarihi"], "2026-09-23T21:06:21Z")
+        self.assertNotIn("kaynak_yayin_tarihi", record)
+
     def test_retains_existing_id_and_repeat_is_stable(self):
         base = [old_station()]
         rows, mapping, report = merge(payload(station()), base, {}, minimum=1)

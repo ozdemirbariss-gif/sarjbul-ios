@@ -118,7 +118,11 @@ public enum StationDataQuality {
         now: Date = Date(),
         halfLifeDays: Double = 120
     ) -> Double {
-        let sourceAgeFactor = decayFactor(timestamp: station.updatedAt, now: now, halfLifeDays: halfLifeDays)
+        let sourceAgeFactor = decayFactor(
+            timestamp: station.sourceObservedAt ?? station.sourcePublishedAt,
+            now: now,
+            halfLifeDays: halfLifeDays
+        )
         let sourceConfidence = station.confidenceScore * sourceAgeFactor
         let verifiedFields = insight?.fields.values.filter(\.verified) ?? []
         guard !verifiedFields.isEmpty else { return min(1, max(0, sourceConfidence)) }
@@ -135,7 +139,7 @@ public enum StationDataQuality {
         now: Date = Date(),
         halfLifeDays: Double
     ) -> Double {
-        guard halfLifeDays > 0, let timestamp, let date = parseISO8601(timestamp) else { return 1 }
+        guard halfLifeDays > 0, let timestamp, let date = parseISO8601(timestamp) else { return 0.5 }
         let ageDays = max(0, now.timeIntervalSince(date) / 86_400)
         return pow(0.5, ageDays / halfLifeDays)
     }

@@ -2,6 +2,11 @@ import Foundation
 
 public protocol StationRepository: Sendable {
     func loadStations() async throws -> [Station]
+    func publicationDate() async -> Date?
+}
+
+public extension StationRepository {
+    func publicationDate() async -> Date? { nil }
 }
 
 public protocol RefreshableStationRepository: StationRepository {

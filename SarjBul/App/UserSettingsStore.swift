@@ -1,3 +1,4 @@
+import Foundation
 import Observation
 import SarjBulCore
 
@@ -13,8 +14,12 @@ final class UserSettingsStore {
         didSet { persistence.navigationAppPreference = navigationAppPreference }
     }
     var profile: DrivingProfile {
-        didSet { persistence.profile = profile }
+        didSet {
+            persistence.profile = profile
+            if profile != oldValue { persistence.manualProfileUpdatedAt = Date() }
+        }
     }
+    var manualProfileUpdatedAt: Date? { persistence.manualProfileUpdatedAt }
     var filters = StationFilters()
     var destination: JourneyDestination? {
         didSet { persistence.destination = destination }

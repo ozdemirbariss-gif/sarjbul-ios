@@ -84,7 +84,7 @@ def validate_payload(payload):
     return rows
 
 
-def normalize(row, identifier, previous=None):
+def normalize(row, identifier, previous=None, observed_at=None):
     coordinate(row)
     powers, sockets = [], set()
     units = []
@@ -121,6 +121,8 @@ def normalize(row, identifier, previous=None):
         "epdk_sockets": row["soketler"], "guven_skoru": 0.88,
         "sarj_uniteleri": units,
     }
+    if observed_at:
+        record["kaynak_gozlem_tarihi"] = observed_at
     if previous:
         record["source_ids"] = {**previous.get("source_ids", {}), **record["source_ids"]}
         record["kaynaklar"] = sorted(set(previous.get("kaynaklar", [])) | {"epdk"})
@@ -129,7 +131,7 @@ def normalize(row, identifier, previous=None):
     return record
 
 
-def merge(payload, base, identities, previous_report=None, minimum=1000):
+def merge(payload, base, identities, previous_report=None, minimum=1000, observed_at=None):
     rows = validate_payload(payload)
     public = [r for r in rows if r["hizmetSekli"] == "HALKA_ACIK"]
     prior_count = (previous_report or {}).get("public_count", 0)
@@ -193,7 +195,7 @@ def merge(payload, base, identities, previous_report=None, minimum=1000):
         if identifier in output:
             raise ValueError("EPDK ID collides with supplementary station ID")
         identities[number] = identifier
-        output[identifier] = normalize(row, identifier, by_id.get(identifier))
+        output[identifier] = normalize(row, identifier, by_id.get(identifier), observed_at=observed_at)
     # Invalid coordinates are quarantined, never geocoded speculatively.
     report = {
         "endpoint": ENDPOINT, "total_count": len(rows), "public_count": len(public),
@@ -212,6 +214,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", type=Path, required=True)
     parser.add_argument("--input", type=Path, help="Saved API response; makes no network request")
+    parser.add_argument("--observed-at", help="Original fetch time for a saved API response")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--identities", type=Path, default=Path("Data/epdk-identities.json"))
     parser.add_argument("--report", type=Path, default=Path("Data/epdk-ingestion-report.json"))
@@ -224,8 +227,11 @@ def main():
     minimum_base = max(1000, math.ceil((previous or {}).get("supplementary_source_count", 0) * 0.85))
     if not isinstance(base, list) or len(base) < minimum_base:
         raise ValueError("Supplementary source unexpectedly shrank; publication refused")
-    records, identities, report = merge(payload, base, identities, previous)
-    report["fetched_at"] = datetime.now(timezone.utc).isoformat()
+    if args.input and not args.observed_at:
+        parser.error("--observed-at is required with --input; replay time is not observation time")
+    fetched_at = args.observed_at or datetime.now(timezone.utc).isoformat()
+    records, identities, report = merge(payload, base, identities, previous, observed_at=fetched_at)
+    report["fetched_at"] = fetched_at
     report["payload_sha256"] = hashlib.sha256(json.dumps(payload["data"], sort_keys=True).encode()).hexdigest()
     if args.raw_output:
         write_json(args.raw_output, payload)

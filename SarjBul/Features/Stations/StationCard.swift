@@ -314,6 +314,12 @@ struct StationCard: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     stationIdentity
+                    Text(settings.t("feed.last_update", [
+                        "date": candidate.station.sourceEvidenceDate?.formatted(date: .abbreviated, time: .omitted)
+                            ?? settings.t("feed.update_unknown")
+                    ]))
+                    .font(.caption)
+                    .foregroundStyle(SBColor.contentSecondary)
                     detailedDecisionSummary
 
                     LazyVGrid(

@@ -34,6 +34,10 @@ public actor StationDataPipeline {
         return stations
     }
 
+    public func publicationDate() async -> Date? {
+        await repository.publicationDate()
+    }
+
     public func refreshStations() async throws -> [Station]? {
         guard let refreshable = repository as? any RefreshableStationRepository,
               let refreshed = try await refreshable.refreshStations(),

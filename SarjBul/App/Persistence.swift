@@ -65,6 +65,11 @@ protocol AppPersistence: AnyObject {
     var lastVehicleTelemetry: VehicleTelemetrySnapshot? { get set }
     var autonomousChargingMutedUntil: Date? { get set }
     var stationDataLastRefreshedAt: Date? { get set }
+    var stationDataSourceObservedAt: Date? { get set }
+    var stationDataSourcePublishedAt: Date? { get set }
+    var stationDataDownloadedAt: Date? { get set }
+    var stationDataLoadedAt: Date? { get set }
+    var manualProfileUpdatedAt: Date? { get set }
     var cachedStationStatuses: [String: StationStatusSummary] { get set }
     var cachedCommunityInsights: [String: StationCommunityInsight] { get set }
     var automationReports: [AutomationReport] { get set }
@@ -115,6 +120,11 @@ final class SystemAppPersistence: AppPersistence {
         static let lastVehicleTelemetry = "lastVehicleTelemetry"
         static let autonomousChargingMutedUntil = AutonomousNotificationConstants.mutedUntilKey
         static let stationDataLastRefreshedAt = "stationDataLastRefreshedAt"
+        static let stationDataSourceObservedAt = "stationDataSourceObservedAt"
+        static let stationDataSourcePublishedAt = "stationDataSourcePublishedAt"
+        static let stationDataDownloadedAt = "stationDataDownloadedAt"
+        static let stationDataLoadedAt = "stationDataLoadedAt"
+        static let manualProfileUpdatedAt = "manualProfileUpdatedAt"
         static let cachedStationStatuses = "cachedStationStatuses"
         static let cachedCommunityInsights = "cachedCommunityInsights"
         static let automationReports = "automationReports"
@@ -297,6 +307,31 @@ final class SystemAppPersistence: AppPersistence {
     var stationDataLastRefreshedAt: Date? {
         get { defaults.object(forKey: Key.stationDataLastRefreshedAt) as? Date }
         set { defaults.set(newValue, forKey: Key.stationDataLastRefreshedAt) }
+    }
+
+    var stationDataSourceObservedAt: Date? {
+        get { defaults.object(forKey: Key.stationDataSourceObservedAt) as? Date }
+        set { defaults.set(newValue, forKey: Key.stationDataSourceObservedAt) }
+    }
+
+    var stationDataSourcePublishedAt: Date? {
+        get { defaults.object(forKey: Key.stationDataSourcePublishedAt) as? Date }
+        set { defaults.set(newValue, forKey: Key.stationDataSourcePublishedAt) }
+    }
+
+    var stationDataDownloadedAt: Date? {
+        get { defaults.object(forKey: Key.stationDataDownloadedAt) as? Date }
+        set { defaults.set(newValue, forKey: Key.stationDataDownloadedAt) }
+    }
+
+    var stationDataLoadedAt: Date? {
+        get { defaults.object(forKey: Key.stationDataLoadedAt) as? Date }
+        set { defaults.set(newValue, forKey: Key.stationDataLoadedAt) }
+    }
+
+    var manualProfileUpdatedAt: Date? {
+        get { defaults.object(forKey: Key.manualProfileUpdatedAt) as? Date }
+        set { defaults.set(newValue, forKey: Key.manualProfileUpdatedAt) }
     }
 
     var automationReports: [AutomationReport] {

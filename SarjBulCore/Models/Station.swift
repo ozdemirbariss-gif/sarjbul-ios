@@ -36,6 +36,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
     public var source: String
     public var sources: [String]
     public var updatedAt: String?
+    public var sourceObservedAt: String?
+    public var sourcePublishedAt: String?
     public var confidenceScore: Double
     public let searchKey: String
 
@@ -53,6 +55,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         source: String,
         sources: [String] = [],
         updatedAt: String? = nil,
+        sourceObservedAt: String? = nil,
+        sourcePublishedAt: String? = nil,
         confidenceScore: Double = 0.62
     ) {
         self.id = id
@@ -69,6 +73,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         self.source = source
         self.sources = sources
         self.updatedAt = updatedAt
+        self.sourceObservedAt = sourceObservedAt ?? updatedAt
+        self.sourcePublishedAt = sourcePublishedAt
         self.confidenceScore = confidenceScore
         searchKey = Station.makeSearchKey(
             name: name,
@@ -94,6 +100,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         case source = "kaynak"
         case sources = "kaynaklar"
         case updatedAt = "guncelleme_tarihi"
+        case sourceObservedAt = "kaynak_gozlem_tarihi"
+        case sourcePublishedAt = "kaynak_yayin_tarihi"
         case confidenceScore = "guven_skoru"
     }
 
@@ -127,6 +135,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         source = try container.decodeIfPresent(String.self, forKey: .source) ?? ""
         sources = try container.decodeIfPresent([String].self, forKey: .sources) ?? []
         updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
+        sourceObservedAt = try container.decodeIfPresent(String.self, forKey: .sourceObservedAt) ?? updatedAt
+        sourcePublishedAt = try container.decodeIfPresent(String.self, forKey: .sourcePublishedAt)
         confidenceScore = try container.decodeIfPresent(Double.self, forKey: .confidenceScore) ?? 0.62
         searchKey = Station.makeSearchKey(
             name: name,
@@ -152,6 +162,8 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
         try container.encode(source, forKey: .source)
         try container.encode(sources, forKey: .sources)
         try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
+        try container.encodeIfPresent(sourceObservedAt, forKey: .sourceObservedAt)
+        try container.encodeIfPresent(sourcePublishedAt, forKey: .sourcePublishedAt)
         try container.encode(confidenceScore, forKey: .confidenceScore)
     }
 
@@ -202,6 +214,20 @@ public struct Station: Codable, Identifiable, Hashable, Sendable {
 }
 
 public extension Station {
+    var sourceObservationDate: Date? { Self.parseSourceDate(sourceObservedAt) }
+    var sourcePublicationDate: Date? { Self.parseSourceDate(sourcePublishedAt) }
+
+    var sourceEvidenceDate: Date? {
+        sourceObservationDate ?? sourcePublicationDate
+    }
+
+    private static func parseSourceDate(_ value: String?) -> Date? {
+        guard let value else { return nil }
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
+    }
+
     var statusKey: String {
         let folded = id
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))

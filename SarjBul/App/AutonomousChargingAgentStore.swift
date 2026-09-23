@@ -136,7 +136,10 @@ final class AutonomousChargingAgentStore {
             return false
         }
 
-        guard let telemetry = await telemetryClient.latestSnapshot(fallbackProfile: settings.profile) else {
+        guard let telemetry = await telemetryClient.latestSnapshot(
+            fallbackProfile: settings.profile,
+            manualUpdatedAt: settings.manualProfileUpdatedAt
+        ) else {
             lastDecisionReason = .staleTelemetry
             return false
         }
@@ -390,7 +393,7 @@ final class AutonomousChargingAgentStore {
             ExecutionEvidence(
                 source: .stationDataset,
                 reliability: candidate.station.confidenceScore,
-                observedAt: executionTrust.stationObservedAt(candidate.station, fallback: now),
+                observedAt: executionTrust.stationObservedAt(candidate.station),
                 maximumAge: 30 * 86_400
             )
         ]

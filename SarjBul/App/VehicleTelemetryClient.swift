@@ -2,11 +2,11 @@ import Foundation
 import SarjBulCore
 
 protocol VehicleTelemetryClient: Sendable {
-    func latestSnapshot(fallbackProfile: DrivingProfile) async -> VehicleTelemetrySnapshot?
+    func latestSnapshot(fallbackProfile: DrivingProfile, manualUpdatedAt: Date?) async -> VehicleTelemetrySnapshot?
 }
 
 struct ProfileVehicleTelemetryClient: VehicleTelemetryClient {
-    func latestSnapshot(fallbackProfile: DrivingProfile) async -> VehicleTelemetrySnapshot? {
+    func latestSnapshot(fallbackProfile: DrivingProfile, manualUpdatedAt: Date?) async -> VehicleTelemetrySnapshot? {
         VehicleTelemetrySnapshot(
             chargePercent: fallbackProfile.chargePercent,
             batteryKWh: fallbackProfile.batteryKWh,
@@ -14,7 +14,7 @@ struct ProfileVehicleTelemetryClient: VehicleTelemetryClient {
             safetyMarginPercent: fallbackProfile.safetyMarginPercent,
             source: .manualProfile,
             isVehicleConnected: false,
-            capturedAt: Date()
+            capturedAt: manualUpdatedAt ?? .distantPast
         )
     }
 }
