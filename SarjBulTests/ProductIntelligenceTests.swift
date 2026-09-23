@@ -99,6 +99,17 @@ struct ProductIntelligenceTests {
     }
 
     @Test
+    func missingSourceDateDoesNotBecomeFreshOnLoad() {
+        let station = Station(
+            id: "undated", name: "Undated", address: "Ankara", latitude: 39.9,
+            longitude: 32.8, power: "22 kW", operatorName: "Test", socket: "Type 2",
+            price: "Bilinmiyor", source: "test", confidenceScore: 0.9
+        )
+        #expect(station.sourceEvidenceDate == nil)
+        #expect(StationDataQuality.confidence(station: station, insight: nil) == 0.45)
+    }
+
+    @Test
     func twoIndependentConfirmationsCanReplaceUnknownValue() {
         let insight = StationCommunityInsight(fields: [
             StationDataField.price.rawValue: StationFieldVerification(
