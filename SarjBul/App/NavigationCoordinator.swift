@@ -4,6 +4,7 @@ import SwiftUI
 enum AppTab: Hashable, Sendable {
     case home
     case routes
+    case saved
     case lounge
     case account
 }
@@ -18,6 +19,7 @@ final class NavigationCoordinator {
     var tab: AppTab = .home
     var homePath = NavigationPath()
     var routesPath = NavigationPath()
+    var savedPath = NavigationPath()
     var loungePath = NavigationPath()
     var accountPath = NavigationPath()
 
@@ -30,6 +32,7 @@ final class NavigationCoordinator {
         switch tab {
         case .home: homePath.append(route)
         case .routes: routesPath.append(route)
+        case .saved: savedPath.append(route)
         case .lounge: loungePath.append(route)
         case .account: accountPath.append(route)
         }
@@ -39,6 +42,7 @@ final class NavigationCoordinator {
         switch tab {
         case .home: homePath = NavigationPath()
         case .routes: routesPath = NavigationPath()
+        case .saved: savedPath = NavigationPath()
         case .lounge: loungePath = NavigationPath()
         case .account: accountPath = NavigationPath()
         }

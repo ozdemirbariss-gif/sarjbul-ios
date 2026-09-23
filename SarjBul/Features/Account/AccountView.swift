@@ -1,6 +1,67 @@
 import SarjBulCore
 import SwiftUI
 
+struct SavedStationsView: View {
+    @Environment(UserSettingsStore.self) private var settings
+    @Environment(FavoritesStore.self) private var favorites
+    @Environment(SearchCoordinator.self) private var search
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    stationSection(settings.t("library.favorites"), stations: favorites.favoriteStations)
+                    stationSection(settings.t("library.recent"), stations: favorites.recentStations)
+                }
+                .padding(20)
+                .frame(maxWidth: 720)
+                .frame(maxWidth: .infinity)
+            }
+            .background(SBScreenBackground())
+            .navigationTitle(settings.t("bottom.saved"))
+        }
+        .accessibilityIdentifier("saved-stations-screen")
+    }
+
+    private func stationSection(_ title: String, stations: [Station]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(SBColor.contentPrimary)
+            if stations.isEmpty {
+                Text(settings.t(title == settings.t("library.favorites")
+                    ? "library.empty_favorites" : "library.empty_recent"))
+                    .font(.subheadline)
+                    .foregroundStyle(SBColor.contentSecondary)
+            } else {
+                ForEach(stations) { station in
+                    Button {
+                        Haptic.tap()
+                        Task { await search.openStation(withKey: station.statusKey) }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "bolt.fill")
+                                .foregroundStyle(SBColor.actionPrimary)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(station.name).font(.subheadline.weight(.semibold))
+                                Text(station.operatorName).font(.caption)
+                            }
+                            .foregroundStyle(SBColor.contentPrimary)
+                            Spacer(minLength: 8)
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(SBColor.contentSecondary)
+                        }
+                        .padding(14)
+                        .sbPremiumGlass(radius: SBRadius.md, interactive: true)
+                    }
+                    .buttonStyle(SBPremiumButtonStyle())
+                    .accessibilityHint(settings.t("library.open_route"))
+                }
+            }
+        }
+    }
+}
+
 struct AccountView: View {
     @Environment(UserSettingsStore.self) private var settings
     @Environment(AuthStore.self) private var auth

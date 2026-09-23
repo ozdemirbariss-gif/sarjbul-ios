@@ -96,7 +96,7 @@ final class AppSmokeUITests: XCTestCase {
 
         XCTAssertTrue(app.descendants(matching: .any)["lounge-screen"].waitForExistence(timeout: 12))
         XCTAssertFalse(app.descendants(matching: .any)["lounge-page-title"].exists)
-        XCTAssertTrue(app.buttons["bottom-navigation-tab-lounge"].exists)
+        XCTAssertTrue(app.buttons["bottom-navigation-tab-saved"].exists)
     }
 
     func testLoungeRotatesIntoFullscreenGame() throws {
@@ -271,15 +271,18 @@ final class AppSmokeUITests: XCTestCase {
 
         let home = app.buttons["bottom-navigation-tab-home"]
         let routes = app.buttons["bottom-navigation-tab-routes"]
-        let lounge = app.buttons["bottom-navigation-tab-lounge"]
+        let saved = app.buttons["bottom-navigation-tab-saved"]
         let profile = app.buttons["bottom-navigation-tab-account"]
         XCTAssertTrue(home.waitForExistence(timeout: 5))
         XCTAssertTrue(routes.exists)
-        XCTAssertTrue(lounge.exists)
+        XCTAssertTrue(saved.exists)
         XCTAssertTrue(profile.exists)
         XCTAssertLessThan(home.frame.minX, routes.frame.minX)
-        XCTAssertLessThan(routes.frame.minX, lounge.frame.minX)
-        XCTAssertLessThan(lounge.frame.minX, profile.frame.minX)
+        XCTAssertLessThan(routes.frame.minX, saved.frame.minX)
+        XCTAssertLessThan(saved.frame.minX, profile.frame.minX)
+        routes.tap()
+        XCTAssertTrue(home.isHittable)
+        XCTAssertTrue(saved.isHittable)
         home.tap()
 
         XCTAssertTrue(app.descendants(matching: .any)["home-screen"].waitForExistence(timeout: 10))

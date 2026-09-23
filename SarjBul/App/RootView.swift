@@ -14,7 +14,6 @@ struct RootView: View {
     @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(OfflineSyncCoordinator.self) private var offlineSync
     @State private var didSetInitialTab = false
-    @State private var isBottomNavigationExpanded = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -66,12 +65,6 @@ struct RootView: View {
             }
         }
         .sensoryFeedback(.selection, trigger: navigation.tab)
-        .onChange(of: navigation.tab) { _, _ in
-            guard didSetInitialTab else { return }
-            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.20)) {
-                isBottomNavigationExpanded = false
-            }
-        }
         .onOpenURL { url in
             Task { await deepLinks.handle(url) }
         }
@@ -124,6 +117,8 @@ struct RootView: View {
             WaitingLoungeView()
         case .routes:
             StationFeedView()
+        case .saved:
+            SavedStationsView()
         case .account:
             AccountView()
         }
@@ -131,40 +126,10 @@ struct RootView: View {
 
     @ViewBuilder
     private var bottomNavigation: some View {
-        Group {
-            if isBottomNavigationExpanded {
-                expandedBottomNavigation
-            } else {
-                HStack {
-                    Spacer()
-                    Button {
-                        withAnimation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.86)) {
-                            isBottomNavigationExpanded = true
-                        }
-                    } label: {
-                        Image(systemName: "square.grid.2x2.fill")
-                            .font(.headline.weight(.heavy))
-                            .foregroundStyle(SBColor.onActionPrimary)
-                            .frame(width: 54, height: 54)
-                            .background(SBColor.actionPrimary, in: Circle())
-                            .overlay(Circle().stroke(SBColor.divider, lineWidth: 1))
-                    }
-                    .buttonStyle(SBPremiumButtonStyle())
-                    .accessibilityLabel(settings.t("navigation.open"))
-                    .accessibilityIdentifier("bottom-navigation-reveal")
-                }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 12)
-            }
-        }
-        .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.96)))
-    }
-
-    private var expandedBottomNavigation: some View {
         HStack(spacing: 8) {
             tabButton(.home)
             tabButton(.routes)
-            tabButton(.lounge)
+            tabButton(.saved)
             tabButton(.account)
         }
         .padding(7)
@@ -192,7 +157,7 @@ struct RootView: View {
 
     private func tabButton(_ tab: AppTab) -> some View {
         let isSelected = navigation.tab == tab
-        let selectedColor = tab == .lounge ? SBColor.loungeAccent : SBColor.actionPrimary
+        let selectedColor = SBColor.actionPrimary
         return Button {
             Haptic.tap()
             if reduceMotion {
@@ -203,22 +168,18 @@ struct RootView: View {
                 }
             }
         } label: {
-            HStack(spacing: 7) {
+            VStack(spacing: 3) {
                 Image(systemName: tabIcon(tab))
-                    .font(.headline.weight(.heavy))
-                    .frame(width: 20, height: 20)
+                    .font(.body.weight(.semibold))
+                    .frame(height: 20)
                     .symbolEffect(.bounce, value: isSelected)
-                if isSelected {
-                    Text(tabTitle(tab))
-                        .font(.caption.weight(.heavy))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.74)
-                }
+                Text(tabTitle(tab))
+                    .font(.caption2.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .foregroundStyle(isSelected ? SBColor.onActionPrimary : SBColor.contentSecondary)
-            .padding(.horizontal, isSelected ? 14 : 0)
-            .frame(minWidth: 50, maxWidth: isSelected ? .infinity : 50)
-            .frame(height: 54)
+            .frame(maxWidth: .infinity, minHeight: 54)
             .background(isSelected ? selectedColor : SBColor.surfaceInteractive.opacity(0.72))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
@@ -239,6 +200,8 @@ struct RootView: View {
             settings.t("bottom.map")
         case .routes:
             settings.t("bottom.routes")
+        case .saved:
+            settings.t("bottom.saved")
         case .account:
             settings.t("bottom.account")
         }
@@ -252,6 +215,8 @@ struct RootView: View {
             "gamecontroller"
         case .routes:
             "point.topleft.down.curvedto.point.bottomright.up"
+        case .saved:
+            "star.fill"
         case .account:
             "person"
         }
@@ -262,6 +227,7 @@ struct RootView: View {
         case .home: "home"
         case .lounge: "lounge"
         case .routes: "routes"
+        case .saved: "saved"
         case .account: "account"
         }
     }
