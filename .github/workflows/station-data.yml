@@ -20,17 +20,41 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Download canonical station data
-        run: >-
-          curl --fail --location --retry 3
-          https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json
-          --output /tmp/stations.json
+      - name: Require private source access
+        env:
+          SOURCE_DEPLOY_KEY: ${{ secrets.SARJBUL_SOURCE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$SOURCE_DEPLOY_KEY" ]; then
+            echo "::error::SARJBUL_SOURCE_DEPLOY_KEY is missing; cannot refresh private canonical stations.json"
+            exit 1
+          fi
+      - name: Check out private canonical station data
+        uses: actions/checkout@v4
+        with:
+          repository: ozdemirbariss-gif/elektriklisarj
+          path: canonical-source
+          ssh-key: ${{ secrets.SARJBUL_SOURCE_DEPLOY_KEY }}
+          persist-credentials: false
+      - name: Verify canonical station data
+        run: |
+          test -s canonical-source/stations.json || {
+            echo "::error::Canonical stations.json is missing or empty"
+            exit 1
+          }
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          source = json.loads(Path("canonical-source/stations.json").read_text(encoding="utf-8"))
+          if not isinstance(source, list) or len(source) < 1_000:
+              raise SystemExit("Canonical stations.json has too few records")
+          print(f"Canonical source: {len(source)} records")
+          PY
       - name: Test EPDK importer
         run: python3 -m unittest discover -s Scripts/tests -p 'test_epdk_stations.py' -v
       - name: Merge official EPDK public stations
         run: >-
           python3 Scripts/update_epdk_stations.py
-          --base /tmp/stations.json
+          --base canonical-source/stations.json
           --output /tmp/merged-stations.json
           --raw-output /tmp/epdk-response.json
       - name: Archive EPDK source and quality report

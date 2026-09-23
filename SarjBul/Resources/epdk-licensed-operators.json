@@ -1,7 +1,7 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-09-14T09:57:27+00:00",
-  "license_count": 181,
+  "generated_at": "2026-09-23T21:07:50+00:00",
+  "license_count": 180,
   "licenses": [
     {
       "brands": [
@@ -425,15 +425,6 @@
       "license_number": "ŞH/11116-2/00025",
       "valid_from": "2022-08-11T00:00:00Z",
       "valid_until": "2071-08-11T00:00:00Z"
-    },
-    {
-      "brands": [
-        "EKA -EMLAK KONUT ASANSÖR SİSTEMLERİ SAN. VE TİC. A.Ş.- EMLAK KONUT GYO A.Ş. KURULUŞUDUR"
-      ],
-      "holder": "EMLAK KONUT ASANSÖR SİSTEMLERİ SANAYİ VE TİCARET ANONİM ŞİRKETİ",
-      "license_number": "ŞH/13210/00208",
-      "valid_from": "2025-01-16T00:00:00Z",
-      "valid_until": "2074-01-16T00:00:00Z"
     },
     {
       "brands": [
@@ -1541,8 +1532,8 @@
     },
     {
       "brands": [
-        "ecojet",
         "Ecojet",
+        "ecojet",
         "ekojet",
         "EVE"
       ],
