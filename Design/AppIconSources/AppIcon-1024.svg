@@ -1,21 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#050905"/>
-      <stop offset="1" stop-color="#182018"/>
-    </linearGradient>
-    <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#D9FF52"/>
-      <stop offset="1" stop-color="#B8FF00"/>
-    </linearGradient>
-    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="24" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-  <rect width="1024" height="1024" fill="url(#bg)"/>
-  <circle cx="512" cy="512" r="326" fill="none" stroke="#F8FFF4" stroke-opacity=".10" stroke-width="32"/>
-  <circle cx="512" cy="512" r="262" fill="#F8FFF4" fill-opacity=".06" stroke="#D9FF52" stroke-opacity=".38" stroke-width="12"/>
-  <path d="M548 174 314 548h173l-51 302 274-420H532z" fill="url(#bolt)" filter="url(#glow)"/>
-  <circle cx="750" cy="252" r="42" fill="#F8FFF4"/>
+  <title>ŞarjBul — route Ş and destination pin</title>
+  <rect width="1024" height="1024" fill="#B7D9C2"/>
+  <path d="M 687 276 C 617 213 487 216 389 273 C 278 338 306 422 455 461 C 508 475 568 483 619 523 C 731 608 693 680 601 718 C 505 758 398 730 332 674" fill="none" stroke="#111915" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 528 774 C 500 774 478 796 478 824 C 478 850 496 869 514 890 C 540 867 578 850 578 824 C 578 796 556 774 528 774 Z M 549 832 A 21 21 0 1 0 507 832 A 21 21 0 1 0 549 832 Z" fill="#335F48" fill-rule="evenodd"/>
 </svg>

@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" fill="#000000"/>
-  <circle cx="512" cy="512" r="310" fill="#10160D" stroke="#D9FF52" stroke-opacity=".28" stroke-width="18"/>
-  <path d="M548 174 314 548h173l-51 302 274-420H532z" fill="#CFFF18"/>
-  <circle cx="750" cy="252" r="42" fill="#FFFFFF"/>
+  <title>ŞarjBul — route Ş and destination pin</title>
+  <path d="M 687 276 C 617 213 487 216 389 273 C 278 338 306 422 455 461 C 508 475 568 483 619 523 C 731 608 693 680 601 718 C 505 758 398 730 332 674" fill="none" stroke="#F7F8F3" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 528 774 C 500 774 478 796 478 824 C 478 850 496 869 514 890 C 540 867 578 850 578 824 C 578 796 556 774 528 774 Z M 549 832 A 21 21 0 1 0 507 832 A 21 21 0 1 0 549 832 Z" fill="#B7D9C2" fill-rule="evenodd"/>
 </svg>
