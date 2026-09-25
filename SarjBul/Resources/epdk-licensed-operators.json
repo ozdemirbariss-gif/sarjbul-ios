@@ -1,17 +1,8 @@
 {
   "endpoint": "https://apigateway.epdk.gov.tr/sarjAgiIsletmeciLisansiSorgula",
-  "generated_at": "2026-09-24T09:22:01+00:00",
-  "license_count": 180,
+  "generated_at": "2026-09-25T09:39:57+00:00",
+  "license_count": 179,
   "licenses": [
-    {
-      "brands": [
-        "RSŞARJ"
-      ],
-      "holder": "2M ELEKTRİKLİ ARAÇ ŞARJ AĞI VE İSTASYON İŞLETMECİLİĞİ ANONİM ŞİRKETİ",
-      "license_number": "ŞH/12007-1/00135",
-      "valid_from": "2023-08-10T00:00:00Z",
-      "valid_until": "2072-08-10T00:00:00Z"
-    },
     {
       "brands": [
         "ŞARJEN"
@@ -1532,8 +1523,8 @@
     },
     {
       "brands": [
-        "Ecojet",
         "ecojet",
+        "Ecojet",
         "ekojet",
         "EVE"
       ],
