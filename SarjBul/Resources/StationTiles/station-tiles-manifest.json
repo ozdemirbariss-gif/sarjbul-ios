@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-27T10:03:46.371276Z",
-  "source_sha256": "abb1093c31a753554647d6ff93bb66a09b44820971f802588db4a28d6be1e1a0",
-  "total_records": 15530,
+  "generated_at": "2026-09-28T11:01:02.897825Z",
+  "source_sha256": "6e5b1cf62c1bb85466cd8dfc0301e5aa6d0a43e70c20803a11deaf89c5771536",
+  "total_records": 15533,
   "base_url": "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/",
   "tiles": [
     {
@@ -15,31 +15,31 @@
       "geohash": "swe",
       "file": "station_tile_swe.json",
       "record_count": 555,
-      "sha256": "3d4c2d7dde0b36f08f34390731761aee094eb8d001551eb2751603ba6c092fb9"
+      "sha256": "4de9870be88d662416e09d0ab11af3812dad395717d07652d542e61e8bee9e4c"
     },
     {
       "geohash": "swf",
       "file": "station_tile_swf.json",
       "record_count": 131,
-      "sha256": "6b57653cbe6ac139236d49f1ae46c45bd9af697c7d1fee306ae53783da393627"
+      "sha256": "23a9a4ff80a62dff1239009d914a4af28b5d291c7b35194f201a6ee949316fa9"
     },
     {
       "geohash": "swg",
       "file": "station_tile_swg.json",
       "record_count": 802,
-      "sha256": "d3d1af815142a136b0436fb841bd750389f92c4ada3866745302a436289a2529"
+      "sha256": "c89a2c9a4dd5dba59e6f1f4fc09495207aac029ca9864f8b06fa46cceba8d1d3"
     },
     {
       "geohash": "swk",
       "file": "station_tile_swk.json",
       "record_count": 20,
-      "sha256": "51d6dfd774c01fbb6028eb3e3e88113db5f34c9ac848e1bf26b432fe7828b361"
+      "sha256": "499630463d3b91dbb2e7bfdc7aa16c8034e5176f8c2673a38e9de3c8c24e6e30"
     },
     {
       "geohash": "swm",
       "file": "station_tile_swm.json",
       "record_count": 68,
-      "sha256": "3f206f42b3316959926f50b453d47f8548694e7690bc7e6ed9e2525ee5e75b7d"
+      "sha256": "77c39deb369b05a627a86a1ac72915d36a70e23c463fe7c2dcdd82e40470ddc0"
     },
     {
       "geohash": "swp",
@@ -51,133 +51,133 @@
       "geohash": "swq",
       "file": "station_tile_swq.json",
       "record_count": 88,
-      "sha256": "91675a49154c160e3eb0479e09dd5d1e52b5a063935334de5dd0fb37637ee182"
+      "sha256": "23ffb52a5f407d6493a65da031c26ed754aa9df21c9c1131ce370a8ec9259365"
     },
     {
       "geohash": "swr",
       "file": "station_tile_swr.json",
       "record_count": 35,
-      "sha256": "78fb2738d67b0471fec0f3b5ba1821b233adaf0f004952e61be1845809b2b458"
+      "sha256": "137c99db4d8de440008ba8406cf7181ac35ead153e3caa0dc88267ddc5c84aa5"
     },
     {
       "geohash": "sws",
       "file": "station_tile_sws.json",
       "record_count": 477,
-      "sha256": "61e98e298e7b347f0b3738fb4aad9c1e655bcbdf5bf0ab64684bac23526be351"
+      "sha256": "3a3c108c8660f57af15f3346dec7d131a9721acff92bd33d518e031d407b0b87"
     },
     {
       "geohash": "swt",
       "file": "station_tile_swt.json",
       "record_count": 638,
-      "sha256": "a4ba89e588efe715096e39239b2504c059cde929cd071717b7404fcf67c3a9c0"
+      "sha256": "cef60acf980b598c6b15c1e47fd9855ef607e1bd2b715a15ffba1904a1659046"
     },
     {
       "geohash": "swu",
       "file": "station_tile_swu.json",
       "record_count": 84,
-      "sha256": "b8c70e6d1305a510aa3495f21f7008d5815c05ee6abeb96cf4863cbde2489e1a"
+      "sha256": "63869d68e8e2d4a3ffc747447e7d8909c3b89509344a261fd58d782e2cbf470f"
     },
     {
       "geohash": "swv",
       "file": "station_tile_swv.json",
-      "record_count": 192,
-      "sha256": "5fce63c1bd15201b79867f051eefac9683bbf5389ac630517eb1dc231781c8a7"
+      "record_count": 193,
+      "sha256": "655099b909a12fe1bc4ff1b3e7f6a6524ec8a6d0316da52b1a11ffe5d91c71fd"
     },
     {
       "geohash": "sww",
       "file": "station_tile_sww.json",
       "record_count": 316,
-      "sha256": "554b3dedc1337377ed9cb69ddd7d4237248efb1da8c356a61abfe859f67e7466"
+      "sha256": "0969a7b67e61c47dba8394de6dbbd5063212773b0a4c973148fbbe8f26d2b031"
     },
     {
       "geohash": "swx",
       "file": "station_tile_swx.json",
       "record_count": 292,
-      "sha256": "4a4d3d415f9be9b3a1f756ac193bdb810bf1b9d9fd4cceaa5dc6a8345644bc95"
+      "sha256": "44b5ea814efb22c81ea5b04531f12bd436cd506368a81476b3d35ec31fbdcfba"
     },
     {
       "geohash": "swy",
       "file": "station_tile_swy.json",
       "record_count": 62,
-      "sha256": "9f7d396e3e602d0d291308e572cf45eea8860cbfbd2946795d7863ead857ca2d"
+      "sha256": "079777c83ee96f795a61759b05f975628a664e3b06eb4f43a35878fca0a79435"
     },
     {
       "geohash": "swz",
       "file": "station_tile_swz.json",
       "record_count": 87,
-      "sha256": "bb13cdf28fb69d3df33c055ec5501404f2eeca92889b482db01c7a5aeb966add"
+      "sha256": "a9c9df6ed0ca81cfabe92474384e3b5f42b3f5d0b1a436375cded16772bb80db"
     },
     {
       "geohash": "sx4",
       "file": "station_tile_sx4.json",
       "record_count": 166,
-      "sha256": "0b356c2cc3c19aedf9fdab491863d38e97103f8711adec58a5182f5799802428"
+      "sha256": "642bb816c7baeffa0a906b679be5d233feefce3f24eb05625c80bc92a8d38f57"
     },
     {
       "geohash": "sx5",
       "file": "station_tile_sx5.json",
       "record_count": 300,
-      "sha256": "34075db4a14010406db2ad1d3b4108a7bb7ecca487e1495a9df5962089d1e45b"
+      "sha256": "fbf15f5b84642875c6ad2f5e816f8fa1866d51ac3b50a44922b591d76ae1e206"
     },
     {
       "geohash": "sx6",
       "file": "station_tile_sx6.json",
       "record_count": 87,
-      "sha256": "5c624836398f34a687de619b488ca0f639a1868d4f6d222d8dedfb2964dcd059"
+      "sha256": "ee08d0e80102d5397b0e2ef378cd58a20aad895a554f5e78a7a7db49b8b4224e"
     },
     {
       "geohash": "sx7",
       "file": "station_tile_sx7.json",
       "record_count": 285,
-      "sha256": "74f7a3173599f64b5b517aedecfa30eb1f55476a8253f0ecf596485347c72766"
+      "sha256": "2308224bd8d2d5c336f442aa62357a119928710d85d50ba5d7bfdc132840a223"
     },
     {
       "geohash": "sxh",
       "file": "station_tile_sxh.json",
-      "record_count": 835,
-      "sha256": "164da3df0a59ac880587d0bca6d55bd7d5dcf499011b58f4e693ca39a42036c6"
+      "record_count": 834,
+      "sha256": "bce415e974a86554db88c4732adb3b23d71bd2138b3a23f345bf1ce8bd432fc5"
     },
     {
       "geohash": "sxj",
       "file": "station_tile_sxj.json",
-      "record_count": 664,
-      "sha256": "eb672b908c012b72b336e17332cd9969a3788c4c1b27235322fcdbf4e3f6862e"
+      "record_count": 663,
+      "sha256": "fd045e138b2bb9a79864a50b9d0801c14c6c37079dc096fcacb2ab7828c614b4"
     },
     {
       "geohash": "sxk",
       "file": "station_tile_sxk.json",
-      "record_count": 3454,
-      "sha256": "fcd68e19cf8cfab1c0110d9cd7e9ee383eee9767a45d3465f406b44d4d22d8c4"
+      "record_count": 3453,
+      "sha256": "b8754b1b78d96141e0f239026fc64c016821b9dab9028511563bd3a4a8a191ff"
     },
     {
       "geohash": "sxm",
       "file": "station_tile_sxm.json",
       "record_count": 150,
-      "sha256": "1813ef204c9a13f70ecd77ae5d10ca473a6b1ec587e382766157fea84e6344ce"
+      "sha256": "d0aa43c513ab0ee238f3ba6e09f8fba7b80f497509be00a980ac3b5b424354cc"
     },
     {
       "geohash": "sxn",
       "file": "station_tile_sxn.json",
       "record_count": 207,
-      "sha256": "13c00170efba80098d1725ac3d2d0c3afab8f57debd33aa210f151a3e4b76b36"
+      "sha256": "2f6e3a1d6c912438095676328aca9eb2099d90ebce114cbc3603a46aed9da7c2"
     },
     {
       "geohash": "sxp",
       "file": "station_tile_sxp.json",
-      "record_count": 1575,
-      "sha256": "4163996fe182f5acc7d07003fad7977d69a2ebe6885838acbbe8e5f70e2d7599"
+      "record_count": 1576,
+      "sha256": "7f76cf82cafb80d1a853cff4c17815ae945cc966c903fa445043a1dee694f9ba"
     },
     {
       "geohash": "sxq",
       "file": "station_tile_sxq.json",
       "record_count": 181,
-      "sha256": "2f4162a483fef7c75977002d404fd57ea6589835ca7d4c45e2fb8ed61ad4b1a7"
+      "sha256": "4df68da4ec523549d9ee2dc1913942d46e241113808312a79ac0e4d07fb16517"
     },
     {
       "geohash": "sxr",
       "file": "station_tile_sxr.json",
-      "record_count": 87,
-      "sha256": "c9de3c314d69a806ce226131e2911fca4c69a5d1d02e4bba6d9b505fb1ea3e0a"
+      "record_count": 89,
+      "sha256": "6fa69fde3daa85e94b211165d4218e3a5139f104f3e3a71e0505ab16f6355598"
     },
     {
       "geohash": "sy0",
@@ -189,205 +189,205 @@
       "geohash": "sy2",
       "file": "station_tile_sy2.json",
       "record_count": 22,
-      "sha256": "2cf3c610ac5b771e413617c017abbb58da34864bce6a9fd4f40e5d20c21668cf"
+      "sha256": "59680ab36c1618c100e2c7df651d839536df86ef9e1158abb59d384d9ddc005e"
     },
     {
       "geohash": "sy3",
       "file": "station_tile_sy3.json",
       "record_count": 60,
-      "sha256": "a2df5caf4b15797b172678af8a1698caead02733528a243ad4c22d1a3108d61d"
+      "sha256": "d09b83e628c2c45376222d254a4cecfb464eaf1ed3120903a53fbb2f15412326"
     },
     {
       "geohash": "sy6",
       "file": "station_tile_sy6.json",
       "record_count": 1,
-      "sha256": "299a788e1a2897151b062f89ef03e01bd8cba9c9b1cc1df8a42efd4c0859b358"
+      "sha256": "2d2c3a44352f9b7500d68c4097c8d65d60a9945078bc381c3635f69e2a5c897b"
     },
     {
       "geohash": "sy8",
       "file": "station_tile_sy8.json",
       "record_count": 292,
-      "sha256": "b72be05fb1cb0a472c6468a3658020fcc0c97ffa81f021baccc118d70ceba21f"
+      "sha256": "0a0641fd45d4d6c57fc28d813e3c1a1a4424bca15ea0f16e998476735b9f2600"
     },
     {
       "geohash": "sy9",
       "file": "station_tile_sy9.json",
-      "record_count": 278,
-      "sha256": "1ebf46dbe528adc9dd78722517df360010d41405de912686d27e39efc0dc2304"
+      "record_count": 279,
+      "sha256": "3d7d9135400f9eb7e132065a18b61ff48ae8aa388031aecc9ba31dfac3730fa7"
     },
     {
       "geohash": "syb",
       "file": "station_tile_syb.json",
       "record_count": 260,
-      "sha256": "77e8f81ff3be295f94e5aa255dd15f61c1b1977ffecde07cd13bb9a1e43ede4a"
+      "sha256": "efb3cef6c783c96209c8bbe25804780ae086d852b92a7c3196af8dec0f362156"
     },
     {
       "geohash": "syc",
       "file": "station_tile_syc.json",
       "record_count": 373,
-      "sha256": "705ed1c2667fac9b7cba551eea90f8ce06c9ec8cf6fba0a3b32e1604dcf42c57"
+      "sha256": "a9e10ae025c6340f71109f88bbcb64dafcfa55663cad77408abf4d6ba1358d53"
     },
     {
       "geohash": "syd",
       "file": "station_tile_syd.json",
       "record_count": 261,
-      "sha256": "9b8596680c1a094f9b71f66c898faef60b928217265608df39bae9bef1d635a3"
+      "sha256": "027b4d6142546795d4170e6f4a9dbf2de277bca26c60e97ead65279fbe71a8f8"
     },
     {
       "geohash": "sye",
       "file": "station_tile_sye.json",
       "record_count": 103,
-      "sha256": "92e47760133a2001758f592cb1ed3412940bd28eec36bc614e87d0e4291aca93"
+      "sha256": "12235e52b54c4ff233043be5c77f21b9707ee569639ca5ca047601e6b21cda51"
     },
     {
       "geohash": "syf",
       "file": "station_tile_syf.json",
       "record_count": 26,
-      "sha256": "776a4c70993ca9697aaf33a8c80ada579244c26e013b92e4f6e9a2fd639999af"
+      "sha256": "2e0c728ab3ee96a0354a586630b278aac954d96d756d8a1d8b31f704f06faa24"
     },
     {
       "geohash": "syg",
       "file": "station_tile_syg.json",
       "record_count": 227,
-      "sha256": "961f85a4038760ca1ad9a330e0aec39ee1fb9e71a56cc04c8ab1c129e83fb169"
+      "sha256": "623ad60bb63e087b0414c20317bb590a9a0e46f6879564f6c96213975e7c20b4"
     },
     {
       "geohash": "sys",
       "file": "station_tile_sys.json",
       "record_count": 179,
-      "sha256": "772444223c5b75030d4c3fe5972346301e04c552ab97ef6c3dee1939ca76c895"
+      "sha256": "617e847fe12157ec3ab3b05dbc2c3eaa2da3bc0e940002abd509e64803f12cb1"
     },
     {
       "geohash": "syt",
       "file": "station_tile_syt.json",
       "record_count": 109,
-      "sha256": "72ce75fcd42b4c6369519aac9103da1bee48369319353d6ec10aee889415e395"
+      "sha256": "07f446b1f1c9652b7d5ce99b25f11dd558a0b2801e361297779fc32399657998"
     },
     {
       "geohash": "syu",
       "file": "station_tile_syu.json",
       "record_count": 56,
-      "sha256": "21fa489b5d3a118c957cd9b8417b874caecb706522b2bd47e2e9c2cc0449739f"
+      "sha256": "04766cdb8b45c6c3c8c96a7fb31197b2c170382ea4a5131bde97085b67e438da"
     },
     {
       "geohash": "syv",
       "file": "station_tile_syv.json",
       "record_count": 39,
-      "sha256": "145725669b9216926c17c0201ac0e4fffb53993f7303fcf6f55b1c14c314e1bb"
+      "sha256": "29cd1ee4b7b2f184520610dd4f0c8745a0e54227192064aec64fdfcf0c9825b1"
     },
     {
       "geohash": "syw",
       "file": "station_tile_syw.json",
       "record_count": 21,
-      "sha256": "947012e5d84279a7ac6f6089d1656c6e19c8d8fec2145da7d8b8225f4dd6ff3b"
+      "sha256": "b151dd69d65038a0b0479d657d4212646290158422e05f3e4f0ffbfd289f119c"
     },
     {
       "geohash": "syx",
       "file": "station_tile_syx.json",
       "record_count": 13,
-      "sha256": "ce45aeb09e8015107a6ea9cba465df1e871bbaf73cd40a5e18c5db29153d08e9"
+      "sha256": "4337e0d2c279ea8b5590521b79581395bd89ced14345bb9e123fc997722eae46"
     },
     {
       "geohash": "syy",
       "file": "station_tile_syy.json",
-      "record_count": 67,
-      "sha256": "35e35751e44cc3cf674d34efbed74256aeed4629a6fa57be8647424bd05eab0e"
+      "record_count": 68,
+      "sha256": "5ae7a4cea3d130b7503a14a90bff50545568a23742e90c479646abfbb4e133cf"
     },
     {
       "geohash": "syz",
       "file": "station_tile_syz.json",
       "record_count": 7,
-      "sha256": "4d4f66d24359215e67964a6250c53b7aa275b7575fe27e847ec95947d859ab4a"
+      "sha256": "05b128dea291958abc3068d47802a05f473b7b2d4f8535684bd9ccb599bd3cb0"
     },
     {
       "geohash": "sz0",
       "file": "station_tile_sz0.json",
       "record_count": 97,
-      "sha256": "e7c4fe72f561cbd23ae36d925dee4055abab2035be623deaa9aa35e12e8a9e18"
+      "sha256": "dc7073888da2b0d13f905d502de2accd92925bebf37087325e2ec1e9d0c28877"
     },
     {
       "geohash": "sz1",
       "file": "station_tile_sz1.json",
       "record_count": 105,
-      "sha256": "320b89728e517690675eb6f8703d01788c887fa1c1a5f30279c1790310e7d5a2"
+      "sha256": "bcb2ae0987803b27b874984b27feaf14d45cadc745bb6a61978024d0b8d7edc8"
     },
     {
       "geohash": "sz2",
       "file": "station_tile_sz2.json",
       "record_count": 96,
-      "sha256": "fe7418e9b7f7b95861dce0e4dbd4794f09cd392d808a195fa3aa10f6ef671483"
+      "sha256": "5ccc79a0a594a2b0f244824b2edaaf8044d1a67a2cf174326fac1160249ec8ea"
     },
     {
       "geohash": "sz3",
       "file": "station_tile_sz3.json",
       "record_count": 225,
-      "sha256": "767b5ebd36b3b5b86b92fef44390448bb14f3e94640d3e5569766e6c3bd64607"
+      "sha256": "e4cef6b744001b96d9ab2d7908fcc258a4376f4195e26698fe31724e59fc0258"
     },
     {
       "geohash": "sz4",
       "file": "station_tile_sz4.json",
       "record_count": 111,
-      "sha256": "0b619b6b78f3052bf69e552a3f9f51387face550e83349b9a47b31b7c0f52f96"
+      "sha256": "b24837b6495db36f60d23c91dd19c8acb86b15e74341d71fb1ff783cff476173"
     },
     {
       "geohash": "sz5",
       "file": "station_tile_sz5.json",
       "record_count": 24,
-      "sha256": "99041510507f53519655fe26b4621632ce0e2435bd0e9f72a1900ae72d7c31f0"
+      "sha256": "cec105b8ceec5a321f2c64fff0a9223a315027b1bc8388dd1299cdd4d36c97f4"
     },
     {
       "geohash": "sz6",
       "file": "station_tile_sz6.json",
       "record_count": 108,
-      "sha256": "e728da43e4771d72fbf6ce35dc5e2ae5809a3e49a2ac6d157df65eee3ae032c2"
+      "sha256": "eb0f971352803a3ecca25cf26f0a0d44fd631bc545c2dd53caa76bfd7c39f9f3"
     },
     {
       "geohash": "sz7",
       "file": "station_tile_sz7.json",
       "record_count": 69,
-      "sha256": "d0007bc7da9960a7eef61bf82f9f90f908de2fe00fb90a95eae2efa1f1500d8f"
+      "sha256": "7c98629f89d2e870a6b3bea5198f7a244887f6bbb3aa26f6e58189bfb0fa9071"
     },
     {
       "geohash": "szh",
       "file": "station_tile_szh.json",
       "record_count": 65,
-      "sha256": "d36036e64fbfc9b0cf33cf590cd950b6f69bc68e7ca43a8db1da515cabd61869"
+      "sha256": "6a45f75f65bcc38fd6c787d3c0d2218fb0e0216d42a27f2e5008ae63f75f9c00"
     },
     {
       "geohash": "szj",
       "file": "station_tile_szj.json",
       "record_count": 77,
-      "sha256": "4b56732f01a31e3bc9744f39f4bfa64deb8b890e3754ad62227d83b16d42c01c"
+      "sha256": "b20a73cbce607d5f5841ba5d483b274f7fb218a02135067d896ed63d253ef712"
     },
     {
       "geohash": "szk",
       "file": "station_tile_szk.json",
       "record_count": 214,
-      "sha256": "00ad4da986dfb4b8a6ed09c90690d23518cf8913a876140864b7aa1a9aedf62f"
+      "sha256": "8b998af94b6dcd0cccdfd24c8f1778cbd23fc058042558f77c41abf24ab7f67e"
     },
     {
       "geohash": "szm",
       "file": "station_tile_szm.json",
       "record_count": 50,
-      "sha256": "c2dbad0f37919491e63b47081a6bd7d9d47cd7fd76f312e71ef3963b570c6b49"
+      "sha256": "0b27ee49199187cf8f361fa67ec39dc2853f914729b083195f5c70458bf3d206"
     },
     {
       "geohash": "szn",
       "file": "station_tile_szn.json",
       "record_count": 29,
-      "sha256": "0bc1652e85ff6df64a969d60759ad04d8e7d3f4f54ebd61278bb89625b8fff15"
+      "sha256": "8f99a7e101c6c2f90d3b8008622b115f4c22dc1ec8251e429d2f6548a6034c1a"
     },
     {
       "geohash": "szp",
       "file": "station_tile_szp.json",
       "record_count": 14,
-      "sha256": "290d28263266d05ed501d1bbc06d7321cd6f8ab898fff66bbc68b6711ef06c02"
+      "sha256": "6dff72cb66215127356374f19aeb836d6ccfb61178ab02736b75312cc5bf8812"
     },
     {
       "geohash": "szq",
       "file": "station_tile_szq.json",
       "record_count": 8,
-      "sha256": "aa59beccb170aa64362536cad6f1ba7a354deef63cdd711029cad526d9a39e3f"
+      "sha256": "4d8edb0878b2b8f834c77268c02a71b60cd5270fe601a50a65ae0a8db0bcc7b2"
     }
   ]
 }
