@@ -3,10 +3,12 @@
 
 Run: python3 Design/AppIconSources/render_app_icons.py (requires Pillow).
 One shared outline and diagonal aperture keep all appearances in sync.
+Colors come from the app's design tokens; tinted uses their grayscale values.
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -17,7 +19,13 @@ SUPERSAMPLE = 4
 MARK_SCALE = 1.16
 Y_OFFSET = -28
 SOURCE_DIR = Path(__file__).resolve().parent
-ASSET_DIR = SOURCE_DIR.parents[1] / "SarjBul/Resources/Assets.xcassets/AppIcon.appiconset"
+ROOT_DIR = SOURCE_DIR.parents[1]
+ASSET_DIR = ROOT_DIR / "SarjBul/Resources/Assets.xcassets/AppIcon.appiconset"
+COLORS = json.loads(
+    (ROOT_DIR / "SarjBul/Resources/design-tokens.json").read_text(encoding="utf-8")
+)["colors"]
+CANVAS = COLORS["canvas"]["hex"]
+MARK_INK = COLORS["actionPrimary"]["hex"]
 
 # Two opposing bends, 136-unit ribbon thickness, and 45-degree terminals.
 # The outline is rotationally symmetric about (512, 540).
@@ -43,10 +51,17 @@ OUTLINE = (
 # The open diagonal separates the two contacts and suggests an energy pulse.
 APERTURE = ((536, 472), (624, 472), (488, 608), (400, 608))
 
+
+def grayscale(color: str) -> str:
+    red, green, blue = (int(color[index : index + 2], 16) for index in (1, 3, 5))
+    value = round(0.2126 * red + 0.7152 * green + 0.0722 * blue)
+    return "#" + f"{value:02X}" * 3
+
+
 VARIANTS = (
-    ("AppIcon-1024", "#111413", "#D8FA6A"),
-    ("AppIcon-1024-dark", None, "#D0EA83"),
-    ("AppIcon-1024-tinted", "#000000", "#F2F2F2"),
+    ("AppIcon-1024", CANVAS, MARK_INK),
+    ("AppIcon-1024-dark", None, MARK_INK),
+    ("AppIcon-1024-tinted", grayscale(CANVAS), grayscale(MARK_INK)),
 )
 
 
