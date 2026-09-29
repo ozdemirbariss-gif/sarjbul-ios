@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Render the ŞarjBul app icon SVGs and iOS assets from one vector geometry.
+"""Export the geometric ŞarjBul energy-flow mark as SVG and iOS PNG assets.
 
-Run from any directory with: python3 Design/AppIconSources/render_app_icons.py
-Requires Pillow. The default uses the app's available-state mint; the dark
-variant leaves its background transparent for iOS, and tinted is grayscale.
+Run: python3 Design/AppIconSources/render_app_icons.py (requires Pillow).
+One shared outline and diagonal aperture keep all appearances in sync.
 """
 
 from __future__ import annotations
@@ -14,132 +13,128 @@ from PIL import Image, ImageDraw
 
 
 SIZE = 1024
-SCALE = 3
+SUPERSAMPLE = 4
+MARK_SCALE = 1.16
+Y_OFFSET = -28
 SOURCE_DIR = Path(__file__).resolve().parent
 ASSET_DIR = SOURCE_DIR.parents[1] / "SarjBul/Resources/Assets.xcassets/AppIcon.appiconset"
 
-# A single broad route draws a custom Ş. Its cedilla is the destination pin.
-ROUTE = (
-    ((687, 308), (617, 245), (487, 248), (389, 305)),
-    ((389, 305), (278, 370), (306, 454), (455, 493)),
-    ((455, 493), (508, 507), (568, 515), (619, 555)),
-    ((619, 555), (731, 640), (693, 712), (601, 750)),
-    ((601, 750), (505, 790), (398, 762), (332, 706)),
+# Two opposing bends, 136-unit ribbon thickness, and 45-degree terminals.
+# The outline is rotationally symmetric about (512, 540).
+OUTLINE = (
+    ("M", 772, 256),
+    ("L", 636, 392),
+    ("L", 420, 392),
+    ("C", 396, 392, 380, 408, 380, 432),
+    ("C", 380, 456, 396, 472, 420, 472),
+    ("L", 604, 472),
+    ("C", 708, 472, 780, 540, 780, 648),
+    ("C", 780, 756, 708, 824, 604, 824),
+    ("L", 252, 824),
+    ("L", 388, 688),
+    ("L", 604, 688),
+    ("C", 628, 688, 644, 672, 644, 648),
+    ("C", 644, 624, 628, 608, 604, 608),
+    ("L", 420, 608),
+    ("C", 316, 608, 244, 540, 244, 432),
+    ("C", 244, 324, 316, 256, 420, 256),
+    ("Z",),
 )
-ROUTE_WIDTH = 124
-Y_OFFSET = -32  # Optical centering leaves room for the Ş's destination pin.
-
-PIN = (
-    ((528, 806), (500, 806), (478, 828), (478, 856)),
-    ((478, 856), (478, 882), (496, 901), (514, 922)),
-    ((514, 922), (540, 899), (578, 882), (578, 856)),
-    ((578, 856), (578, 828), (556, 806), (528, 806)),
-)
-PIN_HOLE = (528, 864, 21)
+# The open diagonal separates the two contacts and suggests an energy pulse.
+APERTURE = ((536, 472), (624, 472), (488, 608), (400, 608))
 
 VARIANTS = (
-    ("AppIcon-1024", "#B7D9C2", "#111915", "#335F48"),
-    ("AppIcon-1024-dark", None, "#F7F8F3", "#B7D9C2"),
-    ("AppIcon-1024-tinted", "#FFFFFF", "#202020", "#666666"),
+    ("AppIcon-1024", "#111413", "#D8FA6A"),
+    ("AppIcon-1024-dark", None, "#D0EA83"),
+    ("AppIcon-1024-tinted", "#000000", "#F2F2F2"),
 )
 
 
-def svg_path(segments: tuple) -> str:
-    first = segments[0][0]
-    commands = [f"M {first[0]} {first[1] + Y_OFFSET}"]
-    for _, control_a, control_b, endpoint in segments:
-        commands.append(
-            f"C {control_a[0]} {control_a[1] + Y_OFFSET} "
-            f"{control_b[0]} {control_b[1] + Y_OFFSET} "
-            f"{endpoint[0]} {endpoint[1] + Y_OFFSET}"
-        )
-    return " ".join(commands)
+def transform(x: float, y: float) -> tuple[float, float]:
+    return (
+        512 + (x - 512) * MARK_SCALE,
+        512 + (y + Y_OFFSET - 512) * MARK_SCALE,
+    )
 
 
-def svg_for(background: str | None, ink: str, accent: str) -> str:
+def svg_path() -> str:
+    commands = []
+    for command in OUTLINE:
+        coordinates = []
+        for index in range(1, len(command), 2):
+            coordinates.extend(transform(command[index], command[index + 1]))
+        commands.append(command[0] + " " + " ".join(f"{v:.2f}" for v in coordinates))
+    return " ".join(commands).strip()
+
+
+def svg_for(background: str | None, ink: str) -> str:
+    aperture = " ".join(f"{x:.2f},{y:.2f}" for x, y in map(lambda p: transform(*p), APERTURE))
     background_element = (
         f'  <rect width="1024" height="1024" fill="{background}"/>\n'
         if background
         else ""
     )
-    hole_x, hole_y, hole_r = PIN_HOLE
-    hole_y += Y_OFFSET
-    hole = (
-        f"M {hole_x + hole_r} {hole_y} "
-        f"A {hole_r} {hole_r} 0 1 0 {hole_x - hole_r} {hole_y} "
-        f"A {hole_r} {hole_r} 0 1 0 {hole_x + hole_r} {hole_y} Z"
-    )
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" '
         'viewBox="0 0 1024 1024">\n'
-        "  <title>ŞarjBul — route Ş and destination pin</title>\n"
+        "  <title>ŞarjBul — energy flow mark</title>\n"
+        "  <defs>\n"
+        '    <mask id="energy-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">\n'
+        '      <rect width="1024" height="1024" fill="#FFFFFF"/>\n'
+        f'      <polygon points="{aperture}" fill="#000000"/>\n'
+        "    </mask>\n"
+        "  </defs>\n"
         f"{background_element}"
-        f'  <path d="{svg_path(ROUTE)}" fill="none" stroke="{ink}" '
-        f'stroke-width="{ROUTE_WIDTH}" stroke-linecap="round" '
-        'stroke-linejoin="round"/>\n'
-        f'  <path d="{svg_path(PIN)} Z {hole}" fill="{accent}" '
-        'fill-rule="evenodd"/>\n'
+        f'  <path d="{svg_path()}" fill="{ink}" mask="url(#energy-gap)"/>\n'
         "</svg>\n"
     )
 
 
-def sample_curve(segments: tuple) -> list[tuple[int, int]]:
+def outline_points() -> list[tuple[float, float]]:
     points = []
-    for start, control_a, control_b, end in segments:
-        for index in range(101):
-            t = index / 100
-            u = 1 - t
-            x = (
-                u**3 * start[0]
-                + 3 * u**2 * t * control_a[0]
-                + 3 * u * t**2 * control_b[0]
-                + t**3 * end[0]
-            )
-            y = (
-                u**3 * start[1]
-                + 3 * u**2 * t * control_a[1]
-                + 3 * u * t**2 * control_b[1]
-                + t**3 * end[1]
-            )
-            points.append((round(x * SCALE), round((y + Y_OFFSET) * SCALE)))
+    current = (0, 0)
+    for command in OUTLINE:
+        if command[0] in ("M", "L"):
+            current = command[1:3]
+            points.append(transform(*current))
+        elif command[0] == "C":
+            first, second, end = command[1:3], command[3:5], command[5:7]
+            for index in range(1, 129):
+                t = index / 128
+                u = 1 - t
+                point = tuple(
+                    u**3 * current[axis]
+                    + 3 * u**2 * t * first[axis]
+                    + 3 * u * t**2 * second[axis]
+                    + t**3 * end[axis]
+                    for axis in (0, 1)
+                )
+                points.append(transform(*point))
+            current = end
     return points
 
 
-def render_png(background: str | None, ink: str, accent: str) -> Image.Image:
-    canvas = Image.new("RGBA", (SIZE * SCALE, SIZE * SCALE), background or (0, 0, 0, 0))
-    draw = ImageDraw.Draw(canvas)
-
-    route_points = sample_curve(ROUTE)
-    draw.line(route_points, fill=ink, width=ROUTE_WIDTH * SCALE, joint="curve")
-    radius = ROUTE_WIDTH * SCALE / 2
-    for x, y in (route_points[0], route_points[-1]):
-        draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=ink)
-
-    pin = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    pin_draw = ImageDraw.Draw(pin)
-    pin_draw.polygon(sample_curve(PIN), fill=accent)
-    hole_x, hole_y, hole_r = PIN_HOLE
-    hole_y += Y_OFFSET
-    pin_draw.ellipse(
-        (
-            (hole_x - hole_r) * SCALE,
-            (hole_y - hole_r) * SCALE,
-            (hole_x + hole_r) * SCALE,
-            (hole_y + hole_r) * SCALE,
-        ),
-        fill=(0, 0, 0, 0),
+def render_png(background: str | None, ink: str) -> Image.Image:
+    high_size = (SIZE * SUPERSAMPLE, SIZE * SUPERSAMPLE)
+    silhouette = Image.new("L", high_size, 0)
+    draw = ImageDraw.Draw(silhouette)
+    draw.polygon([(x * SUPERSAMPLE, y * SUPERSAMPLE) for x, y in outline_points()], fill=255)
+    draw.polygon(
+        [(x * SUPERSAMPLE, y * SUPERSAMPLE) for x, y in map(lambda p: transform(*p), APERTURE)],
+        fill=0,
     )
-    canvas.alpha_composite(pin)
+    foreground = Image.new("RGBA", high_size, ink)
+    foreground.putalpha(silhouette)
+    canvas = Image.new("RGBA", high_size, background or (0, 0, 0, 0))
+    canvas.alpha_composite(foreground)
     canvas = canvas.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
     return canvas if background is None else canvas.convert("RGB")
 
 
 def main() -> None:
-    for name, background, ink, accent in VARIANTS:
-        (SOURCE_DIR / f"{name}.svg").write_text(
-            svg_for(background, ink, accent), encoding="utf-8"
-        )
-        render_png(background, ink, accent).save(ASSET_DIR / f"{name}.png", optimize=True)
+    for name, background, ink in VARIANTS:
+        (SOURCE_DIR / f"{name}.svg").write_text(svg_for(background, ink), encoding="utf-8")
+        render_png(background, ink).save(ASSET_DIR / f"{name}.png", optimize=True)
 
 
 if __name__ == "__main__":
