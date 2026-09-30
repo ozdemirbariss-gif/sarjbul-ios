@@ -33,39 +33,41 @@ struct HomeView: View {
             ZStack(alignment: .topLeading) {
                 SBScreenBackground()
 
-                ScrollViewReader { scrollProxy in
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 22) {
-                            if search.userLocation?.source != .device || search.locationNeedsReview {
-                                locationInput
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                GeometryReader { geometry in
+                    ScrollViewReader { scrollProxy in
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 22) {
+                                if search.userLocation?.source != .device || search.locationNeedsReview {
+                                    locationInput
+                                        .transition(.opacity.combined(with: .move(edge: .top)))
+                                }
+                                primaryOutcome
+                                advancedHomeControls
+                                if advancedHomeExpanded {
+                                    topControls
+                                    drivingProfile
+                                        .id("driving-profile")
+                                    filtersAndSettings
+                                        .id("filters-and-settings")
+                                }
                             }
-                            primaryOutcome
-                            advancedHomeControls
-                            if advancedHomeExpanded {
-                                topControls
-                                drivingProfile
-                                    .id("driving-profile")
-                                filtersAndSettings
-                                    .id("filters-and-settings")
-                            }
+                            .padding(.horizontal, 18)
+                            .padding(.top, 24)
+                            .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
+                            .frame(maxWidth: 720)
+                            .frame(maxWidth: .infinity, minHeight: geometry.size.height)
                         }
-                        .padding(.horizontal, 18)
-                        .padding(.top, 22)
-                        .padding(.bottom, 150)
-                        .frame(maxWidth: 720)
-                        .frame(maxWidth: .infinity)
-                    }
-                    .scrollIndicators(.hidden)
-                    .onChange(of: drivingProfileExpanded) { _, expanded in
-                        guard expanded else { return }
-                        settingsExpanded = false
-                        scrollExpandedPanel("driving-profile", using: scrollProxy)
-                    }
-                    .onChange(of: settingsExpanded) { _, expanded in
-                        guard expanded else { return }
-                        drivingProfileExpanded = false
-                        scrollExpandedPanel("filters-and-settings", using: scrollProxy)
+                        .scrollIndicators(.hidden)
+                        .onChange(of: drivingProfileExpanded) { _, expanded in
+                            guard expanded else { return }
+                            settingsExpanded = false
+                            scrollExpandedPanel("driving-profile", using: scrollProxy)
+                        }
+                        .onChange(of: settingsExpanded) { _, expanded in
+                            guard expanded else { return }
+                            drivingProfileExpanded = false
+                            scrollExpandedPanel("filters-and-settings", using: scrollProxy)
+                        }
                     }
                 }
                 .sensoryFeedback(.selection, trigger: settings.filters.preference)
