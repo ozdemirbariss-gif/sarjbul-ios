@@ -3,6 +3,7 @@ import SarjBulCore
 import SwiftUI
 
 struct StationCard: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(SearchCoordinator.self) private var search
     @Environment(FavoritesStore.self) private var favorites
@@ -39,6 +40,7 @@ struct StationCard: View {
                 .stroke(SBColor.divider, lineWidth: 1)
         )
         .sbCardShadow()
+        .sbCardContent()
         .accessibilityIdentifier("station-route-card")
         .task(id: routeTaskID) {
             guard let origin = search.userLocation else { return }
@@ -76,7 +78,7 @@ struct StationCard: View {
         )
         .frame(height: 236)
         .clipped()
-        .preferredColorScheme(.dark)
+        .environment(\.colorScheme, .dark)
         .overlay(alignment: .top) {
             HStack(alignment: .top) {
                 Text("\(rank) / \(total)")
@@ -182,7 +184,7 @@ struct StationCard: View {
                     Image(systemName: "arrow.up.right")
                         .font(.headline.weight(.heavy))
                 }
-                .foregroundStyle(SBColor.onActionPrimary)
+                .foregroundStyle(appearance.buttonForeground)
                 .padding(.leading, 18)
                 .padding(.trailing, 14)
                 .frame(maxWidth: .infinity)
@@ -203,7 +205,7 @@ struct StationCard: View {
             }
 
             Rectangle()
-                .fill(SBColor.onActionPrimary.opacity(0.14))
+                .fill(appearance.buttonForeground.opacity(0.14))
                 .frame(width: 1, height: 30)
 
             Menu {
@@ -212,13 +214,14 @@ struct StationCard: View {
             } label: {
                 Image(systemName: "chevron.down")
                     .font(.subheadline.weight(.heavy))
-                    .foregroundStyle(SBColor.onActionPrimary)
+                    .foregroundStyle(appearance.buttonForeground)
                     .frame(width: 54, height: 58)
             }
             .accessibilityLabel(settings.t("feed.route_options"))
         }
-        .background(SBColor.actionPrimary)
+        .background(appearance.buttonBackground)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: SBRadius.lg).stroke(appearance.buttonForeground.opacity(0.12)))
         .sbGlowShadow()
     }
 

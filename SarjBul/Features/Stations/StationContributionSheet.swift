@@ -50,6 +50,7 @@ struct StationContributionSheet: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+                .listRowBackground(SBColor.surfaceBase)
 
                 Section(settings.t("data_quality.station_details")) {
                     TextField(settings.t("feed.price"), text: $price)
@@ -58,12 +59,14 @@ struct StationContributionSheet: View {
                     TextField(settings.t("data_quality.address"), text: $address, axis: .vertical)
                         .lineLimit(2...4)
                 }
+                .listRowBackground(SBColor.surfaceBase)
 
                 Section(settings.t("data_quality.night_safety")) {
                     safetyPicker(settings.t("data_quality.lighting"), selection: $lighting)
                     safetyPicker(settings.t("data_quality.camera"), selection: $camera)
                     safetyPicker(settings.t("data_quality.open_24h"), selection: $open24Hours)
                 }
+                .listRowBackground(SBColor.surfaceBase)
 
                 Section {
                     Button {
@@ -81,7 +84,11 @@ struct StationContributionSheet: View {
                 } footer: {
                     Text(settings.t("data_quality.independent_note"))
                 }
+                .listRowBackground(SBColor.surfaceBase)
             }
+            .scrollContentBackground(.hidden)
+            .background(SBScreenBackground())
+            .sbCardContent()
             .navigationTitle(settings.t("data_quality.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

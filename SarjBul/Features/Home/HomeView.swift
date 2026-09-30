@@ -3,6 +3,7 @@ import SarjBulCore
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(SearchCoordinator.self) private var search
     @Environment(NavigationCoordinator.self) private var navigation
@@ -54,6 +55,7 @@ struct HomeView: View {
                             .padding(.horizontal, 18)
                             .padding(.top, 24)
                             .padding(.bottom, geometry.safeAreaInsets.bottom + 24)
+                            .sbCardContent()
                             .frame(maxWidth: 720)
                             .frame(maxWidth: .infinity, minHeight: geometry.size.height)
                         }
@@ -75,6 +77,7 @@ struct HomeView: View {
             .animation(.easeInOut(duration: 0.24), value: search.userLocation?.source)
             .accessibilityIdentifier("home-screen")
             .sbInlineNavigationTitle()
+            .sbCanvasToolbar()
             .onReceive(locationManager.$lastLocation.compactMap { $0 }) { location in
                 guard !isDeterministicUITest else { return }
                 applyLocation(location)
@@ -312,7 +315,7 @@ struct HomeView: View {
             }
         }
         .padding(18)
-        .background(SBColor.actionPrimary.opacity(0.08), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .background(appearance == .lightAnthracite ? SBColor.surfaceRaised : SBColor.actionPrimary.opacity(0.08), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: SBRadius.xl).stroke(SBColor.actionPrimary.opacity(0.36)))
     }
 
@@ -374,7 +377,7 @@ struct HomeView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tint.opacity(0.10), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .background(appearance == .lightAnthracite ? SBColor.surfaceRaised : tint.opacity(0.10), in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
                 .stroke(tint.opacity(0.42), lineWidth: 1)
@@ -449,10 +452,10 @@ struct HomeView: View {
                     Image(systemName: "arrow.right")
                         .font(.subheadline.weight(.heavy))
                 }
-                .foregroundStyle(SBColor.onActionPrimary)
+                .foregroundStyle(appearance.buttonForeground)
                 .padding(.horizontal, 18)
                 .frame(height: 52)
-                .background(SBColor.actionPrimary, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                .background(appearance.buttonBackground, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
         }
@@ -895,11 +898,11 @@ struct HomeView: View {
                     Image(systemName: "arrow.up.right")
                         .font(.headline.weight(.heavy))
                 }
-                .foregroundStyle(SBColor.onActionPrimary)
+                .foregroundStyle(appearance.buttonForeground)
                 .padding(.horizontal, 20)
                 .frame(maxWidth: .infinity)
                 .frame(height: 68)
-                .background(SBColor.actionPrimary)
+                .background(appearance.buttonBackground)
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("prepared-route-button")
@@ -1033,11 +1036,12 @@ struct HomeView: View {
             } label: {
                 Text(search.isSearching ? settings.t("location.calculating") : settings.t("location.find_charger"))
                     .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.onActionPrimary)
+                    .foregroundStyle(appearance.buttonForeground)
                     .frame(maxWidth: .infinity)
                     .frame(height: 76)
-                    .background(SBColor.actionPrimary)
+                    .background(appearance.buttonBackground)
                     .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: SBRadius.lg).stroke(appearance.buttonForeground.opacity(0.12)))
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("find-stations-button")

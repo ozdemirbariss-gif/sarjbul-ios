@@ -2,6 +2,10 @@
   "source": "SarjBul/Resources/design-tokens.json",
   "colors": {
     "canvas": { "hex": "#090A0A", "opacity": 1.0 },
+    "lightCanvas": { "hex": "#FAFAF7", "opacity": 1.0 },
+    "lightContentPrimary": { "hex": "#090A0A", "opacity": 1.0 },
+    "lightContentSecondary": { "hex": "#4E504D", "opacity": 1.0 },
+    "lightContentTertiary": { "hex": "#60625F", "opacity": 1.0 },
     "surfaceBase": { "hex": "#171818", "opacity": 1.0 },
     "surfaceRaised": { "hex": "#202121", "opacity": 1.0 },
     "surfaceInteractive": { "hex": "#292A2A", "opacity": 1.0 },

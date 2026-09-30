@@ -2,6 +2,7 @@ import SarjBulCore
 import SwiftUI
 
 struct SavedStationsView: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(FavoritesStore.self) private var favorites
     @Environment(SearchCoordinator.self) private var search
@@ -19,6 +20,7 @@ struct SavedStationsView: View {
             }
             .background(SBScreenBackground())
             .navigationTitle(settings.t("bottom.saved"))
+            .sbCanvasToolbar()
         }
         .accessibilityIdentifier("saved-stations-screen")
     }
@@ -27,12 +29,12 @@ struct SavedStationsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(SBColor.contentPrimary)
+                .foregroundStyle(appearance.canvasPrimary)
             if stations.isEmpty {
                 Text(settings.t(title == settings.t("library.favorites")
                     ? "library.empty_favorites" : "library.empty_recent"))
                     .font(.subheadline)
-                    .foregroundStyle(SBColor.contentSecondary)
+                    .foregroundStyle(appearance.canvasSecondary)
             } else {
                 ForEach(stations) { station in
                     Button {
@@ -63,6 +65,7 @@ struct SavedStationsView: View {
 }
 
 struct AccountView: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(AuthStore.self) private var auth
     @Environment(FavoritesStore.self) private var favorites
@@ -89,6 +92,7 @@ struct AccountView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         profileTopBar
                         profileHeader
+                        AppearancePicker()
                         outcomeValuePanel
                         collapsibleSection(
                             title: settings.t("profile.automation_group"),
@@ -143,6 +147,7 @@ struct AccountView: View {
                 LegalView(document: document)
                     .environment(settings)
             }
+            .sbCanvasToolbar()
             .confirmationDialog(
                 settings.t("profile.reset_title"),
                 isPresented: $deleteConfirmationPresented,
@@ -177,16 +182,16 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(settings.t("profile.eyebrow"))
                 .font(.caption.weight(.heavy))
-                .foregroundStyle(SBColor.actionPrimary)
+                .foregroundStyle(appearance.canvasPrimary)
 
             Text(settings.t("profile.title"))
                 .font(SBFont.display(size: 48, weight: .heavy))
-                .foregroundStyle(SBColor.contentPrimary)
+                .foregroundStyle(appearance.canvasPrimary)
                 .minimumScaleFactor(0.72)
 
             Text(settings.t("profile.subtitle"))
                 .font(.headline.weight(.semibold))
-                .foregroundStyle(SBColor.contentTertiary)
+                .foregroundStyle(appearance.canvasTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -554,7 +559,7 @@ struct AccountView: View {
 
             Text(settings.t("auth.version", ["version": appVersion]))
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(SBColor.contentTertiary)
+                .foregroundStyle(appearance.canvasTertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.bottom, 110)
@@ -566,7 +571,7 @@ struct AccountView: View {
             legalDocument = document
         }
         .font(.caption.weight(.bold))
-        .foregroundStyle(SBColor.actionPrimary)
+        .foregroundStyle(appearance.canvasPrimary)
     }
 
     private var appVersion: String {

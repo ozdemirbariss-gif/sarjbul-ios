@@ -108,6 +108,7 @@ struct PlaceSearchSheet: View {
                         .padding(.vertical, 6)
                     }
                     .disabled(model.isResolving)
+                    .listRowBackground(SBColor.surfaceBase)
                 }
 
                 if let errorMessage = model.errorMessage {
@@ -116,6 +117,8 @@ struct PlaceSearchSheet: View {
                         .foregroundStyle(SBColor.danger)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SBScreenBackground())
             .searchable(
                 text: $model.query,
                 placement: .navigationBarDrawer(displayMode: .always),

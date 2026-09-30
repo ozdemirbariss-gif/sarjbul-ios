@@ -18,6 +18,10 @@ enum SBGeneratedTokens {
     static let source = "SarjBul/Resources/design-tokens.json"
 
     static let canvas = SBGeneratedColorToken(hex: "#090A0A", opacity: 1.0)
+    static let lightCanvas = SBGeneratedColorToken(hex: "#FAFAF7", opacity: 1.0)
+    static let lightContentPrimary = SBGeneratedColorToken(hex: "#090A0A", opacity: 1.0)
+    static let lightContentSecondary = SBGeneratedColorToken(hex: "#4E504D", opacity: 1.0)
+    static let lightContentTertiary = SBGeneratedColorToken(hex: "#60625F", opacity: 1.0)
     static let surfaceBase = SBGeneratedColorToken(hex: "#171818", opacity: 1.0)
     static let surfaceRaised = SBGeneratedColorToken(hex: "#202121", opacity: 1.0)
     static let surfaceInteractive = SBGeneratedColorToken(hex: "#292A2A", opacity: 1.0)

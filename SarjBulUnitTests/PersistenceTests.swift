@@ -5,6 +5,37 @@ import XCTest
 
 @MainActor
 final class PersistenceTests: XCTestCase {
+    func testAppearanceSurvivesRelaunchAndPreservesDrivingProfile() throws {
+        let suiteName = "AppearanceTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let persistence = SystemAppPersistence(defaults: defaults, secureStorage: MemorySecureStorage())
+        let settings = UserSettingsStore(persistence: persistence, externalLinks: .empty)
+        let originalProfile = settings.profile
+
+        XCTAssertEqual(settings.appearance, .dark)
+        settings.appearance = .lightAnthracite
+
+        let relaunched = UserSettingsStore(
+            persistence: SystemAppPersistence(defaults: defaults, secureStorage: MemorySecureStorage()),
+            externalLinks: .empty
+        )
+        XCTAssertEqual(relaunched.appearance, .lightAnthracite)
+        XCTAssertEqual(relaunched.profile, originalProfile)
+        relaunched.appearance = .dark
+        XCTAssertEqual(persistence.appearance, .dark)
+    }
+
+    func testUnknownSavedAppearanceFallsBackToDark() throws {
+        let suiteName = "AppearanceTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set("unknown-theme", forKey: "appAppearance")
+        let persistence = SystemAppPersistence(defaults: defaults, secureStorage: MemorySecureStorage())
+
+        XCTAssertEqual(persistence.appearance, .dark)
+    }
+
     func testEnglishUppercaseDoesNotUseTurkishDottedCapitalI() {
         let title = AppLanguage.en.uppercased("driving profile")
 

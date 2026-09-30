@@ -179,6 +179,7 @@ struct ChargingInsightsView: View {
                     TextField(settings.t("history.cost"), value: $totalCostTRY, format: .number)
                         .keyboardType(.decimalPad)
                 }
+                .listRowBackground(SBColor.surfaceBase)
 
                 if !favorites.recentStations.isEmpty {
                     Section(settings.t("history.station")) {
@@ -189,8 +190,12 @@ struct ChargingInsightsView: View {
                             }
                         }
                     }
+                    .listRowBackground(SBColor.surfaceBase)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(SBScreenBackground())
+            .sbCardContent()
             .navigationTitle(settings.t("history.confirm_receipt"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

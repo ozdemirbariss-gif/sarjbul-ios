@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct SBScreenBackground: View {
+    @Environment(\.appAppearance) private var appearance
+
     var body: some View {
-        SBColor.canvas
+        appearance.canvas
         .ignoresSafeArea()
     }
 }
@@ -126,11 +128,13 @@ struct SBSecondaryPanel<Content: View>: View {
             .padding(22)
             .background(SBColor.surfaceInteractive, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous).stroke(SBColor.divider, lineWidth: 1))
+            .sbCardContent()
             .sbSoftShadow()
     }
 }
 
 struct SBPrimaryButton: View {
+    @Environment(\.appAppearance) private var appearance
     var title: String
     var systemImage: String?
     var accessibilityIdentifier: String? = nil
@@ -148,14 +152,14 @@ struct SBPrimaryButton: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
             }
-            .foregroundStyle(SBColor.onActionPrimary)
+            .foregroundStyle(appearance.buttonForeground)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(SBColor.actionPrimary)
+            .background(appearance.buttonBackground)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous)
-                    .stroke(SBColor.onActionPrimary.opacity(0.12), lineWidth: 1)
+                    .stroke(appearance.buttonForeground.opacity(0.12), lineWidth: 1)
             )
         }
         .buttonStyle(SBPremiumButtonStyle())
@@ -164,6 +168,7 @@ struct SBPrimaryButton: View {
 }
 
 struct SBDarkButton: View {
+    @Environment(\.appAppearance) private var appearance
     var title: String
     var systemImage: String?
     var action: () -> Void
@@ -177,10 +182,10 @@ struct SBDarkButton: View {
                 Text(title)
                     .font(.headline.weight(.heavy))
             }
-            .foregroundStyle(SBColor.onActionPrimary)
+            .foregroundStyle(appearance.buttonForeground)
             .frame(maxWidth: .infinity)
             .frame(height: 68)
-            .background(SBColor.surfaceInverted)
+            .background(appearance.buttonBackground)
             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
         }
         .buttonStyle(SBPremiumButtonStyle())
@@ -262,6 +267,10 @@ struct SBPremiumButtonStyle: ButtonStyle {
 }
 
 extension View {
+    func sbCanvasToolbar() -> some View {
+        modifier(SBCanvasToolbarModifier())
+    }
+
     @ViewBuilder
     func sbDecimalKeyboard() -> some View {
         #if os(iOS)
@@ -310,6 +319,20 @@ extension View {
             .presentationBackground(.ultraThinMaterial)
         #else
         self
+        #endif
+    }
+}
+
+private struct SBCanvasToolbarModifier: ViewModifier {
+    @Environment(\.appAppearance) private var appearance
+
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        content
+            .toolbarBackground(appearance.canvas, for: .navigationBar)
+            .toolbarBackground(appearance == .lightAnthracite ? .visible : .automatic, for: .navigationBar)
+        #else
+        content
         #endif
     }
 }

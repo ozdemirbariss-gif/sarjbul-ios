@@ -9,6 +9,7 @@ enum LegalDocument: String, Identifiable {
 }
 
 struct LegalView: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
@@ -22,18 +23,18 @@ struct LegalView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         Image(systemName: icon)
                             .font(.system(size: 34, weight: .heavy))
-                            .foregroundStyle(SBColor.onActionPrimary)
+                            .foregroundStyle(appearance.buttonForeground)
                             .frame(width: 72, height: 72)
-                            .background(SBColor.actionPrimary)
+                            .background(appearance.buttonBackground)
                             .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
 
                         Text(title)
                             .font(SBFont.display(size: 36, weight: .heavy))
-                            .foregroundStyle(SBColor.contentPrimary)
+                            .foregroundStyle(appearance.canvasPrimary)
 
                         Text(bodyText)
                             .font(.body)
-                            .foregroundStyle(SBColor.contentSecondary)
+                            .foregroundStyle(appearance.canvasSecondary)
                             .lineSpacing(6)
                             .textSelection(.enabled)
 
@@ -113,15 +114,6 @@ struct LegalView: View {
     }
 
     private func linkButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: icon)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(SBColor.onActionPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(SBColor.actionPrimary)
-                .clipShape(RoundedRectangle(cornerRadius: SBRadius.lg, style: .continuous))
-        }
-        .buttonStyle(SBPremiumButtonStyle())
+        SBPrimaryButton(title: title, systemImage: icon, action: action)
     }
 }

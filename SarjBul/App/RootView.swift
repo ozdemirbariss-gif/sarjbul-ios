@@ -35,9 +35,11 @@ struct RootView: View {
                     }
                 }
         }
-        .tint(SBColor.actionPrimary)
+        .tint(settings.appearance.canvasPrimary)
+        .foregroundStyle(settings.appearance.canvasPrimary)
+        .environment(\.appAppearance, settings.appearance)
         .environment(\.locale, settings.language.locale)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(settings.appearance.colorScheme)
         .task {
             setInitialTabIfNeeded()
             await chargingSession.prepare()
@@ -110,6 +112,7 @@ struct RootView: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: 34)
             .background(SBColor.surfaceInteractive)
+            .sbCardContent()
             .accessibilityAddTraits(.isStaticText)
     }
 
@@ -142,9 +145,10 @@ struct RootView: View {
         .padding(7)
         .background(SBColor.surfaceRaised.opacity(0.98), in: Capsule())
         .overlay(Capsule().stroke(SBColor.divider, lineWidth: 1))
+        .sbCardContent()
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
-        .shadow(color: SBColor.canvas.opacity(0.54), radius: 26, x: 0, y: 16)
+        .shadow(color: .black.opacity(settings.appearance == .dark ? 0.54 : 0.18), radius: 26, x: 0, y: 16)
     }
 
     private func setInitialTabIfNeeded() {

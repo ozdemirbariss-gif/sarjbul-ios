@@ -46,6 +46,12 @@ enum AppLocalization {
 
     private static let translations: [AppLanguage: [String: String]] = [
         .tr: [
+            "appearance.title": "Görünüm",
+            "appearance.hint": "Uygulamanın zemin ve kart renklerini seç.",
+            "appearance.dark": "Koyu",
+            "appearance.lightAnthracite": "Açık · Antrasit",
+            "appearance.selected": "Seçili",
+            "appearance.not_selected": "Seçili değil",
             "status.ok": "Tamam",
             "status.cancel": "Vazgeç",
             "status.yes": "Evet",
@@ -394,6 +400,12 @@ enum AppLocalization {
             "legal.email": "E-posta gönder"
         ],
         .en: [
+            "appearance.title": "Appearance",
+            "appearance.hint": "Choose the app's background and card colors.",
+            "appearance.dark": "Dark",
+            "appearance.lightAnthracite": "Light · Anthracite",
+            "appearance.selected": "Selected",
+            "appearance.not_selected": "Not selected",
             "status.ok": "Done",
             "status.cancel": "Cancel",
             "status.yes": "Yes",

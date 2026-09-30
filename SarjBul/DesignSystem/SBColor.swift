@@ -1,5 +1,30 @@
 import SwiftUI
 
+enum AppAppearance: String, CaseIterable, Codable, Identifiable {
+    case dark
+    case lightAnthracite
+
+    var id: String { rawValue }
+    var colorScheme: ColorScheme { self == .dark ? .dark : .light }
+    var canvas: Color { self == .dark ? SBColor.canvas : SBColor.lightCanvas }
+    var canvasPrimary: Color { self == .dark ? SBColor.contentPrimary : SBColor.lightContentPrimary }
+    var canvasSecondary: Color { self == .dark ? SBColor.contentSecondary : SBColor.lightContentSecondary }
+    var canvasTertiary: Color { self == .dark ? SBColor.contentTertiary : SBColor.lightContentTertiary }
+    var buttonBackground: Color { self == .dark ? SBColor.actionPrimary : SBColor.surfaceInteractive }
+    var buttonForeground: Color { self == .dark ? SBColor.onActionPrimary : SBColor.contentPrimary }
+}
+
+private struct AppAppearanceKey: EnvironmentKey {
+    static let defaultValue = AppAppearance.dark
+}
+
+extension EnvironmentValues {
+    var appAppearance: AppAppearance {
+        get { self[AppAppearanceKey.self] }
+        set { self[AppAppearanceKey.self] = newValue }
+    }
+}
+
 private extension SBGeneratedColorToken {
     var color: Color {
         Color(hex: hex, opacity: opacity)
@@ -27,6 +52,10 @@ private extension Color {
 
 enum SBColor {
     static let canvas = SBGeneratedTokens.canvas.color
+    static let lightCanvas = SBGeneratedTokens.lightCanvas.color
+    static let lightContentPrimary = SBGeneratedTokens.lightContentPrimary.color
+    static let lightContentSecondary = SBGeneratedTokens.lightContentSecondary.color
+    static let lightContentTertiary = SBGeneratedTokens.lightContentTertiary.color
     static let surfaceBase = SBGeneratedTokens.surfaceBase.color
     static let surfaceRaised = SBGeneratedTokens.surfaceRaised.color
     static let surfaceInteractive = SBGeneratedTokens.surfaceInteractive.color
@@ -109,6 +138,12 @@ extension View {
         modifier(SBPremiumGlassModifier(radius: radius, interactive: interactive))
     }
 
+    func sbCardContent() -> some View {
+        foregroundStyle(SBColor.contentPrimary)
+            .tint(SBColor.actionPrimary)
+            .environment(\.colorScheme, .dark)
+    }
+
     func sbSoftShadow() -> some View {
         let shadow = SBShadow.soft
         return self.shadow(
@@ -141,12 +176,25 @@ extension View {
 }
 
 private struct SBPremiumGlassModifier: ViewModifier {
+    @Environment(\.appAppearance) private var appearance
     var radius: CGFloat
     var interactive: Bool
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
 
+        if appearance == .lightAnthracite {
+            content
+                .background(LinearGradient.sbSoftPanel, in: shape)
+                .overlay(shape.stroke(SBColor.dividerStrong, lineWidth: 1))
+                .sbCardContent()
+        } else {
+            glassContent(content, shape: shape)
+        }
+    }
+
+    @ViewBuilder
+    private func glassContent(_ content: Content, shape: RoundedRectangle) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             content

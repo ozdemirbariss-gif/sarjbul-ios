@@ -8,6 +8,14 @@ SarjBul, Türkiye genelindeki elektrikli araç şarj noktalarını menzil, rota,
 
 Görseller gerçek iPhone simülatöründen, tekrarlanabilir test senaryolarıyla alınır; canlı müsaitlik veya fiyat kanıtı değildir. Çekimin kaynak ve ortam bilgileri [capture.json](Docs/screenshots/capture.json) dosyasındadır. Yeniden çekim için GitHub Actions içindeki **Capture README screenshots** iş akışı kullanılır.
 
+### Görünüm seçenekleri
+
+**Profil → Görünüm** bölümünden **Koyu** veya **Açık · Antrasit** seçilebilir. Açık · Antrasit, kırık beyaz zemin üzerinde koyu kartlar ve butonlar, açık kart yazıları ve siyah sayfa başlıkları kullanır. Seçim bütün uygulamaya hemen uygulanır ve uygulama yeniden açıldığında korunur. Mevcut kullanıcılar Koyu görünümle devam eder.
+
+<img src="Docs/screenshots/appearance/light-account.png" alt="Profil ekranındaki görünüm seçimi" width="280"> <img src="Docs/screenshots/appearance/light-home.png" alt="Açık zemin ve antrasit ana ekran kartları" width="280"> <img src="Docs/screenshots/appearance/light-routes.png" alt="Açık görünümde rota kartı" width="280">
+
+Bu ekranlar `AppearanceUITests/testCaptureLightAppearanceScreens` ile gerçek iPhone simülatöründen alınır; çekim bilgileri [appearance/capture.json](Docs/screenshots/appearance/capture.json) dosyasındadır.
+
 ### Şarj Önerisi
 
 İstasyon adı, tahmini süre ve tahmini varış şarjı tek bir aksiyona eşlik eder: **Rotayı görüntüle**. Önerinin gerekçesi ve tahmini mesafe, başlangıçta kapalı **Neden bu istasyon?** alanındadır. Manuel sürüş değerleri araçtan ölçülmüş veri gibi sunulmaz; sarı araç şarjı uyarısı yalnızca güncel, bağlı araç verisiyle gösterilir.

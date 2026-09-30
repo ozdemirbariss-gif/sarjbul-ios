@@ -226,7 +226,9 @@ final class AppState {
         let isUITesting = ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("--ui-testing-") }
         let suiteName = "com.ozdemirbaris.sarjbul.ui-testing"
         if isUITesting, let defaults = UserDefaults(suiteName: suiteName) {
-            defaults.removePersistentDomain(forName: suiteName)
+            if !ProcessInfo.processInfo.arguments.contains("--ui-testing-preserve-settings") {
+                defaults.removePersistentDomain(forName: suiteName)
+            }
             return SystemAppPersistence(
                 defaults: defaults,
                 secureStorage: EphemeralSecureStorage()
@@ -239,6 +241,9 @@ final class AppState {
     private func applyDebugLaunchMode() {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("--ui-testing-light-appearance") {
+            settings.appearance = .lightAnthracite
+        }
         if arguments.contains("--ui-testing-routes-idle") {
             navigation.tab = .routes
             settings.destination = nil

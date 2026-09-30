@@ -2,6 +2,7 @@ import SarjBulCore
 import SwiftUI
 
 struct StationFeedView: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(SearchCoordinator.self) private var search
     @Environment(NavigationCoordinator.self) private var navigation
@@ -20,6 +21,7 @@ struct StationFeedView: View {
                 feedToolbar
             }
             .navigationDestination(for: AppRoute.self, destination: routeDestination)
+            .sbCanvasToolbar()
         }
         .sheet(isPresented: $filterSheetPresented) {
             StationFilterSheet(
@@ -165,11 +167,11 @@ struct StationFeedView: View {
             if search.previousCandidates.isEmpty {
                 VStack(spacing: 18) {
                     ProgressView()
-                        .tint(SBColor.actionPrimary)
+                        .tint(appearance.canvasPrimary)
                         .scaleEffect(1.2)
                     Text(settings.t("route.searching"))
                         .font(.headline.weight(.heavy))
-                        .foregroundStyle(SBColor.contentTertiary)
+                        .foregroundStyle(appearance.canvasTertiary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {

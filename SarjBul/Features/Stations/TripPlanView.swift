@@ -2,6 +2,7 @@ import SarjBulCore
 import SwiftUI
 
 struct TripPlanView: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
     let plan: ChargingTripPlan
@@ -22,7 +23,7 @@ struct TripPlanView: View {
                             systemImage: "exclamationmark.road.lanes"
                         )
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(SBColor.contentPrimary)
+                        .foregroundStyle(appearance.canvasPrimary)
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(SBColor.warning.opacity(0.24))
@@ -48,7 +49,7 @@ struct TripPlanView: View {
                         ? settings.t("planner.elevation_attribution")
                         : settings.t("planner.elevation_unavailable"))
                         .font(.caption)
-                        .foregroundStyle(SBColor.contentSecondary)
+                        .foregroundStyle(appearance.canvasSecondary)
                     if plan.elevationAdjusted {
                         OpenMeteoAttributionView()
                     }

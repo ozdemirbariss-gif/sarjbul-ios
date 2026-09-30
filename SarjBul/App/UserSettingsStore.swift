@@ -10,6 +10,9 @@ final class UserSettingsStore {
     var language: AppLanguage {
         didSet { persistence.language = language }
     }
+    var appearance: AppAppearance {
+        didSet { persistence.appearance = appearance }
+    }
     var navigationAppPreference: NavigationAppPreference? {
         didSet { persistence.navigationAppPreference = navigationAppPreference }
     }
@@ -35,6 +38,7 @@ final class UserSettingsStore {
     init(persistence: any AppPersistence, externalLinks: AppExternalLinks) {
         self.persistence = persistence
         language = persistence.language
+        appearance = persistence.appearance
         navigationAppPreference = persistence.navigationAppPreference
         profile = persistence.profile
         destination = persistence.destination

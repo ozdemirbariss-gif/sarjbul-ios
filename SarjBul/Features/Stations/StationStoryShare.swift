@@ -39,6 +39,7 @@ struct StationStoryShareSheet: UIViewControllerRepresentable {
 }
 
 struct StationStoryPreviewSheet: View {
+    @Environment(\.appAppearance) private var appearance
     @Environment(UserSettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
     let item: StationStoryShareItem
@@ -47,7 +48,7 @@ struct StationStoryPreviewSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                SBColor.canvas.ignoresSafeArea()
+                SBScreenBackground()
 
                 VStack(spacing: 18) {
                     Image(uiImage: item.image)
@@ -81,7 +82,7 @@ struct StationStoryPreviewSheet: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(appearance.colorScheme)
         .accessibilityIdentifier("station-story-preview")
         .sheet(isPresented: $sharePresented) {
             StationStoryShareSheet(item: item)

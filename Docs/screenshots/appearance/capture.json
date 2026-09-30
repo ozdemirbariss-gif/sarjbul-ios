@@ -1,0 +1,17 @@
+{
+  "base_commit": "ee763488380fe3ce46888d7846c2c6f11476e607",
+  "captured_at": "2026-09-30T18:15:49.113245+00:00",
+  "source": "Native iPhone simulator; deterministic AppearanceUITests scenarios; local working tree",
+  "device": "iPhone 17 Pro",
+  "os": "iOS Simulator 26.5",
+  "xcode": "Xcode 26.6; Build version 17F113",
+  "test": "AppearanceUITests/testCaptureLightAppearanceScreens",
+  "appearance": "lightAnthracite",
+  "screens": [
+    "light-home",
+    "light-driving-profile",
+    "light-routes",
+    "light-account",
+    "light-suggestion"
+  ]
+}

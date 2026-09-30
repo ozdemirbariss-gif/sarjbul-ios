@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AutonomousProposalCard: View {
+    @Environment(\.appAppearance) private var appearance
     let presentation: ChargingSuggestionPresentation
     var dismiss: () -> Void
     var openRoute: () -> Void
@@ -106,11 +107,11 @@ struct AutonomousProposalCard: View {
                         .accessibilityHidden(true)
                 }
                 .font(.headline.weight(.semibold))
-                .foregroundStyle(SBColor.onActionPrimary)
+                .foregroundStyle(appearance.buttonForeground)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .background(SBColor.actionPrimary, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
+                .background(appearance.buttonBackground, in: RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityLabel(presentation.text("agent.open_route"))
@@ -118,6 +119,7 @@ struct AutonomousProposalCard: View {
         }
         .padding(20)
         .background(SBColor.surfaceRaised, in: RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous))
+        .sbCardContent()
         .overlay(
             RoundedRectangle(cornerRadius: SBRadius.xl, style: .continuous)
                 .stroke(SBColor.divider, lineWidth: 1)
