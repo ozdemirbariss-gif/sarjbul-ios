@@ -1421,15 +1421,15 @@
     "ŞRJ/9963"
   ],
   "endpoint": "https://apigateway.epdk.gov.tr/sarjIstasyonlari",
-  "epdk_published_count": 13092,
-  "fetched_at": "2026-10-01T11:01:12.555308+00:00",
+  "epdk_published_count": 13096,
+  "fetched_at": "2026-10-02T10:34:10.327914+00:00",
   "invalid_coordinates": [],
-  "payload_sha256": "2a07ba5d74ea0e50cf11ca993dd86e11adc8cc4182f394b183d263354e316bc2",
-  "private_count": 3818,
-  "public_count": 13092,
-  "public_socket_count": 36263,
-  "published_count": 15490,
-  "socket_count": 48944,
+  "payload_sha256": "2e7e699926f1f34ccbf14f016ce3489a32ebd8656d6c90c6e09bf108a655e049",
+  "private_count": 3820,
+  "public_count": 13096,
+  "public_socket_count": 36276,
+  "published_count": 15494,
+  "socket_count": 48964,
   "supplementary_source_count": 13041,
-  "total_count": 16910
+  "total_count": 16916
 }
