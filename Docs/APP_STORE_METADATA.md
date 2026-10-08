@@ -46,8 +46,9 @@ No sign-in or registration form is required. Cloud features use an anonymous app
 ## Tamamlanacak Alanlar
 
 - Destek e-postası: **sarjbul@icloud.com**.
-- Destek URL'si: https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/SUPPORT.md
-- Gizlilik URL'si: https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/PRIVACY_POLICY.md
+- Destek URL'si: https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/
+- Gizlilik URL'si: https://sarjbul-destek.ozdemirbariss.chatgpt.site/privacy/
+- Kullanım koşulları URL'si: https://sarjbul-destek.ozdemirbariss.chatgpt.site/terms/
 - App Review iletişim kişisi, telefon ve e-posta; kamuya açık destek adresinden ayrı bir formdur.
 - Güncel yaş derecelendirmesi anketi: uygulamada gerçekten sunulan özelliklere göre cevapla.
 - Fiyat ve dağıtım ülkeleri; Avrupa Birliği seçilecekse DSA durumunu tamamla.

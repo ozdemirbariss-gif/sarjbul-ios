@@ -107,6 +107,8 @@ final class AppSmokeUITests: XCTestCase {
         app.launchArguments = ["--ui-testing-home-en"]
         app.launch()
 
+        // Route preparation changes the card height; wait before tapping controls below it.
+        XCTAssertTrue(app.descendants(matching: .any)["prepared-route-card"].waitForExistence(timeout: 20))
         let fineTune = app.buttons["home-fine-tune-toggle"]
         XCTAssertTrue(fineTune.waitForExistence(timeout: 12))
         fineTune.tap()

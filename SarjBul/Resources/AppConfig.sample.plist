@@ -18,11 +18,11 @@
     <key>liveAvailabilityURL</key>
     <string></string>
     <key>privacyPolicyURL</key>
-    <string>https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/PRIVACY_POLICY.md</string>
+    <string>https://sarjbul-destek.ozdemirbariss.chatgpt.site/privacy/</string>
     <key>termsOfUseURL</key>
-    <string>https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/TERMS_OF_USE.md</string>
+    <string>https://sarjbul-destek.ozdemirbariss.chatgpt.site/terms/</string>
     <key>supportURL</key>
-    <string>https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/SUPPORT.md</string>
+    <string>https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/</string>
     <key>supportEmail</key>
     <string>sarjbul@icloud.com</string>
 </dict>

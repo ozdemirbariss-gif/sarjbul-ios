@@ -9,9 +9,9 @@ Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `fi
 ## Temel form alanları
 
 - Do you or your third-party partners collect data from this app? **Yes, we collect data from this app.**
-- Privacy Policy URL: `https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md`
-- Privacy Choices URL (isteğe bağlı): `https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md`
-- Support URL (sürüm bilgileri alanı): `https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md`
+- Privacy Policy URL: `https://sarjbul-destek.ozdemirbariss.chatgpt.site/privacy/`
+- Privacy Choices URL (isteğe bağlı): `https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/`
+- Support URL (sürüm bilgileri alanı): `https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/`
 - Destek e-postası: **sarjbul@icloud.com**.
 - Her veri türünde tracking sorusu: **No**.
 - Third-Party Advertising, Developer’s Advertising or Marketing, Product Personalization, Other Purposes: **seçili değil**. Cihaz içi kişiselleştirme sunucu verisi değildir.

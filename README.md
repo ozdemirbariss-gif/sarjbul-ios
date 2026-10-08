@@ -144,3 +144,9 @@ GitHub Actions aynı çekirdek testleri, SwiftLint'i, plist/privacy manifest do�
 Yayın arşivinden önce `python3 Scripts/validate_release.py --production` çalıştırılır. Eksik veya uyuşmayan Firebase dosyaları ve destek bilgileri Archive işlemini durdurur; simülatör geliştirmesi için bu dosyalar zorunlu değildir.
 
 Rezervasyon, şarj başlatma/durdurma, ödeme ve canlı soket uygunluğu sahte butonlarla taklit edilmez. Bu kontroller yalnızca operatörün yetkili API'si ve ticari izinleri bağlandığında açılmalıdır.
+
+## Destek ve yasal belgeler
+
+[Gizlilik politikası](https://sarjbul-destek.ozdemirbariss.chatgpt.site/privacy/) · [Kullanım koşulları](https://sarjbul-destek.ozdemirbariss.chatgpt.site/terms/) · [Destek](https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/)
+
+İletişim: [sarjbul@icloud.com](mailto:sarjbul@icloud.com). Belgeler giriş gerektirmez. [Yayın ve erişim doğrulaması](Docs/PUBLIC_LINKS_STATUS.md).
