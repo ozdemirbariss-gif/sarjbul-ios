@@ -32,7 +32,8 @@ Yeni kaydın atomik `PATCH` isteği aynı UID'nin ilgili metadata yoluna `lastMu
 - iOS uygulaması App Check'e App Attest sağlayıcısıyla kaydedildi; Console `Registered` gösteriyor. Team ID doğrulanmış yerel Apple takımından alındı; token ömrü 1 saat. Release uygulaması zaten App Attest, Debug uygulaması Debug Provider kullanıyor.
 - Realtime Database App Check durumu `Unenforced`; henüz doğrulanmış gerçek iOS istek metriği yok. İmzalı cihazdan App Attest isteği doğrulanmadan enforcement açılmaz.
 - Firebase Admin `14.5.0`, Functions `7.4.0` ve kilit dosyası güncellendi. Önceki CI bulgularının ilgili sürümleri `@grpc/grpc-js 1.14.5`, `brace-expansion 5.0.12`, `minimatch 9.0.9`. Node `22.23.3` ve Java `21.0.12.1` üzerinde temiz `npm ci --ignore-scripts`, sözdizimi denetimi, 6 birim testi ve 35 kural/backend testi geçti. `npm audit --omit=dev --audit-level=moderate`: 0 açık; CI denetim eşiği korunuyor.
-- Proje hâlâ Spark planında. Beş Cloud Function'ın yayını Blaze faturalandırma adımını bekliyor. Yerel Firebase CLI'da oturum bulunmuyor. Dağıtılmış backend ve canlı sunucu silme onayı henüz doğrulanmadığı için `firebaseBackendReady=false` korunuyor.
+- Kullanıcının onayıyla resmi Firebase CLI oturumu açıldı. Realtime Database kuralları `firebase deploy --project sarjbul-ios-f57e6 --only database` ile yayımlandı; sunucudan geri okunan kurallar depodaki JSON ile birebir eşleşti (kanonik SHA-256: `a633731fd5247f68895b06754a692e28e5bd9bcc9ef8acd3c307c4758b2941fd`).
+- Proje hâlâ Spark planında. Beş Cloud Function'ın yayını Blaze faturalandırma adımını bekliyor; hesap sahibine doğru proje için Google Cloud faturalandırma hesabı oluşturma ekranı açıldı. Dağıtılmış backend ve canlı sunucu silme onayı henüz doğrulanmadığı için `firebaseBackendReady=false` korunuyor. Emülatörde geçen silme testleri canlı sunucu onayı yerine sayılmaz.
 
 ## Sunucu onaylı silme ve analiz temizliği
 
