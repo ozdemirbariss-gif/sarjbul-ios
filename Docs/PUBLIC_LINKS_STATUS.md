@@ -18,7 +18,7 @@ Belgeler herkese açık ChatGPT Sites üzerinde yayımlandı. Site kimliği
 Erişim politikası `public`; ziyaretçinin hesap açması gerekmez.
 
 Kaynak belgeler `Docs/PRIVACY_POLICY.md`, `Docs/TERMS_OF_USE.md` ve `Docs/SUPPORT.md`.
-`Scripts/build_public_pages.py --output <site-checkout>/dist` bu üç belgeden
+`python3 Scripts/build_public_pages.py --output <site-checkout>/dist` bu üç belgeden
 statik HTML üretir. Sites kaynak kopyası çalışma alanındaki `sarjbul-public-site`
 dizinindedir; kendi Git deposu ve `.openai/hosting.json` kimliği korunmalıdır.
 Sonraki güncellemelerde belgeler ve üretim betiği bu kaynak kopyasına eşitlenip
@@ -52,3 +52,14 @@ bu görev Cloudflare Edge Worker'ı dağıtmadı.
 
 App Store Connect'e metin veya binary gönderilmedi. Veri sağlayıcı izinleri,
 üretim Firebase kurulumu ve imzalı cihaz yayını için mevcut kapılar geçerlidir.
+
+## GitHub kontrolündeki mevcut bağımlılık engeli
+
+İlk PR kontrolünde üretim bağımlılık denetimi, önceki `main` kontrolünde de bulunan
+5 güvenlik bulgusu nedeniyle başarısız oldu. Ana Firebase paket sürüm aralıkları
+korunarak `@fastify/busboy` 3.2.2, `@grpc/grpc-js` 1.14.5, `brace-expansion` 5.0.12
+ve `proxy-addr` 2.0.8 düzeltmeleri kilit dosyasına işlendi.
+`brace-expansion` override değeri 5.0.12 oldu; `minimatch` bulgusu da bu geçişli
+bağımlılık düzeltmesiyle kapandı. Yerel sözdizimi ve 6 backend çekirdek testi geçti;
+`npm audit --omit=dev --audit-level=moderate` sıfır güvenlik bulgusu döndürdü.
+Bu değişiklik Functions dağıtımı yapmaz.
