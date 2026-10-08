@@ -63,3 +63,11 @@ ve `proxy-addr` 2.0.8 düzeltmeleri kilit dosyasına işlendi.
 bağımlılık düzeltmesiyle kapandı. Yerel sözdizimi ve 6 backend çekirdek testi geçti;
 `npm audit --omit=dev --audit-level=moderate` sıfır güvenlik bulgusu döndürdü.
 Bu değişiklik Functions dağıtımı yapmaz.
+
+## UI kontrolünün eşitlenmesi
+
+Tam iOS kontrolünde sürüş paneli testi, rota hazırlanırken değişen kart yüksekliği
+nedeniyle panel yerine başka bir denetime dokundu; aynı hata yerelde tekrarlandı.
+Test artık alt denetimlerle etkileşmeden önce `prepared-route-card` öğesini bekler.
+Pil/tüketim hizası ve genişletilmiş filtrelere erişim doğrulamaları korunur.
+Düzeltilen test iPhone 17 Pro / iOS 26.5 simülatöründe geçti.
