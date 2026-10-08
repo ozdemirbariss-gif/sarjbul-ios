@@ -23,6 +23,8 @@
 - [x] Takvim ve APNs kullanımının uygulama içi TR/EN gizlilik özetiyle belgelenmesi
 - [x] Eksik/uyumsuz Firebase ve destek yapılandırmasında Archive işlemini durduran `Scripts/validate_release.py --production`
 - [x] Mağaza metni taslağı, inceleme notları ve gerçek cihaz test protokolü
+- [x] İlk sürüm/build `1.0 (1)`: ana uygulama ve widget'ın Debug/Release ayarları doğrulandı; [numaralandırma ve App Store Connect kayıt bilgileri](APP_STORE_CONNECT_SETUP.md) belgelendi (8 Ekim 2026).
+- [x] App Store Connect'te ŞarjBul iOS kaydı oluşturuldu: Apple ID `6820571478`, sürüm `1.0`, durum `Prepare for Submission`; [kayıt bilgileri](APP_STORE_CONNECT_SETUP.md) doğrulandı (8 Ekim 2026).
 
 ## Son Doğrulanan Durum
 
@@ -87,7 +89,8 @@ Mağaza hazırlığı: [Metinler](APP_STORE_METADATA.md), [Review Notes](APP_REV
 - [x] [Gizlilik veri akışı karşılaştırması](PRIVACY_DATA_FLOW_AUDIT.md); manifest, form cevapları, politika ve TR/EN özetleri güncellendi.
 - [x] Hata kaydında URL/konum/istasyon/serbest metin aktarımı kaldırıldı; gizlilik regresyon testleri eklendi.
 - [x] Sağlayıcı atıfları ve lisans bağlantıları uygulamaya eklendi.
-- [ ] App Store Connect hesabını etkinleştir (`INVALIDITCUSER` hatası doğrulandı); [cevap setini](APP_STORE_PRIVACY_ANSWERS.md) kaydet/yayımla ve özetini doğrula.
+- [x] App Store Connect erişimi sağlandı; önceki `INVALIDITCUSER` engeli giderildi ve [ŞarjBul kaydı](APP_STORE_CONNECT_SETUP.md) oluşturuldu (8 Ekim 2026).
+- [ ] [Gizlilik cevap setini](APP_STORE_PRIVACY_ANSWERS.md) kaydet/yayımla ve özetini doğrula.
 - [ ] Ticari yayın: [sağlayıcı hakları ve sunum koşullarını](DATA_PROVIDER_TERMS.md) çöz. Open-Meteo kaldırıldı, MapKit kod karşılaştırması/düzeltmeleri tamamlandı. Güncel istasyon paketi yalnızca EPDK; ChargeIQ/OSM kaldırıldı. EPDK ticari kullanım, türev alan, çevrimdışı saklama ve yeniden dağıtım izni açık. Eski birleşik kopyaların hakları ayrı değerlendirilir.
 - [ ] Kanıt dosyalarını/hash ve EPDK kapsamlarını `Data/provider-rights.json` içinde doğrula; kaynak saflığını `validate_data_rights.py --epdk-only` ile kontrol et. EPDK-only pakete ODbL lisansı verilmez. Gate geçince `commercialDataUseApproved=true` yap; tek başına bayrak yeterli değildir.
 - [ ] Resmi destek posta kutusuna gerçek gönderim/yanıt testi. Bu görev kullanıcı adına e-posta göndermedi.

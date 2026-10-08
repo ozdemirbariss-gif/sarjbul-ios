@@ -1,6 +1,6 @@
 # App Store Metin Taslağı
 
-Bu alanlar ilk iPhone sürümü için hazırlanmıştır. App Store Connect'e yüklenmedi.
+Bu alanlar ilk iPhone sürümü için hazırlanmıştır. ŞarjBul adı ve Türkçe ana dili 8 Ekim 2026'da [App Store Connect kaydına](APP_STORE_CONNECT_SETUP.md) kaydedildi; aşağıdaki diğer mağaza metinleri henüz yüklenmedi.
 İletişim, fiyat, dağıtım ülkeleri ve yaş derecelendirmesi hesap sahibiyle tamamlanır.
 
 ## Türkçe
