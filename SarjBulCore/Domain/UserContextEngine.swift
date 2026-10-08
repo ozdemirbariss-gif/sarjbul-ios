@@ -2,18 +2,15 @@ import Foundation
 
 public struct ContextIntelligencePolicy: Codable, Equatable, Sendable {
     public var isEnabled: Bool
-    public var usesHealthSignals: Bool
     public var usesWeather: Bool
     public var allowsAutomaticCalendarChanges: Bool
 
     public init(
         isEnabled: Bool = false,
-        usesHealthSignals: Bool = true,
         usesWeather: Bool = true,
         allowsAutomaticCalendarChanges: Bool = false
     ) {
         self.isEnabled = isEnabled
-        self.usesHealthSignals = usesHealthSignals
         self.usesWeather = usesWeather
         self.allowsAutomaticCalendarChanges = allowsAutomaticCalendarChanges
     }
@@ -28,9 +25,6 @@ public enum ContextWeatherSeverity: String, Codable, Sendable {
 public struct UserContextSnapshot: Equatable, Sendable {
     public var isEnabled: Bool
     public var isInTransit: Bool
-    public var currentHeartRate: Double?
-    public var restingHeartRate: Double?
-    public var heartRateSampleAge: TimeInterval?
     public var weatherSeverity: ContextWeatherSeverity
     public var hasUpcomingCalendarItem: Bool
     public var minutesUntilCalendarItem: Int?
@@ -42,9 +36,6 @@ public struct UserContextSnapshot: Equatable, Sendable {
     public init(
         isEnabled: Bool,
         isInTransit: Bool,
-        currentHeartRate: Double?,
-        restingHeartRate: Double?,
-        heartRateSampleAge: TimeInterval?,
         weatherSeverity: ContextWeatherSeverity,
         hasUpcomingCalendarItem: Bool,
         minutesUntilCalendarItem: Int?,
@@ -55,9 +46,6 @@ public struct UserContextSnapshot: Equatable, Sendable {
     ) {
         self.isEnabled = isEnabled
         self.isInTransit = isInTransit
-        self.currentHeartRate = currentHeartRate
-        self.restingHeartRate = restingHeartRate
-        self.heartRateSampleAge = heartRateSampleAge
         self.weatherSeverity = weatherSeverity
         self.hasUpcomingCalendarItem = hasUpcomingCalendarItem
         self.minutesUntilCalendarItem = minutesUntilCalendarItem
@@ -71,13 +59,11 @@ public struct UserContextSnapshot: Equatable, Sendable {
 public enum ContextRecommendationAction: String, Codable, Sendable {
     case offerCalendarDeferral
     case automaticallyDeferCalendar
-    case suggestRecoveryPause
 }
 
 public struct ContextRecommendation: Equatable, Sendable {
     public var action: ContextRecommendationAction
     public var confidence: Double
-    public var elevatedPhysiologicalLoad: Bool
     public var isInTransit: Bool
     public var adverseWeather: Bool
     public var delaySeconds: TimeInterval
@@ -85,14 +71,12 @@ public struct ContextRecommendation: Equatable, Sendable {
     public init(
         action: ContextRecommendationAction,
         confidence: Double,
-        elevatedPhysiologicalLoad: Bool,
         isInTransit: Bool,
         adverseWeather: Bool,
         delaySeconds: TimeInterval = 3_600
     ) {
         self.action = action
         self.confidence = confidence
-        self.elevatedPhysiologicalLoad = elevatedPhysiologicalLoad
         self.isInTransit = isInTransit
         self.adverseWeather = adverseWeather
         self.delaySeconds = delaySeconds
@@ -126,17 +110,15 @@ public struct ContextActionReport: Codable, Equatable, Identifiable, Sendable {
 }
 
 public enum UserContextEngine {
-    public static let maximumHeartRateSampleAge: TimeInterval = 15 * 60
     public static let automaticDeferralLearningThreshold = 2
 
     public static func recommendation(for snapshot: UserContextSnapshot) -> ContextRecommendation? {
         guard snapshot.isEnabled else { return nil }
-        let elevatedLoad = hasElevatedLoad(snapshot)
         let adverseWeather = snapshot.weatherSeverity != .normal
         let imminentItem = snapshot.hasUpcomingCalendarItem
             && (snapshot.minutesUntilCalendarItem.map { (0...90).contains($0) } ?? false)
 
-        if imminentItem, snapshot.isInTransit, elevatedLoad || adverseWeather {
+        if imminentItem, snapshot.isInTransit, adverseWeather {
             let learned = snapshot.priorAcceptedDeferrals >= automaticDeferralLearningThreshold
             let action: ContextRecommendationAction = snapshot.allowsAutomaticCalendarChanges && learned
                 ? .automaticallyDeferCalendar
@@ -144,7 +126,6 @@ public enum UserContextEngine {
             let confidence = min(
                 0.96,
                 0.68
-                    + (elevatedLoad ? 0.12 : 0)
                     + (adverseWeather ? 0.08 : 0)
                     + (snapshot.hasMatchingRoutine ? 0.06 : 0)
                     + min(0.08, Double(snapshot.habitObservationCount) / 250)
@@ -152,32 +133,11 @@ public enum UserContextEngine {
             return ContextRecommendation(
                 action: action,
                 confidence: confidence,
-                elevatedPhysiologicalLoad: elevatedLoad,
                 isInTransit: true,
                 adverseWeather: adverseWeather
             )
         }
 
-        if elevatedLoad, !snapshot.isInTransit {
-            return ContextRecommendation(
-                action: .suggestRecoveryPause,
-                confidence: 0.72,
-                elevatedPhysiologicalLoad: true,
-                isInTransit: false,
-                adverseWeather: adverseWeather,
-                delaySeconds: 15 * 60
-            )
-        }
         return nil
-    }
-
-    private static func hasElevatedLoad(_ snapshot: UserContextSnapshot) -> Bool {
-        guard let current = snapshot.currentHeartRate,
-              let resting = snapshot.restingHeartRate,
-              resting > 0,
-              snapshot.heartRateSampleAge.map({ $0 <= maximumHeartRateSampleAge }) ?? false else {
-            return false
-        }
-        return current >= max(resting * 1.25, resting + 18)
     }
 }

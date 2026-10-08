@@ -19,17 +19,25 @@ Charge, range and travel time are estimates. Manual battery values are not measu
 
 Widgets and Live Activities summarize the user's charging break and station information. Background refresh and notifications depend on iOS scheduling and permissions; the app does not require continuous background location.
 
-Optional context settings are off by default. If enabled with system permission, EventKit evaluates upcoming events on-device. HealthKit access, if separately allowed, reads heart rate and resting heart rate samples on-device for contextual break recommendations. These features are not medical diagnosis or stress measurement. Calendar changes require acceptance of a suggestion or separately enabled automation after the app's historical acceptance threshold is reached. No HealthKit samples or event titles are sent to our servers.
+Optional context settings are off by default. If enabled with system permission, EventKit evaluates upcoming events on-device using travel and weather context. Calendar changes require acceptance of a suggestion or separately enabled automation after the historical acceptance threshold is reached. Event titles are never sent to our servers. HealthKit, heart-rate access and heart-rate-based break suggestions have been removed from the app, capabilities and permission descriptions.
 
 Support: sarjbul@icloud.com
 
-Support and privacy choices: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md
+Support and privacy choices: https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/SUPPORT.md
 
-Privacy policy: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md
+Privacy policy: https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/PRIVACY_POLICY.md
 
 ## Yayın Öncesi Kontrol
 
 - Bu notları gerçek Release build üzerinde uygula; çalışmayan adımı mağazaya göndermeden düzelt.
-- HealthKit'in sağlık/fitness amacı koşulunu bu ürün için çözümle. Gizlilik metni eklemek tek başına uygunluk sağlamaz.
+- HealthKit capability/izin metninin imzalı build içinde bulunmadığını doğrula; kaldırılan özellik yayın kapsamı dışındadır.
 - Yerel veri sıfırlama ile bulut verisi sıfırlamanın sonuçlarını gerçek backend'de doğrula.
 - Apple üyeliği, imzalama ve App Attest etkinliği tamamlanmadan bu belgeyi test kanıtı sayma.
+
+## First release scope — 8 October 2026
+
+Search preserves the user's connector, power, operator, text and range conditions. A no-match result provides a way to edit filters. Station cards, Home suggestions and details show price provenance and unknown tariff confirmation dates separately from catalog dates. Availability is either a valid operator snapshot no older than 15 minutes, an explicitly historical community estimate, or unknown. Community risk reports do not assert current operator status.
+
+The “I started charging” action starts a local 30-minute reminder only. It does not start a charger. Widget and Live Activity content is a timer with a user-selected target, not measured vehicle charge or operator-confirmed charging progress. No reservation, payment, or remote charging controls are included.
+
+A CarPlay EV Charging entitlement request was submitted on 8 October 2026; Apple acknowledged receipt. Entitlement approval is pending. This build has no embedded CarPlay UI or entitlement and hands directions off to Maps.

@@ -6,6 +6,12 @@ public struct LiveStationAvailability: Codable, Hashable, Sendable {
     public var totalConnectors: Int
     public var updatedAt: Date
 
+    public func isCurrent(at now: Date = Date()) -> Bool {
+        (0...15 * 60).contains(now.timeIntervalSince(updatedAt))
+            && totalConnectors > 0
+            && (0...totalConnectors).contains(availableConnectors)
+    }
+
     public init(stationKey: String, availableConnectors: Int, totalConnectors: Int, updatedAt: Date) {
         self.stationKey = stationKey
         self.availableConnectors = availableConnectors
@@ -85,8 +91,8 @@ public actor OCPIGatewayClient: LiveAvailabilityClient {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let availability = try decoder.decode([String: LiveStationAvailability].self, from: data)
-        let freshnessLimit = Date().addingTimeInterval(-15 * 60)
-        let fresh = availability.filter { $0.value.updatedAt >= freshnessLimit }
+        let now = Date()
+        let fresh = availability.filter { requestedKeys.contains($0.key) && $0.value.isCurrent(at: now) }
         cache.merge(fresh) { _, new in new }
         cachedRequestKeys.formUnion(requestedKeys)
         cacheStoredAt = Date()

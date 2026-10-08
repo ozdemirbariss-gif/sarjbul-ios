@@ -18,7 +18,7 @@ Bu alanlar ilk iPhone sürümü için hazırlanmıştır. App Store Connect'e y�
 - Soket ve güç filtreleriyle aramanı daralt.
 - Rotayı Apple Maps veya Google Maps'te aç.
 - Favori istasyonlarını sakla ve durum bildirimi gönder.
-- Şarj molanı takip et; widget ve Live Activity ile özeti gör.
+- Manuel şarj hatırlatıcısı kur; widget ve Live Activity ile tahmini süreyi gör.
 - Türkçe ve İngilizce kullan; bağlantı olmadığında son indirilen istasyon verilerine eriş.
 
 Giriş veya kayıt formu gerekmez. Bulut özellikleri için anonim bir uygulama kimliği kullanılır. Şarj ve süre değerleri tahmindir. Fiyat ve müsaitlik bilgileri mevcut kaynağa bağlıdır; canlı bilgi bulunmadığında belirtilir. Güncel yol tarifi ve veri senkronizasyonu internet bağlantısı gerektirir.
@@ -38,7 +38,7 @@ Enter your charge level, battery capacity and average consumption to estimate yo
 - Refine your search with connector and power filters.
 - Open directions in Apple Maps or Google Maps.
 - Save favorite stations and send status reports.
-- Follow your charging break with widgets and Live Activities.
+- Set a manual charging reminder and view the estimated timer with widgets and Live Activities.
 - Use Turkish or English and access previously downloaded station data offline.
 
 No sign-in or registration form is required. Cloud features use an anonymous app identity. Charge and travel time are estimates. Pricing and availability depend on the data source; missing live data is indicated. Current directions and data synchronization require an internet connection.
@@ -46,8 +46,8 @@ No sign-in or registration form is required. Cloud features use an anonymous app
 ## Tamamlanacak Alanlar
 
 - Destek e-postası: **sarjbul@icloud.com**.
-- Destek URL'si: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md
-- Gizlilik URL'si: https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md
+- Destek URL'si: https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/SUPPORT.md
+- Gizlilik URL'si: https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/PRIVACY_POLICY.md
 - App Review iletişim kişisi, telefon ve e-posta; kamuya açık destek adresinden ayrı bir formdur.
 - Güncel yaş derecelendirmesi anketi: uygulamada gerçekten sunulan özelliklere göre cevapla.
 - Fiyat ve dağıtım ülkeleri; Avrupa Birliği seçilecekse DSA durumunu tamamla.

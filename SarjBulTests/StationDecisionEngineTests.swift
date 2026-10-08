@@ -48,6 +48,21 @@ struct StationDecisionEngineTests {
         #expect(summary.availability == .unknown)
     }
 
+    @Test
+    func staleFutureAndInvalidAvailabilityNeverLookLive() {
+        let now = Date()
+        for live in [
+            LiveStationAvailability(stationKey: "test", availableConnectors: 1, totalConnectors: 2, updatedAt: now.addingTimeInterval(-901)),
+            LiveStationAvailability(stationKey: "test", availableConnectors: 1, totalConnectors: 2, updatedAt: now.addingTimeInterval(1)),
+            LiveStationAvailability(stationKey: "test", availableConnectors: 3, totalConnectors: 2, updatedAt: now),
+            LiveStationAvailability(stationKey: "test", availableConnectors: 0, totalConnectors: 0, updatedAt: now)
+        ] {
+            var value = candidate(power: "22 kW", arrival: 40)
+            value.liveAvailability = live
+            #expect(StationDecisionEngine.summarize(candidate: value, profile: DrivingProfile(), now: now).availability == .unknown)
+        }
+    }
+
     private func candidate(power: String, arrival: Double) -> StationCandidate {
         StationCandidate(
             station: Station(

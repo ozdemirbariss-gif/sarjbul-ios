@@ -2,20 +2,19 @@ import Foundation
 import SarjBulCore
 
 struct AppConfiguration {
-    private static let defaultStationDataURL = URL(
-        string: "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj/main/stations.json"
-    )
+    // The canonical source is private and used by ingestion, never by the app.
+    private static let defaultStationDataURL: URL? = nil
     private static let defaultStationTileManifestURL = URL(
-        string: "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json"
+        string: "https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json"
     )
     private static let defaultPrivacyPolicyURL = URL(
-        string: "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/PRIVACY_POLICY.md"
+        string: "https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/PRIVACY_POLICY.md"
     )
     private static let defaultTermsURL = URL(
-        string: "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/TERMS_OF_USE.md"
+        string: "https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/TERMS_OF_USE.md"
     )
     private static let defaultSupportURL = URL(
-        string: "https://github.com/ozdemirbariss-gif/elektriklisarj-ios/blob/main/Docs/SUPPORT.md"
+        string: "https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/SUPPORT.md"
     )
     private static let defaultSupportEmail = "sarjbul@icloud.com"
     var firebaseDatabaseURL: URL?

@@ -1,6 +1,6 @@
 # ŞarjBul imzalama kurulumu
 
-13 Eylül 2026 durumu: proje otomatik imzalamaya hazırlandı; **Apple takım/profil kurulumu henüz tamamlanmadı**. Xcode > Settings > Apple Accounts hesabın ekli olmadığını gösterdi. Yerel denetimde geçerli kod imzalama kimliği ve kurulu provisioning profili bulunmadı. Sonraki arayüz kontrolünde macOS ekran erişimini reddetti.
+Tarihsel durum — 13 Eylül 2026: proje otomatik imzalamaya hazırlandı; **Apple takım/profil kurulumu henüz tamamlanmadı**. Xcode > Settings > Apple Accounts hesabın ekli olmadığını gösterdi. Yerel denetimde geçerli kod imzalama kimliği ve kurulu provisioning profili bulunmadı. Sonraki arayüz kontrolünde macOS ekran erişimini reddetti.
 
 ## Hedef ve yetki eşleştirmesi
 
@@ -13,7 +13,7 @@
 | App Group | `group.com.ozdemirbaris.sarjbul` | `group.com.ozdemirbaris.sarjbul` |
 | Push Notifications | Debug `development`, Release `production` | Kullanılmıyor |
 | App Attest | Release `production` | Kullanılmıyor |
-| HealthKit | `com.apple.developer.healthkit = true` | Kullanılmıyor |
+| HealthKit | Kaldırıldı; talep edilmez | Kullanılmıyor |
 
 Debug sürümü `FirebaseBootstrap` içinde App Check Debug Provider kullanır; bu yapılandırmaya App Attest yetkisi eklenmedi. Release App Attest kullanır. Widget yalnızca paylaşılan App Group'a erişir.
 
@@ -32,8 +32,8 @@ Yer tutucu gerçek takım değildir; dosyaya aynen yazılmamalıdır. Yerel dosy
 ## Hesap erişimi sağlanınca kalan işlem
 
 1. Xcode'a ilgili Apple Developer hesabıyla giriş yap; takım ve Certificates, Identifiers & Profiles erişimini doğrula.
-2. Aynı takım altında iki explicit App ID'yi ve ortak App Group'u doğrula/kaydet. Ana uygulamada App Groups, Push Notifications, App Attest ve HealthKit; widget'ta App Groups etkin olmalı. App Group iki App ID'ye de atanmalı.
-3. Xcode otomatik imzalama ile iki hedefin profillerini yenilesin. App Store Connect dağıtımında ana uygulama ve widget için ayrı, doğru App ID'ye bağlı dağıtım profilleri kullanılsın.
+2. Aynı takım altında iki explicit App ID'yi ve ortak App Group'u doğrula/kaydet. Ana uygulamada App Groups, Push Notifications, App Attest; widget'ta App Groups etkin olmalı. App Group iki App ID'ye de atanmalı.
+3. Ana App ID üzerinde HealthKit önceden açılmışsa kaldır ve profilleri yenile; uygulamanın entitlement dosyalarında HealthKit yok. Xcode otomatik imzalama ile iki hedefin profillerini yenilesin. App Store Connect dağıtımında ana uygulama ve widget için ayrı, doğru App ID'ye bağlı dağıtım profilleri kullanılsın.
 4. Export edilen uygulama ve gömülü `PlugIns/SarjBulWidgets.appex` için imza, profil bitiş tarihi, takım, application-identifier, App Group ve yukarıdaki Release yetkilerini karşılaştır. Dağıtım profilinde `get-task-allow` false olmalı. Gerçek profil UUID/son kullanma bilgileri görülmeden bu adımı tamamlandı işaretleme.
 
 App Group eklemek Apple hesabında kaydı oluşturmaz; entitlement dosyaları yalnızca uygulamanın istediği yetkileri belirtir. Profil oluşturma/yenileme için Apple hesabına erişim gerekir. APNs sağlayıcı anahtarının backend'e kurulması ve Firebase App Check kaydı, iOS imzalama işleminden ayrı işlerdir.
@@ -54,3 +54,9 @@ Mevcut üretim kontrolündeki `firebaseBackendReady=false` ve `commercialDataUse
 - [Apple: App ID yetkileri ve profil yenileme](https://developer.apple.com/help/account/identifiers/enable-app-capabilities/)
 - [Apple: App Group kaydı](https://developer.apple.com/help/account/identifiers/register-an-app-group/)
 - [Apple: App Attest hazırlığı](https://developer.apple.com/documentation/devicecheck/preparing-to-use-the-app-attest-service)
+
+## 8 Ekim 2026 — hesap doğrulaması
+
+Apple Developer portalında aktif ücretli üyelik ve takım doğrulandı. Doğrulanan takım yerel `Config/Signing.local.xcconfig` dosyasına eklendi; bu dosya Git dışında kalır. Portalın Identifiers > App IDs listesi boş göründü: ana uygulama ve widget için kayıtlı App ID bulunmadı. Bu nedenle portalda kaldırılacak bir ŞarjBul HealthKit capability'si de bulunmadı.
+
+Kalan işlem: Xcode > Settings > Apple Accounts altında aynı hesabı ekle; iki explicit App ID'yi ve ortak App Group'u oluştur, ana hedefte App Groups/Push/App Attest ile widget App Group yetkilerini eşleştir ve profilleri üret. HealthKit eklenmemelidir. CarPlay EV Charging başvurusu alındı; onay gelmeden CarPlay capability eklenmez. Portal oturumu Xcode oturumu veya imzalı dağıtım kanıtı değildir.

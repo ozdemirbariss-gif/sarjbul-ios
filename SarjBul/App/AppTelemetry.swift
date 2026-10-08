@@ -9,7 +9,7 @@ enum AppTelemetry {
         "station_status_refresh", "station_insight_refresh", "context_calendar_deferral",
         "journey_route_fallback", "offline_mutation_queued", "offline_mutation_rejected",
         "offline_sync_deferred", "offline_sync_rejected", "context_calendar_authorization",
-        "context_health_authorization", "context_weather"
+        "context_weather"
     ]
 
     static func capture(_ error: Error, operation: String) {

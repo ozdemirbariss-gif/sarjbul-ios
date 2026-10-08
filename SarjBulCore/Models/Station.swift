@@ -221,7 +221,7 @@ public extension Station {
         sourceObservationDate ?? sourcePublicationDate
     }
 
-    private static func parseSourceDate(_ value: String?) -> Date? {
+    static func parseSourceDate(_ value: String?) -> Date? {
         guard let value else { return nil }
         let fractional = ISO8601DateFormatter()
         fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

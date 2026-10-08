@@ -44,7 +44,7 @@ Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `fi
 
 ## Seçilmeyen türler
 
-Health, Fitness, Contacts, Photos or Videos, Payment Info, Purchase History, Browsing History, Audio Data ve diğer türler uygulama tarafından sunucuda toplanmıyor. HealthKit/EventKit içeriği, fiş OCR ve şarj harcama geçmişi cihazdadır. Kullanıcının destek yazışmasına eklediği içerik Customer Support altında açıklanır. Birim fiyat katkısı Other User Content'tir; fiş fotoğrafı yüklenmez.
+Health, Fitness, Contacts, Photos or Videos, Payment Info, Purchase History, Browsing History, Audio Data ve diğer türler uygulama tarafından sunucuda toplanmıyor. HealthKit uygulamadan kaldırılmıştır; sağlık verisi okunmaz/yazılmaz ve sağlık izni istenmez. EventKit içeriği, fiş OCR ve şarj harcama geçmişi cihazdadır. Kullanıcının destek yazışmasına eklediği içerik Customer Support altında açıklanır. Birim fiyat katkısı Other User Content'tir; fiş fotoğrafı yüklenmez.
 
 MapKit arama/rota işleme ve dış Apple/Google Maps aktarımı politikada açıklanır. Apple'ın kendisinin topladığı veriyi geliştiricinin ayrıca beyan etmesi gerekmez; ŞarjBul'un ayrıca kaydettiği veri bu istisnaya girmez. Telegram/WhatsApp/browser/e-posta gateway'leri iOS hedefinde çağrılmıyor; sonradan bağlanırsa ayrı inceleme gerekir.
 

@@ -218,6 +218,6 @@ struct ChargingLiveActivityWidget: Widget {
     private var activityAccent: Color { SBColor.contentPrimary }
 
     private func chargingTitle(_ languageCode: String) -> String {
-        languageCode == "en" ? "Charging" : "Şarj devam ediyor"
+        languageCode == "en" ? "Charging reminder" : "Şarj hatırlatıcısı"
     }
 }

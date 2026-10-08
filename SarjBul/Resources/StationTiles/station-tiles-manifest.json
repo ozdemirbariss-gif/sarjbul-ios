@@ -3,7 +3,7 @@
   "generated_at": "2026-10-07T11:08:55.693920Z",
   "source_sha256": "86d1838998571f4f589c9a01c8111e767b999bb011501b752868f8210aa63765",
   "total_records": 15515,
-  "base_url": "https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/",
+  "base_url": "https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/",
   "tiles": [
     {
       "geohash": "s00",

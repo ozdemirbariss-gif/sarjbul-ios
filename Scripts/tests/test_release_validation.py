@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from validate_release import ROOT, USER_DEFAULTS, manifest_issues, production_issues
+from validate_release import ROOT, USER_DEFAULTS, first_release_scope_issues, manifest_issues, production_issues
 
 
 def configuration():
@@ -34,6 +34,22 @@ def configuration():
 
 
 class ReleaseValidationTests(unittest.TestCase):
+    def test_health_capability_and_runtime_reintroduction_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative in ("SarjBul/SarjBul.entitlements", "SarjBul/SarjBulDebug.entitlements",
+                             "SarjBulWidgets/SarjBulWidgets.entitlements", "SarjBul/Resources/Info.plist"):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes((ROOT / relative).read_bytes())
+            self.assertEqual(first_release_scope_issues(root), [])
+            with (root / "SarjBul/SarjBulDebug.entitlements").open("wb") as target:
+                plistlib.dump({"com.apple.developer.healthkit": True}, target)
+            (root / "SarjBul/Removed.swift").write_text("import HealthKit\n")
+            errors = first_release_scope_issues(root)
+            self.assertTrue(any("SarjBulDebug.entitlements" in error for error in errors))
+            self.assertTrue(any("Removed.swift" in error for error in errors))
+
     def test_commercial_release_requires_provider_rights_review(self):
         config, firebase = configuration()
         config.pop("commercialDataUseApproved")
@@ -118,6 +134,8 @@ class ReleaseValidationTests(unittest.TestCase):
             "SarjBul/Resources/PrivacyInfo.xcprivacy",
             "SarjBulWidgets/PrivacyInfo.xcprivacy",
             "SarjBul/SarjBul.entitlements",
+            "SarjBul/SarjBulDebug.entitlements",
+            "SarjBul/Resources/Info.plist",
             "SarjBulWidgets/SarjBulWidgets.entitlements",
         )
         with tempfile.TemporaryDirectory() as directory:

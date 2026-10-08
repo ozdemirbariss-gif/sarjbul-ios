@@ -115,8 +115,27 @@ def manifest_issues(manifest, required_reasons, label):
     return errors
 
 
-def validate(root, production=False, bundle_id=DEFAULT_BUNDLE_ID):
+def first_release_scope_issues(root):
     errors = []
+    for relative in ("SarjBul/SarjBul.entitlements", "SarjBul/SarjBulDebug.entitlements",
+                     "SarjBulWidgets/SarjBulWidgets.entitlements", "SarjBul/Resources/Info.plist"):
+        path = root / relative
+        value = read_plist(path, errors, relative)
+        if value and any("healthkit" in key.lower() or key.startswith("NSHealth") for key in value):
+            errors.append(f"{relative}: health capabilities and permissions are excluded from the first release.")
+    pattern = re.compile(r"\b(?:HealthKit|HKHealthStore|HealthContextClient|usesHealthSignals|suggestRecoveryPause)\b")
+    for directory in ("SarjBul", "SarjBulCore", "SarjBulWidgets"):
+        for path in (root / directory).rglob("*.swift"):
+            if pattern.search(path.read_text()):
+                errors.append(f"{path.relative_to(root)}: removed health feature found in shipping source.")
+    for path in (root / RESOURCES).glob("*.lproj/InfoPlist.strings"):
+        if "NSHealth" in path.read_text():
+            errors.append(f"{path.relative_to(root)}: health permission text is excluded from the first release.")
+    return errors
+
+
+def validate(root, production=False, bundle_id=DEFAULT_BUNDLE_ID):
+    errors = first_release_scope_issues(root)
     for relative, reasons in (
         (RESOURCES / "PrivacyInfo.xcprivacy", {"CA92.1", "1C8F.1"}),
         (Path("SarjBulWidgets/PrivacyInfo.xcprivacy"), {"1C8F.1"}),

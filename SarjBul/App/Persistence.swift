@@ -270,7 +270,14 @@ final class SystemAppPersistence: AppPersistence {
     }
 
     var contextActionReports: [ContextActionReport] {
-        get { decode([ContextActionReport].self, key: Key.contextActionReports) ?? [] }
+        get {
+            guard let data = defaults.data(forKey: Key.contextActionReports),
+                  let entries = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+            return entries.compactMap { entry in
+                guard let item = try? JSONSerialization.data(withJSONObject: entry) else { return nil }
+                return try? JSONDecoder().decode(ContextActionReport.self, from: item)
+            }
+        }
         set { encode(Array(newValue.prefix(40)), key: Key.contextActionReports) }
     }
 

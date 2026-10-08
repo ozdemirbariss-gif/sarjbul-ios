@@ -77,18 +77,19 @@ struct StationFeedView: View {
                     modeButton(.cards, icon: "rectangle.stack.fill", label: settings.t("feed.cards"))
                     modeButton(.map, icon: "map.fill", label: settings.t("feed.map"))
 
-                    toolbarButton(
-                        icon: "line.3.horizontal.decrease",
-                        accessibilityLabel: settings.t("feed.filters")
-                    ) {
-                        filterSheetPresented = true
-                    }
                 }
                 .padding(5)
                 .background(SBColor.surfaceRaised.opacity(0.98), in: Capsule())
                 .overlay(Capsule().stroke(SBColor.divider, lineWidth: 1))
                 .sbCardShadow()
             }
+            toolbarButton(
+                icon: "line.3.horizontal.decrease",
+                accessibilityLabel: settings.t("feed.filters")
+            ) {
+                filterSheetPresented = true
+            }
+            .accessibilityIdentifier("station-filters-button")
         }
         .padding(.horizontal, 18)
         .padding(.top, 6)
@@ -319,6 +320,22 @@ private struct StationFilterSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section(t("filters.search")) {
+                    TextField(t("filters.search_hint"), text: $filters.searchText)
+                        .autocorrectionDisabled()
+                        .accessibilityIdentifier("station-search-input")
+                }
+                if !filters.operatorFilters.isEmpty {
+                    Section(t("filters.selected_operators")) {
+                        ForEach(filters.operatorFilters.sorted(), id: \.self) { operatorName in
+                            Button {
+                                filters.operatorFilters.remove(operatorName)
+                            } label: {
+                                Label(operatorName, systemImage: "xmark.circle")
+                            }
+                        }
+                    }
+                }
                 Section(t("filters.preference")) {
                     Picker(t("filters.preference"), selection: $filters.preference) {
                         ForEach(RoutePreference.selectableCases) { preference in
@@ -332,7 +349,7 @@ private struct StationFilterSheet: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(t("filters.minimum_power", ["power": "\(Int(filters.minimumPowerKW))"]))
                             .font(.headline)
-                        Slider(value: $filters.minimumPowerKW, in: 0...180, step: 10)
+                        Slider(value: $filters.minimumPowerKW, in: 0...max(600, filters.minimumPowerKW), step: 10)
                             .tint(SBColor.actionPrimary)
                     }
                 }
@@ -368,6 +385,13 @@ private struct StationFilterSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(t("filters.apply"), action: apply)
+                        .accessibilityIdentifier("station-filters-apply")
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(t("filters.reset")) {
+                        filters = StationFilters(preference: filters.preference.supportedValue)
+                    }
+                    .accessibilityIdentifier("station-filters-reset")
                 }
             }
         }

@@ -107,6 +107,7 @@ struct StationCard: View {
         VStack(alignment: .leading, spacing: 18) {
             stationIdentity
             journeyDecision
+            StationDataEvidenceView(candidate: candidate)
             primaryRouteAction
         }
         .padding(.horizontal, 20)
@@ -141,7 +142,13 @@ struct StationCard: View {
     }
 
     private var journeyDecision: some View {
-        let summary = decisionSummaryValue
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            journeyDecision(at: context.date)
+        }
+    }
+
+    private func journeyDecision(at now: Date) -> some View {
+        let summary = StationDecisionEngine.summarize(candidate: decisionCandidate, profile: settings.profile, now: now)
         return HStack(alignment: .bottom, spacing: 16) {
             Text(String(format: "%.1f km", displayDistanceKm))
                 .font(SBFont.display(size: min(distanceTextSize, 64), weight: .heavy))
@@ -334,6 +341,7 @@ struct StationCard: View {
                         metric(settings.t("feed.price"), effectivePrice)
                     }
 
+                    StationDataEvidenceView(candidate: candidate)
                     stationIntelligence
                     statusActions
 
@@ -362,7 +370,13 @@ struct StationCard: View {
     }
 
     private var detailedDecisionSummary: some View {
-        let summary = decisionSummaryValue
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            detailedDecisionSummary(at: context.date)
+        }
+    }
+
+    private func detailedDecisionSummary(at now: Date) -> some View {
+        let summary = StationDecisionEngine.summarize(candidate: decisionCandidate, profile: settings.profile, now: now)
         return HStack(spacing: 0) {
             decisionMetric(
                 title: settings.t("decision.arrival"),
@@ -418,31 +432,6 @@ struct StationCard: View {
 
     private var stationIntelligence: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let availability = candidate.liveAvailability {
-                Label(
-                    settings.t("insight.live_availability", [
-                        "available": "\(availability.availableConnectors)",
-                        "total": "\(availability.totalConnectors)"
-                    ]),
-                    systemImage: availability.availableConnectors > 0
-                        ? "bolt.circle.fill"
-                        : "clock.badge.exclamationmark"
-                )
-                .foregroundStyle(availability.availableConnectors > 0 ? SBColor.statusAvailable : SBColor.warning)
-            } else {
-                let prediction = OccupancyPredictor.predict(
-                    station: candidate.station,
-                    insight: candidate.communityInsight
-                )
-                Label(
-                    settings.t("insight.busy_prediction", [
-                        "percent": "\(Int((prediction.busyProbability * 100).rounded()))"
-                    ]),
-                    systemImage: "chart.xyaxis.line"
-                )
-                .foregroundStyle(SBColor.contentTertiary)
-            }
-
             Label(
                 settings.t("insight.data_confidence", [
                     "percent": "\(Int((candidate.station.confidenceScore * 100).rounded()))"
@@ -524,10 +513,6 @@ struct StationCard: View {
         .frame(minHeight: 62)
         .background(SBColor.surfaceInteractive)
         .clipShape(RoundedRectangle(cornerRadius: SBRadius.md, style: .continuous))
-    }
-
-    private var decisionSummaryValue: StationDecisionSummary {
-        StationDecisionEngine.summarize(candidate: decisionCandidate, profile: settings.profile)
     }
 
     private var decisionCandidate: StationCandidate {

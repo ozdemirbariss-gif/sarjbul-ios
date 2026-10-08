@@ -11,7 +11,6 @@ final class ContextIntelligenceStore {
     private let settings: UserSettingsStore
     private let executionTrust: ExecutionTrustStore
     private let calendar: CalendarContextClient
-    private let health: HealthContextClient
     private let weather: WeatherContextClient
     private var currentCalendarItem: ContextCalendarItem?
 
@@ -34,7 +33,6 @@ final class ContextIntelligenceStore {
         settings: UserSettingsStore,
         executionTrust: ExecutionTrustStore,
         calendar: CalendarContextClient = CalendarContextClient(),
-        health: HealthContextClient = HealthContextClient(),
         weather: WeatherContextClient = WeatherContextClient()
     ) {
         self.persistence = persistence
@@ -42,10 +40,11 @@ final class ContextIntelligenceStore {
         self.settings = settings
         self.executionTrust = executionTrust
         self.calendar = calendar
-        self.health = health
         self.weather = weather
         policy = persistence.contextIntelligencePolicy
         reports = persistence.contextActionReports
+        persistence.contextActionReports = reports
+        persistence.contextIntelligencePolicy = policy
     }
 
     func setEnabled(_ enabled: Bool) async {
@@ -53,17 +52,10 @@ final class ContextIntelligenceStore {
         persistence.contextIntelligencePolicy = policy
         if enabled {
             _ = await calendar.requestAuthorization()
-            if policy.usesHealthSignals { _ = await health.requestAuthorization() }
             _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
         } else {
             recommendation = nil
         }
-    }
-
-    func setUsesHealthSignals(_ enabled: Bool) async {
-        policy.usesHealthSignals = enabled
-        persistence.contextIntelligencePolicy = policy
-        if enabled { _ = await health.requestAuthorization() }
     }
 
     func setUsesWeather(_ enabled: Bool) {
@@ -88,17 +80,12 @@ final class ContextIntelligenceStore {
 
         let item = calendar.nextItem(now: now)
         currentCalendarItem = item
-        async let heartTask = policy.usesHealthSignals ? health.latestContext() : HeartContext()
         async let weatherTask = weatherContext(location: location)
-        let heart = await heartTask
         let currentWeather = await weatherTask
         let acceptedCount = reports.filter { $0.action == .offerCalendarDeferral && $0.outcome == .accepted }.count
         let snapshot = UserContextSnapshot(
             isEnabled: true,
             isInTransit: (movementSpeedMetersPerSecond ?? 0) >= 4.5,
-            currentHeartRate: heart.current,
-            restingHeartRate: heart.resting,
-            heartRateSampleAge: heart.sampleDate.map { max(0, now.timeIntervalSince($0)) },
             weatherSeverity: currentWeather.severity,
             hasUpcomingCalendarItem: item != nil,
             minutesUntilCalendarItem: item.map { Int($0.startDate.timeIntervalSince(now) / 60) },
@@ -117,9 +104,6 @@ final class ContextIntelligenceStore {
         switch recommendation.action {
         case .offerCalendarDeferral, .automaticallyDeferCalendar:
             await applyCalendarDeferral(outcome: .accepted, now: now)
-        case .suggestRecoveryPause:
-            record(ContextActionReport(action: .suggestRecoveryPause, outcome: .accepted, createdAt: now))
-            self.recommendation = nil
         }
     }
 

@@ -150,9 +150,9 @@ final class ChargingSessionStore {
         let isEnglish = languageCode == "en"
         WidgetContextSnapshotStore.save(WidgetContextSnapshot(
             kind: .activeCharging,
-            title: isEnglish ? "Charging" : "Şarj devam ediyor",
+            title: isEnglish ? "Charging reminder" : "Şarj hatırlatıcısı",
             subtitle: station.name,
-            value: "%\(targetPercent)",
+            value: isEnglish ? "Target \(targetPercent)%" : "Hedef %\(targetPercent)",
             icon: "bolt.fill",
             deepLink: "sarjbul://home",
             updatedAt: Date(),

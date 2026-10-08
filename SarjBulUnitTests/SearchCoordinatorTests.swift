@@ -6,6 +6,19 @@ import XCTest
 
 @MainActor
 final class SearchCoordinatorTests: XCTestCase {
+    func testUnmatchedFiltersNeverSilentlyReturnOtherStations() async throws {
+        let app = try makeApp(repository: SearchTestRepository())
+        app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)
+        app.settings.filters.minimumPowerKW = 350
+        app.settings.filters.socketFilters = ["Type 2"]
+        let original = app.settings.filters
+        await app.search.findStations()
+        XCTAssertTrue(app.search.routeCandidates.isEmpty)
+        XCTAssertNil(app.search.preparedCandidate)
+        XCTAssertEqual(app.settings.filters, original)
+        XCTAssertFalse(app.search.locationNeedsReview)
+    }
+
     func testMovingLocationImmediatelyClearsPreparedAndPreviousResults() async throws {
         let app = try makeApp(repository: SearchTestRepository())
         app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)

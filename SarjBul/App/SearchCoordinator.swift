@@ -348,7 +348,7 @@ final class SearchCoordinator {
         filters: StationFilters
     ) async -> [StationCandidate] {
         let limit = context.destination == nil ? 24 : 120
-        var candidates = await stationData.candidates(
+        let candidates = await stationData.candidates(
             origin: context.origin,
             destination: context.destination,
             routePoints: routePoints,
@@ -356,20 +356,6 @@ final class SearchCoordinator {
             filters: filters,
             limit: limit
         )
-        let recoveryFilters = relaxedFilters(from: filters)
-        if !Task.isCancelled, candidates.isEmpty, recoveryFilters != filters {
-            candidates = await stationData.candidates(
-                origin: context.origin,
-                destination: context.destination,
-                routePoints: routePoints,
-                profile: context.profile,
-                filters: recoveryFilters,
-                limit: limit
-            )
-            if !candidates.isEmpty {
-                AppLogger.routing.notice("Station search recovered with safe fallback filters")
-            }
-        }
         return candidates
     }
 
@@ -381,15 +367,17 @@ final class SearchCoordinator {
         previousCandidates = []
         state = .results([])
         if settings.destination == nil {
-            locationNeedsReview = true
-            if presentResults { navigation.select(.home) }
-            AppLogger.routing.warning("Station search found no nearby candidates after fallback")
+            locationNeedsReview = !stationData.stations.contains {
+                DistanceCalculator.haversineKm(from: location, toLatitude: $0.latitude, longitude: $0.longitude) < 400
+            }
+            if presentResults { navigation.select(.routes) }
+            AppLogger.routing.notice("Station search found no candidates matching selected conditions")
         } else {
             if presentResults {
                 state = .results([])
                 navigation.select(.routes)
             }
-            AppLogger.routing.warning("Journey search found no corridor candidates after fallback")
+            AppLogger.routing.warning("Journey search found no corridor candidates matching selected conditions")
         }
         frictionTelemetry.record(.noOutcome)
         recordSearchProof(
@@ -542,16 +530,6 @@ final class SearchCoordinator {
             station: candidate.station,
             correctedRecommendation: correctedRecommendation
         )
-    }
-
-    private func relaxedFilters(from filters: StationFilters) -> StationFilters {
-        var relaxed = filters
-        relaxed.searchText = ""
-        relaxed.minimumPowerKW = 0
-        relaxed.socketFilters = []
-        relaxed.operatorFilters = []
-        relaxed.rangeFilterEnabled = false
-        return relaxed
     }
 
     private func prepareRouteSnapshot(context: SearchContext) async -> JourneyRouteSnapshot? {

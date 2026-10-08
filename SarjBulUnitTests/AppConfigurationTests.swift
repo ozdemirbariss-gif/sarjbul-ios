@@ -4,6 +4,13 @@ import XCTest
 
 @MainActor
 final class AppConfigurationTests: XCTestCase {
+    func testPublicTileDefaultsDoNotRequestPrivateCanonicalData() throws {
+        let configuration = try loadConfiguration(ready: false)
+        XCTAssertNil(configuration.stationDataURL)
+        XCTAssertEqual(configuration.stationTileManifestURL?.absoluteString,
+                       "https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json")
+    }
+
     func testCredentialsDoNotEnableAnUnverifiedBackend() throws {
         let configuration = try loadConfiguration(ready: nil)
         XCTAssertNotNil(configuration.firebaseDatabaseURL)

@@ -266,7 +266,7 @@ struct HomeView: View {
 
     private func contextRecommendationCard(_ recommendation: ContextRecommendation) -> some View {
         HStack(spacing: 16) {
-            Image(systemName: recommendation.elevatedPhysiologicalLoad ? "heart.text.square.fill" : "cloud.rain.fill")
+            Image(systemName: "cloud.rain.fill")
                 .font(.title2.weight(.heavy))
                 .foregroundStyle(SBColor.onActionPrimary)
                 .frame(width: 56, height: 56)
@@ -283,10 +283,6 @@ struct HomeView: View {
                 if contextIntelligence.policy.usesWeather {
                     OpenMeteoAttributionView()
                 }
-                Text(settings.t("context.health_disclaimer"))
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(SBColor.contentSecondary)
-                    .lineLimit(2)
             }
 
             Spacer(minLength: 6)
@@ -295,7 +291,7 @@ struct HomeView: View {
                 Button {
                     Task { await contextIntelligence.acceptRecommendation() }
                 } label: {
-                    Image(systemName: recommendation.action == .suggestRecoveryPause ? "checkmark" : "clock.arrow.circlepath")
+                    Image(systemName: "clock.arrow.circlepath")
                         .frame(width: 38, height: 38)
                         .background(SBColor.actionPrimary, in: Circle())
                         .foregroundStyle(SBColor.onActionPrimary)
@@ -325,8 +321,6 @@ struct HomeView: View {
             settings.t("context.defer_offer")
         case .automaticallyDeferCalendar:
             settings.t("context.defer_completed")
-        case .suggestRecoveryPause:
-            settings.t("context.recovery_offer")
         }
     }
 
@@ -829,6 +823,20 @@ struct HomeView: View {
     private var routeAction: some View {
         if let candidate = search.preparedCandidate {
             preparedRouteAction(candidate)
+        } else if case .results(let candidates) = search.state, candidates.isEmpty {
+            VStack(alignment: .leading, spacing: 14) {
+                Label(settings.t("route.empty"), systemImage: "magnifyingglass")
+                    .font(.headline)
+                Text(settings.t("route.empty_hint"))
+                    .font(.subheadline)
+                    .foregroundStyle(SBColor.contentSecondary)
+                SBDarkButton(title: settings.t("feed.filters"), systemImage: "line.3.horizontal.decrease") {
+                    navigation.select(.routes)
+                }
+            }
+            .padding(20)
+            .sbPremiumGlass(radius: SBRadius.lg)
+            .accessibilityIdentifier("search-no-match-card")
         } else {
             rangeAction
         }
@@ -882,6 +890,10 @@ struct HomeView: View {
                 }
             }
             .padding(20)
+
+            StationDataEvidenceView(candidate: candidate)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
 
             Button {
                 if settings.navigationAppPreference == nil {

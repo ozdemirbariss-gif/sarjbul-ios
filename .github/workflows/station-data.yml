@@ -89,7 +89,7 @@ jobs:
           /tmp/merged-stations.json
           SarjBul/Resources/StationTiles
           --base-url
-          https://raw.githubusercontent.com/ozdemirbariss-gif/elektriklisarj-ios/main/SarjBul/Resources/StationTiles/
+          https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/
       - name: Refresh licensed operators
         run: python3 Scripts/update_epdk_operators.py
       - name: Commit refreshed data

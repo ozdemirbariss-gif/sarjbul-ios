@@ -285,11 +285,28 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(persistence.favoriteStationKeys, ["station-1", "station-2"])
     }
 
+    func testRemovedContextActionsDoNotEraseCalendarHistory() throws {
+        let name = "LegacyContext.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
+        defer { defaults.removePersistentDomain(forName: name) }
+        let report = ContextActionReport(action: .offerCalendarDeferral, outcome: .accepted)
+        let encoded = try JSONEncoder().encode([report])
+        var entries = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [[String: Any]])
+        var removed = entries[0]
+        removed["action"] = "suggestRecoveryPause"
+        entries.append(removed)
+        defaults.set(try JSONSerialization.data(withJSONObject: entries), forKey: "contextActionReports")
+        let persistence = SystemAppPersistence(defaults: defaults)
+        XCTAssertEqual(persistence.contextActionReports, [report])
+        defaults.set(Data(#"{"isEnabled":true,"usesHealthSignals":true,"usesWeather":false,"allowsAutomaticCalendarChanges":false}"#.utf8), forKey: "contextIntelligencePolicy")
+        XCTAssertTrue(persistence.contextIntelligencePolicy.isEnabled)
+        XCTAssertFalse(persistence.contextIntelligencePolicy.usesWeather)
+    }
+
     func testContextPolicyAndActionReportsSurviveRelaunch() throws {
         let persistence = try makePersistence()
         let policy = ContextIntelligencePolicy(
             isEnabled: true,
-            usesHealthSignals: true,
             usesWeather: true,
             allowsAutomaticCalendarChanges: true
         )

@@ -1,7 +1,6 @@
 import CoreLocation
 import EventKit
 import Foundation
-@preconcurrency import HealthKit
 import SarjBulCore
 
 struct ContextCalendarItem: Sendable {
@@ -47,63 +46,6 @@ final class CalendarContextClient {
         event.startDate = event.startDate.addingTimeInterval(interval)
         event.endDate = event.endDate.addingTimeInterval(interval)
         try eventStore.save(event, span: .thisEvent, commit: true)
-    }
-}
-
-struct HeartContext: Sendable {
-    var current: Double?
-    var resting: Double?
-    var sampleDate: Date?
-}
-
-@MainActor
-final class HealthContextClient {
-    private let healthStore = HKHealthStore()
-
-    func requestAuthorization() async -> Bool {
-        guard HKHealthStore.isHealthDataAvailable(),
-              let heartRate = HKObjectType.quantityType(forIdentifier: .heartRate),
-              let resting = HKObjectType.quantityType(forIdentifier: .restingHeartRate) else { return false }
-        do {
-            try await healthStore.requestAuthorization(toShare: [], read: [heartRate, resting])
-            return true
-        } catch {
-            AppTelemetry.capture(error, operation: "context_health_authorization")
-            return false
-        }
-    }
-
-    func latestContext() async -> HeartContext {
-        guard HKHealthStore.isHealthDataAvailable() else { return HeartContext() }
-        async let current = latestValue(identifier: .heartRate)
-        async let resting = latestValue(identifier: .restingHeartRate)
-        let currentSample = await current
-        let restingSample = await resting
-        return HeartContext(
-            current: currentSample?.value,
-            resting: restingSample?.value,
-            sampleDate: currentSample?.date
-        )
-    }
-
-    private func latestValue(identifier: HKQuantityTypeIdentifier) async -> (value: Double, date: Date)? {
-        guard let type = HKObjectType.quantityType(forIdentifier: identifier) else { return nil }
-        return await withCheckedContinuation { continuation in
-            let query = HKSampleQuery(
-                sampleType: type,
-                predicate: nil,
-                limit: 1,
-                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]
-            ) { _, samples, _ in
-                guard let sample = samples?.first as? HKQuantitySample else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                let value = sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute()))
-                continuation.resume(returning: (value, sample.endDate))
-            }
-            healthStore.execute(query)
-        }
     }
 }
 

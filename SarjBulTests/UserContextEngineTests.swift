@@ -5,11 +5,11 @@ import Testing
 @Suite
 struct UserContextEngineTests {
     @Test
-    func elevatedLoadWhileTravellingOffersCalendarDeferral() throws {
+    func adverseWeatherWhileTravellingOffersCalendarDeferral() throws {
         let result = try #require(UserContextEngine.recommendation(for: snapshot()))
 
         #expect(result.action == .offerCalendarDeferral)
-        #expect(result.elevatedPhysiologicalLoad)
+        #expect(result.adverseWeather)
     }
 
     @Test
@@ -24,15 +24,17 @@ struct UserContextEngineTests {
     }
 
     @Test
-    func staleHeartRateDoesNotClaimElevatedLoad() throws {
+    func normalWeatherDoesNotRecommendCalendarChange() {
         var value = snapshot()
-        value.heartRateSampleAge = 30 * 60
-        value.weatherSeverity = .rain
+        value.weatherSeverity = .normal
+        #expect(UserContextEngine.recommendation(for: value) == nil)
+    }
 
-        let result = try #require(UserContextEngine.recommendation(for: value))
-
-        #expect(!result.elevatedPhysiologicalLoad)
-        #expect(result.adverseWeather)
+    @Test
+    func stationaryUserDoesNotReceiveTravelRecommendation() {
+        var value = snapshot()
+        value.isInTransit = false
+        #expect(UserContextEngine.recommendation(for: value) == nil)
     }
 
     @Test
@@ -58,10 +60,7 @@ struct UserContextEngineTests {
         UserContextSnapshot(
             isEnabled: true,
             isInTransit: true,
-            currentHeartRate: 104,
-            restingHeartRate: 68,
-            heartRateSampleAge: 60,
-            weatherSeverity: .normal,
+            weatherSeverity: .rain,
             hasUpcomingCalendarItem: true,
             minutesUntilCalendarItem: 45,
             priorAcceptedDeferrals: 0,

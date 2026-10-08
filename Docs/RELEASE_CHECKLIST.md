@@ -18,9 +18,9 @@
 - [x] Geohash tile manifesti ve checksum tabanlı delta güncelleme
 - [x] Varsayılan kapalı anonim talep paylaşımı, kaba konum hücresi ve sunucu tarafı toplama
 - [x] Hassas konum, kaba konum ve açık rızalı ürün etkileşimi beyanları Privacy Manifest ve gizlilik politikasıyla eşleştirildi
-- [x] Varsayılan kapalı, cihaz içi takvim/HealthKit bağlam motoru ve öğrenilmiş otomasyon eşiği
+- [x] Varsayılan kapalı, cihaz içi takvim/hava durumu bağlam motoru ve öğrenilmiş otomasyon eşiği
 - [x] APNs cihaz token'ı alma, anonim UID ile güvenli Firebase kaydı ve hesap silmede temizleme hattı
-- [x] Takvim, HealthKit ve APNs kullanımının uygulama içi TR/EN gizlilik özetiyle belgelenmesi
+- [x] Takvim ve APNs kullanımının uygulama içi TR/EN gizlilik özetiyle belgelenmesi
 - [x] Eksik/uyumsuz Firebase ve destek yapılandırmasında Archive işlemini durduran `Scripts/validate_release.py --production`
 - [x] Mağaza metni taslağı, inceleme notları ve gerçek cihaz test protokolü
 
@@ -66,15 +66,13 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 - [ ] Widget, kilit ekranı, Dynamic Island ve Siri kısayolunu gerçek cihazda test et
 - [ ] Open-Meteo ticari kullanım/attribution koşullarını yayın öncesi ürün modeliyle doğrula
 - [ ] App Store gizlilik formunda açık rızalı kaba konum ve ürün etkileşimi analizini beyan et; operatör çıktılarında en az 10 örnek eşiğini uygula
-- [ ] HealthKit kullanımının şarj/navigasyon ürünü içindeki sağlık/fitness amacını Apple kurallarıyla değerlendir; uygunluk netleşmeden yayın hazır sayma
-- [ ] HealthKit yayın kapsamında tutulursa Apple Developer App ID capability'sini aç ve distribution provisioning profilini yenile
 - [ ] App Store gizlilik formunda Open-Meteo hava durumu ve rakım hesabı için üçüncü tarafa gönderilen hassas konumu beyan et
-- [ ] Gerçek cihazda EventKit sahiplik kontrolü, HealthKit izni ve otomatik takvim erteleme eşiğini doğrula
+- [ ] Gerçek cihazda EventKit sahiplik kontrolü ve otomatik takvim erteleme eşiğini doğrula
 - [ ] APNs sağlayıcı anahtarını bildirim gönderen backend'e tanımla ve sandbox/production silent push teslimatını gerçek cihazda doğrula
 
-Operatör API'si veya Apple CarPlay entitlement onayı gelmeden rezervasyon, ödeme, şarj kontrolü ve gömülü CarPlay hedefi release kapsamına alınmamalıdır.
+Yetkili operatör entegrasyonu olmadan rezervasyon, ödeme ve şarj başlatma/durdurma yayın kapsamına alınmaz. Gömülü CarPlay arayüzü ise ayrı Apple entitlement onayı ve profil doğrulaması gerektirir.
 
-CarPlay başvurusu ilk iPhone sürümünün ön koşulu değildir; uygulama mevcut sürümde Apple/Google Maps'e aktarım yapar.
+8 Ekim 2026: CarPlay EV Charging başvurusu Apple tarafından alındı; onay bekleniyor. Ayrıntılar [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md). CarPlay onayı ilk iPhone sürümünün ön koşulu değildir; uygulama mevcut sürümde Apple/Google Maps'e aktarım yapar.
 
 Mağaza hazırlığı: [Metinler](APP_STORE_METADATA.md), [Review Notes](APP_REVIEW_NOTES.md), [Gizlilik formu](APP_STORE_PRIVACY_ANSWERS.md).
 
@@ -91,3 +89,17 @@ Mağaza hazırlığı: [Metinler](APP_STORE_METADATA.md), [Review Notes](APP_REV
 - [ ] Resmi destek posta kutusuna gerçek gönderim/yanıt testi. Bu görev kullanıcı adına e-posta göndermedi.
 
 Bu maddeler mağaza yayını veya sağlayıcı sözleşmelerinin kabul edildiği anlamına gelmez. Önceki listelerdeki App Privacy ve destek için “hesap sahibi tarafından yapılacak” maddelerin güncel ayrıntısı bu bölümdür.
+
+## 8 Ekim 2026 — ilk sürüm kapsamı
+
+- [x] HealthKit veri okuma, nabız modeli/mola önerisi, ayar, telemetri işlemi, Debug/Release yetkileri ve TR/EN izin açıklamaları kaldırıldı.
+- [x] Gizlilik politikası, App Privacy cevapları, Review Notes ve imzalama rehberi güncellendi.
+- [x] Arama filtrelerini sessizce kaldıran fallback silindi; boş sonuçtan filtrelere erişim sağlandı.
+- [x] Fiyatın kaynağı ve teyit tarihi/bilinmezliği gösterilir; katalog tarihi tarife doğrulaması sayılmaz.
+- [x] Kart/detay aynı müsaitlik kuralını kullanır; eski, gelecekteki ve geçersiz sayımlı veri canlı gösterilmez.
+- [x] CarPlay EV Charging başvurusu gönderildi, Apple alındı ekranı doğrulandı.
+- [ ] Apple CarPlay onayını al; capability ve provisioning eşleştir; arayüzü ve araç/simülatör testlerini tamamla.
+- [x] Apple portalı kontrol edildi: App IDs listesi boş, kaldırılacak ŞarjBul HealthKit capability kaydı yok.
+- [ ] Ana uygulama/widget App ID ve App Group kayıtlarını oluştur, HealthKit içermeyen profilleri üret.
+
+Bu kod değişiklikleri App Store yayını, operatör sözleşmesi, CarPlay onayı veya üretim backend dağıtımı değildir.

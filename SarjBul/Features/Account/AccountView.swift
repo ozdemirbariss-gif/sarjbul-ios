@@ -404,13 +404,6 @@ struct AccountView: View {
                 if contextIntelligence.policy.isEnabled {
                     Divider().overlay(SBColor.divider)
 
-                    Toggle(settings.t("context.health"), isOn: Binding(
-                        get: { contextIntelligence.policy.usesHealthSignals },
-                        set: { enabled in Task { await contextIntelligence.setUsesHealthSignals(enabled) } }
-                    ))
-                    .font(.subheadline.weight(.bold))
-                    .tint(SBColor.actionPrimary)
-
                     Toggle(settings.t("context.weather"), isOn: Binding(
                         get: { contextIntelligence.policy.usesWeather },
                         set: { contextIntelligence.setUsesWeather($0) }

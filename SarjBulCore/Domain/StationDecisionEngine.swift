@@ -70,7 +70,7 @@ public enum StationDecisionEngine {
         if candidate.hasRiskyStatus { return .risky }
 
         if let live = candidate.liveAvailability,
-           abs(now.timeIntervalSince(live.updatedAt)) <= 15 * 60 {
+           live.isCurrent(at: now) {
             return .live(
                 available: max(0, live.availableConnectors),
                 total: max(0, live.totalConnectors)

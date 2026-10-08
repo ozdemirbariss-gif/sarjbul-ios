@@ -112,6 +112,8 @@ final class AppSmokeUITests: XCTestCase {
         fineTune.tap()
         let profile = app.buttons["driving-profile-toggle"]
         XCTAssertTrue(profile.waitForExistence(timeout: 12))
+        for _ in 0..<4 where !profile.isHittable { app.swipeUp() }
+        XCTAssertTrue(profile.isHittable)
         profile.tap()
 
         let battery = app.descendants(matching: .any)["battery-capacity-input"]
@@ -288,14 +290,25 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(routeCard.waitForExistence(timeout: 20))
     }
 
-    func testSearchRecoversFromFiltersThatWouldHideEveryStation() throws {
+    func testUnmatchedFiltersShowEmptyStateAndAllowEditing() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-filter-recovery"]
         app.launch()
 
-        XCTAssertTrue(app.descendants(matching: .any)["prepared-route-card"].waitForExistence(timeout: 20))
-        app.buttons["prepared-route-alternatives"].tap()
-
+        XCTAssertTrue(app.descendants(matching: .any)["search-no-match-card"].waitForExistence(timeout: 20))
+        XCTAssertFalse(app.descendants(matching: .any)["prepared-route-card"].exists)
+        app.buttons["bottom-navigation-tab-routes"].tap()
+        let filters = app.buttons["station-filters-button"]
+        XCTAssertTrue(filters.waitForExistence(timeout: 5))
+        filters.tap()
+        let reset = app.buttons["station-filters-reset"]
+        XCTAssertTrue(reset.waitForExistence(timeout: 5))
+        reset.tap()
+        let query = app.textFields["station-search-input"]
+        XCTAssertTrue(query.waitForExistence(timeout: 5))
+        query.tap()
+        query.typeText("Yedigöller")
+        app.buttons["station-filters-apply"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["station-route-card"].waitForExistence(timeout: 15))
     }
 
