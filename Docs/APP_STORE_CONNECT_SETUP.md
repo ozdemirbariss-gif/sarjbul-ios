@@ -35,4 +35,25 @@ SKU, App Store'da gösterilmeyen iç takip kodudur. Widget için ayrı mağaza k
 
 Bu işlem paket yükleme, TestFlight dağıtımı veya App Review gönderimi içermez.
 
+## Mağaza metinleri — 8 Ekim 2026
+
+Türkçe ve English (U.S.) adı, alt başlığı, tanıtım metni, açıklaması,
+anahtar kelimeleri ve destek URL'si `1.0` sürümüne kaydedildi. Ana kategori
+Navigation; copyright alanı `2026 Barış Özdemir` oldu. Gizlilik politikası ve
+User Privacy Choices URL'leri App Privacy sayfasında iki dil için kaydedildi.
+Tam metinler ve kaynak/üretim yapılandırması karşılaştırması
+[APP_STORE_METADATA.md](APP_STORE_METADATA.md) içindedir.
+
+Canlı müsaitlik bağlantısı boş ve üretim backend'i hazır olmadığı için fiyat
+karşılaştırması, favori ve durum bildirimi vaatleri kaldırıldı. Açıklamalar canlı
+soket müsaitliği ve doğrulanmış güncel tarife sunulmadığını, menzil/şarj/süre
+değerlerinin tahmin olduğunu belirtir.
+
+Bu kayıt sırasında App Store Connect'te binary yüklenmemişti; seçili bir build
+ile doğrulama yapılmadı. Durum Prepare for Submission olarak kaldı. App Privacy
+veri toplama anketi, yaş derecelendirmesi, ekran görüntüleri ve Review gönderimi
+bu mağaza metni çalışmasının kapsamında tamamlanmadı.
+
 Kaynak: [Apple — Add a new app](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-a-new-app/).
+
+Destek ve gizlilik adresleri hesap sahibinin isteğiyle GitHub Pages adresine taşınıyor; son kaydedilen URL’ler APP_STORE_METADATA.md içindedir.

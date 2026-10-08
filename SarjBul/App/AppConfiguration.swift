@@ -8,13 +8,13 @@ struct AppConfiguration {
         string: "https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json"
     )
     private static let defaultPrivacyPolicyURL = URL(
-        string: "https://sarjbul-destek.ozdemirbariss.chatgpt.site/privacy/"
+        string: "https://ozdemirbariss-gif.github.io/sarjbul-ios/privacy/"
     )
     private static let defaultTermsURL = URL(
-        string: "https://sarjbul-destek.ozdemirbariss.chatgpt.site/terms/"
+        string: "https://ozdemirbariss-gif.github.io/sarjbul-ios/terms/"
     )
     private static let defaultSupportURL = URL(
-        string: "https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/"
+        string: "https://ozdemirbariss-gif.github.io/sarjbul-ios/support/"
     )
     private static let defaultSupportEmail = "sarjbul@icloud.com"
     var firebaseDatabaseURL: URL?

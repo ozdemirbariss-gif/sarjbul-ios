@@ -23,9 +23,9 @@ Weather and elevation API clients and weather-dependent calendar suggestions/set
 
 Support: sarjbul@icloud.com
 
-Support and privacy choices: https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/
+Support and privacy choices: https://ozdemirbariss-gif.github.io/sarjbul-ios/support/
 
-Privacy policy: https://sarjbul-destek.ozdemirbariss.chatgpt.site/privacy/
+Privacy policy: https://ozdemirbariss-gif.github.io/sarjbul-ios/privacy/
 
 ## Yayın Öncesi Kontrol
 

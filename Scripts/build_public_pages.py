@@ -4,9 +4,11 @@ import argparse
 import html
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-SITE_URL = "https://sarjbul-destek.ozdemirbariss.chatgpt.site"
+SITE_URL = "https://ozdemirbariss-gif.github.io/sarjbul-ios"
+BASE_PATH = urlsplit(SITE_URL).path.rstrip("/")
 PAGES = {
     "PRIVACY_POLICY.md": ("privacy", "Gizlilik politikası"),
     "TERMS_OF_USE.md": ("terms", "Kullanım koşulları"),
@@ -26,12 +28,16 @@ p{margin:0 0 20px}li{margin-bottom:12px}ul{padding-left:25px}code{font-size:.9em
 """
 
 
+def site_path(path=""):
+    return BASE_PATH + "/" + path.lstrip("/")
+
+
 def inline(text):
     value = html.escape(text)
     def link(match):
         label, target = match.groups()
         if target in PAGES:
-            target = "/" + PAGES[target][0] + "/"
+            target = site_path(PAGES[target][0] + "/")
         elif target.endswith(".md") and not target.startswith("https://"):
             target = "https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/" + target
         if not target.startswith(("https://", "mailto:", "/")):
@@ -57,12 +63,12 @@ def markdown(text):
 
 
 def page(slug, title, body):
-    nav = "".join(f'<a href="/{path}/"' + (' aria-current="page"' if path == slug else '') + f'>{label}</a>' for path, label in PAGES.values())
+    nav = "".join(f'<a href="{site_path(path + "/")}"' + (' aria-current="page"' if path == slug else '') + f'>{label}</a>' for path, label in PAGES.values())
     return f'''<!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(title)} — ŞarjBul</title><meta name="description" content="ŞarjBul gizlilik politikası, kullanım koşulları ve destek iletişim bilgileri.">
-<link rel="canonical" href="{SITE_URL}/{slug + '/' if slug else ''}"><link rel="stylesheet" href="/style.css"></head>
-<body><a class="skip" href="#content">İçeriğe geç</a><header><div><a class="brand" href="/">ŞarjBul<span aria-hidden="true"> ↗</span></a><nav aria-label="Belgeler">{nav}</nav></div></header>
+<link rel="canonical" href="{SITE_URL}/{slug + '/' if slug else ''}"><link rel="stylesheet" href="{site_path('style.css')}"></head>
+<body><a class="skip" href="#content">İçeriğe geç</a><header><div><a class="brand" href="{site_path()}">ŞarjBul<span aria-hidden="true"> ↗</span></a><nav aria-label="Belgeler">{nav}</nav></div></header>
 <main id="content"><p class="eyebrow">ŞARJBUL · YARDIM VE BİLGİLENDİRME</p><article>{body}</article></main>
 <footer>ŞarjBul · İletişim: <a href="mailto:sarjbul@icloud.com">sarjbul@icloud.com</a><br>Destek ve gizlilik talepleriniz için bize e-posta gönderebilirsiniz.</footer></body></html>'''
 
@@ -76,9 +82,9 @@ def build(output):
         content = markdown((ROOT / "Docs" / filename).read_text(encoding="utf-8"))
         (directory / "index.html").write_text(page(slug, title, content), encoding="utf-8")
     intro = '<h1>ŞarjBul yardım ve belgeler</h1><p>Uygulama desteği, istasyon verisi düzeltmeleri ve gizlilik talepleri için <a href="mailto:sarjbul@icloud.com">sarjbul@icloud.com</a> adresine yazabilirsiniz.</p><ul>'
-    intro += "".join(f'<li><a href="/{slug}/">{title}</a></li>' for slug, title in PAGES.values()) + '</ul><p>Bu sayfalara hesap oluşturmadan erişebilirsiniz.</p>'
+    intro += "".join(f'<li><a href="{site_path(slug + "/")}">{title}</a></li>' for slug, title in PAGES.values()) + '</ul><p>Bu sayfalara hesap oluşturmadan erişebilirsiniz.</p>'
     (output / "index.html").write_text(page("", "Yardım ve belgeler", intro), encoding="utf-8")
-    (output / "404.html").write_text(page("", "Sayfa bulunamadı", '<h1>Sayfa bulunamadı</h1><p><a href="/">Yardım ve belgelere dön</a></p>'), encoding="utf-8")
+    (output / "404.html").write_text(page("", "Sayfa bulunamadı", f'<h1>Sayfa bulunamadı</h1><p><a href="{site_path()}">Yardım ve belgelere dön</a></p>'), encoding="utf-8")
     (output / "robots.txt").write_text("User-agent: *\nAllow: /\n", encoding="utf-8")
     print(f"Built {len(PAGES)} public documents in {output}")
 

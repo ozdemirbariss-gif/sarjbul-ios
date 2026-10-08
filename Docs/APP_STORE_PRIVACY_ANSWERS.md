@@ -9,9 +9,9 @@ Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `fi
 ## Temel form alanları
 
 - Do you or your third-party partners collect data from this app? **Yes, we collect data from this app.**
-- Privacy Policy URL: `https://sarjbul-destek.ozdemirbariss.chatgpt.site/privacy/`
-- Privacy Choices URL (isteğe bağlı): `https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/`
-- Support URL (sürüm bilgileri alanı): `https://sarjbul-destek.ozdemirbariss.chatgpt.site/support/`
+- Privacy Policy URL: `https://ozdemirbariss-gif.github.io/sarjbul-ios/privacy/`
+- Privacy Choices URL (isteğe bağlı): `https://ozdemirbariss-gif.github.io/sarjbul-ios/support/`
+- Support URL (sürüm bilgileri alanı): `https://ozdemirbariss-gif.github.io/sarjbul-ios/support/`
 - Destek e-postası: **sarjbul@icloud.com**.
 - Her veri türünde tracking sorusu: **No**.
 - Third-Party Advertising, Developer’s Advertising or Marketing, Product Personalization, Other Purposes: **seçili değil**. Cihaz içi kişiselleştirme sunucu verisi değildir.

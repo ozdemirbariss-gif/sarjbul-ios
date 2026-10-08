@@ -1,0 +1,48 @@
+name: Public support pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Docs/PRIVACY_POLICY.md'
+      - 'Docs/TERMS_OF_USE.md'
+      - 'Docs/SUPPORT.md'
+      - 'Scripts/build_public_pages.py'
+      - 'Scripts/tests/test_public_pages.py'
+      - '.github/workflows/public-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v5
+      - name: Validate public pages
+        run: python3 -m unittest discover -s Scripts/tests -p 'test_public_pages.py' -v
+      - name: Build public pages
+        run: python3 Scripts/build_public_pages.py --output public-site
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: public-site
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish public pages
+        id: deployment
+        uses: actions/deploy-pages@v4
