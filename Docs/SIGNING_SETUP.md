@@ -4,6 +4,8 @@ Tarihsel durum — 13 Eylül 2026: proje otomatik imzalamaya hazırlandı; **App
 
 Güncel durum — 8 Ekim 2026: ücretli takım doğrulandı, iki explicit App ID ve ortak App Group portalda oluşturuldu. App Group iki App ID'ye de atandı. Gerçek takım kimliği Git dışında tutulan yerel imzalama dosyasında kayıtlı; yeniden üretilen projenin iki hedefi Debug ve Release'te bu takımı kullanıyor. Xcode hesabına giriş tamamlandı ve doğru takıma ait geçerli Apple Development imzalama kimliği doğrulandı. **Takımda kayıtlı cihaz olmadığı için iki geliştirme profili üretilemiyor; imzalı derleme henüz başarılı değil.**
 
+Bu cihaz engeli geliştirme profiline aittir. **App Store/TestFlight dağıtım profillerinin hazırlanması için bağlı veya kayıtlı iPhone gerekmez.** Kullanıcı şu anda kabloyla bağlantı kuramıyor; ilk cihaz eşleştirmesi ve cihaz testi daha sonra tamamlanabilir.
+
 ## Hedef ve yetki eşleştirmesi
 
 | Ayar | SarjBul | SarjBulWidgets |
@@ -33,7 +35,14 @@ DEVELOPMENT_TEAM = <Xcode'da doğrulanan Team ID>
 
 Yer tutucu gerçek takım değildir; dosyaya aynen yazılmamalıdır. Yerel dosya, sertifika özel anahtarları ve provisioning profilleri git'e alınmaz. `xcodegen generate` ardından iki hedefin Signing & Capabilities ekranında aynı ücretli takım görünmelidir. Otomatik imzalamada profil adı/UUID veya Release için elle `Apple Distribution` build kimliği sabitlenmez; dağıtım yeniden imzalaması export sırasında yapılır.
 
-## Kalan işlem
+## Kablo olmadan devam edilebilen işler
+
+- Hesap, takım, App ID, App Group ve capability kurulumu tamamlandı; bunlar USB bağlantısı gerektirmez.
+- App Store Connect dağıtım profili için explicit App ID ve dağıtım sertifikası seçilir; geliştirme profilindeki cihaz seçimi adımı yoktur. Ana uygulama ve widget için ayrı profiller gerekir. Dağıtım sertifikası/profilleri ve export imzaları henüz doğrulanmadı.
+- Geliştirme profili için en az bir gerçek cihaz kaydı gerekir; cihazın adı ve UDID'si zaten biliniyorsa Apple portalında manuel kayıt da yapılabilir. USB, ilk Xcode eşleştirmesi ve otomatik cihaz kaydı için izlenen yoldur; bütün imzalama işlemlerinin ön koşulu değildir.
+- Cihaz kaydı olmadan görülen geliştirme profili hataları, App Store dağıtım profillerinin de cihaz gerektirdiği anlamına gelmez. Mevcut Archive üretim kontrolleri dağıtım çalışmasında da korunmalıdır.
+
+## Cihaz bağlantısı sağlanınca kalan işlem
 
 1. Xcode hesabına giriş ve ücretli takımın Certificates, Identifiers & Profiles erişimi 8 Ekim'de doğrulandı. Takımın On Device Testing ekranı `0 Provisioned Devices` gösteriyor. Test iPhone/iPad'ini veri aktarımı destekleyen USB kablosuyla bağla, kilidini aç ve cihazdaki "Bu bilgisayara güven" onayını/parolayı tamamla. Xcode > Window > Devices and Simulators > Devices listesinde görünmesini bekle. Cihaz isterse Developer Mode adımını cihaz üzerinde tamamla.
 2. Portal kayıtları 8 Ekim 2026'da tamamlandı: ana uygulamada App Groups, Push Notifications, App Attest; widget'ta App Groups etkin. Ortak App Group iki App ID'ye de atandı. Xcode'da doğru takımın seçili olduğunu ve capability eşleşmesini kontrol et.
