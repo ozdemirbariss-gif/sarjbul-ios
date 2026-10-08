@@ -2,7 +2,7 @@
 
 ŞarjBul’un resmi destek ve gizlilik iletişim adresi: **[sarjbul@icloud.com](mailto:sarjbul@icloud.com)**.
 
-Uygulama sorunu, erişilebilirlik, istasyon verisi düzeltmesi veya kişisel veri talebi için bu adrese yazabilirsiniz. GitHub hesabı gerekmez. Bağlantı açılmıyorsa adresi kopyalayıp kullandığınız e-posta hizmetine yapıştırın.
+Uygulama sorunu, erişilebilirlik, istasyon verisi düzeltmesi veya kişisel veri talebi için bu adrese yazabilirsiniz. Hesap oluşturmanız veya giriş yapmanız gerekmez. Bağlantı açılmıyorsa adresi kopyalayıp kullandığınız e-posta hizmetine yapıştırın.
 
 Sorunu inceleyebilmemiz için uygulama/iOS sürümünü, sorunun oluştuğu adımları ve gerekiyorsa istasyon adını belirtin. Parola, doğrulama kodu, kimlik belgesi, ödeme bilgisi veya kesin konum göndermeniz gerekmez. Ekran görüntüsü paylaşmayı seçerseniz kişisel bilgileri önce gizleyin.
 
@@ -10,11 +10,18 @@ Bulut verilerinizi uygulamada **Profil → Bulut verilerini sıfırla** yoluyla 
 
 Destek için gönderdiğiniz adres, mesaj ve isteğe bağlı ekler talebinizi yanıtlamak ve takip etmek için ŞarjBul destek ekibi tarafından iCloud Mail üzerinden işlenir. Bu bilgiler reklam için kullanılmaz. Yazışmanın silinmesini aynı adresten isteyebilirsiniz. Uygulamadaki bulut sıfırlama işlemi destek posta kutusunu veya sağlayıcıların teknik günlüklerini otomatik silmez.
 
+## Sık sorulan sorular
+
+- **İstasyonlar görünmüyor:** İnternet bağlantınızı kontrol edin, filtreleri sıfırlayın ve başlangıç konumunu elle seçmeyi deneyin. İstasyon kapsamı Türkiye’dir.
+- **Konum izni vermek istemiyorum:** Başlangıç konumunu şehir veya adres aramasıyla seçebilirsiniz.
+- **Fiyat veya müsaitlik bilgisi yok:** EPDK istasyon envanteri fiyat ve canlı müsaitlik içermez. Yola çıkmadan önce operatörden doğrulayın.
+- **Veri yanlış:** İstasyon adı ve düzeltilmesini istediğiniz bilgiyi destek adresine gönderin.
+
 [Gizlilik politikası](PRIVACY_POLICY.md) · [Kullanım koşulları ve veri kaynakları](TERMS_OF_USE.md)
 
 ## English
 
-The official ŞarjBul support and privacy contact is **[sarjbul@icloud.com](mailto:sarjbul@icloud.com)**. No GitHub account is required. Copy this address into your email service if the link does not open.
+The official ŞarjBul support and privacy contact is **[sarjbul@icloud.com](mailto:sarjbul@icloud.com)**. No account or sign-in is required. Copy this address into your email service if the link does not open.
 
 For app errors, accessibility issues or station corrections, include the app/iOS version, steps to reproduce and, if relevant, station name. Do not include passwords, verification codes, identity documents, payment details or precise location. Redact personal information from any screenshots you choose to send.
 
