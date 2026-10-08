@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
-from validate_data_rights import ODBL, ROOT, TILES, rights_issues
+from validate_data_rights import ROOT, TILES, epdk_only_issues, rights_issues
 
 BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
@@ -45,14 +45,17 @@ def main() -> None:
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--precision", type=int, default=3)
     parser.add_argument("--publish-licensed", action="store_true",
-                        help="Require verified provider rights and include the complete ODbL database offer.")
+                        help="Require verified EPDK provider rights before publication.")
     args = parser.parse_args()
 
     source_payload = args.input.read_bytes()
     source_sha256 = hashlib.sha256(source_payload).hexdigest()
     records = json.loads(source_payload)
+    errors = epdk_only_issues(records)
+    if errors:
+        raise SystemExit("\n".join(errors))
     if args.publish_licensed:
-        errors = rights_issues(ROOT, records, require_offer=False)
+        errors = rights_issues(ROOT, records)
         if args.output.resolve() != (ROOT / TILES).resolve():
             errors.append("Licensed publication must use the reviewed StationTiles directory.")
         if errors:
@@ -90,22 +93,14 @@ def main() -> None:
 
     manifest = {
         "schema_version": 1,
+        "source_policy": "epdk-only-v1",
+        "attribution": "İstasyon verileri: EPDK",
         "generated_at": generated_at,
         "source_sha256": source_sha256,
         "total_records": len(records),
         "base_url": args.base_url.rstrip("/") + "/",
         "tiles": tiles,
     }
-    if args.publish_licensed:
-        offer_url = args.base_url.rstrip("/") + "/stations-odbl.json"
-        manifest.update(license_url=ODBL, attribution="© OpenStreetMap contributors; ŞarjBul normalized/merged station database", database_offer_url=offer_url)
-        (args.output / "stations-odbl.json").write_bytes(source_payload)
-        (args.output / "LICENSE.md").write_text(
-            "# Station database\n\n© OpenStreetMap contributors. Normalized and merged by ŞarjBul.\n\n"
-            f"This database is available under [ODbL 1.0]({ODBL}).\n\n"
-            f"The complete machine-readable database is available free of charge at [this link]({offer_url}).\n"
-            "The license applies to the database, not the application code. Provider evidence: Data/provider-rights.json.\n"
-        )
     (args.output / "station-tiles-manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

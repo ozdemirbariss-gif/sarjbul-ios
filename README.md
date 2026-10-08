@@ -36,6 +36,8 @@ Rota kartındaki paylaş düğmesi, harita ve istasyon verilerinden Instagram St
 
 <img src="Docs/screenshots/station-story.png" alt="SarjBul şarj hikâyesi" width="320">
 
+Bu görsel EPDK kaynak dipnotuyla yeniden üretildi; [çekim kaydı](Docs/screenshots/station-story.capture.json).
+
 Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, radius, gölge ve tipografi tokenları `SarjBul/Resources/design-tokens.json` içinde tek kaynaktır.
 
 ## Ürün Özellikleri
@@ -107,7 +109,9 @@ Ayrıntılı kurulum ve deploy sırası: [Docs/FIREBASE_SETUP.md](Docs/FIREBASE_
 
 ## Veri
 
-Uygulama 12.936 istasyonu tek bir JSON yerine 63 geohash döşemesi ve bir manifestten yükler. Uzak manifest ETag ile sorgulanır; yalnızca SHA-256 değeri değişen hücreler indirilir. Yeni manifest 1.000 kaydın veya bundle sayısının yüzde 70'inin altındaysa cache'e yazılmaz.
+Uygulama, 8 Ekim 2026 tarihinde doğrudan EPDK yanıtından üretilmiş 13.129 halka açık istasyonu 61 geohash döşemesi ve bir manifestten yükler. İstasyon verisi yalnızca EPDK içerir; ChargeIQ/OSM ek kaynakları ve özel canonical depo bağımlılığı kaldırılmıştır. Fiyat ve anlık müsaitlik bu EPDK aktarımıyla sağlanmaz. Uzak manifest ETag ile sorgulanır; yalnızca SHA-256 değeri değişen hücreler indirilir. Yeni manifest 1.000 kaydın veya bundle sayısının yüzde 70'inin altındaysa cache'e yazılmaz.
+
+[EPDK-only geçiş kaydı](Docs/EPDK_ONLY_MIGRATION.md), [veri akışı](Docs/EPDK_STATION_DATA.md) ve [hak durumu](Docs/DATA_PROVIDER_TERMS.md). Kaynak saflığı `python3 Scripts/validate_data_rights.py --epdk-only` ile kontrol edilir; bu kontrol ticari izin vermez. EPDK izni belgelenene kadar `commercialDataUseApproved=false`; günlük workflow ve Archive yayın gate’i kapalı kalır. Eski üçüncü taraf uygulama ID’lerine bağlı favori/bağlantılar yeni resmî kimliklere otomatik taşınmaz.
 
 `Scripts/update_epdk_operators.py`, EPDK'nin yürürlükteki şarj ağı işletmeci lisanslarını resmi REST servisinden yeniler ve `epdk-licensed-operators.json` snapshot'ını üretir. İstasyon kartındaki lisans eşleşmesi bu snapshot'a dayanır; birkaç elle yazılmış marka adına güvenmez.
 

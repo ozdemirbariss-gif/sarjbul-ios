@@ -22,50 +22,18 @@ jobs:
           fetch-depth: 0
       - name: Require provider permissions before fetching or publishing data
         run: python3 Scripts/validate_data_rights.py
-      - name: Require private source access
-        env:
-          SOURCE_DEPLOY_KEY: ${{ secrets.SARJBUL_SOURCE_DEPLOY_KEY }}
-        run: |
-          if [ -z "$SOURCE_DEPLOY_KEY" ]; then
-            echo "::error::SARJBUL_SOURCE_DEPLOY_KEY is missing; cannot refresh private canonical stations.json"
-            exit 1
-          fi
-      - name: Check out private canonical station data
-        uses: actions/checkout@v4
-        with:
-          repository: ozdemirbariss-gif/elektriklisarj
-          path: canonical-source
-          ssh-key: ${{ secrets.SARJBUL_SOURCE_DEPLOY_KEY }}
-          persist-credentials: false
-      - name: Verify canonical station data
-        run: |
-          test -s canonical-source/stations.json || {
-            echo "::error::Canonical stations.json is missing or empty"
-            exit 1
-          }
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          source = json.loads(Path("canonical-source/stations.json").read_text(encoding="utf-8"))
-          if not isinstance(source, list) or len(source) < 1_000:
-              raise SystemExit("Canonical stations.json has too few records")
-          print(f"Canonical source: {len(source)} records")
-          PY
       - name: Test EPDK importer
         run: python3 -m unittest discover -s Scripts/tests -p 'test_epdk_stations.py' -v
-      - name: Merge official EPDK public stations
+      - name: Build exclusively from official EPDK public stations
         run: >-
           python3 Scripts/update_epdk_stations.py
-          --base canonical-source/stations.json
-          --output /tmp/merged-stations.json
-          --raw-output /tmp/epdk-response.json
-      - name: Archive EPDK source and quality report
+          --output /tmp/epdk-stations.json
+      - name: Archive EPDK quality report
         uses: actions/upload-artifact@v4
         with:
           name: epdk-inventory-${{ github.run_id }}
           retention-days: 7
           path: |
-            /tmp/epdk-response.json
             Data/epdk-ingestion-report.json
       - name: Validate dataset quality
         run: |
@@ -73,7 +41,7 @@ jobs:
           import json
           from pathlib import Path
 
-          incoming = json.loads(Path("/tmp/merged-stations.json").read_text(encoding="utf-8"))
+          incoming = json.loads(Path("/tmp/epdk-stations.json").read_text(encoding="utf-8"))
           manifest = json.loads(Path("SarjBul/Resources/StationTiles/station-tiles-manifest.json").read_text())
           previous = int(manifest["total_records"])
           minimum = max(1_000, int(previous * 0.85))
@@ -85,21 +53,23 @@ jobs:
               raise SystemExit(f"Dataset has malformed records: {invalid[:10]}")
           print(f"Accepted {len(incoming)} records; minimum was {minimum}")
           PY
+      - name: Reject non-EPDK records before building
+        run: python3 Scripts/validate_data_rights.py --stations /tmp/epdk-stations.json
       - name: Build geohash tiles
         run: >-
           python3 Scripts/build_station_tiles.py
-          /tmp/merged-stations.json
+          /tmp/epdk-stations.json
           SarjBul/Resources/StationTiles
           --base-url
           https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/
           --publish-licensed
       - name: Refresh licensed operators
         run: python3 Scripts/update_epdk_operators.py
-      - name: Verify provider rights and complete database offer
+      - name: Verify EPDK-only provenance and provider rights
         run: python3 Scripts/validate_data_rights.py
       - name: Commit refreshed data
         run: |
-          git add SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json Data/epdk-identities.json Data/epdk-ingestion-report.json
+          git add SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json Data/epdk-ingestion-report.json
           if git diff --cached --quiet; then
             echo "Station data is already current."
             exit 0

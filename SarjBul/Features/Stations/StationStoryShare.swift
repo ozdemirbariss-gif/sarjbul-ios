@@ -161,7 +161,7 @@ enum StationStoryRenderer {
             drawScorePill(content.scoreText)
             drawStoryPanel(content)
             drawText(
-                "© OpenStreetMap contributors · openstreetmap.org/copyright",
+                "İstasyon verileri: EPDK · epdk.gov.tr",
                 in: CGRect(x: 50, y: 1_862, width: 980, height: 36),
                 font: .systemFont(ofSize: 26, weight: .regular),
                 color: muted,

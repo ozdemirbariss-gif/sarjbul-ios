@@ -23,6 +23,7 @@ public struct StationTileManifest: Codable, Equatable, Sendable {
         }
     }
 
+    public var sourcePolicy: String?
     public var schemaVersion: Int
     public var generatedAt: String
     public var totalRecords: Int
@@ -34,8 +35,10 @@ public struct StationTileManifest: Codable, Equatable, Sendable {
         generatedAt: String,
         totalRecords: Int,
         baseURL: String,
-        tiles: [Tile]
+        tiles: [Tile],
+        sourcePolicy: String? = nil
     ) {
+        self.sourcePolicy = sourcePolicy
         self.schemaVersion = schemaVersion
         self.generatedAt = generatedAt
         self.totalRecords = totalRecords
@@ -44,6 +47,7 @@ public struct StationTileManifest: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
+        case sourcePolicy = "source_policy"
         case schemaVersion = "schema_version"
         case generatedAt = "generated_at"
         case totalRecords = "total_records"
@@ -56,6 +60,7 @@ public actor TiledStationRepository: RefreshableStationRepository {
     private let bundledManifestURL: URL
     private let remoteManifestURL: URL?
     private let cacheDirectory: URL
+    private let sourcePolicy: StationSourcePolicy
     private let session: URLSession
     private let decoder = JSONDecoder()
     private var refreshTask: Task<[Station]?, Error>?
@@ -65,12 +70,14 @@ public actor TiledStationRepository: RefreshableStationRepository {
         bundledManifestURL: URL,
         remoteManifestURL: URL?,
         cacheDirectory: URL,
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        sourcePolicy: StationSourcePolicy = .unrestricted
     ) {
         self.bundledManifestURL = bundledManifestURL
         self.remoteManifestURL = remoteManifestURL
         self.cacheDirectory = cacheDirectory
         self.session = session
+        self.sourcePolicy = sourcePolicy
     }
 
     public func loadStations() async throws -> [Station] {
@@ -79,6 +86,7 @@ public actor TiledStationRepository: RefreshableStationRepository {
             loadedPublicationDate = Self.parseDate(cached.generatedAt)
             return stations
         }
+        if case .epdkOnly = sourcePolicy { discardRejectedCache() }
         let manifest = try bundledManifest()
         let stations = try decodeStations(manifest: manifest)
         loadedPublicationDate = Self.parseDate(manifest.generatedAt)
@@ -126,7 +134,8 @@ public actor TiledStationRepository: RefreshableStationRepository {
         let minimumAcceptedCount = StationDatasetQualityGate.minimumAcceptedCount(
             referenceCount: bundled.totalRecords
         )
-        guard remoteManifest.schemaVersion == 1,
+        guard sourcePolicy.accepts(manifestPolicy: remoteManifest.sourcePolicy),
+              remoteManifest.schemaVersion == 1,
               remoteManifest.totalRecords >= minimumAcceptedCount,
               !remoteManifest.tiles.isEmpty,
               Set(remoteManifest.tiles.map(\.file)).count == remoteManifest.tiles.count,
@@ -189,6 +198,9 @@ public actor TiledStationRepository: RefreshableStationRepository {
     }
 
     private func decodeStations(manifest: StationTileManifest) throws -> [Station] {
+        guard sourcePolicy.accepts(manifestPolicy: manifest.sourcePolicy) else {
+            throw StationRepositoryError.invalidRemoteData
+        }
         var stations: [Station] = []
         stations.reserveCapacity(manifest.totalRecords)
         let bundled = try bundledManifest()
@@ -202,13 +214,14 @@ public actor TiledStationRepository: RefreshableStationRepository {
             } else {
                 throw StationRepositoryError.invalidRemoteData
             }
-            let decoded = try decoder.decode([Station].self, from: data)
+            let decoded = try sourcePolicy.decode(data, using: decoder)
             guard decoded.count == tile.recordCount else {
                 throw StationRepositoryError.invalidRemoteData
             }
             stations.append(contentsOf: decoded)
         }
-        guard !stations.isEmpty, stations.count == manifest.totalRecords else {
+        guard !stations.isEmpty, stations.count == manifest.totalRecords,
+              Set(stations.map(\.id)).count == stations.count else {
             throw StationRepositoryError.invalidRemoteData
         }
         return stations
@@ -239,6 +252,13 @@ public actor TiledStationRepository: RefreshableStationRepository {
     private func metadata() throws -> RemoteTileMetadata {
         let data = try Data(contentsOf: cacheDirectory.appending(path: "station-tiles-metadata.json"))
         return try decoder.decode(RemoteTileMetadata.self, from: data)
+    }
+
+    private func discardRejectedCache() {
+        removeStaleTiles(keeping: [])
+        for file in ["station-tiles-manifest.json", "station-tiles-metadata.json"] {
+            try? FileManager.default.removeItem(at: cacheDirectory.appending(path: file))
+        }
     }
 
     private func removeStaleTiles(keeping filenames: Set<String>) {

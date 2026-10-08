@@ -15,7 +15,7 @@ To test station search from outside Türkiye:
 5. Open a route and choose Apple Maps or Google Maps. Navigation is handed off to that application. A manual starting location is included; the external app may show a route preview or request its own location permission.
 6. Use the navigation control to open Profile. Cloud data can be reset there. The app displays pending progress until the server confirms cleanup; use Check deletion status to retry. A new anonymous identity is created after cleanup is confirmed and the old identity is deleted.
 
-Charge, range and travel time are estimates. Manual battery values are not measurements from the vehicle. Missing live availability and prices are shown as unavailable.
+Charge, range and travel time are estimates. Manual battery values are not measurements from the vehicle. The station inventory is normalized exclusively from EPDK public station records. This inventory does not supply live availability or prices; unknown values are shown as unavailable. Maps and address search use Apple MapKit.
 
 Widgets and Live Activities summarize the user's charging break and station information. Background refresh and notifications depend on iOS scheduling and permissions; the app does not require continuous background location.
 
@@ -32,6 +32,7 @@ Privacy policy: https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/
 - Bu notları gerçek Release build üzerinde uygula; çalışmayan adımı mağazaya göndermeden düzelt.
 - HealthKit capability/izin metninin imzalı build içinde bulunmadığını doğrula; kaldırılan özellik yayın kapsamı dışındadır.
 - Yerel veri sıfırlama ile bulut verisi sıfırlamanın sonuçlarını gerçek backend'de doğrula.
+- EPDK ticari kullanım/yeniden dağıtım izni belgelenmeden ve `commercialDataUseApproved` yayın gate’i geçmeden göndermeyin. [Hak durumu](DATA_PROVIDER_TERMS.md).
 - Apple üyeliği, imzalama ve App Attest etkinliği tamamlanmadan bu belgeyi test kanıtı sayma.
 
 ## First release scope — 8 October 2026

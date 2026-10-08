@@ -1,11 +1,13 @@
 import copy
 import sys
+import tempfile
+import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from update_epdk_stations import fetch_payload, merge, normalize, validate_payload
+from update_epdk_stations import fetch_payload, build_inventory, normalize, validate_payload, main
 
 
 def station(number="1", access="HALKA_ACIK", latitude=40.0):
@@ -17,11 +19,6 @@ def station(number="1", access="HALKA_ACIK", latitude=40.0):
 
 def payload(*rows):
     return {"statusCode": 200, "numRows": len(rows), "errors": [], "data": list(rows)}
-
-
-def old_station():
-    return {"id": "chargeiq_old", "isim": "Test station", "operator": "Test",
-            "enlem": 40.0, "boylam": 29.0, "kaynak": "chargeiq", "kaynaklar": ["chargeiq"]}
 
 
 class EPDKTests(unittest.TestCase):
@@ -47,7 +44,7 @@ class EPDKTests(unittest.TestCase):
                 validate_payload(data)
 
     def test_public_only_and_socket_conversion(self):
-        rows, _, report = merge(payload(station(), station("2", "OZEL")), [], {}, minimum=1)
+        rows, report = build_inventory(payload(station(), station("2", "OZEL")), minimum=1)
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["hiz"], "120 kW (DC)")
         self.assertEqual(rows[0]["soket"], "CCS")
@@ -59,72 +56,65 @@ class EPDKTests(unittest.TestCase):
         self.assertEqual(report["socket_count"], 2)
 
     def test_observation_time_is_supplied_by_fetch_not_replay(self):
-        record = normalize(station(), "epdk_1", observed_at="2026-09-23T21:06:21Z")
+        record = normalize(station(), observed_at="2026-09-23T21:06:21Z")
         self.assertEqual(record["kaynak_gozlem_tarihi"], "2026-09-23T21:06:21Z")
         self.assertNotIn("kaynak_yayin_tarihi", record)
 
-    def test_retains_existing_id_and_repeat_is_stable(self):
-        base = [old_station()]
-        rows, mapping, report = merge(payload(station()), base, {}, minimum=1)
-        self.assertEqual(rows[0]["id"], "chargeiq_old")
-        self.assertEqual(rows[0]["kaynaklar"], ["chargeiq", "epdk"])
-        repeated, _, _ = merge(payload(station()), base, mapping, report, minimum=1)
+    def test_official_ids_are_stable_without_legacy_matches(self):
+        rows, report = build_inventory(payload(station(), station("2")), minimum=1)
+        self.assertEqual([r["id"] for r in rows], ["epdk_1", "epdk_2"])
+        repeated, _ = build_inventory(payload(station(), station("2")), report, minimum=1)
         self.assertEqual(rows, repeated)
-        absent, _, _ = merge(payload(station()), [], mapping, minimum=1)
-        self.assertEqual(absent[0]["id"], "chargeiq_old")
+        reduced, _ = build_inventory(payload(station("2", "OZEL"), station("3")), minimum=1)
+        self.assertEqual([r["id"] for r in reduced], ["epdk_3"])
 
-    def test_private_and_removed_records_do_not_resurrect(self):
-        _, mapping, _ = merge(payload(station()), [old_station()], {}, minimum=1)
-        for data in [payload(station("2", latitude=41)),
-                     payload(station(access="OZEL"), station("2", latitude=41))]:
-            rows, _, _ = merge(data, [old_station()], mapping, minimum=1)
-            self.assertNotIn("chargeiq_old", [r["id"] for r in rows])
+    def test_normalization_cannot_carry_legacy_fields_or_contributions(self):
+        row = station()
+        row.update(id="chargeiq_old", kaynak="osm", kaynaklar=["chargeiq", "osm"],
+                   source_ids={"chargeiq": "old"}, opening_hours="24/7", fiyat="10 TL",
+                   guncelleme_tarihi="2026-10-01", live_status="available")
+        result = normalize(row)
+        self.assertEqual(result["id"], "epdk_1")
+        self.assertEqual(result["source_ids"], {"epdk": "ŞRJ/1"})
+        self.assertEqual(result["kaynaklar"], ["epdk"])
+        self.assertEqual(result["fiyat"], "Bilinmiyor")
+        for key in ("opening_hours", "guncelleme_tarihi", "live_status"):
+            self.assertNotIn(key, result)
 
-    def test_proximity_without_brand_is_not_an_identity_match(self):
-        base = old_station()
-        base["operator"] = "Another operator"
-        rows, mapping, _ = merge(payload(station()), [base], {}, minimum=1)
-        self.assertEqual(len(rows), 2)
-        self.assertEqual(mapping["ŞRJ/1"], "epdk_1")
-
-    def test_ambiguous_matches_are_not_merged(self):
-        rows, mapping, report = merge(payload(station(), station("2")), [old_station()], {}, minimum=1)
-        self.assertEqual(len(rows), 3)
-        self.assertNotIn("chargeiq_old", mapping.values())
-        self.assertEqual(len(report["ambiguous_matches"]), 2)
-        repeated, next_mapping, _ = merge(payload(station(), station("2")), [old_station()], mapping, report, minimum=1)
-        self.assertEqual(rows, repeated)
-        self.assertEqual(mapping, next_mapping)
-
-    def test_private_ambiguity_cannot_claim_public_station_on_next_run(self):
-        data = payload(station(), station("2", "OZEL"))
-        base = [old_station()]
-        rows, mapping, report = merge(data, base, {}, minimum=1)
-        repeated, next_mapping, _ = merge(data, base, mapping, report, minimum=1)
-        self.assertEqual(rows, repeated)
-        self.assertEqual(mapping, next_mapping)
+    def test_saved_response_requires_original_observation_time_before_any_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            incoming = Path(directory) / "incoming.json"
+            incoming.write_text(json.dumps(payload(station())))
+            output = Path(directory) / "output.json"
+            with patch.object(sys, "argv", ["update_epdk_stations.py", "--input", str(incoming),
+                                            "--output", str(output)]):
+                with self.assertRaises(SystemExit):
+                    main()
+            self.assertFalse(output.exists())
 
     def test_coordinate_and_inventory_quality_gates(self):
         for latitude in [None, True, float("nan"), 0, 90]:
             with self.assertRaises(ValueError):
-                merge(payload(station(latitude=latitude)), [], {}, minimum=1)
+                build_inventory(payload(station(latitude=latitude)), minimum=1)
         with self.assertRaises(ValueError):
-            merge(payload(station()), [], {}, {"public_count": 100}, minimum=1)
+            build_inventory(payload(station()), {"public_count": 100}, minimum=1)
 
     def test_unknown_socket_and_invalid_power_not_invented(self):
         row = station()
         row["soketler"] = [{"soketTuru": "FUTURE", "soketGucu": "NaN"}]
-        record = normalize(row, "epdk_1")
+        record = normalize(row)
         self.assertEqual(record["soket"], "Bilinmiyor")
         self.assertEqual(record["hiz"], "Bilinmiyor")
         self.assertIsNone(record["sarj_uniteleri"][0]["powerKW"])
 
-    def test_inputs_not_mutated(self):
-        base, mapping = [old_station()], {}
-        before = copy.deepcopy(base)
-        merge(payload(station()), base, mapping, minimum=1)
-        self.assertEqual(base, before)
-        self.assertEqual(mapping, {})
+    def test_input_not_mutated_and_report_has_only_epdk_lineage(self):
+        data = payload(station())
+        before = copy.deepcopy(data)
+        _, report = build_inventory(data, minimum=1)
+        self.assertEqual(data, before)
+        self.assertEqual(report["source_policy"], "epdk-only-v1")
+        self.assertNotIn("ambiguous_matches", report)
+        self.assertNotIn("supplementary_source_count", report)
 
 
 if __name__ == "__main__":

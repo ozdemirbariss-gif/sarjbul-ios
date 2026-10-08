@@ -42,6 +42,54 @@ struct TiledStationRecoveryTests {
     }
 
     @Test
+    func epdkPolicyDiscardsLegacyCacheAndLoadsCleanBundleOffline() async throws {
+        let fixture = try TileFixture()
+        defer { fixture.remove() }
+        _ = try fixture.writeVersion("epdk bundle", to: fixture.bundle, epdkOnly: true)
+        _ = try fixture.writeVersion("mixed cache", to: fixture.cache)
+        let repository = fixture.repository(sourcePolicy: .epdkOnly)
+        let stations = try await repository.loadStations()
+        #expect(stations.count == 1_000)
+        #expect(stations.allSatisfy { $0.source == "epdk" && $0.name == "epdk bundle" })
+        #expect(!FileManager.default.fileExists(atPath: fixture.cache.appending(path: "station-tiles-manifest.json").path))
+        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.cache.path).isEmpty)
+    }
+
+    @Test
+    func epdkPolicyRejectsLegacyRemoteManifestBeforeDownloadingTiles() async throws {
+        let fixture = try TileFixture()
+        defer { fixture.remove() }
+        _ = try fixture.writeVersion("epdk bundle", to: fixture.bundle, epdkOnly: true)
+        let remote = try fixture.version("mixed")
+        TileHTTPStub.responses.set(["/manifest": remote.manifest])
+        let repository = fixture.repository(sourcePolicy: .epdkOnly)
+        await #expect(throws: (any Error).self) { try await repository.refreshStations() }
+        #expect(try await repository.loadStations().first?.name == "epdk bundle")
+    }
+
+    @Test
+    func epdkPolicyAcceptsPureRefreshAndRejectsHiddenThirdPartyFields() async throws {
+        let fixture = try TileFixture()
+        defer { fixture.remove() }
+        _ = try fixture.writeVersion("epdk bundle", to: fixture.bundle, epdkOnly: true)
+        let remote = try fixture.version("pure remote", epdkOnly: true)
+        TileHTTPStub.responses.set(["/manifest": remote.manifest,
+                                   "/station_tile_a.json": remote.first, "/station_tile_b.json": remote.second])
+        #expect(try await fixture.repository(sourcePolicy: .epdkOnly).refreshStations()?.count == 1_000)
+        #expect(try await fixture.repository(sourcePolicy: .epdkOnly).loadStations().first?.name == "pure remote")
+        let originalRows = try #require(JSONSerialization.jsonObject(with: remote.first) as? [[String: Any]])
+        for change: [String: Any] in [
+            ["kaynaklar": ["epdk", "osm"]], ["source_ids": ["epdk": "ŞRJ/0", "chargeiq": "old"]],
+            ["id": "chargeiq_old"], ["opening_hours": "24/7"]
+        ] {
+            var rows = originalRows
+            rows[0].merge(change) { _, new in new }
+            let data = try JSONSerialization.data(withJSONObject: rows)
+            #expect(throws: (any Error).self) { try StationSourcePolicy.epdkOnly.decode(data, using: JSONDecoder()) }
+        }
+    }
+
+    @Test
     func malformedTilePathsAreRejectedBeforeWriting() async throws {
         let fixture = try TileFixture()
         defer { fixture.remove() }
@@ -72,12 +120,18 @@ private struct TileFixture {
 
     func remove() { try? FileManager.default.removeItem(at: root) }
 
-    func version(_ name: String) throws -> Version {
+    func version(_ name: String, epdkOnly: Bool = false) throws -> Version {
         func data(start: Int) throws -> Data {
-            try JSONEncoder().encode((start..<(start + 500)).map { index in
-                Station(id: "\(index)", name: name, address: "Test", latitude: 38.4, longitude: 27.1,
-                        power: "50 kW", operatorName: "Test", socket: "CCS", price: "10 TL", source: "test")
+            let encoded = try JSONEncoder().encode((start..<(start + 500)).map { index in
+                Station(id: epdkOnly ? "epdk_\(index)" : "\(index)", name: name, address: "Test", latitude: 38.4, longitude: 27.1,
+                        power: "50 kW", operatorName: "Test", socket: "CCS", price: "Bilinmiyor",
+                        source: epdkOnly ? "epdk" : "test", sources: epdkOnly ? ["epdk"] : [])
             })
+            guard epdkOnly else { return encoded }
+            var rows = try #require(JSONSerialization.jsonObject(with: encoded) as? [[String: Any]])
+            for index in rows.indices { rows[index]["source_ids"] = ["epdk": "ŞRJ/\(start + index)"] }
+            return try JSONSerialization.data(withJSONObject: rows)
+
         }
         let first = try data(start: 0)
         let second = try data(start: 500)
@@ -85,24 +139,24 @@ private struct TileFixture {
                                            baseURL: "https://test.invalid/", tiles: [
             .init(geohash: "a", file: "station_tile_a.json", recordCount: 500, sha256: hash(first)),
             .init(geohash: "b", file: "station_tile_b.json", recordCount: 500, sha256: hash(second))
-        ])
+        ], sourcePolicy: epdkOnly ? "epdk-only-v1" : nil)
         return Version(manifest: try JSONEncoder().encode(manifest), first: first, second: second)
     }
 
-    func writeVersion(_ name: String, to directory: URL) throws -> Version {
-        let value = try version(name)
+    func writeVersion(_ name: String, to directory: URL, epdkOnly: Bool = false) throws -> Version {
+        let value = try version(name, epdkOnly: epdkOnly)
         try value.manifest.write(to: directory.appending(path: "station-tiles-manifest.json"))
         try value.first.write(to: directory.appending(path: "station_tile_a.json"))
         try value.second.write(to: directory.appending(path: "station_tile_b.json"))
         return value
     }
 
-    func repository() -> TiledStationRepository {
+    func repository(sourcePolicy: StationSourcePolicy = .unrestricted) -> TiledStationRepository {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [TileHTTPStub.self]
         return TiledStationRepository(bundledManifestURL: bundle.appending(path: "station-tiles-manifest.json"),
                                       remoteManifestURL: URL(string: "https://test.invalid/manifest"),
-                                      cacheDirectory: cache, session: URLSession(configuration: configuration))
+                                      cacheDirectory: cache, session: URLSession(configuration: configuration), sourcePolicy: sourcePolicy)
     }
 
     private func hash(_ data: Data) -> String {

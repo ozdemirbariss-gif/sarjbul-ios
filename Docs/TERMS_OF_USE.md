@@ -1,6 +1,6 @@
 # ŞarjBul Kullanım Koşulları
 
-Son güncelleme: 11 Eylül 2026
+Son güncelleme: 8 Ekim 2026
 
 ŞarjBul; istasyon, güç, soket, fiyat, uygunluk, menzil ve rota verilerini karar desteği amacıyla sunar. Operatör tarifeleri, yol koşulları, şarj noktası çalışırlığı ve müsaitlik bilgileri değişebilir. Kullanıcı yola çıkmadan önce aracının gerçek menzilini ve ilgili operatörün güncel bilgisini doğrulamalıdır.
 
@@ -13,11 +13,9 @@ Yanlış, yanıltıcı veya otomatik durum bildirimi göndermek yasaktır. Köt�
 
 ## Veri kaynakları
 
-İstasyon verileri EPDK, ChargeIQ ve © OpenStreetMap contributors kaynaklarından birleştirilip normalize edilir; fiyat/müsaitlik bilgileri değişebilir. ŞarjBul bu sağlayıcıların resmi uygulaması değildir ve sağlayıcıların onayını ima etmez. Kaynak gösterilmesi tek başına yeniden dağıtım izni vermez. Ticari yayın izinleri tamamlanmamıştır; [güncel hak durumu ve veri erişimi](DATA_PROVIDER_TERMS.md). Hava durumu/rakım API özellikleri kaldırılmıştır; enerji hesabı rakım düzeltmesi içermez.
+İstasyon kayıtları yalnızca EPDK'nin halka açık istasyon servisinden alınır ve normalize edilir. Bu aktarım fiyat veya anlık müsaitlik sağlamaz; kullanıcı katkıları varsa ayrı kaynak olarak gösterilir. ŞarjBul EPDK'nin resmî uygulaması değildir ve kurumun onayını ima etmez. Kaynak gösterilmesi tek başına yeniden dağıtım izni vermez. EPDK ticari yayın izni henüz belgelenmemiştir; [güncel hak durumu](DATA_PROVIDER_TERMS.md). Önceki birleşik paketlerin hak durumu yeni pakete geçişle kapanmış sayılmaz. Hava durumu/rakım API özellikleri kaldırılmıştır; enerji hesabı rakım düzeltmesi içermez.
 
 - [EPDK web servisleri](https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler)
-- [ChargeIQ](https://www.chargeiq.com.tr/tr)
-- [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright) — [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/)
 - Harita/rota: Apple MapKit ve [Apple Maps koşulları](https://www.apple.com/legal/internet-services/maps/terms-en.html). Dış Google Maps kullanımı ilgili hizmetin koşullarına tabidir.
 
 Ticari yayına ilişkin kaynak izinlerinin teknik incelemesi [sağlayıcı kontrol belgesindedir](DATA_PROVIDER_TERMS.md).

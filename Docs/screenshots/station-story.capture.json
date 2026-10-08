@@ -1,0 +1,14 @@
+{
+  "base_commit": "02cd7c88c32993ea77fef93fa09bdb58bac1508d",
+  "captured_at": "2026-10-08T10:48:04.526105+00:00",
+  "source": "Native iPhone 17 Pro / iOS 26.5 simulator, AppSmokeUITests/testStationStoryImageOpensShareSheet; deterministic UI-test station, not a live availability claim. Local EPDK-only working tree.",
+  "logical_size": [
+    1080,
+    1920
+  ],
+  "pixel_size": [
+    3240,
+    5760
+  ],
+  "sha256": "2625f6918d9543eab1862aea8d3b21e5169c2722a55990b7647a5e4768faf6c3"
+}

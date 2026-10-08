@@ -2,7 +2,7 @@ import Foundation
 import SarjBulCore
 
 struct AppConfiguration {
-    // The canonical source is private and used by ingestion, never by the app.
+    // Station inventories are normalized exclusively from the official EPDK response.
     private static let defaultStationDataURL: URL? = nil
     private static let defaultStationTileManifestURL = URL(
         string: "https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/station-tiles-manifest.json"
@@ -131,14 +131,20 @@ struct AppConfiguration {
         return URL(string: raw)
     }
 
-    func stationRepository(bundle: Bundle = .main) -> (any StationRepository)? {
-        let cacheRoot = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+    func stationRepository(bundle: Bundle = .main, cacheRoot: URL? = nil) -> (any StationRepository)? {
+        let cacheRoot = cacheRoot ?? FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
+        // Retire the mixed-source cache. Keep all personal settings and account data.
+        let legacyRoot = cacheRoot.appending(path: "SarjBul", directoryHint: .isDirectory)
+        for file in ["StationTiles", "stations.json", "stations-metadata.json"] {
+            try? FileManager.default.removeItem(at: legacyRoot.appending(path: file))
+        }
         if let manifestURL = bundle.url(forResource: "station-tiles-manifest", withExtension: "json") {
             return TiledStationRepository(
                 bundledManifestURL: manifestURL,
                 remoteManifestURL: stationTileManifestURL,
-                cacheDirectory: cacheRoot.appending(path: "SarjBul/StationTiles", directoryHint: .isDirectory)
+                cacheDirectory: cacheRoot.appending(path: "SarjBul/EPDKStationTiles-v1", directoryHint: .isDirectory),
+                sourcePolicy: .epdkOnly
             )
         }
         guard let bundledURL = bundle.url(forResource: "stations", withExtension: "json") else {
@@ -147,7 +153,8 @@ struct AppConfiguration {
         return CachedRemoteStationRepository(
             bundledFileURL: bundledURL,
             remoteURL: stationDataURL,
-            cacheDirectory: cacheRoot.appending(path: "SarjBul", directoryHint: .isDirectory)
+            cacheDirectory: cacheRoot.appending(path: "SarjBul/EPDKStations-v1", directoryHint: .isDirectory),
+            sourcePolicy: .epdkOnly
         )
     }
 }

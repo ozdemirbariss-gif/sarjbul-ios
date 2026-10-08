@@ -22,12 +22,16 @@ struct EPDKStationDatasetTests {
             #expect(digest == tile.sha256)
             let decoded = try decoder.decode([Station].self, from: data)
             #expect(decoded.count == tile.recordCount)
+            _ = try StationSourcePolicy.epdkOnly.decode(data, using: decoder)
             stations.append(contentsOf: decoded)
         }
+        #expect(manifest.sourcePolicy == "epdk-only-v1")
         #expect(stations.count == manifest.totalRecords)
         #expect(Set(stations.map(\.id)).count == stations.count)
         let official = stations.filter { $0.source == "epdk" }
+        #expect(official.count == stations.count)
         #expect(official.count >= 1_000)
+        #expect(official.allSatisfy { $0.sources == ["epdk"] && $0.id.hasPrefix("epdk_") })
         #expect(official.allSatisfy { $0.hasValidCoordinate })
         let sample = try #require(official.first { $0.powerKW >= 50 })
         let results = StationSearchEngine().candidates(

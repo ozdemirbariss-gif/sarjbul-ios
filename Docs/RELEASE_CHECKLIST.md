@@ -84,8 +84,8 @@ Mağaza hazırlığı: [Metinler](APP_STORE_METADATA.md), [Review Notes](APP_REV
 - [x] Hata kaydında URL/konum/istasyon/serbest metin aktarımı kaldırıldı; gizlilik regresyon testleri eklendi.
 - [x] Sağlayıcı atıfları ve lisans bağlantıları uygulamaya eklendi.
 - [ ] App Store Connect hesabını etkinleştir (`INVALIDITCUSER` hatası doğrulandı); [cevap setini](APP_STORE_PRIVACY_ANSWERS.md) kaydet/yayımla ve özetini doğrula.
-- [ ] Ticari yayın: [sağlayıcı hakları ve sunum koşullarını](DATA_PROVIDER_TERMS.md) çöz. Open-Meteo kaldırıldı, MapKit kod karşılaştırması/düzeltmeleri tamamlandı. ChargeIQ/EPDK yazılı yeniden dağıtım izni ve ODbL uyumu açık.
-- [ ] Kanıt dosyalarını/hash ve kapsamları `Data/provider-rights.json` içinde doğrula, ODbL tam veri teklifini üret. Gate geçince `commercialDataUseApproved=true` yap; tek başına bayrak yeterli değildir.
+- [ ] Ticari yayın: [sağlayıcı hakları ve sunum koşullarını](DATA_PROVIDER_TERMS.md) çöz. Open-Meteo kaldırıldı, MapKit kod karşılaştırması/düzeltmeleri tamamlandı. Güncel istasyon paketi yalnızca EPDK; ChargeIQ/OSM kaldırıldı. EPDK ticari kullanım, türev alan, çevrimdışı saklama ve yeniden dağıtım izni açık. Eski birleşik kopyaların hakları ayrı değerlendirilir.
+- [ ] Kanıt dosyalarını/hash ve EPDK kapsamlarını `Data/provider-rights.json` içinde doğrula; kaynak saflığını `validate_data_rights.py --epdk-only` ile kontrol et. EPDK-only pakete ODbL lisansı verilmez. Gate geçince `commercialDataUseApproved=true` yap; tek başına bayrak yeterli değildir.
 - [ ] Resmi destek posta kutusuna gerçek gönderim/yanıt testi. Bu görev kullanıcı adına e-posta göndermedi.
 
 Bu maddeler mağaza yayını veya sağlayıcı sözleşmelerinin kabul edildiği anlamına gelmez. Önceki listelerdeki App Privacy ve destek için “hesap sahibi tarafından yapılacak” maddelerin güncel ayrıntısı bu bölümdür.

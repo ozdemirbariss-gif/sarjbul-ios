@@ -10,12 +10,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = Path("Data/provider-rights.json")
 TILES = Path("SarjBul/Resources/StationTiles")
-ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
-DATA_SCOPES = {"commercial_use", "redistribution", "derived_fields", "odbl_compatible"}
+DATA_SCOPES = {"commercial_use", "redistribution", "derived_fields", "offline_storage"}
 
 
 def published_records(root):
     manifest = json.loads((root / TILES / "station-tiles-manifest.json").read_text())
+    if manifest.get("source_policy") != "epdk-only-v1":
+        raise ValueError("Station manifest must declare the EPDK-only source policy")
     records = []
     seen = set()
     for tile in manifest["tiles"]:
@@ -52,6 +53,36 @@ def source_counts(records):
     return primary, contributions
 
 
+EPDK_FIELDS = {
+    "id", "isim", "adres", "enlem", "boylam", "hiz", "operator", "soket", "fiyat",
+    "kaynak", "kaynaklar", "source_ids", "epdk_license", "epdk_sockets", "guven_skoru",
+    "sarj_uniteleri", "kaynak_gozlem_tarihi",
+}
+
+
+def epdk_only_issues(records):
+    """Reject supplementary provenance, identifiers and fields even if its rights are approved."""
+    if not isinstance(records, list) or not records:
+        return ["Station source policy: a nonempty EPDK-only inventory is required."]
+    seen = set()
+    for row in records:
+        if not isinstance(row, dict):
+            return ["Station source policy: invalid station record."]
+        source_ids = row.get("source_ids")
+        number = source_ids.get("epdk", "") if isinstance(source_ids, dict) else ""
+        suffix = number.removeprefix("ŞRJ/") if isinstance(number, str) else ""
+        identifier = row.get("id")
+        if (row.get("kaynak") != "epdk" or row.get("kaynaklar") != ["epdk"]
+                or not isinstance(source_ids, dict) or set(source_ids) != {"epdk"}
+                or not isinstance(number, str) or not number.startswith("ŞRJ/")
+                or not suffix.isascii() or not suffix.isdigit()
+                or identifier != "epdk_" + suffix or identifier in seen
+                or set(row) - EPDK_FIELDS):
+            return ["Station source policy: only freshly normalized EPDK records/IDs/fields are allowed."]
+        seen.add(identifier)
+    return []
+
+
 def evidence_issues(root, provider, review):
     errors = []
     evidence = review.get("evidence", [])
@@ -74,7 +105,7 @@ def evidence_issues(root, provider, review):
     return errors
 
 
-def rights_issues(root, records=None, registry=None, require_offer=True):
+def rights_issues(root, records=None, registry=None):
     try:
         if registry is None:
             registry = json.loads((root / REGISTRY).read_text())
@@ -83,25 +114,27 @@ def rights_issues(root, records=None, registry=None, require_offer=True):
         reviews = registry["providers"]
         if not isinstance(reviews, dict):
             raise ValueError("Invalid provider reviews")
-        _, contributions = source_counts(published_records(root) if records is None else records)
+        records = published_records(root) if records is None else records
+        _, contributions = source_counts(records)
     except (OSError, ValueError, KeyError, TypeError):
         return ["Data rights: missing/invalid registry, station inventory or tile integrity; publication blocked."]
     # EPDK's operator-license snapshot has reuse rights independent of station rows.
     active = set(contributions)
     if (root / "SarjBul/Resources/epdk-licensed-operators.json").exists():
         active.add("epdk")
-    errors = []
-    for provider in sorted(active | {"apple_maps", "open_meteo"}):
+    errors = epdk_only_issues(records)
+    retired = {"open_meteo", "chargeiq", "osm"}
+    for provider in sorted(active | retired | {"apple_maps"}):
         review = reviews.get(provider)
         if not isinstance(review, dict):
             errors.append(f"{provider}: no rights review; publication blocked.")
             continue
-        expected = "removed" if provider == "open_meteo" else "reviewed" if provider == "apple_maps" else "approved"
+        expected = "removed" if provider in retired else "reviewed" if provider == "apple_maps" else "approved"
         if review.get("status") != expected:
             errors.append(f"{provider}: rights unresolved ({review.get('status', 'missing')}); see Docs/DATA_PROVIDER_TERMS.md.")
             continue
         required = ({"matching_apple_map", "temporary_storage"} if provider == "apple_maps"
-                    else set() if provider == "open_meteo" else DATA_SCOPES)
+                    else set() if provider in retired else DATA_SCOPES)
         scopes = review.get("scopes", {})
         if not isinstance(scopes, dict) or any(scopes.get(scope) is not True for scope in required):
             errors.append(f"{provider}: permission/compliance scope is incomplete.")
@@ -114,32 +147,6 @@ def rights_issues(root, records=None, registry=None, require_offer=True):
         except (KeyError, TypeError, ValueError):
             errors.append(f"{provider}: invalid review/expiry date.")
         errors.extend(evidence_issues(root, provider, review))
-    osm = reviews.get("osm")
-    if "osm" in active and isinstance(osm, dict) and osm.get("status") == "approved":
-        osm = reviews["osm"]
-        if osm.get("database_license") != ODBL:
-            errors.append("osm: merged database must carry the ODbL license.")
-        offer = osm.get("database_offer", {})
-        try:
-            if not isinstance(offer, dict):
-                raise ValueError("Invalid database offer")
-            offer_path = (root / offer["path"]).resolve()
-            if not offer_path.is_relative_to(root.resolve()):
-                raise ValueError("Offer outside workspace")
-            if not offer.get("url", "").startswith("https://"):
-                raise ValueError("Missing public offer URL")
-            if require_offer:
-                offered = json.loads(offer_path.read_text())
-                # Include every source and field, not just the OSM contribution.
-                actual = sorted(json.dumps(row, sort_keys=True) for row in (published_records(root) if records is None else records))
-                if not isinstance(offered, list) or sorted(json.dumps(row, sort_keys=True) for row in offered) != actual:
-                    raise ValueError("Offer is incomplete")
-                manifest = json.loads((root / TILES / "station-tiles-manifest.json").read_text())
-                if (manifest.get("license_url") != ODBL or not manifest.get("attribution")
-                        or manifest.get("database_offer_url") != offer["url"]):
-                    raise ValueError("Missing distribution license/attribution notice")
-        except (OSError, ValueError, KeyError, TypeError, AttributeError):
-            errors.append("osm: missing complete machine-readable database and public offer URL.")
     errors.extend(removed_service_issues(root))
     return errors
 
@@ -157,6 +164,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--stations", type=Path, help="Validate a candidate inventory before building/publishing tiles.")
+    parser.add_argument("--epdk-only", action="store_true", help="Check source purity and tile integrity without granting rights.")
     parser.add_argument("--inventory", action="store_true", help="Print source counts only; never grants approval.")
     args = parser.parse_args()
     try:
@@ -168,12 +176,15 @@ def main():
     if args.inventory:
         print(json.dumps({"total": len(records), "primary": primary, "all_contributions": contributions}, indent=2))
         return 0
-    errors = rights_issues(args.root, records, require_offer=args.stations is None)
+    errors = epdk_only_issues(records) if args.epdk_only else rights_issues(args.root, records)
     for error in errors:
         print(f"error: {error}")
     if errors:
         return 1
-    print("Provider evidence and dataset rights checks passed; contractual scope still requires human review.")
+    if args.epdk_only:
+        print("EPDK-only source and tile integrity checks passed; this check does not approve provider permissions.")
+    else:
+        print("Provider evidence and dataset rights checks passed; contractual scope still requires human review.")
     return 0
 
 

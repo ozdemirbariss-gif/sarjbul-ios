@@ -33,7 +33,7 @@ Destek e-postası ve üçüncü taraf teknik günlükleri aynı sıfırlama işi
 - Uygulama ve örnek/yerel konfigürasyonda resmi destek e-postası; herkese açık okunabilir destek belgesi.
 - Manifest, form cevap seti, TR/EN uygulama özeti ve politika eşleştirildi.
 - Teknik hata veri sızıntısı sınırı düzeltildi; regresyon testleri eklendi.
-- Open-Meteo ağ istemcileri ve atıfları kaldırıldı; haritalarda OSM atfı korunur.
+- Open-Meteo ağ istemcileri ve atıfları kaldırıldı; istasyon paketi yalnızca EPDK’den yeniden üretilmiştir; haritalarda EPDK istasyon kaynağı ve Apple harita bildirimleri korunur.
 - Apple girişinden sonra `INVALIDITCUSER` hatası doğrulandı: hesap App Store Connect için etkin değil. App Privacy çevrimiçi formu doldurulamadı; etkin hesap/uygun uygulama erişimi gerekiyor.
 - Ticari sağlayıcı hakları henüz tamamlanmış değil: [kontrol sonuçları](DATA_PROVIDER_TERMS.md).
 - Destek adresini kullanıcı resmi adres olarak verdi. Bu görev e-posta göndermedi; gerçek gelen kutusu teslimatı test edilmedi.

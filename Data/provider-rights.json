@@ -10,18 +10,23 @@
       "evidence": [
         {
           "path": "Docs/DATA_PROVIDER_TERMS.md",
-          "sha256": "c540216cc6e2a8b90c68acbc842b998180f73a5b4968c212bff6888398cd57dd"
+          "sha256": "9ae3ef2f6cb236df530baba4a7aa3f467ac5dda93cfcc4d0624929dc86764495"
         }
       ],
       "note": "Forecast and Elevation clients removed; no subscription purchased."
     },
     "chargeiq": {
-      "status": "pending_permission",
+      "status": "removed",
       "reviewed_at": "2026-10-08",
       "terms_url": "https://www.chargeiq.com.tr/tr/gizlilik",
       "scopes": {},
-      "evidence": [],
-      "note": "No verified commercial reuse, derived-field redistribution or ODbL compatibility grant. User confirmed no written permission on 2026-10-08."
+      "evidence": [
+        {
+          "path": "Docs/EPDK_ONLY_MIGRATION.md",
+          "sha256": "e0a45c70bb0c672ffb652c661d239b922789d41cc5f8feb6273f5cda05d6a64f"
+        }
+      ],
+      "note": "Removed from current inventory and refresh pipeline by rebuilding exclusively from raw EPDK. No permission acquired; historic public copies remain unresolved."
     },
     "epdk": {
       "status": "pending_permission",
@@ -29,21 +34,20 @@
       "terms_url": "https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler",
       "scopes": {},
       "evidence": [],
-      "note": "Public endpoints do not establish redistribution rights; include operator-license snapshot in permission. User confirmed no written permission on 2026-10-08."
+      "note": "No verified commercial use, redistribution, derived-field or offline-storage permission for stations/operator snapshot. User confirmed no written permission on 2026-10-08. ODbL compatibility is not required for the new EPDK-only inventory."
     },
     "osm": {
-      "status": "pending_compatibility",
+      "status": "removed",
       "reviewed_at": "2026-10-08",
       "terms_url": "https://www.openstreetmap.org/copyright",
-      "scopes": {
-        "commercial_use": true,
-        "redistribution": true,
-        "derived_fields": true,
-        "odbl_compatible": false
-      },
-      "evidence": [],
-      "database_license": "https://opendatacommons.org/licenses/odbl/1-0/",
-      "note": "Attribution is present; merged database cannot be licensed before ChargeIQ/EPDK compatibility is confirmed."
+      "scopes": {},
+      "evidence": [
+        {
+          "path": "Docs/EPDK_ONLY_MIGRATION.md",
+          "sha256": "e0a45c70bb0c672ffb652c661d239b922789d41cc5f8feb6273f5cda05d6a64f"
+        }
+      ],
+      "note": "Removed from current inventory and refresh pipeline by rebuilding exclusively from raw EPDK. No permission acquired; historic public copies remain unresolved."
     },
     "apple_maps": {
       "status": "reviewed",
@@ -56,9 +60,10 @@
       "evidence": [
         {
           "path": "Docs/MAPKIT_TERMS_REVIEW.md",
-          "sha256": "d81faed05900ff62e88f79afbb19f9be2a612cee7f7331c7dc6ac29166c1775c"
+          "sha256": "ed1e7f9f5edeca0c3ba5e457590d8ba0b6c0d9a94168a090fa7e2af245b7a804"
         }
       ]
     }
-  }
+  },
+  "station_source_policy": "epdk-only-v1"
 }

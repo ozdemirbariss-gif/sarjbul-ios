@@ -5,6 +5,21 @@ import XCTest
 
 @MainActor
 final class PersistenceTests: XCTestCase {
+    func testEPDKMigrationRetiresEmbeddedStationRecommendationsAndPreservesFavorites() throws {
+        let suiteName = "EPDKMigration.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        for key in ["autonomousChargingProposal", "lastAutonomousChargingProposal"] {
+            defaults.set(Data("old embedded station".utf8), forKey: key)
+        }
+        defaults.set(try JSONEncoder().encode(["legacy_favorite", "epdk_1"]), forKey: "favoriteStationKeys")
+        let persistence = SystemAppPersistence(defaults: defaults, secureStorage: MemorySecureStorage())
+        XCTAssertNil(defaults.data(forKey: "autonomousChargingProposal"))
+        XCTAssertNil(defaults.data(forKey: "lastAutonomousChargingProposal"))
+        XCTAssertEqual(persistence.favoriteStationKeys, ["legacy_favorite", "epdk_1"])
+        XCTAssertTrue(defaults.bool(forKey: "epdkOnlyRecommendationsMigrationV1"))
+    }
+
     func testRemovedWeatherFlowClearsLegacyContextOptIns() throws {
         let persistence = try makePersistence()
         persistence.contextIntelligencePolicy = ContextIntelligencePolicy(

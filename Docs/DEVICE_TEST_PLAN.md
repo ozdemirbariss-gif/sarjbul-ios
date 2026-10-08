@@ -36,3 +36,10 @@ Test eden:
 | Çökme takibi | Kontrol edilen deneme hatası Crashlytics'e düşer; hassas içerik içermez | Bekliyor |
 
 En az bir gerçek iPhone gerekir. Küçük ekran ve büyük yazı kontrollerini ek cihaz/simülatörle tamamla. Hata bulunan satırı tamamlandı sayma; build değişince etkilenen akışı tekrar dene.
+
+## EPDK-only geçişi
+
+- Eski birleşik cache içeren kurulumdan güncelle: uçak modunda yalnızca EPDK bundle'ı yüklenmeli; eski ChargeIQ/OSM kayıtları geri gelmemeli. Eski otomatik öneriler temizlenmeli, kişisel şarj günlüğü korunmalı.
+- Yeni EPDK cache'i ve bundle için harita/arama/soket-güç filtreleri/rota açmayı doğrula. EPDK dışı kaynak veya eski manifest alan bir uzak güncelleme mevcut geçerli paketi değiştirmemeli.
+- Kaynak ekranı, harita/listedeki kaynak bağlantısı ve paylaşım görselinde EPDK görünmeli; native Apple harita bildirimleri okunabilir kalmalı.
+- Üçüncü taraf ID'sinden resmî `epdk_...` ID'sine geçen istasyonlarda eski favori/son rota/paylaşım bağlantısı otomatik taşınmaz; yeniden seçme gereksinimini doğrula. Zaten kanonik EPDK kimlikleri aynı kalır.

@@ -6,24 +6,31 @@ public actor CachedRemoteStationRepository: RefreshableStationRepository {
     private let cacheFileURL: URL
     private let metadataFileURL: URL
     private let decoder = JSONDecoder()
+    private let sourcePolicy: StationSourcePolicy
     private let session: URLSession
 
     public init(
         bundledFileURL: URL,
         remoteURL: URL?,
         cacheDirectory: URL,
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        sourcePolicy: StationSourcePolicy = .unrestricted
     ) {
         self.bundledFileURL = bundledFileURL
         self.remoteURL = remoteURL
         cacheFileURL = cacheDirectory.appending(path: "stations.json")
         metadataFileURL = cacheDirectory.appending(path: "stations-metadata.json")
         self.session = session
+        self.sourcePolicy = sourcePolicy
     }
 
     public func loadStations() async throws -> [Station] {
         if let cached = try? decodeStations(at: cacheFileURL), !cached.isEmpty {
             return cached
+        }
+        if case .epdkOnly = sourcePolicy {
+            try? FileManager.default.removeItem(at: cacheFileURL)
+            try? FileManager.default.removeItem(at: metadataFileURL)
         }
         return try decodeStations(at: bundledFileURL)
     }
@@ -37,7 +44,8 @@ public actor CachedRemoteStationRepository: RefreshableStationRepository {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("SarjBul-iOS/1", forHTTPHeaderField: "User-Agent")
 
-        if let metadata = try? loadMetadata(), let etag = metadata.etag {
+        if (try? decodeStations(at: cacheFileURL)) != nil,
+           let metadata = try? loadMetadata(), let etag = metadata.etag {
             request.setValue(etag, forHTTPHeaderField: "If-None-Match")
         }
 
@@ -50,7 +58,7 @@ public actor CachedRemoteStationRepository: RefreshableStationRepository {
             throw URLError(.badServerResponse)
         }
 
-        let remoteStations = try decoder.decode([Station].self, from: data)
+        let remoteStations = try sourcePolicy.decode(data, using: decoder)
         let bundledCount = (try? decodeStations(at: bundledFileURL).count) ?? 1_000
         guard StationDatasetQualityGate.accepts(
             candidateCount: remoteStations.count,
@@ -73,7 +81,7 @@ public actor CachedRemoteStationRepository: RefreshableStationRepository {
 
     private func decodeStations(at url: URL) throws -> [Station] {
         let data = try Data(contentsOf: url)
-        let stations = try decoder.decode([Station].self, from: data)
+        let stations = try sourcePolicy.decode(data, using: decoder)
         guard !stations.isEmpty else { throw StationRepositoryError.emptyData }
         return stations
     }

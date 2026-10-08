@@ -33,6 +33,28 @@ final class AppConfigurationTests: XCTestCase {
         XCTAssertFalse(configuration.serviceClients.isConfigured)
     }
 
+    func testStationRepositoryRetiresLegacyCachesAndLoadsOnlyEPDK() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: "EPDKCache-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let legacyRoot = directory.appending(path: "SarjBul")
+        try FileManager.default.createDirectory(at: legacyRoot.appending(path: "StationTiles"), withIntermediateDirectories: true)
+        for file in ["StationTiles/station_tile_legacy.json", "stations.json", "stations-metadata.json"] {
+            try Data("legacy mixed source cache".utf8).write(to: legacyRoot.appending(path: file))
+        }
+        // A nearby personal file must survive retirement of the inventory cache.
+        let personalFile = legacyRoot.appending(path: "personal-history.json")
+        try Data("personal".utf8).write(to: personalFile)
+        let configuration = try loadConfiguration(ready: false)
+        let repository = try XCTUnwrap(configuration.stationRepository(cacheRoot: directory))
+        let stations = try await repository.loadStations()
+        XCTAssertGreaterThan(stations.count, 1_000)
+        XCTAssertTrue(stations.allSatisfy { $0.source == "epdk" && $0.sources == ["epdk"] && $0.id.hasPrefix("epdk_") })
+        for file in ["StationTiles", "stations.json", "stations-metadata.json"] {
+            XCTAssertFalse(FileManager.default.fileExists(atPath: legacyRoot.appending(path: file).path))
+        }
+        XCTAssertEqual(try Data(contentsOf: personalFile), Data("personal".utf8))
+    }
+
     private func loadConfiguration(ready: Bool?) throws -> AppConfiguration {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("Configuration-\(UUID().uuidString).bundle")

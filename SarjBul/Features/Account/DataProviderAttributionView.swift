@@ -10,8 +10,6 @@ struct DataProviderAttributionView: View {
             Text(settings.t("legal.data_sources_body"))
                 .font(.footnote)
             ProviderLink(title: "EPDK", address: "https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler")
-            ProviderLink(title: "ChargeIQ", address: "https://www.chargeiq.com.tr/tr")
-            ProviderLink(title: "© OpenStreetMap contributors · ODbL", address: "https://www.openstreetmap.org/copyright")
             ProviderLink(title: settings.t("legal.database_rights"), address: "https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/DATA_PROVIDER_TERMS.md")
         }
         .textSelection(.enabled)
@@ -20,7 +18,7 @@ struct DataProviderAttributionView: View {
 
 struct StationDataAttributionView: View {
     var body: some View {
-        ProviderLink(title: "© OpenStreetMap contributors · ODbL", address: "https://www.openstreetmap.org/copyright")
+        ProviderLink(title: "EPDK", address: "https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler")
             .font(.caption2)
             .padding(6)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))

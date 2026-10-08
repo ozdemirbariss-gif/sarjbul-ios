@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""Merge the official EPDK inventory into the existing iOS station contract."""
+"""Build the iOS station inventory exclusively from the official EPDK response."""
 
 import argparse
-from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import hashlib
 import json
 import math
 from pathlib import Path
 import re
-import unicodedata
 import urllib.request
 
 ENDPOINT = "https://apigateway.epdk.gov.tr/sarjIstasyonlari"
@@ -44,11 +42,6 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def fold(value):
-    value = unicodedata.normalize("NFKD", str(value).casefold().replace("ı", "i"))
-    return "".join(c for c in value if c.isalnum())
-
-
 def coordinate(record):
     lat, lon = record.get("enlem"), record.get("boylam")
     if (type(lat) not in (int, float) or type(lon) not in (int, float)
@@ -56,13 +49,6 @@ def coordinate(record):
             or not 35 <= lat <= 43 or not 25 <= lon <= 45):
         raise ValueError("Invalid station coordinate")
     return lat, lon
-
-
-def distance(a, b):
-    lat1, lon1 = coordinate(a)
-    lat2, lon2 = coordinate(b)
-    x = math.radians(lon2 - lon1) * math.cos(math.radians((lat1 + lat2) / 2))
-    return 6_371_000 * math.hypot(x, math.radians(lat2 - lat1))
 
 
 def validate_payload(payload):
@@ -84,7 +70,7 @@ def validate_payload(payload):
     return rows
 
 
-def normalize(row, identifier, previous=None, observed_at=None):
+def normalize(row, observed_at=None):
     coordinate(row)
     powers, sockets = [], set()
     units = []
@@ -111,7 +97,7 @@ def normalize(row, identifier, previous=None, observed_at=None):
         power_text += f" ({maximum[1]})"
     # Do not copy an old price/live status onto newly verified registry data.
     record = {
-        "id": identifier, "isim": row["sarjIstasyonuAdi"], "adres": row.get("adres") or UNKNOWN,
+        "id": "epdk_" + row["sarjIstasyonuNo"].split("/")[1], "isim": row["sarjIstasyonuAdi"], "adres": row.get("adres") or UNKNOWN,
         "enlem": row["enlem"], "boylam": row["boylam"], "hiz": power_text,
         "operator": row.get("marka") or row.get("sarjAgiIsletmecisiUnvan") or UNKNOWN,
         "soket": ", ".join(sorted(sockets)) or UNKNOWN, "fiyat": UNKNOWN,
@@ -123,123 +109,65 @@ def normalize(row, identifier, previous=None, observed_at=None):
     }
     if observed_at:
         record["kaynak_gozlem_tarihi"] = observed_at
-    if previous:
-        record["source_ids"] = {**previous.get("source_ids", {}), **record["source_ids"]}
-        record["kaynaklar"] = sorted(set(previous.get("kaynaklar", [])) | {"epdk"})
     # Fetch time is recorded in the ingestion report, not represented as an
     # operator's real-time station update timestamp.
     return record
 
 
-def merge(payload, base, identities, previous_report=None, minimum=1000, observed_at=None):
+def build_inventory(payload, previous_report=None, minimum=1000, observed_at=None):
     rows = validate_payload(payload)
     public = [r for r in rows if r["hizmetSekli"] == "HALKA_ACIK"]
     prior_count = (previous_report or {}).get("public_count", 0)
     if len(public) < max(minimum, math.ceil(prior_count * 0.85)):
         raise ValueError("EPDK public inventory unexpectedly shrank; keeping last published data")
-    identities = dict(identities)
-    if len(set(identities.values())) != len(identities):
-        raise ValueError("EPDK identity mapping must be one-to-one")
-    by_id = {r["id"]: r for r in base}
-    if len(by_id) != len(base):
-        raise ValueError("Duplicate IDs in supplementary source")
-    occupied = set(identities.values())
-    grid = defaultdict(list)
-    for record in base:
-        try:
-            lat, lon = coordinate(record)
-        except ValueError:
-            continue
-        grid[(int(lat * 100), int(lon * 100))].append(record)
-    proposals = {}
-    invalid = []
-    active_numbers = {r["sarjIstasyonuNo"] for r in rows}
-    ambiguous = list(set((previous_report or {}).get("ambiguous_matches", [])) & active_numbers)
+    invalid, output = [], []
     for row in rows:
-        number = row["sarjIstasyonuNo"]
         try:
-            lat, lon = coordinate(row)
+            coordinate(row)
         except ValueError:
-            invalid.append(number)
+            invalid.append(row["sarjIstasyonuNo"])
             continue
-        candidates = []
-        for dx in (-1, 0, 1):
-            for dy in (-1, 0, 1):
-                for old in grid[(int(lat * 100) + dx, int(lon * 100) + dy)]:
-                    # Never merge on proximity alone. Multiple stations may share a car park.
-                    same_brand = bool(fold(row.get("marka", ""))) and fold(row["marka"]) == fold(old.get("operator", ""))
-                    same_name = fold(row["sarjIstasyonuAdi"]) == fold(old.get("isim", ""))
-                    metres = distance(row, old)
-                    if same_brand and (metres <= 40 or (same_name and metres <= 150)):
-                        candidates.append(old["id"])
-        if len(candidates) == 1:
-            proposals[number] = candidates[0]
-        elif candidates:
-            ambiguous.append(number)
-    claims = Counter(proposals.values())
-    for number, identifier in proposals.items():
-        if claims[identifier] == 1 and number not in identities and identifier not in occupied:
-            identities[number] = identifier
-        elif claims[identifier] > 1:
-            ambiguous.append(number)
+        if row["hizmetSekli"] == "HALKA_ACIK":
+            output.append(normalize(row, observed_at=observed_at))
     if len(invalid) > len(rows) * 0.01:
         raise ValueError("Too many invalid EPDK coordinates; publication refused")
-    # Mapped private/removed stations must not reappear from the supplementary feed.
-    reserved = set(identities.values())
-    output = {key: row for key, row in by_id.items() if key not in reserved}
-    for row in public:
-        number = row["sarjIstasyonuNo"]
-        if number in invalid:
-            continue
-        identifier = identities.get(number, "epdk_" + number.split("/")[1])
-        if identifier in output:
-            raise ValueError("EPDK ID collides with supplementary station ID")
-        identities[number] = identifier
-        output[identifier] = normalize(row, identifier, by_id.get(identifier), observed_at=observed_at)
-    # Invalid coordinates are quarantined, never geocoded speculatively.
+    if len(output) < max(minimum, math.ceil(prior_count * 0.85)):
+        raise ValueError("Too few valid public EPDK stations; publication refused")
     report = {
-        "endpoint": ENDPOINT, "total_count": len(rows), "public_count": len(public),
+        "endpoint": ENDPOINT, "source_policy": "epdk-only-v1",
+        "total_count": len(rows), "public_count": len(public),
         "private_count": len(rows) - len(public),
         "socket_count": sum(len(r["soketler"]) for r in rows),
         "public_socket_count": sum(len(r["soketler"]) for r in public),
-        "invalid_coordinates": sorted(invalid), "ambiguous_matches": sorted(set(ambiguous)),
-        "supplementary_source_count": len(base),
-        "epdk_published_count": sum(r["kaynak"] == "epdk" for r in output.values()),
-        "published_count": len(output),
+        "invalid_coordinates": sorted(invalid),
+        "epdk_published_count": len(output), "published_count": len(output),
     }
-    return sorted(output.values(), key=lambda r: r["id"]), dict(sorted(identities.items())), report
+    return sorted(output, key=lambda r: r["id"]), report
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base", type=Path, required=True)
-    parser.add_argument("--input", type=Path, help="Saved API response; makes no network request")
+    parser.add_argument("--input", type=Path, help="Saved EPDK API response; makes no network request")
     parser.add_argument("--observed-at", help="Original fetch time for a saved API response")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--identities", type=Path, default=Path("Data/epdk-identities.json"))
     parser.add_argument("--report", type=Path, default=Path("Data/epdk-ingestion-report.json"))
     parser.add_argument("--raw-output", type=Path, help="Archive response outside the app bundle")
     args = parser.parse_args()
-    payload = read_json(args.input) if args.input else fetch_payload()
-    identities = read_json(args.identities) if args.identities.exists() else {}
-    previous = read_json(args.report) if args.report.exists() else None
-    base = read_json(args.base)
-    minimum_base = max(1000, math.ceil((previous or {}).get("supplementary_source_count", 0) * 0.85))
-    if not isinstance(base, list) or len(base) < minimum_base:
-        raise ValueError("Supplementary source unexpectedly shrank; publication refused")
     if args.input and not args.observed_at:
         parser.error("--observed-at is required with --input; replay time is not observation time")
+    payload = read_json(args.input) if args.input else fetch_payload()
+    previous = read_json(args.report) if args.report.exists() else None
     fetched_at = args.observed_at or datetime.now(timezone.utc).isoformat()
-    records, identities, report = merge(payload, base, identities, previous, observed_at=fetched_at)
+    # A fresh normalization is intentional: no legacy station, source ID, field,
+    # proximity match or third-party identity mapping is used as an input.
+    records, report = build_inventory(payload, previous, observed_at=fetched_at)
     report["fetched_at"] = fetched_at
     report["payload_sha256"] = hashlib.sha256(json.dumps(payload["data"], sort_keys=True).encode()).hexdigest()
     if args.raw_output:
         write_json(args.raw_output, payload)
     write_json(args.output, records)
-    write_json(args.identities, identities)
     write_json(args.report, report)
-    print(f"EPDK: {report['public_count']} public, {report['private_count']} private; "
-          f"published: {len(records)}; ambiguous: {len(report['ambiguous_matches'])}")
+    print(f"EPDK only: {len(records)} public stations; {report['private_count']} private excluded")
 
 
 if __name__ == "__main__":

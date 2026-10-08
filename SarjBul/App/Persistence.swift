@@ -171,6 +171,12 @@ final class SystemAppPersistence: AppPersistence {
             }
             defaults.set(true, forKey: "mapDataStorageMigrationV1")
         }
+        if !defaults.bool(forKey: "epdkOnlyRecommendationsMigrationV1") {
+            // Earlier recommendations may embed a full station from the retired dataset.
+            defaults.removeObject(forKey: Key.autonomousChargingProposal)
+            defaults.removeObject(forKey: Key.lastAutonomousChargingProposal)
+            defaults.set(true, forKey: "epdkOnlyRecommendationsMigrationV1")
+        }
     }
 
     var profile: DrivingProfile {

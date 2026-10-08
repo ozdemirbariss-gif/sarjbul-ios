@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from validate_data_rights import DATA_SCOPES, ODBL, ROOT, TILES, published_records, rights_issues, source_counts
+from validate_data_rights import DATA_SCOPES, ROOT, TILES, published_records, rights_issues, source_counts, epdk_only_issues
 from validate_release import validate
 import build_station_tiles
 from test_release_validation import configuration
@@ -26,17 +26,15 @@ class DataRightsTests(unittest.TestCase):
         evidence = self.root / "permission.txt"
         evidence.write_text("Test fixture only, never a provider permission.")
         self.evidence = [{"path": evidence.name, "sha256": hashlib.sha256(evidence.read_bytes()).hexdigest()}]
-        self.rows = [{"id": "1", "kaynak": "epdk", "kaynaklar": ["epdk", "chargeiq", "osm"],
-                      "isim": "Fixture", "enlem": 40, "boylam": 29, "derived_power": 150}]
+        self.rows = [{"id": "epdk_1", "kaynak": "epdk", "kaynaklar": ["epdk"],
+                      "source_ids": {"epdk": "ŞRJ/1"}, "isim": "Fixture", "enlem": 40, "boylam": 29, "hiz": "150 kW"}]
         self.registry = {"schema_version": 1, "providers": {}}
-        for provider, status in (("epdk", "approved"), ("chargeiq", "approved"), ("osm", "approved"),
+        for provider, status in (("epdk", "approved"), ("chargeiq", "removed"), ("osm", "removed"),
                                  ("apple_maps", "reviewed"), ("open_meteo", "removed")):
             self.registry["providers"][provider] = {
                 "status": status, "reviewed_at": date.today().isoformat(), "evidence": copy.deepcopy(self.evidence),
                 "scopes": dict.fromkeys(DATA_SCOPES | {"matching_apple_map", "temporary_storage"}, True),
             }
-        self.registry["providers"]["osm"].update(database_license=ODBL, database_offer={
-            "path": str(TILES / "stations-odbl.json"), "url": "https://fixture.invalid/stations-odbl.json"})
         self.write_dataset(self.rows)
         self.write_registry()
 
@@ -50,30 +48,31 @@ class DataRightsTests(unittest.TestCase):
         folder.mkdir(parents=True, exist_ok=True)
         payload = json.dumps(rows).encode()
         (folder / "fixture.json").write_bytes(payload)
-        (folder / "stations-odbl.json").write_bytes(payload)
         (folder / "station-tiles-manifest.json").write_text(json.dumps({
-            "total_records": len(rows), "license_url": ODBL, "attribution": "© OpenStreetMap contributors",
-            "database_offer_url": "https://fixture.invalid/stations-odbl.json", "tiles": [{
+            "total_records": len(rows), "source_policy": "epdk-only-v1", "tiles": [{
                 "file": "fixture.json", "sha256": hashlib.sha256(payload).hexdigest(), "record_count": len(rows)}]}))
 
     def errors(self, **kwargs):
         return rights_issues(self.root, registry=self.registry, **kwargs)
 
-    def test_complete_evidence_and_exact_database_offer_are_accepted(self):
+    def test_complete_epdk_evidence_is_accepted_without_odbl_relicensing(self):
         self.assertEqual(self.errors(), [])
 
-    def test_primary_epdk_does_not_hide_chargeiq_or_osm_derivatives(self):
-        primary, contributions = source_counts(self.rows)
-        self.assertEqual(dict(primary), {"epdk": 1})
+    def test_primary_epdk_cannot_hide_retired_sources_even_if_approved(self):
+        mixed = copy.deepcopy(self.rows)
+        mixed[0]["kaynaklar"] = ["epdk", "chargeiq", "osm"]
+        _, contributions = source_counts(mixed)
         self.assertEqual(dict(contributions), {"epdk": 1, "chargeiq": 1, "osm": 1})
-        for provider in ("chargeiq", "osm"):
-            registry = copy.deepcopy(self.registry)
-            registry["providers"][provider]["status"] = "pending_permission"
-            self.assertTrue(any(provider in e for e in rights_issues(self.root, registry=registry)))
+        self.registry["providers"]["chargeiq"]["status"] = "approved"
+        self.assertTrue(any("Station source policy" in e for e in self.errors(records=mixed)))
 
-    def test_active_source_cannot_be_declared_removed(self):
-        self.registry["providers"]["chargeiq"]["status"] = "removed"
-        self.assertTrue(any("chargeiq" in e for e in self.errors()))
+    def test_legacy_ids_and_hidden_third_party_fields_are_rejected(self):
+        for change in ({"id": "chargeiq_old"}, {"source_ids": {"epdk": "ŞRJ/1", "osm": "2"}},
+                       {"opening_hours": "24/7"}, {"source_ids": {"epdk": "ŞRJ/２"}},
+                       {"kaynaklar": []}):
+            rows = [{**self.rows[0], **change}]
+            self.assertTrue(epdk_only_issues(rows), change)
+        self.assertTrue(epdk_only_issues(self.rows * 2))
 
     def test_unknown_or_missing_provenance_is_rejected(self):
         self.assertTrue(self.errors(records=[{"kaynak": "new_provider", "kaynaklar": []}]))
@@ -90,11 +89,11 @@ class DataRightsTests(unittest.TestCase):
         for change in ([], [{"path": "missing", "sha256": "0" * 64}],
                        [{"path": "permission.txt", "sha256": "0" * 64}],
                        [{"path": "../outside", "sha256": "0" * 64}]):
-            self.registry["providers"]["chargeiq"]["evidence"] = change
-            self.assertTrue(any("chargeiq" in e for e in self.errors()))
+            self.registry["providers"]["epdk"]["evidence"] = change
+            self.assertTrue(any("epdk" in e for e in self.errors()))
 
     def test_incomplete_scope_expiry_and_future_review_block_approval(self):
-        review = self.registry["providers"]["chargeiq"]
+        review = self.registry["providers"]["epdk"]
         for scope in DATA_SCOPES:
             review["scopes"][scope] = False
             self.assertTrue(self.errors())
@@ -105,17 +104,10 @@ class DataRightsTests(unittest.TestCase):
         review["reviewed_at"] = (date.today() + timedelta(days=1)).isoformat()
         self.assertTrue(self.errors())
 
-    def test_osm_offer_cannot_omit_other_sources_or_derived_fields(self):
-        offer = self.root / TILES / "stations-odbl.json"
-        for rows in ([], [{k: v for k, v in self.rows[0].items() if k != "derived_power"}]):
-            offer.write_text(json.dumps(rows))
-            self.assertTrue(any("osm" in e for e in self.errors()))
-
-    def test_candidate_requires_permissions_before_offer_is_generated(self):
-        (self.root / TILES / "stations-odbl.json").unlink()
-        self.assertEqual(self.errors(records=self.rows, require_offer=False), [])
-        self.registry["providers"]["chargeiq"]["status"] = "pending_permission"
-        self.assertTrue(self.errors(records=self.rows, require_offer=False))
+    def test_candidate_requires_epdk_permission_even_with_pure_provenance(self):
+        self.assertEqual(self.errors(records=self.rows), [])
+        self.registry["providers"]["epdk"]["status"] = "pending_permission"
+        self.assertTrue(self.errors(records=self.rows))
 
     def test_tile_tampering_is_rejected(self):
         (self.root / TILES / "fixture.json").write_text("[]")
@@ -132,10 +124,10 @@ class DataRightsTests(unittest.TestCase):
         for relative in ("SarjBul/Resources/AppConfig.plist", "SarjBul/Resources/GoogleService-Info.plist"):
             with (self.root / relative).open("wb") as target:
                 plistlib.dump(config if relative.endswith("AppConfig.plist") else firebase, target)
-        self.registry["providers"]["chargeiq"]["status"] = "pending_permission"
+        self.registry["providers"]["epdk"]["status"] = "pending_permission"
         self.write_registry()
         with patch("validate_release.first_release_scope_issues", return_value=[]):
-            self.assertTrue(any("chargeiq" in e for e in validate(self.root, production=True)))
+            self.assertTrue(any("epdk" in e for e in validate(self.root, production=True)))
 
     def run_builder(self):
         incoming = self.root / "incoming.json"
@@ -146,14 +138,17 @@ class DataRightsTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 build_station_tiles.main()
 
-    def test_licensed_builder_exports_every_field_and_license_notice(self):
+    def test_reviewed_builder_preserves_epdk_fields_without_inventing_a_license(self):
         self.run_builder()
         self.assertEqual(published_records(self.root), self.rows)
         self.assertEqual(self.errors(), [])
-        self.assertIn(ODBL, (self.root / TILES / "LICENSE.md").read_text())
+        manifest = json.loads((self.root / TILES / "station-tiles-manifest.json").read_text())
+        self.assertEqual(manifest["source_policy"], "epdk-only-v1")
+        self.assertNotIn("license_url", manifest)
+        self.assertFalse((self.root / TILES / "stations-odbl.json").exists())
 
     def test_pending_permission_stops_builder_before_output_is_mutated(self):
-        self.registry["providers"]["chargeiq"]["status"] = "pending_permission"
+        self.registry["providers"]["epdk"]["status"] = "pending_permission"
         self.write_registry()
         sentinel = self.root / TILES / "keep-existing-data.txt"
         sentinel.write_text("unchanged")
@@ -161,11 +156,19 @@ class DataRightsTests(unittest.TestCase):
             self.run_builder()
         self.assertEqual(sentinel.read_text(), "unchanged")
 
-    def test_current_repository_is_blocked_for_the_three_unresolved_sources(self):
+    def test_source_violation_stops_builder_before_any_output_mutation(self):
+        self.rows[0]["source_ids"]["chargeiq"] = "old"
+        sentinel = self.root / TILES / "keep-existing-data.txt"
+        sentinel.write_text("unchanged")
+        with self.assertRaises(SystemExit):
+            self.run_builder()
+        self.assertEqual(sentinel.read_text(), "unchanged")
+
+    def test_current_repository_is_blocked_only_for_epdk_permission(self):
         errors = rights_issues(ROOT)
-        for provider in ("chargeiq", "epdk", "osm"):
-            self.assertTrue(any(e.startswith(provider + ":") for e in errors))
-        self.assertFalse(any(e.startswith("apple_maps:") or e.startswith("open_meteo:") for e in errors), errors)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertTrue(errors[0].startswith("epdk:"), errors)
+        self.assertEqual(epdk_only_issues(published_records(ROOT)), [])
 
 
 if __name__ == "__main__":
