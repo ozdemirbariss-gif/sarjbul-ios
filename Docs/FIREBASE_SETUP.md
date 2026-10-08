@@ -12,6 +12,8 @@
    ```
 
    Genel `--only functions` komutu tarayıcı/e-posta/Telegram/WhatsApp geçitlerini de kapsar; iOS hazırlığında kullanılmaz. Cloud Functions dağıtımı [Blaze gerektirir](https://firebase.google.com/docs/functions/get-started). Spark üzerindeki kilitli veritabanı kurulumu işlevlerin yayımlandığı anlamına gelmez.
+
+   Aynı proje ve beş işlev kapsamı `cd firebase/functions && npm run deploy:ios` komutunda da sabittir. `npm run deploy` tüm kanal servislerini içerir; iOS dağıtımı için kullanma.
 7. Backend dağıtıldıktan ve test ortamında doğrulandıktan sonra yerel `firebaseBackendReady` alanını `true` yaparak cihaz testine başla. iOS build'inden doğrulanmış App Check istekleri geldiğini gördükten sonra Realtime Database için App Check enforcement'ı aç.
 8. Anonim oturum oluşturma, favori, rapor, token yenileme ve Profil ekranındaki bulut verisi sıfırlama akışlarını gerçek cihazda test et.
 9. Bir önceki adımdaki testlerden biri başarısızsa `firebaseBackendReady` alanını tekrar `false` yap. Üretim ayarını yalnızca tüm testler tamamlanınca hazır say. `python3 Scripts/validate_release.py --production` çalıştır. Bu kontrol bundle kimliği, API key, iOS app ID/sender ID, varsa iki dosyadaki veritabanı adresi, destek alanları ve backend hazırlık onayını doğrular. Canlı yetkilendirme veya App Check doğrulamasının yerine geçmez.
@@ -23,6 +25,14 @@ Kurallar ham yorum ve istasyon katkılarını yalnızca kaydın sahibi için oku
 Yeni kaydın atomik `PATCH` isteği aynı UID'nin ilgili metadata yoluna `lastMutationPath` ve Firebase sunucu zamanını (`{".sv":"timestamp"}`) yazar. Hız sınırı cihazdaki eski olay tarihine değil sunucunun teslim alma zamanına göre uygulanır. Metadata silinemez, zamanı geriye alınamaz ve tek işleme birden fazla yeni kayıt eklenemez. İstemci, yetki hatası sonrasında yalnızca kendi metadata kaydında devam eden başka bir gönderim sınırı doğrulanırsa hatayı tekrar denenebilir olarak sınıflandırır; çevrimdışı kuyruk bu kaydı korur. Analiz metadata kayıtları hesap silme işleviyle veya 7 gün sonra günlük temizleme göreviyle kaldırılır.
 
 10 Eylül 2026 konsol durumu: `sarjbul-ios-f57e6`, Spark; `https://sarjbul-ios-f57e6-default-rtdb.europe-west1.firebasedatabase.app/`, kilitli kurallar; Anonymous etkin. Yerel plistler Git dışında hazırdır. Üretim App Check, Functions, destek e-postası ve cihaz testi henüz tamamlanmamıştır.
+
+## 8 Ekim 2026 doğrulaması
+
+- Console'daki `SarjBul iOS` projesinin kimliği `sarjbul-ios-f57e6`; yerel iki plist ve `com.ozdemirbaris.sarjbul` ile eşleşiyor. Anonymous sağlayıcısı etkin. Veritabanı Belçika (`europe-west1`) bölgesinde; inceleme sırasında kök veri `null`.
+- iOS uygulaması App Check'e App Attest sağlayıcısıyla kaydedildi; Console `Registered` gösteriyor. Team ID doğrulanmış yerel Apple takımından alındı; token ömrü 1 saat. Release uygulaması zaten App Attest, Debug uygulaması Debug Provider kullanıyor.
+- Realtime Database App Check durumu `Unenforced`; henüz doğrulanmış gerçek iOS istek metriği yok. İmzalı cihazdan App Attest isteği doğrulanmadan enforcement açılmaz.
+- Firebase Admin `14.5.0`, Functions `7.4.0` ve kilit dosyası güncellendi. Önceki CI bulgularının ilgili sürümleri `@grpc/grpc-js 1.14.5`, `brace-expansion 5.0.12`, `minimatch 9.0.9`. Node `22.23.3` ve Java `21.0.12.1` üzerinde temiz `npm ci --ignore-scripts`, sözdizimi denetimi, 6 birim testi ve 35 kural/backend testi geçti. `npm audit --omit=dev --audit-level=moderate`: 0 açık; CI denetim eşiği korunuyor.
+- Proje hâlâ Spark planında. Beş Cloud Function'ın yayını Blaze faturalandırma adımını bekliyor. Yerel Firebase CLI'da oturum bulunmuyor. Dağıtılmış backend ve canlı sunucu silme onayı henüz doğrulanmadığı için `firebaseBackendReady=false` korunuyor.
 
 ## Sunucu onaylı silme ve analiz temizliği
 
