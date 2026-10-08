@@ -64,9 +64,9 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 - [ ] App Store ekran görüntülerinin desteklenen cihaz boyutlarında yüklenmesi
 - [ ] `group.com.ozdemirbaris.sarjbul` App Group'unu App ID ve provisioning profillerinde aç
 - [ ] Widget, kilit ekranı, Dynamic Island ve Siri kısayolunu gerçek cihazda test et
-- [ ] Open-Meteo ticari kullanım/attribution koşullarını yayın öncesi ürün modeliyle doğrula
+- [x] Open-Meteo ücretsiz Forecast/Elevation istemcilerini ticari sürümden kaldır (8 Ekim 2026).
 - [ ] App Store gizlilik formunda açık rızalı kaba konum ve ürün etkileşimi analizini beyan et; operatör çıktılarında en az 10 örnek eşiğini uygula
-- [ ] App Store gizlilik formunda Open-Meteo hava durumu ve rakım hesabı için üçüncü tarafa gönderilen hassas konumu beyan et
+- [ ] Güncel gizlilik cevap setini mağazaya gir: kaldırılan Open-Meteo akışı için Precise Location artık seçilmez.
 - [ ] Gerçek cihazda EventKit sahiplik kontrolü ve otomatik takvim erteleme eşiğini doğrula
 - [ ] APNs sağlayıcı anahtarını bildirim gönderen backend'e tanımla ve sandbox/production silent push teslimatını gerçek cihazda doğrula
 
@@ -84,8 +84,8 @@ Mağaza hazırlığı: [Metinler](APP_STORE_METADATA.md), [Review Notes](APP_REV
 - [x] Hata kaydında URL/konum/istasyon/serbest metin aktarımı kaldırıldı; gizlilik regresyon testleri eklendi.
 - [x] Sağlayıcı atıfları ve lisans bağlantıları uygulamaya eklendi.
 - [ ] App Store Connect hesabını etkinleştir (`INVALIDITCUSER` hatası doğrulandı); [cevap setini](APP_STORE_PRIVACY_ANSWERS.md) kaydet/yayımla ve özetini doğrula.
-- [ ] Ticari yayın: [sağlayıcı hakları ve sunum koşullarını](DATA_PROVIDER_TERMS.md) çöz. Open-Meteo ücretsiz API uygun değil; ChargeIQ/EPDK yeniden dağıtım izni ve ODbL uyumu açık. MapKit adres sunumu/saklaması ayrıca kontrol edilmeli.
-- [ ] Bu kanıtlar tamamlanınca `commercialDataUseApproved=true` yap; onaylanmadan Archive kontrolü geçmez.
+- [ ] Ticari yayın: [sağlayıcı hakları ve sunum koşullarını](DATA_PROVIDER_TERMS.md) çöz. Open-Meteo kaldırıldı, MapKit kod karşılaştırması/düzeltmeleri tamamlandı. ChargeIQ/EPDK yazılı yeniden dağıtım izni ve ODbL uyumu açık.
+- [ ] Kanıt dosyalarını/hash ve kapsamları `Data/provider-rights.json` içinde doğrula, ODbL tam veri teklifini üret. Gate geçince `commercialDataUseApproved=true` yap; tek başına bayrak yeterli değildir.
 - [ ] Resmi destek posta kutusuna gerçek gönderim/yanıt testi. Bu görev kullanıcı adına e-posta göndermedi.
 
 Bu maddeler mağaza yayını veya sağlayıcı sözleşmelerinin kabul edildiği anlamına gelmez. Önceki listelerdeki App Privacy ve destek için “hesap sahibi tarafından yapılacak” maddelerin güncel ayrıntısı bu bölümdür.

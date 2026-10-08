@@ -7,7 +7,7 @@ public struct ContextIntelligencePolicy: Codable, Equatable, Sendable {
 
     public init(
         isEnabled: Bool = false,
-        usesWeather: Bool = true,
+        usesWeather: Bool = false,
         allowsAutomaticCalendarChanges: Bool = false
     ) {
         self.isEnabled = isEnabled

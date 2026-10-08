@@ -9,18 +9,18 @@
 - Yerel şarj hatırlatıcısı
 - WidgetKit, App Intents, Live Activity ve Dynamic Island
 - Vision ile tamamen cihaz içinde fiş OCR
-- Open-Meteo Elevation API / Copernicus DEM ile rota rakım profili
+- Rakım servisi olmadan rota/enerji tahmini (rakım düzeltmesi uygulanmaz)
 - EPDK şarj ağı işletmeci lisansı REST servisiyle operatör doğrulama snapshot'ı
 - Telegram, WhatsApp, e-posta ve browser uzantısı için ortak salt okunur komut gateway'i
-- Açık rızalı, cihaz içi takvim + konum + alışkanlık bağlam motoru
+- Cihaz içi bağlam motoru altyapısı (hava sağlayıcısı kaldırıldığı için takvim önerileri kapalı)
 
 Kanal gateway'inin sağlayıcı kurulumu ve güvenlik sınırları [CHANNEL_AUTOMATION.md](CHANNEL_AUTOMATION.md) içinde açıklanır.
 
 ## Bağlam zekası veri sınırı
 
-Bağlam zekası varsayılan olarak kapalıdır ve Hesap ekranından ayrı ayrı açılır. EventKit takvim içeriği ve kişisel alışkanlık özeti cihazdan çıkarılmaz. Hava durumu için Open-Meteo'ya yalnızca üç ondalığa yuvarlanmış yaklaşık koordinat gönderilir; kullanıcı veya oturum kimliği eklenmez.
+Hava koşulu gerektiren bağlam/takvim önerileri bu sürümde kapalıdır; etkinleştirme ayarları kaldırılmıştır. EventKit takvim içeriği ve kişisel alışkanlık özeti cihazdan çıkarılmaz. Hava durumu ve rakım ağ istemcileri 8 Ekim 2026 tarihinde ticari erişim lisansı bulunmadığı için kaldırıldı. Eski hava durumu tercihi açılışta kapatılır.
 
-HealthKit ve kalp atışına dayalı mola önerisi uygulamadan, domain modelinden, yetkilerden ve izin metinlerinden kaldırılmıştır. Kalan bağlam önerileri yolculuk, hava durumu ve takvime dayanır. Takvim olayı, kullanıcı aynı erteleme önerisini en az iki kez kabul etmeden ve ayrıca otomatik takvim eylemini açmadan otomatik değiştirilmez. Tüm gün etkinlikleri ve başka birinin düzenlediği etkinlikler otomasyona kapalıdır.
+HealthKit ve kalp atışına dayalı mola önerisi uygulamadan, domain modelinden, yetkilerden ve izin metinlerinden kaldırılmıştır. Bağlam motorunun hava sinyali `.normal` olarak kalır; yağışa bağlı takvim önerileri üretilmez. Takvim olayı, kullanıcı aynı erteleme önerisini en az iki kez kabul etmeden ve ayrıca otomatik takvim eylemini açmadan otomatik değiştirilmez. Tüm gün etkinlikleri ve başka birinin düzenlediği etkinlikler otomasyona kapalıdır.
 
 iOS sürekli ve sınırsız arka plan çalışması garanti etmez. Değerlendirme uygulama açılışı, konum güncellemesi ve sistemin verdiği BGTask pencerelerinde yapılır. Canlı trafik yoğunluğu entegrasyonu bulunmadığı için hareket hızı yalnızca "seyir halinde" sinyali olarak kullanılır; sıkışıklık iddiası üretilmez.
 
@@ -55,7 +55,7 @@ Operatörlere yönelik bir çıktı açılacaksa backend yalnızca toplamı en a
 
 ## Rakım verisi
 
-Hedefli rota oluşturulduğunda en fazla 80 örnek koordinat Open-Meteo Elevation API'ye gönderilir. Yanıtta Copernicus DEM GLO-90 rakımları kullanılır; e-posta, Firebase UID veya istasyon katkısı gönderilmez. Servis başarısızsa plan rakım düzeltmesiz hesaplanır ve bu durum kullanıcıya açıkça yazılır.
+Open-Meteo Elevation istemcisi kaldırılmıştır. Hedefli rota rakım düzeltmesiz hesaplanır ve bu durum kullanıcıya açıkça yazılır. Yeni bir rakım sağlayıcısı ancak ticari erişim ve veri hakları doğrulanarak eklenebilir.
 
 ## CarPlay
 

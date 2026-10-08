@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from validate_data_rights import removed_service_issues, rights_issues
+
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = Path("SarjBul/Resources")
@@ -135,7 +137,7 @@ def first_release_scope_issues(root):
 
 
 def validate(root, production=False, bundle_id=DEFAULT_BUNDLE_ID):
-    errors = first_release_scope_issues(root)
+    errors = first_release_scope_issues(root) + removed_service_issues(root)
     for relative, reasons in (
         (RESOURCES / "PrivacyInfo.xcprivacy", {"CA92.1", "1C8F.1"}),
         (Path("SarjBulWidgets/PrivacyInfo.xcprivacy"), {"1C8F.1"}),
@@ -156,6 +158,7 @@ def validate(root, production=False, bundle_id=DEFAULT_BUNDLE_ID):
             errors.append("Release App Attest entitlement must use production.")
 
     if production:
+        errors.extend(rights_issues(root))
         config = read_plist(root / RESOURCES / "AppConfig.plist", errors)
         firebase = read_plist(root / RESOURCES / "GoogleService-Info.plist", errors)
         if config is not None and firebase is not None:

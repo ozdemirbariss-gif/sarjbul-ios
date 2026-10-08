@@ -24,9 +24,8 @@ final class UserSettingsStore {
     }
     var manualProfileUpdatedAt: Date? { persistence.manualProfileUpdatedAt }
     var filters = StationFilters()
-    var destination: JourneyDestination? {
-        didSet { persistence.destination = destination }
-    }
+    // Apple search results are temporary session state, never a saved address book.
+    var destination: JourneyDestination?
     var demandAnalyticsEnabled: Bool {
         didSet { persistence.demandAnalyticsEnabled = demandAnalyticsEnabled }
     }
@@ -41,7 +40,6 @@ final class UserSettingsStore {
         appearance = persistence.appearance
         navigationAppPreference = persistence.navigationAppPreference
         profile = persistence.profile
-        destination = persistence.destination
         demandAnalyticsEnabled = persistence.demandAnalyticsEnabled
         autonomousChargingPolicy = persistence.autonomousChargingPolicy
         self.externalLinks = externalLinks

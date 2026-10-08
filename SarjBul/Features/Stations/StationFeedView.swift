@@ -212,6 +212,7 @@ struct StationFeedView: View {
             ScrollView {
                 LazyVStack(spacing: 18) {
                     Color.clear.frame(height: 22)
+                    StationDataAttributionView()
                     if let best = candidates.first {
                         resultCard(best, rank: 1, total: candidates.count)
                     }

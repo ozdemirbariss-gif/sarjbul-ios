@@ -47,7 +47,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Dikey snap kart akışı ile bütün istasyonları gösteren harita arasında geçiş
 - ETag destekli uzaktan istasyon verisi, kalite kapısı, yerel cache ve bundle fallback
 - Çevrimdışı favori/durum/katkı outbox'ı; bağlantı dönüşünde otomatik, sıralı ve hız kontrollü senkronizasyon
-- Dış uygunluk, rota ve rakım servislerinde süreli cache, istek tekilleştirme ve kota koruması
+- Dış uygunluk ve rota servislerinde süreli cache, istek tekilleştirme ve kota koruması
 - Teknik ayrıntıyı kullanıcıdan ayıran, tekrar baskılamalı OSLog + Crashlytics operasyon telemetrisi
 - Yüzde 5 hata eşiğinde safe mode'a geçen circuit breaker, servis bulkhead'leri ve Keychain şifreli idempotent outbox
 - Form gerektirmeyen anonim Firebase oturumu, token yenileme, favori senkronizasyonu ve durum bildirimi
@@ -57,7 +57,7 @@ Tasarım değiştiğinde bu görsel de aynı değişiklikle güncellenir. Renk, 
 - Aynı zaman bağlamında en az %90 tutarlılık oluştuğunda arama parametrelerini önceden dolduran, geri alınabilir cihaz içi niyet tahmini
 - Şarj değerine ve tahmini menzile göre istasyon öneren; bildirimden rotayı görüntüleme, 15 dakika erteleme veya bugün susturma aksiyonları sunan şarj asistanı
 - Telegram, WhatsApp, e-posta ve browser uzantısından uygulamayı açmadan istasyon bulduran güvenli kanal gateway'i
-- Doğrusal olmayan şarj eğrisi, rakım etkisi ve toplam süre optimizasyonlu uzun yol planı
+- Doğrusal olmayan şarj eğrisi ve toplam süre optimizasyonlu uzun yol planı; rakım düzeltmesi uygulanmaz
 - Yol ağına göre 16 yönlü erişilebilir menzil poligonu; dairesel menzil yanılsaması yok
 - Fiyat/soket/adres doğrulama, zamanla azalan güven ve gece güvenliği katkıları
 - Varsayılan kapalı, kaba hücreli anonim arama talebi toplama altyapısı

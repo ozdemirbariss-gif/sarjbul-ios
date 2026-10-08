@@ -42,6 +42,14 @@ struct HomeView: View {
                                     locationInput
                                         .transition(.opacity.combined(with: .move(edge: .top)))
                                 }
+                                if let location = search.userLocation, location.source == .appleMaps {
+                                    PlaceResultMap(latitude: location.latitude, longitude: location.longitude)
+                                        .frame(height: 180)
+                                }
+                                if let destination = settings.destination {
+                                    PlaceResultMap(latitude: destination.latitude, longitude: destination.longitude)
+                                        .frame(height: 180)
+                                }
                                 primaryOutcome
                                 advancedHomeControls
                                 if advancedHomeExpanded {
@@ -122,7 +130,7 @@ struct HomeView: View {
                         applyLocation(UserLocation(
                             latitude: place.latitude,
                             longitude: place.longitude,
-                            source: .manual
+                            source: .appleMaps
                         ))
                     case .destination:
                         settings.destination = place
@@ -280,9 +288,6 @@ struct HomeView: View {
                     .font(.headline.weight(.heavy))
                     .foregroundStyle(SBColor.contentPrimary)
                     .lineLimit(2)
-                if contextIntelligence.policy.usesWeather {
-                    OpenMeteoAttributionView()
-                }
             }
 
             Spacer(minLength: 6)

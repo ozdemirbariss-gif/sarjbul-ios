@@ -36,7 +36,7 @@ enum ExternalNavigationHandoff {
         switch origin.source {
         case .device:
             originItem = .forCurrentLocation()
-        case .manual:
+        case .manual, .appleMaps:
             originItem = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
                 latitude: origin.latitude,
                 longitude: origin.longitude
@@ -579,6 +579,7 @@ final class SearchCoordinator {
     private var profileSafeRange: Double { settings.profile.safeRangeKm }
 
     private func recordDemandIfEnabled(origin: SarjBulCore.UserLocation, resultCount: Int) async {
+        guard origin.source != .appleMaps else { return }
         guard settings.demandAnalyticsEnabled else { return }
         let event = SearchDemandEvent(
             location: origin,

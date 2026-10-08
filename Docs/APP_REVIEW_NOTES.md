@@ -19,7 +19,7 @@ Charge, range and travel time are estimates. Manual battery values are not measu
 
 Widgets and Live Activities summarize the user's charging break and station information. Background refresh and notifications depend on iOS scheduling and permissions; the app does not require continuous background location.
 
-Optional context settings are off by default. If enabled with system permission, EventKit evaluates upcoming events on-device using travel and weather context. Calendar changes require acceptance of a suggestion or separately enabled automation after the historical acceptance threshold is reached. Event titles are never sent to our servers. HealthKit, heart-rate access and heart-rate-based break suggestions have been removed from the app, capabilities and permission descriptions.
+Weather and elevation API clients and weather-dependent calendar suggestions/settings have been removed. Existing weather/context opt-ins are reset to off. No EventKit permission is requested by this disabled flow. HealthKit and heart-rate access remain removed from the app, capabilities and permission descriptions.
 
 Support: sarjbul@icloud.com
 

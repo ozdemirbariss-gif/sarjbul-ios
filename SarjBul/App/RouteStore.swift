@@ -7,19 +7,29 @@ import SarjBulCore
 final class RouteStore {
     private var routes: [RouteKey: StationRoute] = [:]
     private var failures: [RouteKey: Date] = [:]
+    private var cachedAt: [RouteKey: Date] = [:]
+    private var expiryTasks: [RouteKey: Task<Void, Never>] = [:]
+    private var generation = 0
     private let failureRetryInterval: TimeInterval = 30
 
     func cachedRoute(origin: UserLocation, station: Station) -> StationRoute? {
-        routes[RouteKey(origin: origin, stationID: station.id)]
+        let key = RouteKey(origin: origin, stationID: station.id)
+        guard let date = cachedAt[key], Date().timeIntervalSince(date) < 5 * 60 else {
+            routes.removeValue(forKey: key)
+            cachedAt.removeValue(forKey: key)
+            return nil
+        }
+        return routes[key]
     }
 
     func route(origin: UserLocation, station: Station) async -> StationRoute? {
         let key = RouteKey(origin: origin, stationID: station.id)
-        if let cached = routes[key] { return cached }
+        if let cached = cachedRoute(origin: origin, station: station) { return cached }
         if let failedAt = failures[key], Date().timeIntervalSince(failedAt) < failureRetryInterval {
             return nil
         }
         failures.removeValue(forKey: key)
+        let requestGeneration = generation
 
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(
@@ -38,6 +48,7 @@ final class RouteStore {
                 failures[key] = Date()
                 return nil
             }
+            guard requestGeneration == generation else { return nil }
             let result = StationRoute(
                 stationID: station.id,
                 distanceKm: route.distance / 1_000,
@@ -54,8 +65,18 @@ final class RouteStore {
             )
             if routes.count >= 96, let oldestKey = routes.keys.first {
                 routes.removeValue(forKey: oldestKey)
+                cachedAt.removeValue(forKey: oldestKey)
+                expiryTasks.removeValue(forKey: oldestKey)?.cancel()
             }
             routes[key] = result
+            cachedAt[key] = Date()
+            expiryTasks.removeValue(forKey: key)?.cancel()
+            expiryTasks[key] = Task { [weak self] in
+                do { try await Task.sleep(for: .seconds(5 * 60)) } catch { return }
+                self?.routes.removeValue(forKey: key)
+                self?.cachedAt.removeValue(forKey: key)
+                self?.expiryTasks.removeValue(forKey: key)
+            }
             return result
         } catch {
             AppLogger.routing.warning("MapKit route failed for \(station.id, privacy: .public): \(error.localizedDescription, privacy: .public)")
@@ -65,8 +86,12 @@ final class RouteStore {
     }
 
     func invalidate() {
+        generation += 1
         routes.removeAll()
         failures.removeAll()
+        cachedAt.removeAll()
+        expiryTasks.values.forEach { $0.cancel() }
+        expiryTasks.removeAll()
     }
 }
 

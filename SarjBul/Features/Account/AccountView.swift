@@ -72,7 +72,6 @@ struct AccountView: View {
     @Environment(SearchCoordinator.self) private var search
     @Environment(ChargingHistoryStore.self) private var chargingHistory
     @Environment(AutonomousChargingAgentStore.self) private var autonomousAgent
-    @Environment(ContextIntelligenceStore.self) private var contextIntelligence
     @Environment(ExecutionTrustStore.self) private var executionTrust
     @Environment(FrictionTelemetryStore.self) private var frictionTelemetry
     @Environment(NavigationCoordinator.self) private var navigation
@@ -102,7 +101,6 @@ struct AccountView: View {
                             isExpanded: $automationExpanded
                         ) {
                             autonomousAssistantPanel
-                            contextIntelligencePanel
                         }
                         stationLibraryPanel
 
@@ -380,55 +378,6 @@ struct AccountView: View {
                 settings.autonomousChargingPolicy = policy
             }
         )
-    }
-
-    private var contextIntelligencePanel: some View {
-        SBSecondaryPanel {
-            VStack(alignment: .leading, spacing: 14) {
-                Label(settings.t("context.settings_title"), systemImage: "brain.head.profile")
-                    .font(.headline.weight(.heavy))
-                    .foregroundStyle(SBColor.contentPrimary)
-
-                Text(settings.t("context.settings_hint"))
-                    .font(.caption)
-                    .foregroundStyle(SBColor.contentTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Toggle(settings.t("context.enable"), isOn: Binding(
-                    get: { contextIntelligence.policy.isEnabled },
-                    set: { enabled in Task { await contextIntelligence.setEnabled(enabled) } }
-                ))
-                .font(.subheadline.weight(.bold))
-                .tint(SBColor.actionPrimary)
-
-                if contextIntelligence.policy.isEnabled {
-                    Divider().overlay(SBColor.divider)
-
-                    Toggle(settings.t("context.weather"), isOn: Binding(
-                        get: { contextIntelligence.policy.usesWeather },
-                        set: { contextIntelligence.setUsesWeather($0) }
-                    ))
-                    .font(.subheadline.weight(.bold))
-                    .tint(SBColor.actionPrimary)
-
-                    Toggle(settings.t("context.calendar_auto"), isOn: Binding(
-                        get: { contextIntelligence.policy.allowsAutomaticCalendarChanges },
-                        set: { enabled in Task { await contextIntelligence.setAutomaticCalendarChanges(enabled) } }
-                    ))
-                    .font(.subheadline.weight(.bold))
-                    .tint(SBColor.actionPrimary)
-
-                    if contextIntelligence.policy.usesWeather {
-                        OpenMeteoAttributionView()
-                    }
-
-                    Text(settings.t("context.calendar_auto_hint"))
-                        .font(.caption2)
-                        .foregroundStyle(SBColor.contentTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
     }
 
     private var profileFallbackBinding: Binding<Bool> {

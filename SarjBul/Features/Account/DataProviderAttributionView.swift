@@ -12,20 +12,9 @@ struct DataProviderAttributionView: View {
             ProviderLink(title: "EPDK", address: "https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler")
             ProviderLink(title: "ChargeIQ", address: "https://www.chargeiq.com.tr/tr")
             ProviderLink(title: "© OpenStreetMap contributors · ODbL", address: "https://www.openstreetmap.org/copyright")
-            OpenMeteoAttributionView()
+            ProviderLink(title: settings.t("legal.database_rights"), address: "https://github.com/ozdemirbariss-gif/sarjbul-ios/blob/main/Docs/DATA_PROVIDER_TERMS.md")
         }
         .textSelection(.enabled)
-    }
-}
-
-struct OpenMeteoAttributionView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ProviderLink(title: "Open-Meteo · CC BY 4.0", address: "https://open-meteo.com/en/licence")
-            ProviderLink(title: "Copernicus DEM GLO-90", address: "https://doi.org/10.5270/ESA-c5d3d65")
-        }
-        .font(.caption)
-        .fixedSize(horizontal: false, vertical: true)
     }
 }
 

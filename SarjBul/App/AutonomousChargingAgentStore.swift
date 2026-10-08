@@ -81,6 +81,8 @@ final class AutonomousChargingAgentStore {
     }
 
     func updateLocation(_ location: UserLocation) async {
+        // Search coordinates may be used temporarily, never in a saved agent proposal.
+        guard location.source != .appleMaps else { return }
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-agent") { return }
         #endif
@@ -139,6 +141,7 @@ final class AutonomousChargingAgentStore {
     }
 
     private func performWorker(trigger: ChargingAgentTrigger, location: UserLocation) async -> Bool {
+        guard location.source != .appleMaps else { return true }
         guard settings.autonomousChargingPolicy.isEnabled else { return true }
         guard persistence.autonomousChargingMutedUntil.map({ $0 <= Date() }) ?? true else { return true }
         let now = Date()

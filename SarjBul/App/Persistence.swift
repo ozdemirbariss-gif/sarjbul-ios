@@ -45,7 +45,6 @@ protocol AppPersistence: AnyObject {
     var language: AppLanguage { get set }
     var appearance: AppAppearance { get set }
     var navigationAppPreference: NavigationAppPreference? { get set }
-    var destination: JourneyDestination? { get set }
     var recentRoutes: [RecentStationRoute] { get set }
     var favoriteStationKeys: Set<String> { get set }
     var reportCooldowns: [String: Date] { get set }
@@ -160,6 +159,18 @@ final class SystemAppPersistence: AppPersistence {
     ) {
         self.defaults = defaults
         self.secureStorage = secureStorage
+        // Earlier builds persisted MapKit address results without an expiry.
+        defaults.removeObject(forKey: Key.destination)
+        if !defaults.bool(forKey: "mapDataStorageMigrationV1") {
+            // Legacy manual points could originate from Apple search. Their provenance
+            // cannot be recovered, so remove the saved point and dependent proposals.
+            if decode(UserLocation.self, key: Key.lastKnownLocation)?.source == .manual {
+                defaults.removeObject(forKey: Key.lastKnownLocation)
+                defaults.removeObject(forKey: Key.autonomousChargingProposal)
+                defaults.removeObject(forKey: Key.lastAutonomousChargingProposal)
+            }
+            defaults.set(true, forKey: "mapDataStorageMigrationV1")
+        }
     }
 
     var profile: DrivingProfile {
@@ -207,11 +218,6 @@ final class SystemAppPersistence: AppPersistence {
             return NavigationAppPreference(rawValue: rawValue)
         }
         set { defaults.set(newValue?.rawValue, forKey: Key.navigationAppPreference) }
-    }
-
-    var destination: JourneyDestination? {
-        get { decode(JourneyDestination.self, key: Key.destination) }
-        set { encodeOptional(newValue, key: Key.destination) }
     }
 
     var recentRoutes: [RecentStationRoute] {
@@ -298,7 +304,7 @@ final class SystemAppPersistence: AppPersistence {
 
     var lastKnownLocation: UserLocation? {
         get { decode(UserLocation.self, key: Key.lastKnownLocation) }
-        set { encodeOptional(newValue, key: Key.lastKnownLocation) }
+        set { encodeOptional(newValue?.source == .appleMaps ? nil : newValue, key: Key.lastKnownLocation) }
     }
 
     var lastVehicleTelemetry: VehicleTelemetrySnapshot? {

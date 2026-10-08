@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-10-08",
+  "providers": {
+    "open_meteo": {
+      "status": "removed",
+      "reviewed_at": "2026-10-08",
+      "terms_url": "https://open-meteo.com/en/terms",
+      "scopes": {},
+      "evidence": [
+        {
+          "path": "Docs/DATA_PROVIDER_TERMS.md",
+          "sha256": "c540216cc6e2a8b90c68acbc842b998180f73a5b4968c212bff6888398cd57dd"
+        }
+      ],
+      "note": "Forecast and Elevation clients removed; no subscription purchased."
+    },
+    "chargeiq": {
+      "status": "pending_permission",
+      "reviewed_at": "2026-10-08",
+      "terms_url": "https://www.chargeiq.com.tr/tr/gizlilik",
+      "scopes": {},
+      "evidence": [],
+      "note": "No verified commercial reuse, derived-field redistribution or ODbL compatibility grant. User confirmed no written permission on 2026-10-08."
+    },
+    "epdk": {
+      "status": "pending_permission",
+      "reviewed_at": "2026-10-08",
+      "terms_url": "https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler",
+      "scopes": {},
+      "evidence": [],
+      "note": "Public endpoints do not establish redistribution rights; include operator-license snapshot in permission. User confirmed no written permission on 2026-10-08."
+    },
+    "osm": {
+      "status": "pending_compatibility",
+      "reviewed_at": "2026-10-08",
+      "terms_url": "https://www.openstreetmap.org/copyright",
+      "scopes": {
+        "commercial_use": true,
+        "redistribution": true,
+        "derived_fields": true,
+        "odbl_compatible": false
+      },
+      "evidence": [],
+      "database_license": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "note": "Attribution is present; merged database cannot be licensed before ChargeIQ/EPDK compatibility is confirmed."
+    },
+    "apple_maps": {
+      "status": "reviewed",
+      "reviewed_at": "2026-10-08",
+      "terms_url": "https://developer.apple.com/support/terms/apple-developer-program-license-agreement/",
+      "scopes": {
+        "matching_apple_map": true,
+        "temporary_storage": true
+      },
+      "evidence": [
+        {
+          "path": "Docs/MAPKIT_TERMS_REVIEW.md",
+          "sha256": "d81faed05900ff62e88f79afbb19f9be2a612cee7f7331c7dc6ac29166c1775c"
+        }
+      ]
+    }
+  }
+}

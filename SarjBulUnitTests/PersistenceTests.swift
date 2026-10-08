@@ -5,6 +5,57 @@ import XCTest
 
 @MainActor
 final class PersistenceTests: XCTestCase {
+    func testRemovedWeatherFlowClearsLegacyContextOptIns() throws {
+        let persistence = try makePersistence()
+        persistence.contextIntelligencePolicy = ContextIntelligencePolicy(
+            isEnabled: true, usesWeather: true, allowsAutomaticCalendarChanges: true
+        )
+        let settings = UserSettingsStore(persistence: persistence, externalLinks: .empty)
+        let store = ContextIntelligenceStore(
+            persistence: persistence,
+            habits: HabitStore(persistence: persistence),
+            settings: settings,
+            executionTrust: ExecutionTrustStore(persistence: persistence)
+        )
+        XCTAssertFalse(store.policy.isEnabled)
+        XCTAssertFalse(store.policy.usesWeather)
+        XCTAssertFalse(store.policy.allowsAutomaticCalendarChanges)
+        XCTAssertEqual(persistence.contextIntelligencePolicy, store.policy)
+    }
+
+    func testLegacyMapKitAddressesAndAmbiguousSavedOriginArePurged() throws {
+        let suiteName = "MapDataMigration.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(try JSONEncoder().encode(JourneyDestination(
+            name: "Legacy result", address: "Legacy address", latitude: 40, longitude: 29
+        )), forKey: "journeyDestination")
+        defaults.set(try JSONEncoder().encode(UserLocation(latitude: 40, longitude: 29, source: .manual)),
+                     forKey: "lastKnownLocation")
+        let persistence = SystemAppPersistence(defaults: defaults, secureStorage: MemorySecureStorage())
+        XCTAssertNil(defaults.data(forKey: "journeyDestination"))
+        XCTAssertNil(persistence.lastKnownLocation)
+        let settings = UserSettingsStore(persistence: persistence, externalLinks: .empty)
+        settings.destination = JourneyDestination(name: "Result", address: "Address", latitude: 40, longitude: 29)
+        XCTAssertNil(defaults.data(forKey: "journeyDestination"))
+        let relaunched = UserSettingsStore(
+            persistence: SystemAppPersistence(defaults: defaults, secureStorage: MemorySecureStorage()),
+            externalLinks: .empty
+        )
+        XCTAssertNil(relaunched.destination)
+    }
+
+    func testAppleSearchOriginIsNeverSavedButDeviceAndManualInputStillPersist() throws {
+        let persistence = try makePersistence()
+        persistence.lastKnownLocation = UserLocation(latitude: 40, longitude: 29, source: .appleMaps)
+        XCTAssertNil(persistence.lastKnownLocation)
+        for source in [UserLocation.Source.device, .manual] {
+            let point = UserLocation(latitude: 40, longitude: 29, source: source)
+            persistence.lastKnownLocation = point
+            XCTAssertEqual(persistence.lastKnownLocation, point)
+        }
+    }
+
     func testAppearanceSurvivesRelaunchAndPreservesDrivingProfile() throws {
         let suiteName = "AppearanceTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

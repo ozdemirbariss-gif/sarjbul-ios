@@ -1,6 +1,6 @@
 # Gizlilik veri akışı karşılaştırması
 
-11 Eylül 2026. Temel sürüm: `a990a04`; Firebase SDK: `12.16.0`.
+8 Ekim 2026 güncellemesi. İlk inceleme: 11 Eylül 2026, `a990a04`; Firebase SDK: `12.16.0`.
 
 Bu inceleme kaynak kodu ve yerel yapılandırma incelemesidir. Üretim ağ yakalaması, App Store beyan yayını veya gerçek cihaz izin testi değildir. Yerel AppConfig'te backend henüz hazır işaretli değildir; aşağıdaki bulut akışları üretim kurulumu açıldığında çalışır. FirebaseBootstrap Crashlytics'i bundan bağımsız açar.
 
@@ -12,9 +12,9 @@ Bu inceleme kaynak kodu ve yerel yapılandırma incelemesidir. Üretim ağ yakal
 | `PushTokenRegistrationStore`, `SarjBulAppDelegate` | APNs cihaz token'ı ve platform UID altında Firebase'e | Device ID linked; FCM SDK kullanılmıyor |
 | `FirebaseBootstrap`, `AppTelemetry` | Crashlytics'e çökme ve sade teknik hata; kurulum/teknik SDK ölçümleri | Eksik Other Diagnostic Data eklendi; SDK amaçları birleştirildi |
 | `AppTelemetry` eski akış | Ham NSError userInfo/URL ve offline mutation anahtarı teknik hata kaydına girebiliyordu | Düzeltildi: sabit operation allowlist + güvenli hata domain/kodu; diğer alanlar aktarılmaz |
-| `UserContextClients`, `JourneyRouteService` | Open-Meteo'ya hava/rota koordinatları | Precise Location; [saklama ve ticari kullanım kararı](DATA_PROVIDER_TERMS.md) |
+| `UserContextClients`, `JourneyRouteService` | Open-Meteo hava/rakım istemcileri kaldırıldı; koordinat aktarımı yok | İlgili Precise Location beyanı çıkarıldı; geçmiş günlükler geriye dönük silinmez |
 | `TiledStationRepository`, `CachedRemoteStationRepository` | GitHub'a dosya URL'si, IP ve HTTP teknik verisi | Kimlik eklenmez; tüm güncel tile dosyaları indirilir, kullanıcının koordinatı URL'ye konmaz |
-| `PlaceSearchSheet`, `RouteStore`, `RangeIsochroneService` | MapKit üzerinden Apple'a arama/rota noktaları | Apple hizmeti; uygulamanın kalıcı adres/rota saklaması ayrıca lisans açısından incelenmeli |
+| `PlaceSearchSheet`, `RouteStore`, `RangeIsochroneService` | MapKit üzerinden Apple'a arama/rota noktaları | [MapKit karşılaştırması](MAPKIT_TERMS_REVIEW.md); adresler geçici, eski kalıcı kayıtlar temizlenir |
 | `SearchCoordinator`, `NavigationCoordinator` | Kullanıcı seçerse Apple/Google Maps'e rota noktaları | Dış uygulama aktarımı; politika açıklandı |
 | `ContextIntelligenceStore`, `UserContextClients` | Sağlık ve takvim içeriği dışarı gönderilmez | Health/Fitness/Contacts seçilmedi; izin/App Review uygunluğu ayrı |
 | `ReceiptOCRService`, `ChargingHistoryStore` | Fiş OCR ve harcama cihazda; yalnız isteğe bağlı birim fiyat katkısı Firebase'e | Fotoğraf/ödeme verisi toplanmıyor; fiyat katkısı Other User Content |
@@ -33,7 +33,7 @@ Destek e-postası ve üçüncü taraf teknik günlükleri aynı sıfırlama işi
 - Uygulama ve örnek/yerel konfigürasyonda resmi destek e-postası; herkese açık okunabilir destek belgesi.
 - Manifest, form cevap seti, TR/EN uygulama özeti ve politika eşleştirildi.
 - Teknik hata veri sızıntısı sınırı düzeltildi; regresyon testleri eklendi.
-- Uygulama içi Open-Meteo/Copernicus ve haritalarda OSM kaynak/lisans bağlantıları eklendi.
+- Open-Meteo ağ istemcileri ve atıfları kaldırıldı; haritalarda OSM atfı korunur.
 - Apple girişinden sonra `INVALIDITCUSER` hatası doğrulandı: hesap App Store Connect için etkin değil. App Privacy çevrimiçi formu doldurulamadı; etkin hesap/uygun uygulama erişimi gerekiyor.
 - Ticari sağlayıcı hakları henüz tamamlanmış değil: [kontrol sonuçları](DATA_PROVIDER_TERMS.md).
 - Destek adresini kullanıcı resmi adres olarak verdi. Bu görev e-posta göndermedi; gerçek gelen kutusu teslimatı test edilmedi.

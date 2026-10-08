@@ -13,12 +13,11 @@ Yanlış, yanıltıcı veya otomatik durum bildirimi göndermek yasaktır. Köt�
 
 ## Veri kaynakları
 
-İstasyon verileri EPDK, ChargeIQ ve © OpenStreetMap contributors kaynaklarından birleştirilip normalize edilir; fiyat/müsaitlik bilgileri değişebilir. ŞarjBul bu sağlayıcıların resmi uygulaması değildir ve sağlayıcıların onayını ima etmez. Kaynak gösterilmesi tek başına yeniden dağıtım izni vermez.
+İstasyon verileri EPDK, ChargeIQ ve © OpenStreetMap contributors kaynaklarından birleştirilip normalize edilir; fiyat/müsaitlik bilgileri değişebilir. ŞarjBul bu sağlayıcıların resmi uygulaması değildir ve sağlayıcıların onayını ima etmez. Kaynak gösterilmesi tek başına yeniden dağıtım izni vermez. Ticari yayın izinleri tamamlanmamıştır; [güncel hak durumu ve veri erişimi](DATA_PROVIDER_TERMS.md). Hava durumu/rakım API özellikleri kaldırılmıştır; enerji hesabı rakım düzeltmesi içermez.
 
 - [EPDK web servisleri](https://www.epdk.gov.tr/Detay/Icerik/3-0-226/web-servisler)
 - [ChargeIQ](https://www.chargeiq.com.tr/tr)
 - [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright) — [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/)
-- Hava durumu ve rakım: [Open-Meteo](https://open-meteo.com/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); rakım kaynağı [Copernicus DEM GLO-90](https://doi.org/10.5270/ESA-c5d3d65). ŞarjBul bunları bağlam ve tüketim tahminlerine dönüştürür.
 - Harita/rota: Apple MapKit ve [Apple Maps koşulları](https://www.apple.com/legal/internet-services/maps/terms-en.html). Dış Google Maps kullanımı ilgili hizmetin koşullarına tabidir.
 
 Ticari yayına ilişkin kaynak izinlerinin teknik incelemesi [sağlayıcı kontrol belgesindedir](DATA_PROVIDER_TERMS.md).

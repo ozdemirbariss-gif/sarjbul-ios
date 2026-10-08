@@ -26,8 +26,10 @@ Test eden:
 | Production App Attest | Gerçek imzalı build App Check enforcement açıkken hizmet alır | Bekliyor |
 | APNs ve etkileşimli bildirim | Production token kaydı ve bildirimin doğru rota aksiyonu doğrulanır | Bekliyor |
 | Widget / Live Activity | App Group verisi paylaşılır; şarj başlangıç/bitişinde özet güncellenir | Bekliyor |
-| Takvim / Sağlık izni ret | Temel istasyon bulma etkilenmez | Bekliyor |
-| Takvim ertelemesi | Yetki, etkinlik sahipliği ve kullanıcı onayı/otomasyon koşulları doğrulanır | Bekliyor |
+| Kaldırılan hava/rakım ve takvim bağlamı | Hava/rakım isteği ve ilgili ayarlar yok; eski opt-in kapalı | Bekliyor |
+| Apple adres arama sonuçları | Her adres sonucu için eşleşen Apple haritası/pin görünür; Apple bildirimleri örtülmez | Bekliyor |
+| Apple arama seçimi + arka plan/yeniden açılış | Geçici seçim/cache temizlenir; eski kayıtlı adres ve belirsiz başlangıç geri yüklenmez | Bekliyor |
+| Apple arama başlangıcı + Google Maps | Apple kaynaklı başlangıç aktarılmaz; istasyon hedefi aktarılır | Bekliyor |
 | TR / EN, büyük yazı, VoiceOver | Metinler taşmaz; kontroller adlandırılmış ve erişilebilirdir | Bekliyor |
 | Sheet ve sekmeler | Kapatma/geri, klavye ve alt navigasyon erişilebilir kalır | Bekliyor |
 | Şarj hikayesi | 1080x1920 önizleme, paylaşım ve iptal akışları çalışır | Bekliyor |

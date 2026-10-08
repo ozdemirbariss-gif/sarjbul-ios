@@ -63,6 +63,12 @@ struct SarjBulApp: App {
             if phase == .active {
                 appState.locationManager.requestFreshLocation()
             } else if phase == .background {
+                appState.settings.destination = nil
+                appState.search.reset()
+                if appState.search.userLocation?.source == .appleMaps {
+                    appState.search.userLocation = nil
+                }
+                routeStore.invalidate()
                 AutonomousBackgroundScheduler.scheduleAll()
             }
         }

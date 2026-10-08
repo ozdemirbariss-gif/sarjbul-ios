@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Require provider permissions before fetching or publishing data
+        run: python3 Scripts/validate_data_rights.py
       - name: Require private source access
         env:
           SOURCE_DEPLOY_KEY: ${{ secrets.SARJBUL_SOURCE_DEPLOY_KEY }}
@@ -90,8 +92,11 @@ jobs:
           SarjBul/Resources/StationTiles
           --base-url
           https://raw.githubusercontent.com/ozdemirbariss-gif/sarjbul-ios/main/SarjBul/Resources/StationTiles/
+          --publish-licensed
       - name: Refresh licensed operators
         run: python3 Scripts/update_epdk_operators.py
+      - name: Verify provider rights and complete database offer
+        run: python3 Scripts/validate_data_rights.py
       - name: Commit refreshed data
         run: |
           git add SarjBul/Resources/StationTiles SarjBul/Resources/epdk-licensed-operators.json Data/epdk-identities.json Data/epdk-ingestion-report.json

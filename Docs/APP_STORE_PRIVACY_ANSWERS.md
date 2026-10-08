@@ -4,7 +4,7 @@ Kontrol tarihi: 11 Eylül 2026. Bundle ID: `com.ozdemirbaris.sarjbul`.
 
 **Durum:** Cevap seti kaynak kodu, Firebase 12.16.0 manifestleri ve sağlayıcı belgeleriyle karşılaştırılarak dolduruldu. Apple hesabıyla giriş denendi; Apple “Your Apple Account isn’t enabled for App Store Connect” (`INVALIDITCUSER`) hatası verdi. Uygulama ve App Privacy formuna erişilemedi; çevrimiçi kaydetme/yayımlama yapılmadı. Bu belge formun Apple'a gönderildiği anlamına gelmez.
 
-Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `firebaseBackendReady=false` yapılandırmasında REST bulut yazımları kapalıdır; GoogleService dosyası varsa Crashlytics ayrı çalışır. Dağıtılacak binary ve backend son kez karşılaştırılmalıdır. Ticari yayın için ücretsiz Open-Meteo bağlantısı değiştirilir veya kaldırılırsa ilgili cevaplar yeniden güncellenmelidir.
+Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `firebaseBackendReady=false` yapılandırmasında REST bulut yazımları kapalıdır; GoogleService dosyası varsa Crashlytics ayrı çalışır. Dağıtılacak binary ve backend son kez karşılaştırılmalıdır. 8 Ekim 2026: Open-Meteo hava/rakım istemcileri kaldırıldı; bu akışa ait Precise Location beyanı çıkarıldı.
 
 ## Temel form alanları
 
@@ -21,7 +21,6 @@ Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `fi
 | Apple veri türü | Seçilecek amaçlar | Linked to the user | Tracking |
 | --- | --- | --- | --- |
 | Contact Info → Email Address | App Functionality | Yes | No |
-| Location → Precise Location | App Functionality | No | No |
 | Location → Coarse Location | Analytics | Yes | No |
 | User Content → Customer Support | App Functionality | Yes | No |
 | User Content → Other User Content | App Functionality | Yes | No |
@@ -35,7 +34,6 @@ Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `fi
 ## Cevapların gerekçesi
 
 - **Email Address / Customer Support:** Kullanıcı resmi adrese kendi isteğiyle yazarsa gönderen adresi, mesajı ve seçtiği ekler iCloud Mail'e ulaşır. Giriş için e-posta toplanmaz. Dış e-posta uygulaması mesajı gönderilmeden gösterir. Optional disclosure istisnasına dayanılmadan destek verisi beyan edildi.
-- **Precise Location:** Hava durumu üç ondalıklı konum; rakım hesabı beş ondalıklı en fazla 80 rota noktası gönderir. Üç ondalık Apple tanımında hassas konumdur. Open-Meteo koordinat içerebilen günlükleri 90 gün tutabildiğinden anlık işleme istisnası uygulanmadı. ŞarjBul kimlik eklemez; ücretsiz API'nin kimliğe bağlamama açıklaması esas alındı. Lisanslı servis/proxy gelince bu karar yeniden incelenmelidir.
 - **Coarse Location / Search History:** Varsayılan kapalı talep paylaşımında 0,1 derecelik hücre, arama tercihi, menzil/sonuç sayısı kovası ve zaman gönderilir; arama metni gönderilmez. Son olay yolu anonim UID altında hız sınırı kaydına bağlıdır; bu yüzden linked=Yes.
 - **User ID:** Favori, bildirim, katkı, APNs ve silme isteği anonim Firebase UID kullanır. Analiz hız sınırı kayıtları da aynı UID'yi kullandığından Analytics eklendi. Anonim oturum kimlikle bağlantısız anlamına gelmez.
 - **Device ID:** APNs token'ı UID ile kaydedilir; Firebase kurulum tanımlayıcıları ve App Attest doğrulama belirteçleri de işlenir. iOS hedefinde FirebaseMessaging/FCM SDK yoktur; APNs kaydı REST kullanır.
@@ -44,7 +42,7 @@ Bu tablo mevcut özellikleri içeren hedef üretim sürümü içindir. Yerel `fi
 
 ## Seçilmeyen türler
 
-Health, Fitness, Contacts, Photos or Videos, Payment Info, Purchase History, Browsing History, Audio Data ve diğer türler uygulama tarafından sunucuda toplanmıyor. HealthKit uygulamadan kaldırılmıştır; sağlık verisi okunmaz/yazılmaz ve sağlık izni istenmez. EventKit içeriği, fiş OCR ve şarj harcama geçmişi cihazdadır. Kullanıcının destek yazışmasına eklediği içerik Customer Support altında açıklanır. Birim fiyat katkısı Other User Content'tir; fiş fotoğrafı yüklenmez.
+Precise Location (kaldırılan Open-Meteo akışı), Health, Fitness, Contacts, Photos or Videos, Payment Info, Purchase History, Browsing History, Audio Data ve diğer türler uygulama tarafından sunucuda toplanmıyor. HealthKit uygulamadan kaldırılmıştır; sağlık verisi okunmaz/yazılmaz ve sağlık izni istenmez. EventKit içeriği, fiş OCR ve şarj harcama geçmişi cihazdadır. Kullanıcının destek yazışmasına eklediği içerik Customer Support altında açıklanır. Birim fiyat katkısı Other User Content'tir; fiş fotoğrafı yüklenmez.
 
 MapKit arama/rota işleme ve dış Apple/Google Maps aktarımı politikada açıklanır. Apple'ın kendisinin topladığı veriyi geliştiricinin ayrıca beyan etmesi gerekmez; ŞarjBul'un ayrıca kaydettiği veri bu istisnaya girmez. Telegram/WhatsApp/browser/e-posta gateway'leri iOS hedefinde çağrılmıyor; sonradan bağlanırsa ayrı inceleme gerekir.
 

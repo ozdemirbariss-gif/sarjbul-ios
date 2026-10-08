@@ -128,7 +128,8 @@ private final class StationStoryActivityItem: NSObject, UIActivityItemSource {
 @MainActor
 enum StationStoryRenderer {
     private static let canvasSize = CGSize(width: 1_080, height: 1_920)
-    private static let mapSize = CGSize(width: 1_080, height: 1_160)
+    // Keep the entire native snapshot, including Apple's legal marks, above the panel.
+    private static let mapSize = CGSize(width: 1_080, height: 900)
     private static let signal = UIColor(sbHex: SBGeneratedTokens.actionPrimary.hex)
     private static let background = UIColor(sbHex: SBGeneratedTokens.canvas.hex)
     private static let surface = UIColor(sbHex: SBGeneratedTokens.surfaceBase.hex)
@@ -155,31 +156,18 @@ enum StationStoryRenderer {
             background.setFill()
             cgContext.fill(CGRect(origin: .zero, size: canvasSize))
             snapshot.image.draw(in: CGRect(origin: .zero, size: mapSize))
-            drawMapShade(in: cgContext)
             drawMapPin(snapshot: snapshot, coordinate: content.coordinate)
             drawBrandPill()
             drawScorePill(content.scoreText)
             drawStoryPanel(content)
+            drawText(
+                "© OpenStreetMap contributors · openstreetmap.org/copyright",
+                in: CGRect(x: 50, y: 1_862, width: 980, height: 36),
+                font: .systemFont(ofSize: 26, weight: .regular),
+                color: muted,
+                alignment: .center
+            )
         }
-    }
-
-    private static func drawMapShade(in context: CGContext) {
-        let colors = [
-            UIColor.clear.cgColor,
-            background.withAlphaComponent(0.18).cgColor,
-            background.cgColor
-        ] as CFArray
-        guard let gradient = CGGradient(
-            colorsSpace: CGColorSpaceCreateDeviceRGB(),
-            colors: colors,
-            locations: [0, 0.54, 1]
-        ) else { return }
-        context.drawLinearGradient(
-            gradient,
-            start: CGPoint(x: 540, y: 330),
-            end: CGPoint(x: 540, y: 1_190),
-            options: []
-        )
     }
 
     private static func drawMapPin(snapshot: MKMapSnapshotter.Snapshot, coordinate: CLLocationCoordinate2D) {

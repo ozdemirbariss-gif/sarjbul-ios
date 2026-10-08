@@ -78,6 +78,18 @@ final class SearchCoordinatorTests: XCTestCase {
         XCTAssertEqual(app.search.userLocation?.capturedAt, observed)
     }
 
+    func testAppleSearchCoordinatesAreOnlyPassedToAppleMaps() throws {
+        let origin = UserLocation(latitude: 38.4, longitude: 27.1, source: .appleMaps)
+        let station = SearchTestRepository.stations[0]
+        let appleItems = ExternalNavigationHandoff.appleMapItems(origin: origin, destination: station)
+        XCTAssertEqual(appleItems.count, 2)
+        XCTAssertEqual(appleItems[0].placemark.coordinate.latitude, origin.latitude, accuracy: 0.000_001)
+        let url = try XCTUnwrap(ExternalNavigationHandoff.googleMapsURL(origin: origin, destination: station))
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        XCTAssertFalse(components.queryItems?.contains { $0.name == "origin" } ?? false)
+        XCTAssertTrue(components.queryItems?.contains { $0.name == "destination" } ?? false)
+    }
+
     func testManualOriginIsIncludedInExternalMapHandoffs() throws {
         let origin = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
         let station = SearchTestRepository.stations[0]

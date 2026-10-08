@@ -8,6 +8,7 @@
     <string></string>
     <key>firebaseBackendReady</key>
     <false/>
+    <!-- Keep false until provider-rights.json evidence and the full database offer pass validation. -->
     <key>commercialDataUseApproved</key>
     <false/>
     <key>stationDataURL</key>

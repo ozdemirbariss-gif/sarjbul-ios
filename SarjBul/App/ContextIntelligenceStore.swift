@@ -11,7 +11,6 @@ final class ContextIntelligenceStore {
     private let settings: UserSettingsStore
     private let executionTrust: ExecutionTrustStore
     private let calendar: CalendarContextClient
-    private let weather: WeatherContextClient
     private var currentCalendarItem: ContextCalendarItem?
 
     private(set) var policy: ContextIntelligencePolicy
@@ -32,16 +31,19 @@ final class ContextIntelligenceStore {
         habits: HabitStore,
         settings: UserSettingsStore,
         executionTrust: ExecutionTrustStore,
-        calendar: CalendarContextClient = CalendarContextClient(),
-        weather: WeatherContextClient = WeatherContextClient()
+        calendar: CalendarContextClient = CalendarContextClient()
     ) {
         self.persistence = persistence
         self.habits = habits
         self.settings = settings
         self.executionTrust = executionTrust
         self.calendar = calendar
-        self.weather = weather
-        policy = persistence.contextIntelligencePolicy
+        var restoredPolicy = persistence.contextIntelligencePolicy
+        // Clear legacy consent: no licensed weather service is configured.
+        restoredPolicy.usesWeather = false
+        restoredPolicy.isEnabled = false
+        restoredPolicy.allowsAutomaticCalendarChanges = false
+        policy = restoredPolicy
         reports = persistence.contextActionReports
         persistence.contextActionReports = reports
         persistence.contextIntelligencePolicy = policy
@@ -56,11 +58,6 @@ final class ContextIntelligenceStore {
         } else {
             recommendation = nil
         }
-    }
-
-    func setUsesWeather(_ enabled: Bool) {
-        policy.usesWeather = enabled
-        persistence.contextIntelligencePolicy = policy
     }
 
     func setAutomaticCalendarChanges(_ enabled: Bool) async {
@@ -80,13 +77,11 @@ final class ContextIntelligenceStore {
 
         let item = calendar.nextItem(now: now)
         currentCalendarItem = item
-        async let weatherTask = weatherContext(location: location)
-        let currentWeather = await weatherTask
         let acceptedCount = reports.filter { $0.action == .offerCalendarDeferral && $0.outcome == .accepted }.count
         let snapshot = UserContextSnapshot(
             isEnabled: true,
             isInTransit: (movementSpeedMetersPerSecond ?? 0) >= 4.5,
-            weatherSeverity: currentWeather.severity,
+            weatherSeverity: .normal,
             hasUpcomingCalendarItem: item != nil,
             minutesUntilCalendarItem: item.map { Int($0.startDate.timeIntervalSince(now) / 60) },
             priorAcceptedDeferrals: acceptedCount,
@@ -115,11 +110,6 @@ final class ContextIntelligenceStore {
 
     func refreshInBackground(location: UserLocation?) async {
         await evaluate(location: location)
-    }
-
-    private func weatherContext(location: UserLocation?) async -> ContextWeather {
-        guard policy.usesWeather, let location else { return ContextWeather(severity: .normal) }
-        return await weather.current(at: location)
     }
 
     private func applyCalendarDeferral(outcome: ContextActionOutcome, now: Date) async {

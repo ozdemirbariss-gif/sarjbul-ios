@@ -12,6 +12,10 @@ struct TripPlanView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     summary
+                    if let destination = settings.destination {
+                        PlaceResultMap(latitude: destination.latitude, longitude: destination.longitude)
+                            .frame(height: 200)
+                    }
 
                     if let advice = HolidayTrafficAdvisor.advice(for: Date()) {
                         Label(
@@ -50,9 +54,6 @@ struct TripPlanView: View {
                         : settings.t("planner.elevation_unavailable"))
                         .font(.caption)
                         .foregroundStyle(appearance.canvasSecondary)
-                    if plan.elevationAdjusted {
-                        OpenMeteoAttributionView()
-                    }
                 }
                 .padding(20)
             }

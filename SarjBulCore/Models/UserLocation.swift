@@ -9,6 +9,7 @@ public struct UserLocation: Codable, Hashable, Sendable {
     public enum Source: String, Codable, Sendable {
         case device
         case manual
+        case appleMaps
     }
 
     public init(latitude: Double, longitude: Double, source: Source, capturedAt: Date = Date()) {

@@ -1,6 +1,6 @@
 # ŞarjBul Gizlilik Politikası
 
-Son güncelleme: 11 Eylül 2026
+Son güncelleme: 8 Ekim 2026
 
 ŞarjBul, yakındaki şarj istasyonlarını bulmak ve rota/varış şarjı hesaplamak için cihaz konumunu yalnızca kullanıcı isteğiyle kullanır. Varsayılan durumda konum bilgisi Firebase'e yazılmaz ve reklam amacıyla kullanılmaz. Kullanıcı konum izni vermeden adres, şehir veya koordinatla devam edebilir.
 
@@ -20,7 +20,7 @@ Fiyat, soket, adres ve gece güvenliği doğrulamaları kötüye kullanımı ön
 
 Şarj fişi fotoğrafı Apple Vision ile cihaz üzerinde işlenir ve fotoğraf ŞarjBul sunucusuna yüklenmez. Okunan enerji ve harcama geçmişi cihazda saklanır. Kullanıcı fişi bir istasyonla eşleştirip katkı göndermeyi seçerse yalnızca hesaplanan birim fiyat istasyon doğrulama akışına yazılır.
 
-Kullanıcı hava durumu bağlamını açtığında mevcut konum yaklaşık üç ondalık basamakla Open-Meteo Forecast API'ye gönderilebilir. Uzun yol planında rakım etkisini hesaplamak için rotadan örneklenmiş enlem/boylam noktaları Open-Meteo Elevation API'ye beş ondalık basamakla gönderilebilir. Bu koordinatlar hassas konum olarak beyan edilir; isteklerin amacı yalnızca hava koşulu ve enerji tüketimi hesabıdır. İsteklere e-posta, Firebase kimliği veya reklam tanımlayıcısı eklenmez ve ŞarjBul bu API isteklerini kendi sunucusunda saklamaz. [Open-Meteo koşulları](https://open-meteo.com/en/terms), koordinat içerebilen teknik günlükler için 90 günlük saklama açıklar. Bu günlükler uygulamadaki bulut sıfırlama ile silinmez. Ana ekran widget'ı ve Live Activity, en yakın istasyon özeti ile şarj bitiş zamanını Apple App Group alanında cihaz içinde paylaşır.
+Hava durumu ve rakım API özellikleri kaldırılmıştır; Open-Meteo'ya koordinat gönderilmez. Önceki sürümlerin sağlayıcıya göndermiş olabileceği kayıtlar bu değişiklikle geriye dönük silinmez. Ana ekran widget'ı ve Live Activity, en yakın istasyon özeti ile şarj bitiş zamanını Apple App Group alanında cihaz içinde paylaşır.
 
 Kullanıcı Telegram, WhatsApp, e-posta veya browser uzantısı entegrasyonunu tercih ederse mesaj metni ve paylaştığı konum, istasyon aramasını yanıtlamak için ilgili kanal sağlayıcısından ŞarjBul Cloud Function'ına iletilir. ŞarjBul bu mesajı, kesin konumu veya e-posta adresini veritabanına kaydetmez. Kötüye kullanım sınırı için kanal kullanıcı değeri tek yönlü SHA-256 özeti halinde kısa süreli dakika kovasında tutulur ve zamanlanmış görevle silinir. Telegram, Meta/WhatsApp, e-posta sağlayıcısı ve browser kendi gizlilik koşullarına göre ayrıca veri işleyebilir; kullanıcı kullanacağı kanalı kendisi seçer.
 
@@ -35,7 +35,7 @@ Sorular ve veri talepleri için resmi adresimiz **[sarjbul@icloud.com](mailto:sa
 
 ## Harita, dosya indirme ve dış bağlantılar
 
-MapKit adres araması, rota ve harita için Apple Maps hizmetini kullanır. Yazdığınız arama ifadesi ve rota noktaları Apple'a iletilebilir. [Apple Maps gizlilik açıklaması](https://www.apple.com/legal/privacy/data/en/apple-maps/) geçerlidir. Google Maps'i seçerseniz hedef ve gerektiğinde seçtiğiniz başlangıç noktası bu uygulamaya aktarılır; [Google gizlilik politikası](https://policies.google.com/privacy) uygulanır.
+MapKit adres araması, rota ve harita için Apple Maps hizmetini kullanır. Yazdığınız arama ifadesi ve rota noktaları Apple'a iletilebilir. [Apple Maps gizlilik açıklaması](https://www.apple.com/legal/privacy/data/en/apple-maps/) geçerlidir. Seçilen adresler yalnızca geçici oturumda tutulur; eski kayıtlı adresler temizlenir. Apple arama sonucu koordinatları kayıtlı otonom önerilere veya talep analizine eklenmez. Google Maps'i seçerseniz istasyon hedefi ve gerektiğinde elle girdiğiniz başlangıç noktası bu uygulamaya aktarılır; Apple arama sonucu başlangıç noktası Google'a gönderilmez; [Google gizlilik politikası](https://policies.google.com/privacy) uygulanır.
 
 İstasyon dosyaları GitHub/raw.githubusercontent.com üzerinden indirilir. İndirilen bölgesel dosyanın adı ve teknik istek bilgileri (IP adresi, user-agent) dosya hizmetine ulaşabilir. ŞarjBul bu isteklere Firebase kullanıcı kimliği eklemez. Gizlilik/destek/kullanım koşulları sayfalarını açtığınızda GitHub kendi web hizmeti kapsamında veri işler; [GitHub gizlilik bildirimi](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) uygulanır.
 
