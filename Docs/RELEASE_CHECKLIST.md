@@ -59,10 +59,14 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 - [ ] Firebase rules/functions deploy ve App Check enforcement
 - [ ] App Store Connect gizlilik cevaplarını `Docs/APP_STORE_PRIVACY_ANSWERS.md` ile birebir gir
 - [ ] Destek URL'si, gizlilik URL'si ve anonim veri sıfırlama akışının Review Notes'a eklenmesi
-- [ ] [İmzalama eşleştirmesine](SIGNING_SETUP.md) göre ücretli Developer Team, iki dağıtım profili ve archive validation
+- [x] [İmzalama eşleştirmesine](SIGNING_SETUP.md) göre ücretli Developer Team, kalıcı yerel takım ayarı ve Apple Development/Apple Distribution sertifikaları (8 Ekim 2026).
+- [x] İki App Store Connect dağıtım profili oluşturuldu, Xcode'a kuruldu; takım, sertifika, Bundle ID ve Release entitlement uyumu doğrulandı (8 Ekim 2026).
+- [ ] İmzalı Archive/export doğrulaması: EPDK izin kaydı, ticari veri kullanım onayı ve Firebase backend hazırlığı üretim kontrolünü engelliyor. Fiziksel cihaz testi kullanıcı isteğiyle ertelendi.
 - [ ] [Gerçek cihaz test planını](DEVICE_TEST_PLAN.md) dağıtılacak build ile tamamla
 - [ ] App Store ekran görüntülerinin desteklenen cihaz boyutlarında yüklenmesi
-- [ ] `group.com.ozdemirbaris.sarjbul` App Group'unu App ID ve provisioning profillerinde aç
+- [x] `group.com.ozdemirbaris.sarjbul` App Group'unu iki App ID'ye ata (8 Ekim 2026).
+- [x] App Group'un iki App Store Connect dağıtım profilinde bulunduğu doğrulandı (8 Ekim 2026).
+- [ ] App Group ve diğer Release yetkilerini export edilen uygulama/widget imzalarında doğrula.
 - [ ] Widget, kilit ekranı, Dynamic Island ve Siri kısayolunu gerçek cihazda test et
 - [x] Open-Meteo ücretsiz Forecast/Elevation istemcilerini ticari sürümden kaldır (8 Ekim 2026).
 - [ ] App Store gizlilik formunda açık rızalı kaba konum ve ürün etkileşimi analizini beyan et; operatör çıktılarında en az 10 örnek eşiğini uygula
@@ -99,7 +103,8 @@ Bu maddeler mağaza yayını veya sağlayıcı sözleşmelerinin kabul edildiği
 - [x] Kart/detay aynı müsaitlik kuralını kullanır; eski, gelecekteki ve geçersiz sayımlı veri canlı gösterilmez.
 - [x] CarPlay EV Charging başvurusu gönderildi, Apple alındı ekranı doğrulandı.
 - [ ] Apple CarPlay onayını al; capability ve provisioning eşleştir; arayüzü ve araç/simülatör testlerini tamamla.
-- [x] Apple portalı kontrol edildi: App IDs listesi boş, kaldırılacak ŞarjBul HealthKit capability kaydı yok.
-- [ ] Ana uygulama/widget App ID ve App Group kayıtlarını oluştur, HealthKit içermeyen profilleri üret.
+- [x] Ana uygulama/widget explicit App ID'leri ve ortak App Group doğru ücretli takımda oluşturuldu; grup iki App ID'ye atandı. Ana uygulamada Push Notifications ve App Attest açık, iki App ID'de HealthKit kapalı (8 Ekim 2026).
+- [x] HealthKit içermeyen iki dağıtım profili oluşturuldu ve Release yetkileriyle karşılaştırıldı (8 Ekim 2026).
+- [ ] Export imzalarını doğrula; geliştirme profilleri için cihaz kaydı ve cihaz testi daha sonra yapılacak.
 
 Bu kod değişiklikleri App Store yayını, operatör sözleşmesi, CarPlay onayı veya üretim backend dağıtımı değildir.

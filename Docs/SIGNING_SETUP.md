@@ -1,67 +1,88 @@
 # ŞarjBul imzalama kurulumu
 
-Tarihsel durum — 13 Eylül 2026: proje otomatik imzalamaya hazırlandı; **Apple takım/profil kurulumu henüz tamamlanmadı**. Xcode > Settings > Apple Accounts hesabın ekli olmadığını gösterdi. Yerel denetimde geçerli kod imzalama kimliği ve kurulu provisioning profili bulunmadı. Sonraki arayüz kontrolünde macOS ekran erişimini reddetti.
+## Güncel durum — 8 Ekim 2026
 
-Güncel durum — 8 Ekim 2026: ücretli takım doğrulandı, iki explicit App ID ve ortak App Group portalda oluşturuldu. App Group iki App ID'ye de atandı. Gerçek takım kimliği Git dışında tutulan yerel imzalama dosyasında kayıtlı; yeniden üretilen projenin iki hedefi Debug ve Release'te bu takımı kullanıyor. Xcode hesabına giriş tamamlandı ve doğru takıma ait geçerli Apple Development imzalama kimliği doğrulandı. **Takımda kayıtlı cihaz olmadığı için iki geliştirme profili üretilemiyor; imzalı derleme henüz başarılı değil.**
+Xcode Apple hesabına giriş tamamlandı ve ücretli Baris Ozdemir takımı doğrulandı. İki explicit App ID ile ortak App Group doğru takım altında oluşturuldu; grup iki App ID'ye atandı. Apple Development ve Apple Distribution sertifikalarının bu Mac'te özel anahtarlarıyla kullanılabilir olduğu doğrulandı. İki App Store Connect dağıtım profili oluşturuldu, indirildi, Xcode'a kuruldu ve Release yetkileriyle karşılaştırıldı.
 
-Bu cihaz engeli geliştirme profiline aittir. **App Store/TestFlight dağıtım profillerinin hazırlanması için bağlı veya kayıtlı iPhone gerekmez.** Kullanıcı şu anda kabloyla bağlantı kuramıyor; ilk cihaz eşleştirmesi ve cihaz testi daha sonra tamamlanabilir.
+**Kablo gerektirmeyen imzalama kurulumu tamamlandı.** Kullanıcı fiziksel cihaz testini erteledi. Takımda kayıtlı cihaz olmadığı için otomatik geliştirme profilleri hâlâ üretilemiyor; imzalı cihaz derlemesi yapılmadı. İmzalı Archive/export ise aşağıdaki üretim engelleri kapanmadan tamamlanmış sayılmaz.
 
 ## Hedef ve yetki eşleştirmesi
 
 | Ayar | SarjBul | SarjBulWidgets |
 | --- | --- | --- |
 | Bundle ID | `com.ozdemirbaris.sarjbul` | `com.ozdemirbaris.sarjbul.widgets` |
-| Team | Doğrulanmış ücretli takım; yerel dosyadan miras alınır | Ana uygulamayla aynı doğrulanmış takım |
-| Signing | Automatic | Automatic |
-| Apple Development sertifikası | Doğru takıma ait geçerli yerel kimlik; 8 Ekim 2027'ye kadar | Aynı yerel kimlik kullanılacak |
-| iOS App Development profili | Kayıtlı fiziksel cihaz bekleniyor | Kayıtlı fiziksel cihaz bekleniyor |
-| App Store Connect dağıtım profili | Bu explicit App ID için ayrı profil; bekliyor | Widget explicit App ID için ayrı profil; bekliyor |
-| App Group | `group.com.ozdemirbaris.sarjbul`; portalda atandı | `group.com.ozdemirbaris.sarjbul`; portalda atandı |
-| Push Notifications | Debug `development`, Release `production` | Kullanılmıyor |
-| App Attest | Release `production` | Kullanılmıyor |
-| HealthKit | Kaldırıldı; talep edilmez | Kullanılmıyor |
+| Team | Yerel dosyada kayıtlı doğrulanmış ücretli takım | Aynı takım |
+| Signing | Automatic; Debug ve Release doğrulandı | Automatic; Debug ve Release doğrulandı |
+| App Group | `group.com.ozdemirbaris.sarjbul`; App ID ve dağıtım profilinde var | Aynı grup; App ID ve dağıtım profilinde var |
+| Push Notifications | Debug `development`, Release ve dağıtım profili `production` | Kullanılmıyor |
+| App Attest | Release `production`; dağıtım profili bu ortamı destekliyor | Kullanılmıyor |
+| HealthKit | Koddan kaldırıldı; App ID ve profilde yok | Kullanılmıyor |
+| Geliştirme profili | Cihaz kaydı bekleniyor; ertelendi | Cihaz kaydı bekleniyor; ertelendi |
+| App Store Connect profili | `SarjBul App Store`; kuruldu ve doğrulandı | `SarjBulWidgets App Store`; kuruldu ve doğrulandı |
 
-Debug sürümü `FirebaseBootstrap` içinde App Check Debug Provider kullanır; bu yapılandırmaya App Attest yetkisi eklenmedi. Release App Attest kullanır. Widget yalnızca paylaşılan App Group'a erişir.
+Debug sürümü `FirebaseBootstrap` içinde App Check Debug Provider kullanır; Debug entitlement dosyasına App Attest eklenmedi. Release App Attest kullanır. Widget'ın proje tarafından istediği tek yetki paylaşılan App Group'tur.
 
 ## Kalıcı takım ayarı
 
-`SarjBul.xcodeproj` XcodeGen ile üretilir ve git dışında tutulur. Yalnızca Xcode'un hedef ekranında yapılan seçim yeniden üretimde kaybolabilir. `project.yml` hem Debug hem Release için `Config/Signing.xcconfig` dosyasını bağlar; uygulama ve widget takımı proje seviyesinden miras alır.
+`SarjBul.xcodeproj` XcodeGen ile üretilir ve Git dışında tutulur. Yalnızca Xcode hedef ekranında yapılan takım seçimi yeniden üretimde kaybolabilir. `project.yml` hem Debug hem Release için `Config/Signing.xcconfig` dosyasını bağlar; bu dosya yerel takım dosyasını içerir.
 
-Hesaba giriş yapıldıktan sonra doğrulanmış Team ID, `Config/Signing.local.xcconfig.example` örneğinden oluşturulacak `Config/Signing.local.xcconfig` içine yazılmalıdır:
+Bu Mac'te `Config/Signing.local.xcconfig`, `Config/Signing.local.xcconfig.example` temel alınarak gerçek ve portalda doğrulanmış Team ID ile dolduruldu. Yeni bir Mac'te örneği yerel dosyaya kopyalayıp Xcode/Developer portalında doğrulanan takım kimliğini gir:
 
 ```xcconfig
-DEVELOPMENT_TEAM = <Xcode'da doğrulanan Team ID>
+DEVELOPMENT_TEAM = <doğrulanan gerçek Team ID>
 ```
 
-Yer tutucu gerçek takım değildir; dosyaya aynen yazılmamalıdır. Yerel dosya, sertifika özel anahtarları ve provisioning profilleri git'e alınmaz. `xcodegen generate` ardından iki hedefin Signing & Capabilities ekranında aynı ücretli takım görünmelidir. Otomatik imzalamada profil adı/UUID veya Release için elle `Apple Distribution` build kimliği sabitlenmez; dağıtım yeniden imzalaması export sırasında yapılır.
+Yer tutucuyu aynen kullanma. Yerel takım dosyası, sertifika özel anahtarları ve provisioning profilleri Git'e alınmaz. Otomatik imzalamada profil adı/UUID veya Release için elle `Apple Distribution` build kimliği sabitlenmez; dağıtım yeniden imzalaması export sırasında yapılır.
 
-## Kablo olmadan devam edilebilen işler
+8 Ekim'de `xcodegen generate` sonrasında dört hedef/yapılandırma birleşiminin gerçek build settings çıktısı kontrol edildi: iki hedefin Debug ve Release ayarlarında aynı yerel `DEVELOPMENT_TEAM`, `CODE_SIGN_STYLE=Automatic`, doğru Bundle ID ve entitlement dosyaları korundu; sabit profil seçimi bulunmadı.
 
-- Hesap, takım, App ID, App Group ve capability kurulumu tamamlandı; bunlar USB bağlantısı gerektirmez.
-- App Store Connect dağıtım profili için explicit App ID ve dağıtım sertifikası seçilir; geliştirme profilindeki cihaz seçimi adımı yoktur. Ana uygulama ve widget için ayrı profiller gerekir. Dağıtım sertifikası/profilleri ve export imzaları henüz doğrulanmadı.
-- Geliştirme profili için en az bir gerçek cihaz kaydı gerekir; cihazın adı ve UDID'si zaten biliniyorsa Apple portalında manuel kayıt da yapılabilir. USB, ilk Xcode eşleştirmesi ve otomatik cihaz kaydı için izlenen yoldur; bütün imzalama işlemlerinin ön koşulu değildir.
-- Cihaz kaydı olmadan görülen geliştirme profili hataları, App Store dağıtım profillerinin de cihaz gerektirdiği anlamına gelmez. Mevcut Archive üretim kontrolleri dağıtım çalışmasında da korunmalıdır.
+## Dağıtım sertifikası ve profilleri
 
-## Cihaz bağlantısı sağlanınca kalan işlem
+Apple Development ve Apple Distribution sertifikaları 8 Ekim 2026–8 Ekim 2027 arasında geçerli. Dağıtım sertifikası Xcode > Settings > Apple Accounts > Baris Ozdemir > Manage Certificates üzerinden oluşturuldu. Anahtar zinciri denetimi iki geçerli imzalama kimliği gösterdi; sertifikaların takım alanları yerel Team ID ile eşleşti. Özel anahtarlar dışa aktarılmadı.
 
-1. Xcode hesabına giriş ve ücretli takımın Certificates, Identifiers & Profiles erişimi 8 Ekim'de doğrulandı. Takımın On Device Testing ekranı `0 Provisioned Devices` gösteriyor. Test iPhone/iPad'ini veri aktarımı destekleyen USB kablosuyla bağla, kilidini aç ve cihazdaki "Bu bilgisayara güven" onayını/parolayı tamamla. Xcode > Window > Devices and Simulators > Devices listesinde görünmesini bekle. Cihaz isterse Developer Mode adımını cihaz üzerinde tamamla.
-2. Portal kayıtları 8 Ekim 2026'da tamamlandı: ana uygulamada App Groups, Push Notifications, App Attest; widget'ta App Groups etkin. Ortak App Group iki App ID'ye de atandı. Xcode'da doğru takımın seçili olduğunu ve capability eşleşmesini kontrol et.
-3. HealthKit portalda da kapalı; uygulamanın entitlement dosyalarında HealthKit yok. Fiziksel cihaz görününce doğru takım altında kayıt edilmesine izin ver; Xcode'da iki hedef için Try Again kullan veya `xcodebuild` çağrısına `-allowProvisioningUpdates -allowProvisioningDeviceRegistration` ekleyip bağlı cihazı destination olarak seç. Xcode otomatik imzalama ile iki hedefin geliştirme profillerini üretsin/yenilesin. App Store Connect dağıtımında ana uygulama ve widget için ayrı, doğru App ID'ye bağlı dağıtım profilleri kullanılsın.
-4. Export edilen uygulama ve gömülü `PlugIns/SarjBulWidgets.appex` için imza, profil bitiş tarihi, takım, application-identifier, App Group ve yukarıdaki Release yetkilerini karşılaştır. Dağıtım profilinde `get-task-allow` false olmalı. Gerçek profil UUID/son kullanma bilgileri görülmeden bu adımı tamamlandı işaretleme.
+| Hedef | App Store Connect profil adı | Profil UUID | Bitiş (UTC) |
+| --- | --- | --- | --- |
+| SarjBul | `SarjBul App Store` | `b40e6a28-d63e-4905-bf21-f3997d179aa1` | 8 Ekim 2027 13:16:14 |
+| SarjBulWidgets | `SarjBulWidgets App Store` | `59146f57-f9c7-4f28-a437-0f18b655a2d4` | 8 Ekim 2027 13:16:14 |
 
-App Group eklemek Apple hesabında kaydı oluşturmaz; entitlement dosyaları yalnızca uygulamanın istediği yetkileri belirtir. Profil oluşturma/yenileme için Apple hesabına erişim gerekir. APNs sağlayıcı anahtarının backend'e kurulması ve Firebase App Check kaydı, iOS imzalama işleminden ayrı işlerdir.
+Profiller Apple Developer > Profiles altında aynı takımda oluşturuldu. Xcode'da **Download Manual Profiles** çalıştırıldı. Kurulu dosyalar Xcode 26.6'nın `~/Library/Developer/Xcode/UserData/Provisioning Profiles/` dizininde UUID adlarıyla doğrulandı.
 
-Mevcut üretim kontrolündeki `firebaseBackendReady=false` ve `commercialDataUseApproved=false` ayrıca Archive'ı engeller; imzalama kontrolü için bu doğrulamalar atlanmamalıdır.
+İndirilen ve kurulu profil dosyalarının denetiminde:
 
-## Yerel doğrulama
+- Team Identifier ve `application-identifier` her hedefin gerçek takım/Bundle ID eşleşmesini sağladı.
+- İki profil aynı Apple Distribution sertifikasını içerdi; sertifikanın SHA-256 özeti yerel imzalama kimliğiyle eşleşti.
+- Ortak App Group iki profilde de bulundu; `get-task-allow=false`, `beta-reports-active=true` ve geçerlilik tarihleri doğrulandı. Cihaz listesi veya tüm cihazlara dağıtım yetkisi bulunmadı.
+- Ana uygulamada `aps-environment=production` bulundu. App Attest profilinin izin verdiği ortamlar `development` ve `production`; uygulamanın Release isteği `production` bunların içindedir.
+- Widget profili Push veya App Attest istemedi. İki profilde de HealthKit bulunmadı.
+- Projenin iki Release entitlement dosyasındaki bütün isteklerin profil tarafından karşılandığı doğrulandı.
 
-- `xcodegen generate` ve `python3 Scripts/validate_release.py` başarılı.
-- Üretilen PBXProject incelendi: iki hedefte Debug/Release `CODE_SIGN_STYLE=Automatic`, `ProvisioningStyle=Automatic`, doğru bundle ve entitlement yolları var; proje yapılandırmaları ortak Signing.xcconfig dosyasına bağlı.
-- İlk `xcodebuild -showBuildSettings` denemesi sandbox içindeki Xcode önbelleği yazma izinlerinde durdu. Gerekli yerel erişimle yapılan 8 Ekim denetiminde uygulama ve widget için Debug/Release build settings başarıyla okundu: aynı gerçek `DEVELOPMENT_TEAM`, `CODE_SIGN_STYLE=Automatic`, doğru Bundle ID ve entitlement dosyaları doğrulandı.
-- Gerçek iOS Debug derlemesi iki hedefte de `No profiles ... were found` hatası verdi. Bu deneme provisioning güncellemelerini açmadan çalıştırıldı; hata metnindeki otomatik profil üretiminin devre dışı olduğu ifadesi CLI çağrısına aittir, projenin `Automatic` ayarına değil. Hesaba girişten sonra `-allowProvisioningUpdates` ile yeniden doğrulanmalıdır.
-- Hesaba girişten sonraki `xcodebuild ... -allowProvisioningUpdates build` Apple'a erişti ve iki hedefte de `Your team has no devices from which to generate a provisioning profile` / `No profiles ... were found` hatalarıyla durdu. Xcode Signing & Capabilities ekranları da aynı engeli gösteriyor; iki hedefte Automatic Signing, aynı ücretli takım, doğru Bundle ID ve seçili ortak App Group doğrulandı.
-- Sandbox içindeki `security find-identity` çağrısı `0 valid identities` döndürdü; bu ortam anahtar zincirinin gerçek durumunu göstermedi. Gerekli erişimle yapılan denetim **1 geçerli Apple Development imzalama kimliği** buldu. Sertifikanın OU alanı doğrulanmış Team ID ile aynı; geçerlilik 8 Ekim 2026–8 Ekim 2027. Özel anahtar dışa aktarılmadı.
-- `devicectl list devices`, `xctrace list devices` ve Xcode Devices listesi fiziksel iPhone/iPad göstermedi. Apple tarafından verilmiş geliştirme profilleri, gerçek cihaz derlemesi ve dağıtım/export denetimi bekleniyor.
+Bu denetim profil/sertifika uyumunu doğrular; export edilmiş uygulama imzasının veya cihaz çalışmasının yerine geçmez. App Store Connect dağıtım profili oluşturmak için bağlı ya da kayıtlı iPhone gerekmez.
+
+## Ertelenen cihaz işlemi
+
+Takımın On Device Testing ekranı `0 Provisioned Devices` gösteriyor. Hesaba girişten sonraki `xcodebuild ... -allowProvisioningUpdates build`, iki hedefte de `Your team has no devices from which to generate a provisioning profile` / `No profiles ... were found` hatalarıyla durdu. Xcode Signing & Capabilities ekranındaki geliştirme profili hataları da bu nedenden kaynaklanıyor; dağıtım profili hazırlığı bu hataları kaldırmaz.
+
+Cihaz testi yeniden ele alındığında:
+
+1. Test iPhone/iPad'ini Mac ile eşleştir; gerekirse veri aktarabilen USB kablosu kullan, cihazın kilidini aç, güven onayını ve Developer Mode adımını tamamla.
+2. Cihazın Xcode Devices listesinde görünmesini ve doğru takıma kaydedilmesini sağla. Cihazın gerçek UDID'si zaten biliniyorsa portalda manuel kayıt da yapılabilir.
+3. İki hedefte Automatic Signing ve aynı takım seçiliyken Xcode'un geliştirme profillerini üretmesini sağla; ardından imzalı cihaz derlemesi ve cihaz testlerini tamamla.
+
+Cihaz engeli geliştirme profiline aittir; App Store/TestFlight dağıtımının cihaz gerektirdiği anlamına gelmez. HealthKit eklenmemelidir. CarPlay EV Charging başvurusu alındı; Apple onayı gelmeden CarPlay capability eklenmez.
+
+## Archive/export için açık üretim engelleri
+
+8 Ekim'de `python3 Scripts/validate_release.py` başarılı oldu. `python3 Scripts/validate_release.py --production --bundle-id com.ozdemirbaris.sarjbul` üç açık engel bildirdi:
+
+- EPDK veri izin kaydı `pending_permission`: ticari kullanım/yeniden dağıtım izin kanıtı eksik.
+- `commercialDataUseApproved=false`: sağlayıcı hakları tamamlanmadı.
+- `firebaseBackendReady=false`: canlı backend dağıtımı ve doğrulaması tamamlanmadı.
+
+Veri izin kanıtını [veri sağlayıcı koşullarına](DATA_PROVIDER_TERMS.md), backend dağıtımı ve doğrulamasını [Firebase kurulumuna](FIREBASE_SETUP.md) göre tamamla. Bayrakları yalnızca bu işler gerçekten doğrulandıktan sonra aç; imzalamayı kontrol etmek için Archive korumasını atlama.
+
+Üretim kontrolü geçince imzalı Archive/export yap. Export edilen uygulama ile gömülü `PlugIns/SarjBulWidgets.appex` için imza geçerliliği, gömülü profil, takım, Bundle ID, App Group, bitiş tarihi ve Release yetkilerini ayrıca karşılaştır. **Archive/export ve TestFlight/App Store yüklemesi bu görevde tamamlanmadı.**
+
+APNs sağlayıcı anahtarının backend'e kurulması, Firebase App Check/enforcement ve gerçek cihazda bildirim/App Attest testi iOS sertifika/profil kurulumundan ayrı işlerdir.
 
 ## Kaynaklar
 
@@ -70,19 +91,5 @@ Mevcut üretim kontrolündeki `firebaseBackendReady=false` ve `commercialDataUse
 - [Apple: App ID yetkileri ve profil yenileme](https://developer.apple.com/help/account/identifiers/enable-app-capabilities/)
 - [Apple: App Group kaydı](https://developer.apple.com/help/account/identifiers/register-an-app-group/)
 - [Apple: App Attest hazırlığı](https://developer.apple.com/documentation/devicecheck/preparing-to-use-the-app-attest-service)
-- [Apple: Geliştirme profili için cihaz kaydı](https://developer.apple.com/help/account/devices/register-a-single-device)
+- [Apple: Cihaz kaydı](https://developer.apple.com/help/account/devices/register-a-single-device)
 - [Apple: Cihazda Developer Mode](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device)
-
-## 8 Ekim 2026 — portal kurulumu
-
-Apple Developer portalında aktif ücretli üyelik ve takım doğrulandı. Doğrulanan takım yerel `Config/Signing.local.xcconfig` dosyasında kayıtlı; bu dosya Git dışında kalır. Başlangıçta App IDs ve App Groups listeleri boştu. Aşağıdaki kayıtlar aynı takım altında oluşturuldu ve kaydedilen yapılandırmalar yeniden açılarak doğrulandı:
-
-| Portal kaydı | Doğrulanan durum |
-| --- | --- |
-| `com.ozdemirbaris.sarjbul` | Explicit App ID; App Groups, Push Notifications, App Attest açık; HealthKit kapalı |
-| `com.ozdemirbaris.sarjbul.widgets` | Explicit App ID; App Groups açık; Push/App Attest/HealthKit kapalı |
-| `group.com.ozdemirbaris.sarjbul` | SarjBul Shared App Group; iki App ID'nin App Group Assignment ekranında seçili |
-
-Xcode Apple Accounts listesi başlangıçta boştu. Hesap ekleme akışındaki Apple giriş penceresi boş ekranda takıldı. Açık dosyalar Save All ile kaydedildi; kullanıcı onayıyla Xcode zorla kapatılıp yeniden açıldı. Kullanıcı Apple girişini tamamladı; Xcode'da Baris Ozdemir ücretli Developer Team ve Certificates, Identifiers & Profiles erişimi doğrulandı. Parola ve doğrulama kodları proje dosyalarına veya sohbete yazılmadı.
-
-Kalan işlem: fiziksel test cihazını Mac'e bağla ve güven/eşleşme işlemini tamamla. Takımda cihaz kaydı yapılınca iki hedef için otomatik geliştirme profillerini üret ve imzalı derlemenin başarılı olduğunu doğrula. Sonrasında dağıtım profili ve export imzaları ayrıca denetlenmelidir. HealthKit eklenmemelidir. CarPlay EV Charging başvurusu alındı; onay gelmeden CarPlay capability eklenmez. Başarılı hesap girişi ve sertifika doğrulaması, imzalı dağıtım kanıtı değildir.
