@@ -1,4 +1,4 @@
-# İlk sürüm teslimi — 8 Ekim 2026
+# İlk sürüm durumu — 9 Ekim 2026
 
 ## Uygulama kapsamı
 
@@ -13,16 +13,20 @@
 
 ## CarPlay
 
-EV Charging başvurusu Apple tarafından alındı. Hesap sahibi bağlayıcı sözleşmeyi kendisi kabul etti; ardından Apple alındı ekranı doğrulandı. Onay bekleniyor. Başvuru alındı mesajı, CarPlay entitlement veya App Store onayı değildir. Ayrıntılar ve Apple ek bilgi isterse kullanılacak açıklama: [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md).
+EV Charging onayı geldi; Apple portalında capability etkinleştirilip kaydedildi. Projeye CarPlay haritası, favoriler, AC/DC filtresi, istasyon bilgisi ve Apple Maps aktarımı eklendi. CarPlay onayı App Store binary onayı değildir. İmzalama ve test ayrıntıları: [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md).
 
 ## Yayın için kalanlar ve yapmanız gerekenler
 
-1. **CarPlay:** Apple Developer hesabınıza bağlı e-postadaki yanıtı kontrol edin. Apple ek bilgi isterse başvuru belgesindeki açıklamayı kullanın. Yetki onayından sonra App ID/profiller ve CarPlay arayüzü eklenip araçta test edilmelidir. Apple'ın kararını bu çalışma içinde veremeyiz.
-2. **İmzalama:** Portalda ücretli takım doğrulandı ve yerel takım dosyası ayarlandı; App IDs listesi boş. Xcode > Settings > Apple Accounts'a aynı hesabı ekleyin. Ana uygulama/widget App ID ve ortak App Group'u oluşturup profilleri üretin; HealthKit eklemeyin. [SIGNING_SETUP.md](SIGNING_SETUP.md).
-3. **Üretim yapılandırması:** Bu çalışma kopyasında gerçek `SarjBul/Resources/AppConfig.plist` ve `GoogleService-Info.plist` yok. Doğru iOS Firebase projesinden dosyaları sağlayın. Örnek dosya veya uydurma değerle Archive kontrolü geçirilmedi. Bu dosyalar Git'e yüklenmemelidir.
-4. **Backend:** Doğru üretim projesi, gerekli Functions dağıtımı ve yetki doğrulamaları tamamlanmadan `firebaseBackendReady=true` yapmayın. Bu görev backend dağıtımı yapmadı. Ücretli plan kararı gerekiyorsa hesap sahibi vermelidir. [FIREBASE_SETUP.md](FIREBASE_SETUP.md).
-5. **Veri hakları:** EPDK’nin istasyon ve işletmeci lisans verileri için ticari kullanım, çevrimdışı saklama, türev alan ve yeniden dağıtım koşullarını çözün; doğrulanmadan `commercialDataUseApproved=true` yapmayın. [DATA_PROVIDER_TERMS.md](DATA_PROVIDER_TERMS.md).
-6. **Mağaza:** İmzalı gerçek cihaz ve TestFlight testleri, son ekran görüntüleri, App Privacy formu ve App Review gönderimi tamamlanmalı. Bu çalışma App Store'a uygulama yüklemedi/yayımlamadı. [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+1. **CarPlay:** Araç ekranı uygulandı ve App ID yetkisi açıldı. Simülatörde simge göründü; ancak sistem Ayarlar simgesi dahil tıklama ve klavye girişleri uygulama açmadı. CarPlay etkileşim testi açık: yeni Simulator oturumunda veya CarPlay Simulator/gerçek araçta bağlantı-kopma, konum reddi ve Maps aktarımını dağıtılacak build üzerinde tamamlayın. Gerçek cihaz testi daha önce isteğinizle ertelenmiştir.
+2. **İmzalama:** Apple hesap/takım, App ID, App Group ve dağıtım sertifikaları aradaki çalışmalarda tamamlandı. CarPlay sonrası ana uygulama dağıtım profilinin yenileme/doğrulama kaydı [SIGNING_SETUP.md](SIGNING_SETUP.md) içindedir. Cihaz geliştirme profili ve imzalı Archive/export ayrı adımlardır.
+3. **Üretim yapılandırması:** Gerçek `AppConfig.plist` ve `GoogleService-Info.plist` bu Mac'te artık var; Git dışında tutulur. Bunlar ilk teslimde eksikti. Dosya varlığı backend'in hazır olduğu anlamına gelmez.
+4. **Backend:** Firebase kuralları aradaki çalışmada dağıtıldı; iOS Functions dağıtımı/canlı doğrulama tamamlanmadığı için `firebaseBackendReady=false` korunur. Güncel engeller [FIREBASE_SETUP.md](FIREBASE_SETUP.md) içindedir. Bu CarPlay işi backend dağıtımı yapmaz.
+5. **Veri hakları:** EPDK ticari kullanım/çevrimdışı saklama/yeniden dağıtım izin kanıtı hâlâ bekleniyor. Doğrulanmadan `commercialDataUseApproved=true` yapmayın. [DATA_PROVIDER_TERMS.md](DATA_PROVIDER_TERMS.md).
+6. **Mağaza:** App Store Connect kaydı, mağaza metinleri ve herkese açık destek/gizlilik URL'leri aradaki çalışmalarda tamamlandı. İmzalı gerçek cihaz/TestFlight testleri, ekran görüntüleri, App Privacy ve App Review gönderimi kalan adımlardır. CarPlay capability açmak App Store'a binary yüklemek/yayımlamak değildir. [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+
+## 9 Ekim CarPlay doğrulaması
+
+87 Swift çekirdek ve 36 Python testi geçti. iPhone 17 Pro / iOS 26.5 üzerinde 95 uygulama/UI testi (7 yeni CarPlay testi dahil) geçti; son konum izni/güncelleme düzeltmesi sonrasında 7 CarPlay testi tekrar geçti. Debug ve Release Simulator derlemeleri, 143 dosyada SwiftLint ve depo yayın kontrolü başarılı. CarPlay ana ekranında simge görünmesi doğrulandı; araç ekranındaki etkileşim testleri simülatör giriş engeli nedeniyle açık. [Ayrıntılı kayıt](CARPLAY_REQUEST.md#9-ekim-doğrulama-kaydı).
 
 ## İlk teslimin yerel doğrulaması
 
@@ -34,4 +38,4 @@ Aşağıdaki sayılar ilk teslim kaydıdır; sonraki EPDK-only değişikliğinin
 - Debug uygulama/widget ve Release Simulator derlemeleri başarılı. Release binary'sinde HealthKit framework bağlantısı yok. Bunlar imzalı cihaz Archive kontrolü değildir.
 - SwiftLint: 138 dosyada sıfır ihlal. Depo gizlilik/yetki doğrulaması ve `git diff --check` başarılı.
 
-`python3 Scripts/validate_release.py --production` şu anda `AppConfig.plist` ve `GoogleService-Info.plist` eksik olduğu ve EPDK izni belgelenmediği için başarısızdır; yayın engeli korunmuştur. GitHub teslim commit'i görev sonucunda belirtilir. GitHub'a push, backend dağıtımı veya App Store yayını anlamına gelmez.
+9 Ekim’de `python3 Scripts/validate_release.py --production` EPDK izin kaydı, ticari veri hakları bayrağı ve Firebase backend hazırlığı nedeniyle başarısızdır; gerçek iki plist artık mevcuttur. Yayın engelleri korunmuştur. GitHub teslim commit'i görev sonucunda belirtilir. GitHub'a push, backend dağıtımı veya App Store yayını anlamına gelmez.

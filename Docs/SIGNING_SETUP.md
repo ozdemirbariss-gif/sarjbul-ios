@@ -1,8 +1,10 @@
 # ŞarjBul imzalama kurulumu
 
-## Güncel durum — 8 Ekim 2026
+## Güncel durum — 9 Ekim 2026
 
 Xcode Apple hesabına giriş tamamlandı ve ücretli Baris Ozdemir takımı doğrulandı. İki explicit App ID ile ortak App Group doğru takım altında oluşturuldu; grup iki App ID'ye atandı. Apple Development ve Apple Distribution sertifikalarının bu Mac'te özel anahtarlarıyla kullanılabilir olduğu doğrulandı. İki App Store Connect dağıtım profili oluşturuldu, indirildi, Xcode'a kuruldu ve Release yetkileriyle karşılaştırıldı.
+
+9 Ekim'de CarPlay EV Charging onayı doğrulandı ve ana App ID capability'si açıldı. Eski ana dağıtım profili geçersiz kaldı; aynı App ID ve mevcut dağıtım sertifikasıyla yeniden üretildi, indirildi ve Xcode'a kuruldu. Yeni UUID `321fd27f-330c-4dd3-8ccc-b9466d336b3f`, bitiş 8 Ekim 2027 13:16:14 UTC. Profilde `com.apple.developer.carplay-charging=true`, doğru takım/Bundle ID, App Group, Push ve App Attest izinleri doğrulandı; yerel özel anahtarı olan sertifikayla eşleşti. Widget'ın mevcut profili değişmedi. HealthKit yok. Bu işlem imzalı Archive/export değildir.
 
 **Kablo gerektirmeyen imzalama kurulumu tamamlandı.** Kullanıcı fiziksel cihaz testini erteledi. Takımda kayıtlı cihaz olmadığı için otomatik geliştirme profilleri hâlâ üretilemiyor; imzalı cihaz derlemesi yapılmadı. İmzalı Archive/export ise aşağıdaki üretim engelleri kapanmadan tamamlanmış sayılmaz.
 
@@ -17,6 +19,7 @@ Xcode Apple hesabına giriş tamamlandı ve ücretli Baris Ozdemir takımı doğ
 | Push Notifications | Debug `development`, Release ve dağıtım profili `production` | Kullanılmıyor |
 | App Attest | Release `production`; dağıtım profili bu ortamı destekliyor | Kullanılmıyor |
 | HealthKit | Koddan kaldırıldı; App ID ve profilde yok | Kullanılmıyor |
+| CarPlay EV Charging | App ID açık; Debug/Release ve yenilenmiş dağıtım profili `com.apple.developer.carplay-charging=true` | Kullanılmıyor |
 | Geliştirme profili | Cihaz kaydı bekleniyor; ertelendi | Cihaz kaydı bekleniyor; ertelendi |
 | App Store Connect profili | `SarjBul App Store`; kuruldu ve doğrulandı | `SarjBulWidgets App Store`; kuruldu ve doğrulandı |
 
@@ -42,7 +45,7 @@ Apple Development ve Apple Distribution sertifikaları 8 Ekim 2026–8 Ekim 2027
 
 | Hedef | App Store Connect profil adı | Profil UUID | Bitiş (UTC) |
 | --- | --- | --- | --- |
-| SarjBul | `SarjBul App Store` | `b40e6a28-d63e-4905-bf21-f3997d179aa1` | 8 Ekim 2027 13:16:14 |
+| SarjBul | `SarjBul App Store` (9 Ekim CarPlay yenilemesi) | `321fd27f-330c-4dd3-8ccc-b9466d336b3f` | 8 Ekim 2027 13:16:14 |
 | SarjBulWidgets | `SarjBulWidgets App Store` | `59146f57-f9c7-4f28-a437-0f18b655a2d4` | 8 Ekim 2027 13:16:14 |
 
 Profiller Apple Developer > Profiles altında aynı takımda oluşturuldu. Xcode'da **Download Manual Profiles** çalıştırıldı. Kurulu dosyalar Xcode 26.6'nın `~/Library/Developer/Xcode/UserData/Provisioning Profiles/` dizininde UUID adlarıyla doğrulandı.
@@ -68,7 +71,7 @@ Cihaz testi yeniden ele alındığında:
 2. Cihazın Xcode Devices listesinde görünmesini ve doğru takıma kaydedilmesini sağla. Cihazın gerçek UDID'si zaten biliniyorsa portalda manuel kayıt da yapılabilir.
 3. İki hedefte Automatic Signing ve aynı takım seçiliyken Xcode'un geliştirme profillerini üretmesini sağla; ardından imzalı cihaz derlemesi ve cihaz testlerini tamamla.
 
-Cihaz engeli geliştirme profiline aittir; App Store/TestFlight dağıtımının cihaz gerektirdiği anlamına gelmez. HealthKit eklenmemelidir. CarPlay EV Charging başvurusu alındı; Apple onayı gelmeden CarPlay capability eklenmez.
+Cihaz engeli geliştirme profiline aittir; App Store/TestFlight dağıtımının cihaz gerektirdiği anlamına gelmez. HealthKit eklenmemelidir. CarPlay EV Charging onayı 9 Ekim'de doğrulandı, capability açıldı ve dağıtım profili yenilendi. Cihaz kaydından sonra üretilecek geliştirme profilleri de CarPlay yetkisini içermelidir.
 
 ## Archive/export için açık üretim engelleri
 

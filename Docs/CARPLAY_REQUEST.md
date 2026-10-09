@@ -1,32 +1,42 @@
-# CarPlay EV Charging başvurusu
+# CarPlay EV Charging
 
-## 8 Ekim 2026 durumu
+## 9 Ekim 2026 — onay ve uygulama
 
-Apple Developer hesabında **EV Charging** kategorisi seçildi. Hesap sahibi CarPlay Entitlement Addendum sözleşmesini kendisi kabul etti. Apple başvuru sonunda **“Thank you for your submission.”** ve inceleme sonrası durum bildireceğini gösterdi. Başvuru alındı; **entitlement onayı henüz doğrulanmadı**. Ekranda başvuru numarası gösterilmedi. Bu form adımında bundle ID veya uygulama açıklaması alanı sunulmadı.
+Hesap sahibi Apple onayının geldiğini bildirdi. Doğru ücretli takımın `com.ozdemirbaris.sarjbul` App ID sayfasında **CarPlay EV Charging App** seçeneğinin kullanılabilir olduğu görüldü. Capability etkinleştirildi, kaydedildi ve sayfa yeniden açılarak işaretli durumu doğrulandı. Debug ve Release entitlement dosyaları `com.apple.developer.carplay-charging=true` ister. Widget bu yetkiyi istemez.
 
-ŞarjBul'un kapsamı EV şarj istasyonu bulma, soket/güç bilgisi ve seçilen istasyona Maps aktarımıdır. Gömülü turn-by-turn navigasyon sunmadığı için başvuru kategorisi Navigation değildir. [Apple CarPlay](https://developer.apple.com/carplay/) EV charging kategorisini ayrı listeler. [Başvuru sayfası](https://developer.apple.com/contact/carplay/).
+8 Ekim'de EV Charging başvurusu gönderilmiş ve Apple alındısı doğrulanmıştı. Bu kayıt artık onay bekliyor durumunda değildir. CarPlay yetkisi, App Store binary incelemesi veya operatör rezervasyon/ödeme/şarj kontrolü yetkisi değildir.
 
-## Apple ek bilgi isterse kullanılacak açıklama
+## Araç ekranı
 
-App name: SarjBul (ŞarjBul)
+- `CPTemplateApplicationScene` ve `CarPlaySceneDelegate` sahnesi SwiftUI iPhone sahnesiyle aynı uygulama durumunu kullanır. CarPlay soğuk açılışında istasyon kataloğu iPhone ekranı açılmadan yüklenir; giriş formu gerekmez.
+- Yakındaki şarj istasyonları `CPPointOfInterestTemplate` üzerinde en fazla 12 nokta olarak gösterilir. Haritayı kaydırınca bölgeye göre arama yapılır; 80 km dışında kalan sonuçlar yakınmış gibi sunulmaz. Araç ekranında AC + DC / DC 50+ kW filtresi ve Yenile bulunur. Telefonun gizli metin/operatör/menzil filtreleri CarPlay'e uygulanmaz.
+- Favoriler sistem liste şablonunda gösterilir; seçim istasyon bilgisine açılır. Yeni hesap kurulumu, serbest metin veya ayrıntılı araç ayarları gerekmez.
+- İstasyon bilgisi soket/güç, fiyat kaynağı/tarihi, müsaitlik ve adresi gösterir. EPDK tarifesi ve canlı müsaitlik sağlamaz; bilinmeyen değerler açıkça bilinmiyor sunulur. Telefonla aynı kanıt kuralları kullanılır. Açık detay dahil müsaitlik 60 saniyede yeniden değerlendirilir; 15 dakikadan eski veya gelecekteki operatör verisi güncel sayılmaz.
+- Yol tarifi Apple Maps'e aktarılır; başlangıç sürücünün güncel konumudur, telefonun eski manuel başlangıcı değildir. Bu bir turn-by-turn navigasyon uygulaması değildir.
+- Konum erişimi zaten verilmişse bağlantı süresince konum güncellenir; bağlantı kopunca takip ve görevler durur. CarPlay yeni konum izni istemez. Konum izni geri alınırsa önbellekteki konum da kullanılmaz. Güncel cihaz konumu yoksa haritada gezinme ve favoriler kullanılabilir; eski/manuel konum güncel sürücü konumu sayılmaz.
+- Rezervasyon, ödeme, uzaktan şarj başlatma/durdurma ve HealthKit yoktur.
 
-Bundle ID: `com.ozdemirbaris.sarjbul`
+## İmzalama ve test
 
-Category: EV Charging
+Capability değişikliği ana uygulamanın eski `SarjBul App Store` profilini geçersiz kıldı. Yenilenen profilin CarPlay anahtarı, takım, Bundle ID, App Group, sertifika ve Release yetkileriyle uyumu ayrıca doğrulanır; sonuç [imzalama belgesindedir](SIGNING_SETUP.md). Widget profili CarPlay istemediği için değişmez.
 
-Support: `sarjbul@icloud.com`
+Yerel doğrulama sonuçları aşağıdaki kayıtta belirtilir. Şablon/presenter testleri gerçek CarPlay bağlantısının yerine geçmez. Araç testleri daha önce hesap sahibinin isteğiyle ertelenmiştir.
 
-> SarjBul helps drivers locate EV charging stations in Türkiye. The iPhone app supports Turkish and English, nearby station discovery, connector types and power, favorites, and directions through Apple Maps or Google Maps. The proposed CarPlay experience will focus on charging station points of interest using system templates, concise charger details and a directions action. Prices and availability will be marked with their source and timestamp when available; unknown or stale information will not be presented as current. SarjBul does not provide reservations, payment or remote charging control without an authorized operator integration. It does not use HealthKit or heart-rate data. The CarPlay interface is planned and will be implemented and tested after entitlement approval.
+Yayın öncesinde CarPlay Simulator/gerçek araçta soğuk açılış, iPhone ekranı kapalı kullanım, bağlantı/kopma/yeniden bağlantı, konum reddi, boş sonuç, favoriler, AC/DC filtresi, fiyat/müsaitlik güncelliği ve Apple Maps aktarımı kontrol edilmelidir. Dokunmatik ve döner kumandalı ekranlar ayrıca denenmelidir. Üretim veri hakları/backend gate'leri geçmeden imzalı Archive/export veya App Store yayını tamamlanmış sayılmaz.
 
-Bu metin Apple'a gönderilmiş ek açıklama değildir; talep edilirse kullanılacak hazırlıktır. Özel navigasyon, canlı araç telemetrisi veya operatör sözleşmesi varmış gibi beyan edilmez.
+## 9 Ekim doğrulama kaydı
 
-## Onay sonrası yapılacaklar
+- Swift çekirdeği: 87 test / 15 suite geçti. Python veri, yayın ve public pages doğrulamaları: 36 test geçti.
+- iPhone 17 Pro / iOS 26.5 üzerinde uygulama birim ve UI testleri: 95/95 geçti. Bu sayı yeni 7 CarPlay presenter/konum/kanıt/sahne kayıt testini içerir; araç ekranının elle kullanım testi değildir. Son konum izni ve `@Published` güncelleme düzeltmesinden sonra 7 CarPlay testi yeniden geçti.
+- Debug uygulama/widget ve Release Simulator derlemeleri başarılı. SwiftLint: 143 dosya, sıfır ihlal. Depo yayın kontrolü ve `git diff --check` başarılı.
+- Simülatör için ad hoc imzalanan uygulamanın gömülü simüle entitlement dosyasında charging yetkisi doğrulandı; kurulumdan sonra CarPlay ana ekranında ŞarjBul simgesi göründü. Bu imzalı cihaz/export kanıtı değildir.
+- **Etkileşim testi açık:** Mac'teki Xcode Simulator CarPlay ekranında ŞarjBul ve sistem Ayarlar simgelerine tıklama ile klavye girdisi uygulama açmadı. Hesap sahibi de tıklayamadığını bildirdi. ŞarjBul araç sahnesi açılışı, favoriler, filtre ve Maps aktarımı bu oturumda çalıştırılmış sayılmadı; uygulama kaynaklı bir çökme doğrulanmadı. Yeni bir Simulator oturumu veya geliştirme profili hazırlanmış iPhone ile CarPlay Simulator/gerçek araçta test protokolünü tamamlayın. Gerçek cihaz testi ertelenmiş durumdadır.
+- Kurulu ana dağıtım profili charging yetkisini içerir; widget profili içermez. İkisinde de HealthKit yoktur.
+- Üretim kontrolü yalnızca açık EPDK izin kaydı, `commercialDataUseApproved=false` ve `firebaseBackendReady=false` nedeniyle durur. İmzalı Archive/export ve TestFlight yüklemesi yapılmadı; bu gate'ler atlanmadı.
 
-1. Apple Developer hesabına bağlı e-posta adresindeki CarPlay yanıtını kontrol et. Talep edilen ek bilgileri yukarıdaki gerçek ürün kapsamıyla yanıtla. Apple'ın karar süresi veya onayı garanti edilemez.
-2. Apple'ın verdiği EV Charging entitlement'ını, ilgili takım ve `com.ozdemirbaris.sarjbul` App ID ile eşleştir. Sadece başvuru alındı mesajını yetki onayı sayma.
-3. Yetki onayından sonra App ID capability'sini ve development/distribution provisioning profillerini güncelle. Onaylanan anahtarı imzalı uygulamanın yetkileriyle karşılaştır.
-4. `CPPointOfInterestTemplate` tabanlı şarj istasyonu yüzeyini ekle. Kapsam istasyonlar, soket/güç, kaynak/güncellik bilgisi ve yönlendirmedir. CarPlay kullanımı için iPhone'a dokunmayı zorunlu kılma; serbest metin, hesap kurulumu, ayrıntılı ayarlar ve ilgisiz POI göstermeme kurallarını uygula.
-5. CarPlay Simulator ve gerçek araçta bağlantı/kopma, konum izni reddi, boş sonuç, eski veri, farklı ekran/kumanda türleri ve Maps aktarımını test et. EV Charging arayüzünü özel turn-by-turn navigasyon gibi sunma.
-6. Review Notes'a CarPlay kapsamını ve onaylanan yetkiyi ekle; imzalı Archive doğrulamasını tamamla.
+## Resmî kaynaklar
 
-Onay beklenirken ana iPhone uygulaması Maps aktarımıyla kullanılabilir. Bu repo şu anda gömülü CarPlay ekranı veya CarPlay entitlement'ı içermez. Başvuru göndermek iPhone binary'sini App Store'a yüklemek değildir.
+- [Apple CarPlay ve geliştirme rehberi](https://developer.apple.com/carplay/)
+- [EV Charging entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.carplay-charging)
+- [Point of Interest şablonu](https://developer.apple.com/documentation/carplay/cppointofinteresttemplate)
+- [En fazla 12 harita noktası](https://developer.apple.com/documentation/carplay/cppointofinterest)

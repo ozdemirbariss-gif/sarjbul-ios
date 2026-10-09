@@ -10,7 +10,7 @@ struct SarjBulApp: App {
 
     init() {
         FirebaseBootstrap.configureIfAvailable()
-        let appState = AppState.bootstrap()
+        let appState = AppRuntime.state
         self.appState = appState
         _routeStore = State(initialValue: RouteStore())
         _networkMonitor = State(initialValue: NetworkMonitor())

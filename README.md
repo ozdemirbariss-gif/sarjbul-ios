@@ -2,7 +2,7 @@
 
 SarjBul, Türkiye genelindeki elektrikli araç şarj noktalarını menzil, rota, güç, fiyat ve kullanıcı durum bildirimleriyle sıralayan native SwiftUI uygulamasıdır. Web sürümündeki domain mantığı iOS'a taşınmış; arayüz, rota ve cihaz yetenekleri Apple platformlarına uygun katmanlara ayrılmıştır.
 
-İlk sürüm kapsamı, CarPlay başvuru durumu ve yayın için kalan adımlar: [8 Ekim 2026 teslim notu](Docs/FIRST_RELEASE_STATUS.md).
+İlk sürüm kapsamı, CarPlay onayı ve yayın için kalan adımlar: [9 Ekim 2026 teslim notu](Docs/FIRST_RELEASE_STATUS.md).
 
 ## Ekran Görüntüleri
 

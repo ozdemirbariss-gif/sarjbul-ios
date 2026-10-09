@@ -28,7 +28,7 @@ iOS sürekli ve sınırsız arka plan çalışması garanti etmez. Değerlendirm
 
 Canlı soket uygunluğu, rezervasyon, QR ile şarj başlatma/durdurma, ücret tahsilatı, fatura ve şarj oturumu geçmişi yalnızca istasyon operatörünün sözleşmeli API'siyle güvenilir biçimde sunulabilir. Şu anki açık veri kümesi bu işlemler için yetki veya gerçek zaman garantisi vermez. Uygulama bu nedenle çalışmayan kontroller göstermez.
 
-CarPlay EV Charging uygulaması yetkisi Apple tarafından ayrı değerlendirilir. Entitlement onaylanmadan CarPlay hedefi eklemek derlenen fakat dağıtılamayan bir özellik oluşturacağından ana hedefe dahil edilmez. Mevcut uygulama rotayı CarPlay destekli Apple Maps'e aktarır.
+CarPlay EV Charging yetkisi 9 Ekim 2026 tarihinde onay sonrası ana App ID'de etkinleştirildi; dağıtım profili yenilendi. Ana hedef CarPlay sahnesini ve charging entitlement'ını içerir. Araç ekranı yakındaki istasyonları, favorileri ve kaynak/tarih bilgili istasyon detaylarını sistem şablonlarında gösterir; yol tarifi Apple Maps'e aktarılır.
 
 Bir operatör entegrasyonu geldiğinde istemcinin doğrudan operatör anahtarı taşımaması gerekir. Yetki, fiyat ve ödeme işlemleri server-to-server backend üzerinden yürütülmeli; iOS yalnızca kısa ömürlü oturum ve işlem sonucunu almalıdır.
 
@@ -59,4 +59,4 @@ Open-Meteo Elevation istemcisi kaldırılmıştır. Hedefli rota rakım düzeltm
 
 ## CarPlay
 
-Kod tarafı rotayı CarPlay destekli Apple Maps'e aktarır. Gömülü CarPlay EV Charging arayüzü için Apple entitlement onayı zorunludur. Başvuru, bundle kimliği ve şarj istasyonu bulma kullanım senaryosuyla [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md) adımlarına göre paralel yürütülmelidir.
+Onay ve portal etkinleştirmesi tamamlandı. Uygulama `CPPointOfInterestTemplate` ile en fazla 12 istasyon, `CPListTemplate` ile favoriler ve `CPInformationTemplate` ile istasyon detayı sunar. Rota Apple Maps'e aktarılır. Doğrulama kayıtları ve kalan simülatör/gerçek araç kontrolleri [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md) dosyasındadır.

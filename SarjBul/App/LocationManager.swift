@@ -10,6 +10,7 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
     @Published var movementSpeedMetersPerSecond: Double?
 
     private let manager = CLLocationManager()
+    private var carPlayConnected = false
 
     override init() {
         super.init()
@@ -39,10 +40,22 @@ final class LocationManager: NSObject, ObservableObject, @preconcurrency CLLocat
         manager.requestLocation()
     }
 
+    func startCarPlayUpdates() {
+        carPlayConnected = true
+        guard locationAccessGranted else { return }
+        manager.startUpdatingLocation()
+    }
+
+    func stopCarPlayUpdates() {
+        carPlayConnected = false
+        manager.stopUpdatingLocation()
+    }
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
         if locationAccessGranted {
             manager.requestLocation()
+            if carPlayConnected { manager.startUpdatingLocation() }
         }
     }
 

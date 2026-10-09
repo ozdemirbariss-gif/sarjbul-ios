@@ -57,10 +57,11 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 
 ## Hesap sahibi tarafından tamamlanacaklar
 
-- [ ] Gerçek `GoogleService-Info.plist` ve `AppConfig.plist` üretim yapılandırmaları; iki dosyanın bundle/API/proje eşleşmesi
-- [ ] Firebase rules/functions deploy ve App Check enforcement
+- [x] Gerçek `GoogleService-Info.plist` ve `AppConfig.plist` yerel olarak hazır; bundle/API/proje eşleşmesi doğrulandı (8 Ekim 2026). Backend/veri hakları gate’leri hâlâ kapalı.
+- [x] Firebase Realtime Database kuralları dağıtıldı ve sunucudan geri okunarak karşılaştırıldı; App Attest sağlayıcısı kaydedildi (8 Ekim 2026).
+- [ ] Beş iOS Cloud Function dağıtımı, canlı cihaz doğrulaması ve App Check enforcement; Blaze kararı bekleniyor.
 - [ ] App Store Connect gizlilik cevaplarını `Docs/APP_STORE_PRIVACY_ANSWERS.md` ile birebir gir
-- [ ] Destek URL'si, gizlilik URL'si ve anonim veri sıfırlama akışının Review Notes'a eklenmesi
+- [x] Destek/gizlilik URL'leri ve anonim veri sıfırlama akışı Review Notes taslağına eklendi; App Review'a gönderim ayrı yayın adımıdır.
 - [x] [İmzalama eşleştirmesine](SIGNING_SETUP.md) göre ücretli Developer Team, kalıcı yerel takım ayarı ve Apple Development/Apple Distribution sertifikaları (8 Ekim 2026).
 - [x] İki App Store Connect dağıtım profili oluşturuldu, Xcode'a kuruldu; takım, sertifika, Bundle ID ve Release entitlement uyumu doğrulandı (8 Ekim 2026).
 - [ ] İmzalı Archive/export doğrulaması: EPDK izin kaydı, ticari veri kullanım onayı ve Firebase backend hazırlığı üretim kontrolünü engelliyor. Fiziksel cihaz testi kullanıcı isteğiyle ertelendi.
@@ -78,7 +79,7 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 
 Yetkili operatör entegrasyonu olmadan rezervasyon, ödeme ve şarj başlatma/durdurma yayın kapsamına alınmaz. Gömülü CarPlay arayüzü ise ayrı Apple entitlement onayı ve profil doğrulaması gerektirir.
 
-8 Ekim 2026: CarPlay EV Charging başvurusu Apple tarafından alındı; onay bekleniyor. Ayrıntılar [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md). CarPlay onayı ilk iPhone sürümünün ön koşulu değildir; uygulama mevcut sürümde Apple/Google Maps'e aktarım yapar.
+9 Ekim 2026: CarPlay EV Charging onayı doğrulandı; ana App ID capability'si açıldı ve dağıtım profili yenilenip Xcode'a kuruldu. Projeye araç haritası/favoriler/istasyon bilgisi ve Apple Maps aktarımı eklendi. Araç bağlantı/kopma ve imzalı export doğrulaması ayrı yayın kontrolleridir. Ayrıntılar [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md).
 
 Mağaza hazırlığı: [Metinler](APP_STORE_METADATA.md), [Review Notes](APP_REVIEW_NOTES.md), [Gizlilik formu](APP_STORE_PRIVACY_ANSWERS.md).
 
@@ -105,9 +106,11 @@ Bu maddeler mağaza yayını veya sağlayıcı sözleşmelerinin kabul edildiği
 - [x] Fiyatın kaynağı ve teyit tarihi/bilinmezliği gösterilir; katalog tarihi tarife doğrulaması sayılmaz.
 - [x] Kart/detay aynı müsaitlik kuralını kullanır; eski, gelecekteki ve geçersiz sayımlı veri canlı gösterilmez.
 - [x] CarPlay EV Charging başvurusu gönderildi, Apple alındı ekranı doğrulandı.
-- [ ] Apple CarPlay onayını al; capability ve provisioning eşleştir; arayüzü ve araç/simülatör testlerini tamamla.
+- [x] Apple CarPlay EV Charging onayı doğrulandı; capability ve yenilenmiş App Store profili eşleştirildi (9 Ekim 2026).
+- [x] CarPlay sistem haritası, favoriler, AC/DC filtresi, kaynak/güncellik bilgisi ve Apple Maps aktarımı uygulandı.
+- [ ] CarPlay Simulator/gerçek araç bağlantı-kopma, iPhone kapalı kullanım ve Maps aktarım testlerini dağıtılacak build üzerinde tamamla. 9 Ekim: Simulator ana ekranında simge doğrulandı; sistem uygulamaları dahil giriş yanıt vermediği için araç ekranı etkileşim testi açık. 95 uygulama/UI ve 7 tekrar CarPlay testi geçti; [doğrulama kaydı](CARPLAY_REQUEST.md#9-ekim-doğrulama-kaydı).
 - [x] Ana uygulama/widget explicit App ID'leri ve ortak App Group doğru ücretli takımda oluşturuldu; grup iki App ID'ye atandı. Ana uygulamada Push Notifications ve App Attest açık, iki App ID'de HealthKit kapalı (8 Ekim 2026).
 - [x] HealthKit içermeyen iki dağıtım profili oluşturuldu ve Release yetkileriyle karşılaştırıldı (8 Ekim 2026).
 - [ ] Export imzalarını doğrula; geliştirme profilleri için cihaz kaydı ve cihaz testi daha sonra yapılacak.
 
-Bu kod değişiklikleri App Store yayını, operatör sözleşmesi, CarPlay onayı veya üretim backend dağıtımı değildir.
+Kod teslimi App Store yayını, operatör sözleşmesi veya üretim backend dağıtımı değildir. CarPlay onayı 9 Ekim'de ayrıca portalda doğrulanmıştır.
