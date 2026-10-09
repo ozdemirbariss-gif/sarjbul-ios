@@ -64,7 +64,7 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 - [x] Destek/gizlilik URL'leri ve anonim veri sıfırlama akışı Review Notes taslağına eklendi; App Review'a gönderim ayrı yayın adımıdır.
 - [x] [İmzalama eşleştirmesine](SIGNING_SETUP.md) göre ücretli Developer Team, kalıcı yerel takım ayarı ve Apple Development/Apple Distribution sertifikaları (8 Ekim 2026).
 - [x] İki App Store Connect dağıtım profili oluşturuldu, Xcode'a kuruldu; takım, sertifika, Bundle ID ve Release entitlement uyumu doğrulandı (8 Ekim 2026).
-- [ ] İmzalı Archive/export doğrulaması: EPDK izin kaydı, ticari veri kullanım onayı ve Firebase backend hazırlığı üretim kontrolünü engelliyor. Fiziksel cihaz testi kullanıcı isteğiyle ertelendi.
+- [ ] İmzalı Archive/export doğrulaması: EPDK izin kaydı, ticari veri kullanım onayı ve Firebase backend hazırlığı üretim kontrolünü engelliyor. 9 Ekim: geliştirme imzalaması, gerçek iPhone kurulumu ve ilk açılış tamamlandı; kapsamlı yayın cihaz testleri açık.
 - [ ] [Gerçek cihaz test planını](DEVICE_TEST_PLAN.md) dağıtılacak build ile tamamla
 - [ ] App Store ekran görüntülerinin desteklenen cihaz boyutlarında yüklenmesi
 - [x] `group.com.ozdemirbaris.sarjbul` App Group'unu iki App ID'ye ata (8 Ekim 2026).
@@ -111,6 +111,7 @@ Bu maddeler mağaza yayını veya sağlayıcı sözleşmelerinin kabul edildiği
 - [ ] CarPlay Simulator/gerçek araç bağlantı-kopma, iPhone kapalı kullanım ve Maps aktarım testlerini dağıtılacak build üzerinde tamamla. 9 Ekim: Simulator ana ekranında simge doğrulandı; sistem uygulamaları dahil giriş yanıt vermediği için araç ekranı etkileşim testi açık. 95 uygulama/UI ve 7 tekrar CarPlay testi geçti; [doğrulama kaydı](CARPLAY_REQUEST.md#9-ekim-doğrulama-kaydı).
 - [x] Ana uygulama/widget explicit App ID'leri ve ortak App Group doğru ücretli takımda oluşturuldu; grup iki App ID'ye atandı. Ana uygulamada Push Notifications ve App Attest açık, iki App ID'de HealthKit kapalı (8 Ekim 2026).
 - [x] HealthKit içermeyen iki dağıtım profili oluşturuldu ve Release yetkileriyle karşılaştırıldı (8 Ekim 2026).
-- [ ] Export imzalarını doğrula; geliştirme profilleri için cihaz kaydı ve cihaz testi daha sonra yapılacak.
+- [x] iPhone 14 Plus / iOS 26.6.2 eşleşmesi, Geliştirici Modu ve takım cihaz kaydı; iki otomatik geliştirme profili ve uygulama/widget Debug imzaları doğrulandı. İmzalı cihaz build'i, telefona kurulum ve normal ilk açılış başarılı; kullanıcı ana ekranı doğruladı (9 Ekim 2026, kaynak `54acc8e`).
+- [ ] Export imzalarını ve TestFlight Release build'i ile kapsamlı cihaz testlerini doğrula.
 
 Kod teslimi App Store yayını, operatör sözleşmesi veya üretim backend dağıtımı değildir. CarPlay onayı 9 Ekim'de ayrıca portalda doğrulanmıştır.

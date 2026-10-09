@@ -6,7 +6,7 @@ Xcode Apple hesabına giriş tamamlandı ve ücretli Baris Ozdemir takımı doğ
 
 9 Ekim'de CarPlay EV Charging onayı doğrulandı ve ana App ID capability'si açıldı. Eski ana dağıtım profili geçersiz kaldı; aynı App ID ve mevcut dağıtım sertifikasıyla yeniden üretildi, indirildi ve Xcode'a kuruldu. Yeni UUID `321fd27f-330c-4dd3-8ccc-b9466d336b3f`, bitiş 8 Ekim 2027 13:16:14 UTC. Profilde `com.apple.developer.carplay-charging=true`, doğru takım/Bundle ID, App Group, Push ve App Attest izinleri doğrulandı; yerel özel anahtarı olan sertifikayla eşleşti. Widget'ın mevcut profili değişmedi. HealthKit yok. Bu işlem imzalı Archive/export değildir.
 
-**Kablo gerektirmeyen imzalama kurulumu tamamlandı.** Kullanıcı fiziksel cihaz testini erteledi. Takımda kayıtlı cihaz olmadığı için otomatik geliştirme profilleri hâlâ üretilemiyor; imzalı cihaz derlemesi yapılmadı. İmzalı Archive/export ise aşağıdaki üretim engelleri kapanmadan tamamlanmış sayılmaz.
+**Geliştirme imzalaması ve ilk gerçek cihaz açılışı tamamlandı.** 9 Ekim'de iPhone 14 Plus / iOS 26.6.2 USB ile eşleştirildi, kullanıcı Geliştirici Modu'nu açtı ve Xcode cihazı doğru takıma kaydederek iki otomatik geliştirme profilini üretti. Debug cihaz derlemesi başarılı oldu; uygulama ve gömülü widget'ın gerçek imzaları/profilleri doğrulandı. ŞarjBul telefona yüklendi ve normal açılışla başlatıldı; kullanıcı ana ekranın açıldığını doğruladı. İmzalı Archive/export ve kapsamlı yayın cihaz testleri aşağıdaki açık kontrollerden ayrıdır.
 
 ## Hedef ve yetki eşleştirmesi
 
@@ -20,7 +20,7 @@ Xcode Apple hesabına giriş tamamlandı ve ücretli Baris Ozdemir takımı doğ
 | App Attest | Release `production`; dağıtım profili bu ortamı destekliyor | Kullanılmıyor |
 | HealthKit | Koddan kaldırıldı; App ID ve profilde yok | Kullanılmıyor |
 | CarPlay EV Charging | App ID açık; Debug/Release ve yenilenmiş dağıtım profili `com.apple.developer.carplay-charging=true` | Kullanılmıyor |
-| Geliştirme profili | Cihaz kaydı bekleniyor; ertelendi | Cihaz kaydı bekleniyor; ertelendi |
+| Geliştirme profili | Xcode otomatik üretti; cihaz kaydı ve Debug imzası doğrulandı | Xcode otomatik üretti; cihaz kaydı ve gömülü widget imzası doğrulandı |
 | App Store Connect profili | `SarjBul App Store`; kuruldu ve doğrulandı | `SarjBulWidgets App Store`; kuruldu ve doğrulandı |
 
 Debug sürümü `FirebaseBootstrap` içinde App Check Debug Provider kullanır; Debug entitlement dosyasına App Attest eklenmedi. Release App Attest kullanır. Widget'ın proje tarafından istediği tek yetki paylaşılan App Group'tur.
@@ -61,21 +61,41 @@ Profiller Apple Developer > Profiles altında aynı takımda oluşturuldu. Xcode
 
 Bu denetim profil/sertifika uyumunu doğrular; export edilmiş uygulama imzasının veya cihaz çalışmasının yerine geçmez. App Store Connect dağıtım profili oluşturmak için bağlı ya da kayıtlı iPhone gerekmez.
 
-## Ertelenen cihaz işlemi
+## Geliştirme profilleri ve cihaz doğrulaması — 9 Ekim 2026
 
-Takımın On Device Testing ekranı `0 Provisioned Devices` gösteriyor. Hesaba girişten sonraki `xcodebuild ... -allowProvisioningUpdates build`, iki hedefte de `Your team has no devices from which to generate a provisioning profile` / `No profiles ... were found` hatalarıyla durdu. Xcode Signing & Capabilities ekranındaki geliştirme profili hataları da bu nedenden kaynaklanıyor; dağıtım profili hazırlığı bu hataları kaldırmaz.
+Önceki `0 Provisioned Devices` / `Your team has no devices from which to generate a provisioning profile` engeli çözüldü. iPhone 14 Plus, iOS 26.6.2 (23G90), Mac ile eşleşti ve Geliştirici Modu açık olarak doğrulandı. Cihazın özel UDID/seri numarası bu belgeye veya Git'e eklenmedi. Xcode Devices ekranında kurulu ŞarjBul göründü; cihaz hata/uyarı bölümü boştu. Projenin çalışma hedefi bağlı iPhone olarak seçildi.
 
-Cihaz testi yeniden ele alındığında:
+`xcodegen generate` sonrasında gerçek yerel Team ID, Automatic Signing ve Debug entitlement yolu tekrar doğrulandı. Cihazın gerçek UDID'sini destination seçen şu derleme, provisioning güncellemeleri ve cihaz kaydı açıkken **BUILD SUCCEEDED** verdi:
 
-1. Test iPhone/iPad'ini Mac ile eşleştir; gerekirse veri aktarabilen USB kablosu kullan, cihazın kilidini aç, güven onayını ve Developer Mode adımını tamamla.
-2. Cihazın Xcode Devices listesinde görünmesini ve doğru takıma kaydedilmesini sağla. Cihazın gerçek UDID'si zaten biliniyorsa portalda manuel kayıt da yapılabilir.
-3. İki hedefte Automatic Signing ve aynı takım seçiliyken Xcode'un geliştirme profillerini üretmesini sağla; ardından imzalı cihaz derlemesi ve cihaz testlerini tamamla.
+```sh
+xcodebuild -project SarjBul.xcodeproj -scheme SarjBul -configuration Debug \
+  -destination 'platform=iOS,id=<eşleşen iPhone UDID>' \
+  -disableAutomaticPackageResolution \
+  -allowProvisioningUpdates -allowProvisioningDeviceRegistration build
+```
 
-Cihaz engeli geliştirme profiline aittir; App Store/TestFlight dağıtımının cihaz gerektirdiği anlamına gelmez. HealthKit eklenmemelidir. CarPlay EV Charging onayı 9 Ekim'de doğrulandı, capability açıldı ve dağıtım profili yenilendi. Cihaz kaydından sonra üretilecek geliştirme profilleri de CarPlay yetkisini içermelidir.
+| Hedef | Xcode geliştirme profil adı | Profil UUID | Profil bitişi (UTC) |
+| --- | --- | --- | --- |
+| SarjBul | `iOS Team Provisioning Profile: com.ozdemirbaris.sarjbul` | `1f98feae-60f1-4cb2-8197-350e63110525` | 9 Ekim 2027 10:53:41 |
+| SarjBulWidgets | `iOS Team Provisioning Profile: com.ozdemirbaris.sarjbul.widgets` | `54594fe0-936d-46d6-80fd-4e9df707f445` | 9 Ekim 2027 10:53:44 |
+
+Profil bitişi, sertifikanın geçerlilik süresini uzatmaz: mevcut Apple Development sertifikası 8 Ekim 2027'de biter ve öncesinde yenilenmelidir.
+
+Derlenen `SarjBul.app` ve onun `PlugIns/SarjBulWidgets.appex` paketi için:
+
+- `codesign --verify --deep --strict` başarılı oldu.
+- İmzaya gömülen yaprak sertifika ve profilin sertifikası, bu Mac'te özel anahtarı olan Apple Development kimliğinin SHA-256 özetiyle eşleşti.
+- Gömülü profillerde doğru takım, Bundle ID, bu iPhone'un cihaz kaydı, geçerli bitiş tarihi, ortak App Group ve `get-task-allow=true` doğrulandı.
+- Gerçek Debug imzaları projedeki entitlement istekleriyle eşleşti: ana uygulamada development Push ve CarPlay charging, iki hedefte ortak App Group. Debug imzası App Attest istemiyor; widget Push/CarPlay istemiyor. HealthKit yok.
+- `devicectl` ile uygulama sürüm 1.0 (build 1) telefona yüklendi, normal argümansız açılış başarılı oldu ve süreç çalışmayı sürdürdü. Kullanıcı ana ekranın açıldığını ayrıca doğruladı. Bu cihaz derlemesinin kaynak commit'i `54acc8e`.
+
+Bu sonuç geliştirme imzalamasını, kurulumu ve ilk açılışı doğrular. Production App Attest/APNs, widget/Live Activity davranışı, uzun oturum, konum/izin akışları ve CarPlay araç bağlantısı/kopması için [cihaz test planı](DEVICE_TEST_PLAN.md) hâlâ uygulanmalıdır. Bu Debug açılışı, TestFlight'a gönderilecek Release build'in yayın testi değildir.
+
+Yeni cihazda eşleşme, güven onayı ve Geliştirici Modu gerekir; ardından Xcode'un doğru takım için otomatik profilleri yenilemesine izin ver. HealthKit eklenmemelidir. CarPlay EV Charging onayı 9 Ekim'de doğrulandı; mevcut geliştirme ve yenilenmiş ana dağıtım profili charging yetkisini içerir.
 
 ## Archive/export için açık üretim engelleri
 
-8 Ekim'de `python3 Scripts/validate_release.py` başarılı oldu. `python3 Scripts/validate_release.py --production --bundle-id com.ozdemirbaris.sarjbul` üç açık engel bildirdi:
+9 Ekim cihaz kurulumundan sonra `python3 Scripts/validate_release.py` tekrar başarılı oldu. `python3 Scripts/validate_release.py --production --bundle-id com.ozdemirbaris.sarjbul` aynı üç açık engeli bildirdi:
 
 - EPDK veri izin kaydı `pending_permission`: ticari kullanım/yeniden dağıtım izin kanıtı eksik.
 - `commercialDataUseApproved=false`: sağlayıcı hakları tamamlanmadı.
