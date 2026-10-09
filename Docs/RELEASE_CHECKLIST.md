@@ -66,7 +66,7 @@ Durum bildirimi, istasyon katkısı, arama talebi ve ürün etkileşimi kurallar
 - [x] İki App Store Connect dağıtım profili oluşturuldu, Xcode'a kuruldu; takım, sertifika, Bundle ID ve Release entitlement uyumu doğrulandı (8 Ekim 2026).
 - [ ] İmzalı Archive/export doğrulaması: EPDK izin kaydı, ticari veri kullanım onayı ve Firebase backend hazırlığı üretim kontrolünü engelliyor. 9 Ekim: geliştirme imzalaması, gerçek iPhone kurulumu ve ilk açılış tamamlandı; kapsamlı yayın cihaz testleri açık.
 - [ ] [Gerçek cihaz test planını](DEVICE_TEST_PLAN.md) dağıtılacak build ile tamamla
-- [ ] App Store ekran görüntülerinin desteklenen cihaz boyutlarında yüklenmesi
+- [x] TR/English (U.S.) için beşer gerçek Release ekranı 1320 × 2868, alpha kanalsız olarak App Store Connect büyük iPhone alanına yüklendi (9 Ekim 2026). Orta boy alan otomatik aynı seti kullanır; [görseller ve doğrulama](app-store/README.md).
 - [x] `group.com.ozdemirbaris.sarjbul` App Group'unu iki App ID'ye ata (8 Ekim 2026).
 - [x] App Group'un iki App Store Connect dağıtım profilinde bulunduğu doğrulandı (8 Ekim 2026).
 - [ ] App Group ve diğer Release yetkilerini export edilen uygulama/widget imzalarında doğrula.

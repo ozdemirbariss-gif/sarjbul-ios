@@ -57,3 +57,5 @@ bu mağaza metni çalışmasının kapsamında tamamlanmadı.
 Kaynak: [Apple — Add a new app](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-a-new-app/).
 
 9 Ekim 2026'da destek ve gizlilik adresleri hesap sahibinin isteğiyle GitHub Pages adresine taşındı. Canlı yayın ve aynı kaynağın iOS CI kontrolleri geçti; App Store Connect URL alanları iki dilde güncellendi. Son kaydedilen adresler APP_STORE_METADATA.md içindedir.
+
+9 Ekim 2026'da Türkçe ve English (U.S.) için beşer 1320 × 2868 ekran, gerçek Release 1.0 (1) arayüzünden alınıp Media Manager büyük iPhone alanına eklendi. Orta boy zorunlu alan aynı seti otomatik kullanır. [İkon ve ekran görüntüsü doğrulaması](app-store/README.md). Bu kayıt binary yüklemesi veya App Review gönderimi değildir.

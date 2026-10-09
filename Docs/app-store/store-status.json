@@ -1,0 +1,22 @@
+{
+  "verified_on": "2026-10-09",
+  "app_id": "6820571478",
+  "version": "1.0",
+  "destination": "iPhone with Dynamic Island (large display)",
+  "localizations": {
+    "tr": 5,
+    "en-US": 5
+  },
+  "required_medium_display": "Using Existing Assets from corresponding large-display localization",
+  "order": [
+    "01-home.png",
+    "02-stations-map.png",
+    "03-filters.png",
+    "04-route.png",
+    "05-charging-break.png"
+  ],
+  "persistence_verified": "Reloaded Media Manager and reselected each locale; five assets and order confirmed",
+  "app_review_submitted": false,
+  "binary_uploaded": false,
+  "url": "https://appstoreconnect.apple.com/apps/6820571478/distribution/ios/version/inflight/media-manager/iphone"
+}

@@ -38,6 +38,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul
         INFOPLIST_FILE: SarjBul/Resources/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_PREVIEWS: YES
         TARGETED_DEVICE_FAMILY: "1"
       configs:
@@ -116,6 +117,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ozdemirbaris.sarjbul.unittests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
+  SarjBulStoreScreenshots:
+    build:
+      targets:
+        SarjBul: all
+    run:
+      config: Release
+    test:
+      config: Release
+      targets:
+        - SarjBulUITests
   SarjBul:
     build:
       targets:

@@ -62,11 +62,12 @@ No sign-in or registration form is required. Range, arrival charge and time valu
 - Rezervasyon, ödeme, uzaktan şarj başlatma, CarPlay ve sürekli arka plan çalışması vaat edilmez.
 - `commercialDataUseApproved=false` korunur; metinlerin kaydı veri kullanım izni veya uygulama yayını değildir.
 
+9 Ekim 2026'da Türkçe ve English (U.S.) için beşer **1320 × 2868**, RGB/alpha kanalsız gerçek Release ekranı App Store Connect büyük iPhone alanına eklendi. Orta boy alan aynı seti otomatik kullanır. [İkon bağlantısı, görseller ve çekim kaydı](app-store/README.md).
+
 ## Tamamlanacak Alanlar
 
 - App Review iletişim kişisi, telefon ve e-posta; kamuya açık destek adresinden ayrı bir formdur.
 - Güncel yaş derecelendirmesi anketi: uygulamada gerçekten sunulan özelliklere göre cevapla.
 - Fiyat ve dağıtım ülkeleri; Avrupa Birliği seçilecekse DSA durumunu tamamla.
-- Desteklenen iPhone ekran boyutunda güncel TR/EN ekran görüntüleri; README kolajını mağaza ekran görüntüsü yerine kullanma.
 
 Doğrulanmış operatör bağlantısı olmadan canlı soket garantisi, rezervasyon, ödeme, uzaktan araç batarya okuma veya kesintisiz arka plan çalışması vaat edilmez. Mağaza sürümündeki görünür özellikler bu metinle son kez karşılaştırılır.

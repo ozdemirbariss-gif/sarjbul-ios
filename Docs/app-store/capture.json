@@ -1,0 +1,154 @@
+{
+  "captured_at": "2026-10-09T11:18:03.942067+00:00",
+  "source_commit": "2a3c32042f72d1b040cec78f522bff21b6c23c10",
+  "xcode": "Xcode 26.6\nBuild version 17F113",
+  "device": "iPhone 17 Pro Max",
+  "configuration": "Release",
+  "version": "1.0",
+  "build": "1",
+  "bundle_id": "com.ozdemirbaris.sarjbul",
+  "compiled_primary_icon": {
+    "CFBundleIconFiles": [
+      "AppIcon60x60"
+    ],
+    "CFBundleIconName": "AppIcon"
+  },
+  "station_source": "Configured shipping repository and bundled EPDK station tiles; no UI-test fixtures",
+  "simulated_origin": {
+    "latitude": 38.4237,
+    "longitude": 27.1428
+  },
+  "processing": "Native captures; opaque alpha channel removed, RGB pixels and dimensions preserved",
+  "locales": [
+    "tr",
+    "en-US"
+  ],
+  "screenshots": [
+    {
+      "path": "tr/01-home.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "611dd2fa87d47d69096e5d6356c329089fc0a44fe4542dfb73c321655ecd9da7",
+      "source_sha256": "667363a347682b0b5b6dcf282b8cb0111ed2613d99bc40442c25e174b956e0de"
+    },
+    {
+      "path": "tr/02-stations-map.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "6133525f02594999cb58dd97bf20dc920a519c1fc1e74e1e8f3febe119a7cbd9",
+      "source_sha256": "083b8467bda0f8c33d51ba62f5dcc2db63e2d262ea615bdd6f82998b3421f686"
+    },
+    {
+      "path": "tr/03-filters.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "7c2b79c8f4074b98920382834945455bf32e9afff2515f43d4f571248fb94c12",
+      "source_sha256": "fb43b789771859458ee77fd751092fb8848773fc2a380ded7203f01fb6cb0dd2"
+    },
+    {
+      "path": "tr/04-route.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "e181a7b00807bbae54502b10a6f81997c3f2252e49a6b3dd3053e287a385fbc0",
+      "source_sha256": "5afd5a41938b22f5747ebd0da7e5dcb198e6f1eec8962a78e9a606d8305f4e9a"
+    },
+    {
+      "path": "tr/05-charging-break.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "87a08d09f4bf6f02d71643076b269cfbc2abcb258ad41de219c4f8dc5a4ce7bc",
+      "source_sha256": "54ca22d61d199b07fb64822b22c2b743e0c5a1baf0776e0ed954ddff6ed76ee4"
+    },
+    {
+      "path": "en-US/01-home.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "173299dd2c5dafc42f1b1874df317247adc67d7fa778ba3029a39a39b4dcbd7f",
+      "source_sha256": "e00cfb1e87f14b266b2d34d856c3bbf0546eefc458d2746d9d3720c4693860ae"
+    },
+    {
+      "path": "en-US/02-stations-map.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "8f2d91b89a1906d0031ef0b2c22f70debe7f7168068885425f0d2ae43f40d432",
+      "source_sha256": "1bba80076bed3a13f7ae6bdbeb25b0ea233699539ee822d2a83c7e254dbc0573"
+    },
+    {
+      "path": "en-US/03-filters.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "7957150081f134360ac30e82dcdc0f33ea9013482f83c8b0486fc74dd8e45d14",
+      "source_sha256": "ff0e45b5d65cb91aba9d78b86e6ccf5dd2203f7c0e56160762e3b03ef1a9e9ff"
+    },
+    {
+      "path": "en-US/04-route.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "7096a6e4ef876c8b974ab217da0012b39233fd3244f65aebd5a884c4376e5be4",
+      "source_sha256": "86e79d8d2ac611790d171969f6627ad96779956fe17f096334297a3f627e952d"
+    },
+    {
+      "path": "en-US/05-charging-break.png",
+      "width": 1320,
+      "height": 2868,
+      "mode": "RGB",
+      "alpha": false,
+      "sha256": "6546b04d9c8167ba25fd5c4ceff3cfe59905e90938c5883d4d147bd73be61960",
+      "source_sha256": "de6f3ba4224685579790e6adcc8367899a2d15cffacd90434b31839a940c764c"
+    }
+  ],
+  "icons": [
+    {
+      "path": "icon/AppIcon-1024.png",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "appearances": [],
+      "sha256": "e60a1b81da8dc7d0dd276b5617d95ce23c2524d361fb4f91a0212a01e52d885a"
+    },
+    {
+      "path": "icon/AppIcon-1024-dark.png",
+      "width": 1024,
+      "height": 1024,
+      "alpha": true,
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "dark"
+        }
+      ],
+      "sha256": "3685071155d9c25af09d22a4acf917c2aff0c370a0dad2b820bf4ce4763ff174"
+    },
+    {
+      "path": "icon/AppIcon-1024-tinted.png",
+      "width": 1024,
+      "height": 1024,
+      "alpha": false,
+      "appearances": [
+        {
+          "appearance": "luminosity",
+          "value": "tinted"
+        }
+      ],
+      "sha256": "51425882deaa78faa77f8590e832de3f2541e06c787da3c114a42b3ce1f59ac2"
+    }
+  ]
+}

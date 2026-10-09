@@ -22,7 +22,7 @@ EV Charging onayı geldi; Apple portalında capability etkinleştirilip kaydedil
 3. **Üretim yapılandırması:** Gerçek `AppConfig.plist` ve `GoogleService-Info.plist` bu Mac'te artık var; Git dışında tutulur. Bunlar ilk teslimde eksikti. Dosya varlığı backend'in hazır olduğu anlamına gelmez.
 4. **Backend:** Firebase kuralları aradaki çalışmada dağıtıldı; iOS Functions dağıtımı/canlı doğrulama tamamlanmadığı için `firebaseBackendReady=false` korunur. Güncel engeller [FIREBASE_SETUP.md](FIREBASE_SETUP.md) içindedir. Bu CarPlay işi backend dağıtımı yapmaz.
 5. **Veri hakları:** EPDK ticari kullanım/çevrimdışı saklama/yeniden dağıtım izin kanıtı hâlâ bekleniyor. Doğrulanmadan `commercialDataUseApproved=true` yapmayın. [DATA_PROVIDER_TERMS.md](DATA_PROVIDER_TERMS.md).
-6. **Mağaza:** App Store Connect kaydı, mağaza metinleri ve herkese açık destek/gizlilik URL'leri aradaki çalışmalarda tamamlandı. İmzalı gerçek cihaz/TestFlight testleri, ekran görüntüleri, App Privacy ve App Review gönderimi kalan adımlardır. CarPlay capability açmak App Store'a binary yüklemek/yayımlamak değildir. [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+6. **Mağaza:** App Store Connect kaydı, mağaza metinleri ve herkese açık destek/gizlilik URL'leri aradaki çalışmalarda tamamlandı. 9 Ekim'de TR/English (U.S.) için beşer gerçek Release ekranı 1320 × 2868 olarak büyük iPhone alanına yüklendi; [çekim kaydı](app-store/README.md). İmzalı yayın cihazı/TestFlight testleri, App Privacy ve App Review gönderimi kalan adımlardır. CarPlay capability açmak App Store'a binary yüklemek/yayımlamak değildir. [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## 9 Ekim CarPlay doğrulaması
 
