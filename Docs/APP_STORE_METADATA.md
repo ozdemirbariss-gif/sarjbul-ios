@@ -1,6 +1,6 @@
 # App Store Metinleri — 1.0
 
-Bu metinler ilk iPhone sürümü `1.0 (1)` için hazırlanmıştır. 8 Ekim 2026'da [App Store Connect kaydına](APP_STORE_CONNECT_SETUP.md) Türkçe ve English (U.S.) yerelleştirmeleri kaydedildi. Ana dil Türkçe, ana kategori Navigation'dır.
+Bu metinler ilk iPhone sürümü `1.0 (1)` için hazırlanmıştır. 8 Ekim 2026'da [App Store Connect kaydına](APP_STORE_CONNECT_SETUP.md) Türkçe ve English (U.S.) yerelleştirmeleri kaydedildi. Ana dil Türkçe, ana kategori Navigation'dır. Destek ve gizlilik bağlantıları 9 Ekim 2026'da GitHub Pages adreslerine güncellendi.
 App Review iletişim bilgileri, fiyat, dağıtım ülkeleri ve yaş derecelendirmesi ayrıca tamamlanır.
 
 ## Türkçe
@@ -54,7 +54,7 @@ No sign-in or registration form is required. Range, arrival charge and time valu
 
 ## Sürümle karşılaştırma
 
-Kontrol edilen kaynak: `c368967`; `project.yml` sürümü `1.0`, build numarası `1`. Bu çalışma sırasında App Store Connect'te henüz yüklenmiş/seçilmiş binary yoktu. Karşılaştırma kaynak kodu ve yerel üretim yapılandırmasıyla yapıldı; bu, yüklenmiş binary testi değildir.
+Özellik karşılaştırmasının kaynağı: `c368967`; GitHub Pages/URL güncellemesinin kaynağı: `31b4560`; `project.yml` sürümü `1.0`, build numarası `1`. Bu çalışma sırasında App Store Connect'te henüz yüklenmiş/seçilmiş binary yoktu. Karşılaştırma kaynak kodu ve yerel üretim yapılandırmasıyla yapıldı; bu, yüklenmiş binary testi değildir.
 
 - `AppConfig.plist` içinde `liveAvailabilityURL` boş; `AppConfiguration.configuredLiveAvailabilityClient` bu durumda `UnavailableLiveAvailabilityClient` kullanır. EPDK envanteri fiyat ve canlı müsaitlik sağlamaz. Bu nedenle fiyat karşılaştırması vaadi kaldırıldı, canlı müsaitlik ve doğrulanmış güncel tarife bulunmadığı iki dilde açıklandı.
 - `firebaseBackendReady=false`; üretim Cloud Functions dağıtımı tamamlanmadı. Favori ve durum bildirimi vaatleri açıklamalardan çıkarıldı. Bu metin değişikliği backend'i etkinleştirmez.

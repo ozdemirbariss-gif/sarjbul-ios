@@ -56,4 +56,4 @@ bu mağaza metni çalışmasının kapsamında tamamlanmadı.
 
 Kaynak: [Apple — Add a new app](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-a-new-app/).
 
-Destek ve gizlilik adresleri hesap sahibinin isteğiyle GitHub Pages adresine taşınıyor; son kaydedilen URL’ler APP_STORE_METADATA.md içindedir.
+9 Ekim 2026'da destek ve gizlilik adresleri hesap sahibinin isteğiyle GitHub Pages adresine taşındı. Canlı yayın ve aynı kaynağın iOS CI kontrolleri geçti; App Store Connect URL alanları iki dilde güncellendi. Son kaydedilen adresler APP_STORE_METADATA.md içindedir.
