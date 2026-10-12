@@ -161,9 +161,15 @@ struct HomeView: View {
     @ViewBuilder
     private var primaryOutcome: some View {
         if chargingSession.isActive {
-            activeChargingContextCard
+            VStack(spacing: 14) {
+                ActiveChargingReminderCard()
+                routeAction
+            }
         } else if let journey = frictionTelemetry.activeJourney, journey.arrivedAt != nil {
-            ArrivedAtStationCard(journey: journey)
+            VStack(spacing: 14) {
+                ArrivedAtStationCard(journey: journey)
+                routeAction
+            }
         } else if let proposal = autonomousAgent.proposal {
             autonomousProposalCard(proposal)
         } else if settings.profile.chargePercent <= 20 {
@@ -224,25 +230,6 @@ struct HomeView: View {
         }
         .buttonStyle(SBPremiumButtonStyle())
         .accessibilityIdentifier("home-fine-tune-toggle")
-    }
-
-    private var activeChargingContextCard: some View {
-        contextualStatusCard(
-            icon: "bolt.fill",
-            kicker: settings.t("context.charging_kicker"),
-            title: chargingSession.station?.name ?? settings.t("context.charging_title"),
-            detail: settings.t("context.charging_target", [
-                "percent": "\(chargingSession.targetPercent)"
-            ]),
-            tint: SBColor.surfaceInverted
-        ) {
-            if let endDate = chargingSession.endDate {
-                Text(timerInterval: Date()...max(Date(), endDate), countsDown: true)
-                    .font(.headline.monospacedDigit().weight(.heavy))
-                    .foregroundStyle(SBColor.contentPrimary)
-            }
-        }
-        .accessibilityIdentifier("active-charging-context-card")
     }
 
     private var criticalRangeContextCard: some View {

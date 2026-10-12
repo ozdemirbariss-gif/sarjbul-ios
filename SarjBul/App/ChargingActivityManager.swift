@@ -6,6 +6,7 @@ final class ChargingActivityManager {
     static let shared = ChargingActivityManager()
 
     private var activity: Activity<ChargingActivityAttributes>?
+    private var startRequestID: UUID?
 
     func start(
         stationName: String,
@@ -33,7 +34,11 @@ final class ChargingActivityManager {
         languageCode: String
     ) async {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-        await stop()
+        let requestID = UUID()
+        startRequestID = requestID
+        await endCurrentActivities()
+        // Cancellation or another start can arrive while old activities end.
+        guard startRequestID == requestID else { return }
         let state = ChargingActivityAttributes.ContentState(
             startedAt: startedAt,
             endDate: endDate,
@@ -55,6 +60,11 @@ final class ChargingActivityManager {
     }
 
     func stop() async {
+        startRequestID = nil
+        await endCurrentActivities()
+    }
+
+    private func endCurrentActivities() async {
         let currentActivities = Activity<ChargingActivityAttributes>.activities
         activity = nil
         for currentActivity in currentActivities {

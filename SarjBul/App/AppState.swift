@@ -244,6 +244,9 @@ final class AppState {
         if arguments.contains("--ui-testing-light-appearance") {
             settings.appearance = .lightAnthracite
         }
+        if arguments.contains("--ui-testing-home-en") {
+            settings.language = .en
+        }
         if arguments.contains("--ui-testing-routes-idle") {
             navigation.tab = .routes
             settings.destination = nil
@@ -303,9 +306,6 @@ final class AppState {
             settings.destination = nil
             settings.filters = StationFilters(rangeFilterEnabled: false)
             search.userLocation = UserLocation(latitude: 38.3939, longitude: 27.1891, source: .manual)
-            if arguments.contains("--ui-testing-home-en") {
-                settings.language = .en
-            }
             if arguments.contains("--ui-testing-habit") {
                 seedHabitSuggestionForUITesting()
             }

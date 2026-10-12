@@ -67,6 +67,75 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["active-charging-context-card"].waitForExistence(timeout: 12))
     }
 
+    func testChargingReminderKeepsRoutesAccessibleAndCancellationSurvivesRelaunch() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-arrived"]
+        app.launch()
+        let start = app.buttons["arrived-start-charging-card"]
+        XCTAssertTrue(start.waitForExistence(timeout: 12))
+        start.tap()
+
+        let reminder = app.descendants(matching: .any)["active-charging-context-card"]
+        XCTAssertTrue(reminder.waitForExistence(timeout: 5))
+        let route = app.buttons["prepared-route-button"]
+        XCTAssertTrue(route.waitForExistence(timeout: 20))
+        for _ in 0..<4 where !route.isHittable { app.swipeUp() }
+        XCTAssertTrue(route.isHittable, app.debugDescription)
+        let activeScreenshot = XCTAttachment(screenshot: app.screenshot())
+        activeScreenshot.name = "Reminder and route remain accessible"
+        activeScreenshot.lifetime = .keepAlways
+        add(activeScreenshot)
+
+        app.buttons["bottom-navigation-tab-routes"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["station-route-card"].waitForExistence(timeout: 15))
+        app.buttons["bottom-navigation-tab-home"].tap()
+        XCTAssertTrue(reminder.waitForExistence(timeout: 5))
+        let cancel = app.buttons["cancel-charging-reminder-button"]
+        for _ in 0..<4 where !cancel.isHittable { app.swipeDown() }
+        XCTAssertTrue(cancel.isHittable)
+        XCTAssertGreaterThanOrEqual(cancel.frame.height, 44)
+        cancel.tap()
+        XCTAssertTrue(reminder.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(route.exists)
+        XCTAssertFalse(reminder.waitForExistence(timeout: 3))
+
+        app.terminate()
+        app.launchArguments = ["--ui-testing-home", "--ui-testing-preserve-settings"]
+        app.launch()
+        XCTAssertTrue(route.waitForExistence(timeout: 20))
+        XCTAssertFalse(reminder.exists)
+    }
+
+    func testChargingReminderCanBeCancelledAtAccessibilityTextSizeInEnglish() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "--ui-testing-arrived", "--ui-testing-home-en",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"
+        ]
+        app.launch()
+        let start = app.buttons["arrived-start-charging-card"]
+        XCTAssertTrue(start.waitForExistence(timeout: 12))
+        start.tap()
+        let cancel = app.buttons["cancel-charging-reminder-button"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+        for _ in 0..<8 where !cancel.isHittable { app.swipeUp() }
+        XCTAssertTrue(cancel.isHittable)
+        XCTAssertEqual(cancel.label, "Cancel charging reminder")
+        XCTAssertGreaterThanOrEqual(cancel.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(cancel.frame.minX, 0)
+        XCTAssertLessThanOrEqual(cancel.frame.maxX, app.frame.width)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Reminder at accessibility text size"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        cancel.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["active-charging-context-card"].waitForNonExistence(timeout: 5))
+        let route = app.buttons["prepared-route-button"]
+        XCTAssertTrue(route.waitForExistence(timeout: 20))
+        for _ in 0..<8 where !route.isHittable { app.swipeUp() }
+        XCTAssertTrue(route.isHittable)
+    }
+
     func testProfileKeepsComplexSettingsCollapsedByDefault() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-profile"]

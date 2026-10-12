@@ -61,6 +61,7 @@ struct SarjBulApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
+                Task { await appState.chargingSession.reconcileExpiredSession() }
                 appState.locationManager.requestFreshLocation()
             } else if phase == .background {
                 appState.settings.destination = nil

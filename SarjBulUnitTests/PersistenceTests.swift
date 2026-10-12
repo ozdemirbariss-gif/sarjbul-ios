@@ -300,6 +300,35 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(telemetry.events.last?.kind, .chargingEstimatedEnded)
     }
 
+    func testCancellingRestoredReminderClearsPersistenceAndDoesNotRestartOnPrepare() async throws {
+        let persistence = try makePersistence()
+        let station = Station(
+            id: "cancelled-session", name: "SHELL GÜZELYALI", address: "İzmir",
+            latitude: 38.3939, longitude: 27.1891, power: "180 kW",
+            operatorName: "Test", socket: "CCS2", price: "10 TL", source: "test"
+        )
+        persistence.activeChargingSession = PersistedChargingSession(
+            station: station, endDate: Date().addingTimeInterval(1_800), targetPercent: 80
+        )
+        let telemetry = FrictionTelemetryStore(persistence: persistence)
+        let store = ChargingSessionStore(persistence: persistence, frictionTelemetry: telemetry)
+        XCTAssertTrue(store.isActive)
+
+        await store.stop()
+        await store.stop()
+        await store.prepare()
+
+        XCTAssertFalse(store.isActive)
+        XCTAssertNil(store.station)
+        XCTAssertNil(store.endDate)
+        XCTAssertFalse(store.isLoadingPlaces)
+        XCTAssertTrue(store.nearbyPlaces.isEmpty)
+        XCTAssertNil(persistence.activeChargingSession)
+        XCTAssertEqual(telemetry.events.filter { $0.kind == .chargingStopped }.count, 1)
+        let relaunched = ChargingSessionStore(persistence: persistence, frictionTelemetry: telemetry)
+        XCTAssertFalse(relaunched.isActive)
+    }
+
     func testAutonomousMuteWindowPersists() throws {
         let persistence = try makePersistence()
         let mutedUntil = Date(timeIntervalSince1970: 1_800_000_000)

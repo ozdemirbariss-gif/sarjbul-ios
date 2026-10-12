@@ -31,6 +31,7 @@ final class ChargingSessionStore {
     private let frictionTelemetry: FrictionTelemetryStore
     private var prepared = false
     private var expirationTask: Task<Void, Never>?
+    private var placesTask: Task<Void, Never>?
 
     private(set) var station: Station?
     private(set) var endDate: Date?
@@ -70,11 +71,8 @@ final class ChargingSessionStore {
         await reconcileExpiredSession()
         guard let station, let endDate, let startedAt, endDate > Date() else {
             persistence.activeChargingSession = nil
-            return
-        }
-        await loadPlaces(near: station)
-        guard self.station?.statusKey == station.statusKey, endDate > Date() else {
-            await reconcileExpiredSession()
+            WidgetContextSnapshotStore.clear(kind: .activeCharging)
+            await ChargingActivityManager.shared.stop()
             return
         }
         await ChargingActivityManager.shared.start(
@@ -85,7 +83,9 @@ final class ChargingSessionStore {
             targetPercent: targetPercent,
             languageCode: languageCode
         )
+        guard self.endDate == endDate else { return }
         saveWidgetContext(station: station, endDate: endDate)
+        loadPlacesInBackground(near: station, sessionEndDate: endDate)
     }
 
     func start(
@@ -97,7 +97,7 @@ final class ChargingSessionStore {
     ) async {
         self.station = station
         let startedAt = Date()
-        let endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        let endDate = startedAt.addingTimeInterval(TimeInterval(minutes * 60))
         self.startedAt = startedAt
         self.endDate = endDate
         self.initialPercent = initialPercent
@@ -112,11 +112,7 @@ final class ChargingSessionStore {
             languageCode: languageCode
         )
         frictionTelemetry.chargingStarted(at: station)
-        await loadPlaces(near: station)
-        guard self.station?.statusKey == station.statusKey, endDate > Date() else {
-            await reconcileExpiredSession()
-            return
-        }
+        scheduleExpiration(at: endDate)
         await ChargingActivityManager.shared.start(
             stationName: station.name,
             startedAt: startedAt,
@@ -125,11 +121,13 @@ final class ChargingSessionStore {
             targetPercent: targetPercent,
             languageCode: languageCode
         )
+        guard self.endDate == endDate else { return }
         saveWidgetContext(station: station, endDate: endDate)
-        scheduleExpiration(at: endDate)
+        loadPlacesInBackground(near: station, sessionEndDate: endDate)
     }
 
     func stop() async {
+        guard station != nil else { return }
         expirationTask?.cancel()
         expirationTask = nil
         frictionTelemetry.chargingStopped()
@@ -171,6 +169,9 @@ final class ChargingSessionStore {
     }
 
     private func clearSession() {
+        placesTask?.cancel()
+        placesTask = nil
+        isLoadingPlaces = false
         station = nil
         endDate = nil
         startedAt = nil
@@ -179,13 +180,15 @@ final class ChargingSessionStore {
         WidgetContextSnapshotStore.clear(kind: .activeCharging)
     }
 
-    private func loadPlaces(near station: Station) async {
+    private func loadPlacesInBackground(near station: Station, sessionEndDate: Date) {
+        placesTask?.cancel()
         isLoadingPlaces = true
-        let places = await poiService.places(near: station, radiusMeters: 400)
-        if self.station?.statusKey == station.statusKey {
-            nearbyPlaces = places
+        placesTask = Task { [weak self, poiService] in
+            let places = await poiService.places(near: station, radiusMeters: 400)
+            guard !Task.isCancelled, let self, self.endDate == sessionEndDate else { return }
+            self.nearbyPlaces = places
+            self.isLoadingPlaces = false
         }
-        isLoadingPlaces = false
     }
 }
 
@@ -200,6 +203,7 @@ private actor ChargingBreakPOIService {
         let queries = ["kahve", "market", "park", "fırın", "tuvalet"]
         var places: [ChargingBreakPlace] = []
         for query in queries {
+            guard !Task.isCancelled else { return [] }
             let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = query
             request.region = region

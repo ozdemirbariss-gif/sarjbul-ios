@@ -146,37 +146,51 @@ private struct NearestStationWidgetView: View {
 struct ChargingLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: ChargingActivityAttributes.self) { context in
-            VStack(alignment: .leading, spacing: 9) {
-                HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .center, spacing: 10) {
                     Image(systemName: "bolt.fill")
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(activityAccent)
+                        .frame(width: 36, height: 36)
+                        .background(activityAccent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
                     VStack(alignment: .leading, spacing: 3) {
                         Text(chargingTitle(context.attributes.languageCode))
-                            .font(.caption.weight(.bold))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(SBColor.contentPrimary.opacity(0.68))
-                        Text(context.attributes.stationName)
-                            .font(.headline.weight(.heavy))
                             .lineLimit(1)
+                        Text(context.attributes.stationName)
+                            .font(.system(size: 15, weight: .bold))
+                            .lineLimit(2)
+                            .truncationMode(.tail)
                     }
-                    Spacer()
-                    Text("%\(context.state.targetPercent)")
-                        .font(.title3.weight(.heavy))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(context.attributes.languageCode == "en" ? "Target" : "Hedef")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(SBColor.contentPrimary.opacity(0.68))
+                        Text(percent(context.state.targetPercent, languageCode: context.attributes.languageCode))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                    }
+                    .fixedSize()
                 }
-                ProgressView(
-                    timerInterval: context.state.startedAt...context.state.endDate,
-                    countsDown: false
-                )
-                .tint(activityAccent)
-                HStack {
-                    Text("%\(context.state.initialPercent)")
-                    Spacer()
-                    Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
-                        .monospacedDigit()
+                timerProgress(context.state)
+                HStack(spacing: 6) {
+                    Text(initialCharge(context.state.initialPercent, languageCode: context.attributes.languageCode))
+                        .font(.system(size: 12, weight: .medium))
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    Image(systemName: "clock")
+                        .font(.system(size: 12, weight: .semibold))
+                    countdown(context.state)
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .frame(width: 66, alignment: .trailing)
                 }
-                .font(.caption.weight(.bold))
                 .foregroundStyle(SBColor.contentPrimary.opacity(0.72))
             }
-            .padding(.horizontal, 4)
+            .foregroundStyle(SBColor.contentPrimary)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .widgetURL(URL(string: "sarjbul://home"))
             .activityBackgroundTint(SBColor.canvas)
             .activitySystemActionForegroundColor(SBColor.contentPrimary)
         } dynamicIsland: { context in
@@ -185,28 +199,37 @@ struct ChargingLiveActivityWidget: Widget {
                     Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(context.attributes.stationName).lineLimit(1)
+                    Text(context.attributes.stationName)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("%\(context.state.targetPercent)").fontWeight(.heavy)
+                    Text(percent(context.state.targetPercent, languageCode: context.attributes.languageCode))
+                        .font(.subheadline.weight(.bold))
+                        .fixedSize()
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(spacing: 6) {
-                        ProgressView(
-                            timerInterval: context.state.startedAt...context.state.endDate,
-                            countsDown: false
-                        )
-                        .tint(activityAccent)
-                        Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
-                            .monospacedDigit()
+                    VStack(spacing: 8) {
+                        timerProgress(context.state)
+                        HStack {
+                            Text(initialCharge(context.state.initialPercent, languageCode: context.attributes.languageCode))
+                                .font(.caption)
+                                .lineLimit(1)
+                            Spacer(minLength: 4)
+                            countdown(context.state)
+                                .font(.subheadline.weight(.semibold))
+                                .frame(width: 66, alignment: .trailing)
+                        }
                     }
+                    .padding(.top, 4)
                 }
             } compactLeading: {
                 Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
             } compactTrailing: {
-                Text(timerInterval: Date()...max(Date(), context.state.endDate), countsDown: true)
-                    .monospacedDigit()
-                    .frame(width: 46)
+                countdown(context.state)
+                    .font(.caption.monospacedDigit())
+                    .frame(width: 46, alignment: .trailing)
             } minimal: {
                 Image(systemName: "bolt.fill").foregroundStyle(activityAccent)
             }
@@ -216,6 +239,32 @@ struct ChargingLiveActivityWidget: Widget {
     }
 
     private var activityAccent: Color { SBColor.contentPrimary }
+
+    private func timerProgress(_ state: ChargingActivityAttributes.ContentState) -> some View {
+        // The default current-value label adds a second timer below the bar.
+        ProgressView(timerInterval: state.startedAt...max(state.startedAt, state.endDate), countsDown: false) {
+            EmptyView()
+        } currentValueLabel: {
+            EmptyView()
+        }
+        .progressViewStyle(.linear)
+        .tint(activityAccent)
+    }
+
+    private func countdown(_ state: ChargingActivityAttributes.ContentState) -> some View {
+        Text(timerInterval: state.startedAt...max(state.startedAt, state.endDate), countsDown: true)
+            .monospacedDigit()
+            .multilineTextAlignment(.trailing)
+    }
+
+    private func percent(_ value: Int, languageCode: String) -> String {
+        languageCode == "en" ? "\(value)%" : "%\(value)"
+    }
+
+    private func initialCharge(_ value: Int, languageCode: String) -> String {
+        let value = percent(value, languageCode: languageCode)
+        return languageCode == "en" ? "Start \(value)" : "Başlangıç \(value)"
+    }
 
     private func chargingTitle(_ languageCode: String) -> String {
         languageCode == "en" ? "Charging reminder" : "Şarj hatırlatıcısı"
