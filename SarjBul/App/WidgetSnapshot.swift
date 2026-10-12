@@ -49,6 +49,13 @@ enum WidgetSnapshotStore {
         #endif
     }
 
+    static func clear() {
+        UserDefaults(suiteName: suiteName)?.removeObject(forKey: key)
+        #if canImport(WidgetKit)
+        WidgetCenter.shared.reloadTimelines(ofKind: "SarjBulNearestWidget")
+        #endif
+    }
+
     static func load() -> WidgetSnapshot? {
         guard let data = UserDefaults(suiteName: suiteName)?.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(WidgetSnapshot.self, from: data)

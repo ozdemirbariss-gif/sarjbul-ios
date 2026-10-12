@@ -90,7 +90,7 @@ public struct StationSearchEngine: Sendable {
                     longitude: station.longitude
                 )
                 let distance = DistanceCalculator.estimatedRoadDistanceKm(straightLineKm: straightLine)
-                guard !filters.rangeFilterEnabled || distance <= profile.safeRangeKm else { continue }
+                guard !filters.rangeFilterEnabled || straightLine <= profile.safeRangeKm else { continue }
 
                 candidates.append(StationCandidate(
                     station: station,
@@ -173,7 +173,7 @@ public struct StationSearchEngine: Sendable {
             let estimatedDistance = routePosition.distanceFromOriginKm
                 + DistanceCalculator.estimatedRoadDistanceKm(straightLineKm: routePosition.lateralDistanceKm)
             guard !filters.rangeFilterEnabled || estimatedDistance <= profile.safeRangeKm else { return nil }
-            let deviation = routePosition.lateralDistanceKm * 2
+            let deviation = DistanceCalculator.estimatedRoadDistanceKm(straightLineKm: routePosition.lateralDistanceKm) * 2
 
             var candidate = StationCandidate(
                 station: station,
@@ -185,6 +185,7 @@ public struct StationSearchEngine: Sendable {
                 arrivalChargePercent: profile.arrivalChargePercent(distanceKm: estimatedDistance),
                 remainingSafeRangeKm: max(0, profile.safeRangeKm - estimatedDistance),
                 routeDeviationKm: (deviation * 10).rounded() / 10,
+                routeProgressKm: routePosition.distanceFromOriginKm,
                 score: 1,
                 badges: []
             )
@@ -356,7 +357,7 @@ private struct RoutePosition {
     var distanceFromOriginKm: Double
 }
 
-private extension Array where Element == StationCandidate {
+public extension Array where Element == StationCandidate {
     func roughSorted(preference: RoutePreference) -> [StationCandidate] {
         switch preference {
         case .balanced:

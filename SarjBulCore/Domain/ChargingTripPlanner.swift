@@ -68,9 +68,9 @@ public enum ChargingCurve {
         guard endPercent > startPercent, batteryKWh > 0, stationPowerKW > 0 else { return 0 }
         var minutes = 0.0
         for percent in startPercent..<endPercent {
-            let effectivePower = min(stationPowerKW, batteryKWh * 3) * multiplier(at: Double(percent) + 0.5)
+            let effectivePower = stationPowerKW * multiplier(at: Double(percent) + 0.5)
             let energy = batteryKWh / 100
-            minutes += energy / max(3.6, effectivePower) * 60
+            minutes += energy / effectivePower * 60
         }
         return minutes
     }
@@ -97,22 +97,24 @@ public struct ChargingTripPlanner: Sendable {
         candidates: [StationCandidate],
         profile: DrivingProfile,
         estimatedDrivingMinutes: Int? = nil,
-        elevation: RouteElevationProfile = .init()
+        elevation: RouteElevationProfile = .init(),
+        verifiedLegs: [TripLegKey: TripLegMetrics]? = nil,
+        requireVerifiedLegs: Bool = true
     ) -> ChargingTripPlan? {
         guard routeDistanceKm > 0, profile.batteryKWh > 0, profile.consumptionKWhPer100Km > 0 else {
             return nil
         }
 
         let eligibleStations = candidates
-            .filter { $0.distanceKm > 0.5 && $0.distanceKm < routeDistanceKm - 0.5 && !$0.hasRiskyStatus }
-            .sorted { $0.distanceKm < $1.distanceKm }
+            .filter { $0.planningProgressKm > 0.5 && $0.planningProgressKm < routeDistanceKm - 0.5 && !$0.hasRiskyStatus }
+            .sorted { $0.planningProgressKm < $1.planningProgressKm }
         let usableStations = distributedCandidates(
             eligibleStations,
             routeDistanceKm: routeDistanceKm,
             maximumCount: 60
         )
         let nodes = [PlannerNode.origin] + usableStations.map(PlannerNode.station) + [.destination(routeDistanceKm)]
-        let startSOC = max(socStep, min(maximumSOC, profile.chargePercent / socStep * socStep))
+        let startSOC = max(0, min(100, profile.chargePercent))
         let start = PlannerState(node: 0, soc: startSOC)
         var distances: [PlannerState: Double] = [start: 0]
         var previous: [PlannerState: Transition] = [:]
@@ -127,9 +129,9 @@ public struct ChargingTripPlanner: Sendable {
                 break
             }
 
-            if state.node > 0, state.node < nodes.count - 1, state.soc < maximumSOC {
+            if state.node > 0, state.node < nodes.count - 1, state.soc < maximumSOC, nodes[state.node].powerKW(profile: profile) > 0 {
                 let nextSOC = min(maximumSOC, state.soc + socStep)
-                let power = max(7.4, nodes[state.node].powerKW)
+                let power = nodes[state.node].powerKW(profile: profile)
                 let chargeMinutes = ChargingCurve.minutes(
                     from: state.soc,
                     to: nextSOC,
@@ -148,25 +150,33 @@ public struct ChargingTripPlanner: Sendable {
             }
 
             for nextNode in (state.node + 1)..<nodes.count {
-                let segmentDistance = nodes[nextNode].distanceKm - nodes[state.node].distanceKm
+                let key = TripLegKey(from: nodes[state.node].id, to: nodes[nextNode].id)
+                if requireVerifiedLegs, let verifiedLegs, verifiedLegs[key] == nil { continue }
+                let metrics = verifiedLegs?[key]
+                let segmentDistance = metrics?.distanceKm ?? (
+                    nodes[nextNode].distanceKm - nodes[state.node].distanceKm
+                    + nodes[state.node].accessKm + nodes[nextNode].accessKm
+                )
+                guard segmentDistance.isFinite, segmentDistance >= 0 else { continue }
                 let energy = segmentEnergy(
                     distanceKm: segmentDistance,
                     routeDistanceKm: routeDistanceKm,
                     profile: profile,
                     elevation: elevation
                 )
-                let spentPercent = Int(ceil(energy / profile.batteryKWh * 100 / Double(socStep))) * socStep
+                let spentPercent = Int(ceil(energy / profile.batteryKWh * 100))
                 let arrivalSOC = state.soc - spentPercent
-                guard arrivalSOC >= (nextNode == nodes.count - 1 ? minimumArrivalPercent : socStep) else {
-                    if nextNode == state.node + 1 { continue }
-                    break
+                let reserve = Int(ceil(Double(state.soc) * Double(max(0, min(100, profile.safetyMarginPercent))) / 100))
+                guard arrivalSOC >= max(reserve, nextNode == nodes.count - 1 ? minimumArrivalPercent : socStep) else {
+                    continue
                 }
-                let driveMinutes = segmentDistance / 82 * 60
+                let driveMinutes = metrics?.minutes ?? segmentDistance / routeDistanceKm
+                    * Double(estimatedDrivingMinutes ?? Int(ceil(routeDistanceKm / 82 * 60)))
                 relax(
                     from: state,
                     to: PlannerState(node: nextNode, soc: arrivalSOC),
                     addedCost: driveMinutes,
-                    transition: .drive,
+                    transition: .drive(distanceKm: segmentDistance, minutes: driveMinutes),
                     distances: &distances,
                     previous: &previous,
                     queue: &queue
@@ -175,6 +185,13 @@ public struct ChargingTripPlanner: Sendable {
         }
 
         guard let destinationState else { return nil }
+        return buildPlan(start: start, destinationState: destinationState, previous: previous,
+                         nodes: nodes, elevation: elevation)
+    }
+
+    private func buildPlan(start: PlannerState, destinationState: PlannerState,
+                           previous: [PlannerState: Transition], nodes: [PlannerNode],
+                           elevation: RouteElevationProfile) -> ChargingTripPlan {
         var transitions: [(PlannerState, PlannerState, Transition.Kind)] = []
         var cursor = destinationState
         while cursor != start, let item = previous[cursor] {
@@ -185,9 +202,15 @@ public struct ChargingTripPlanner: Sendable {
 
         var stops: [PlannedChargingStop] = []
         var chargingMinutes = 0.0
+        var drivingMinutes = 0.0
+        var totalDistanceKm = 0.0
         var index = 0
         while index < transitions.count {
             let transition = transitions[index]
+            if case .drive(let distance, let minutes) = transition.2 {
+                totalDistanceKm += distance
+                drivingMinutes += minutes
+            }
             guard case .charge = transition.2,
                   case .station(let candidate) = nodes[transition.0.node] else {
                 index += 1
@@ -213,8 +236,8 @@ public struct ChargingTripPlanner: Sendable {
         }
 
         return ChargingTripPlan(
-            distanceKm: routeDistanceKm,
-            drivingMinutes: estimatedDrivingMinutes ?? Int(ceil(routeDistanceKm / 82 * 60)),
+            distanceKm: totalDistanceKm,
+            drivingMinutes: Int(ceil(drivingMinutes)),
             chargingMinutes: Int(ceil(chargingMinutes)),
             arrivalPercent: destinationState.soc,
             stops: stops,
@@ -243,7 +266,7 @@ public struct ChargingTripPlanner: Sendable {
         guard candidates.count > maximumCount else { return candidates }
         let bucketWidth = max(1, routeDistanceKm / Double(maximumCount))
         let groups = Dictionary(grouping: candidates) {
-            min(maximumCount - 1, Int($0.distanceKm / bucketWidth))
+            min(maximumCount - 1, Int($0.planningProgressKm / bucketWidth))
         }
         return groups.values.compactMap { bucket in
             bucket.max {
@@ -256,7 +279,7 @@ public struct ChargingTripPlanner: Sendable {
                 return $0.score < $1.score
             }
         }
-        .sorted { $0.distanceKm < $1.distanceKm }
+        .sorted { $0.planningProgressKm < $1.planningProgressKm }
     }
 
     private func relax(
@@ -284,14 +307,27 @@ private enum PlannerNode {
     var distanceKm: Double {
         switch self {
         case .origin: 0
-        case .station(let candidate): candidate.distanceKm
+        case .station(let candidate): candidate.planningProgressKm
         case .destination(let distance): distance
         }
     }
 
-    var powerKW: Double {
-        if case .station(let candidate) = self { return candidate.chargingPowerKW }
+    func powerKW(profile: DrivingProfile) -> Double {
+        if case .station(let candidate) = self { return profile.chargingPowerKW(for: candidate) }
         return 0
+    }
+
+    var accessKm: Double {
+        if case .station(let candidate) = self { return max(0, candidate.routeDeviationKm / 2) }
+        return 0
+    }
+
+    var id: String {
+        switch self {
+        case .origin: TripLegKey.origin
+        case .destination: TripLegKey.destination
+        case .station(let candidate): candidate.id
+        }
     }
 }
 
@@ -302,7 +338,7 @@ private struct PlannerState: Hashable {
 
 private struct Transition {
     enum Kind {
-        case drive
+        case drive(distanceKm: Double, minutes: Double)
         case charge(minutes: Double)
     }
 

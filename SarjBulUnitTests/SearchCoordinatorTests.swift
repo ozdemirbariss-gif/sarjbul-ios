@@ -68,7 +68,92 @@ final class SearchCoordinatorTests: XCTestCase {
         app.settings.filters.rangeFilterEnabled = false
         XCTAssertNil(app.search.preparedCandidate)
         await app.search.prepareOutcome()
+        XCTAssertEqual(app.search.routeCandidates.first?.station.id, "ankara")
+        XCTAssertNil(app.search.preparedCandidate)
+    }
+
+    func testActualRoadDistanceCanRejectAnApparentlyNearbyStation() async throws {
+        let routes = RouteStore { _, station in
+            StationRoute(stationID: station.id, distanceKm: 300, expectedTravelTime: 10_800,
+                         polyline: MKPolyline(), steps: [])
+        }
+        let app = try makeApp(repository: SearchTestRepository(), routeStore: routes)
+        app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)
+        await app.search.prepareOutcome()
+        XCTAssertTrue(app.search.routeCandidates.isEmpty)
+        XCTAssertNil(app.search.preparedCandidate)
+    }
+
+    func testUnavailableRoadRouteCannotBecomeAPreparedRecommendation() async throws {
+        let app = try makeApp(repository: SearchTestRepository(), routeStore: RouteStore { _, _ in nil })
+        app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)
+        await app.search.prepareOutcome()
+        XCTAssertNil(app.search.preparedCandidate)
+    }
+
+    func testRealtimeFaultReranksPreviouslyPreparedChoice() async throws {
+        let routes = RouteStore { _, station in
+            StationRoute(stationID: station.id, distanceKm: station.id == "izmir" ? 1 : 2,
+                         expectedTravelTime: 120, polyline: MKPolyline(), steps: [])
+        }
+        let app = try makeApp(repository: SearchTestRepository(), routeStore: routes)
+        app.settings.filters.rangeFilterEnabled = false
+        app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)
+        await app.search.prepareOutcome()
+        XCTAssertEqual(app.search.preparedCandidate?.station.id, "izmir")
+        app.search.applyRealtime(.statusChanged(key: SearchTestRepository.stations[0].statusKey,
+                                               value: StationStatusSummary(durum: "riskli")))
         XCTAssertEqual(app.search.preparedCandidate?.station.id, "ankara")
+        XCTAssertEqual(app.search.previousCandidates.first?.station.id, "ankara")
+    }
+
+    func testAllRiskyStationsCannotBecomePreparedRecommendations() async throws {
+        let app = try makeApp(repository: SearchTestRepository())
+        app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)
+        await app.search.prepareOutcome()
+        app.search.applyRealtime(.statusChanged(key: SearchTestRepository.stations[0].statusKey,
+                                               value: StationStatusSummary(durum: "riskli")))
+        XCTAssertNil(app.search.preparedCandidate)
+    }
+
+    func testRoadValidationRetriesAlternativeStopsAndUsesMeasuredLegs() async throws {
+        let stations = SearchTestRepository.stations
+        var measuredStationIDs: [String] = []
+        let routes = RouteStore { origin, station in
+            measuredStationIDs.append(station.id)
+            // The first estimated stop cannot be reached by road; the alternative can.
+            let distance: Double
+            if station.id == "izmir" {
+                distance = 200
+            } else if station.id == "ankara" {
+                distance = 80
+            } else {
+                distance = origin.latitude == stations[1].latitude ? 120 : 200
+            }
+            return StationRoute(stationID: station.id, distanceKm: distance,
+                                expectedTravelTime: distance * 60, polyline: MKPolyline(), steps: [])
+        }
+        func candidate(_ original: Station, _ distance: Double) -> StationCandidate {
+            var station = original
+            if station.id == "izmir" {
+                station.power = "350 kW"
+                station.chargingUnits = [.init(id: "dc", powerKW: 350, sockets: [.init(id: "ccs", type: "CCS")])]
+            }
+            return StationCandidate(station: station, distanceKm: distance, straightLineDistanceKm: distance,
+                             estimatedMinutes: 60, arrivalChargePercent: 20, remainingSafeRangeKm: 20,
+                             score: 50, badges: [])
+        }
+        let result = await RoadRouteValidator(routes: routes).plan(
+            snapshot: JourneyRouteSnapshot(points: [], distanceKm: 200, estimatedMinutes: 200, elevation: .init()),
+            origin: UserLocation(latitude: 38, longitude: 27, source: .manual),
+            destination: JourneyDestination(name: "End", address: "Test", latitude: 40, longitude: 34),
+            candidates: [candidate(stations[0], 70), candidate(stations[1], 90)],
+            profile: DrivingProfile(batteryKWh: 50, chargePercent: 50, consumptionKWhPer100Km: 20, maximumDCPowerKW: 350)
+        )
+        XCTAssertTrue(measuredStationIDs.contains("izmir"))
+        XCTAssertEqual(result?.stops.first?.id, "ankara")
+        XCTAssertEqual(result?.distanceKm, 200)
+        XCTAssertEqual(result?.drivingMinutes, 200)
     }
 
     func testDeviceTimestampIsPreserved() throws {
@@ -121,7 +206,7 @@ final class SearchCoordinatorTests: XCTestCase {
         XCTAssertFalse((components.queryItems ?? []).contains { $0.name == "origin" })
     }
 
-    private func makeApp(repository: any StationRepository) throws -> AppState {
+    private func makeApp(repository: any StationRepository, routeStore: RouteStore? = nil) throws -> AppState {
         let name = "SearchCoordinatorTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         addTeardownBlock { UserDefaults(suiteName: name)?.removePersistentDomain(forName: name) }
@@ -131,7 +216,13 @@ final class SearchCoordinatorTests: XCTestCase {
             status: UnavailableStatusClient(), demandAnalytics: UnavailableDemandAnalyticsClient(),
             realtime: UnavailableRealtimeStationClient(), pushTokens: UnavailablePushTokenClient(),
             liveAvailability: UnavailableLiveAvailabilityClient(), isConfigured: false
-        ), persistence: persistence, externalLinks: .empty)
+        ), persistence: persistence, externalLinks: .empty, routeStore: routeStore ?? RouteStore { origin, station in
+            let distance = DistanceCalculator.estimatedRoadDistanceKm(straightLineKm: DistanceCalculator.haversineKm(
+                from: origin, toLatitude: station.latitude, longitude: station.longitude
+            ))
+            return StationRoute(stationID: station.id, distanceKm: distance, expectedTravelTime: distance * 60,
+                                polyline: MKPolyline(), steps: [])
+        })
         app.settings.filters = StationFilters(preference: .nearest)
         return app
     }

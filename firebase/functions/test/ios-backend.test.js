@@ -167,3 +167,27 @@ test("retention preserves a cooldown refreshed after the expiry query", async ()
   await backend.cleanupAnalyticsData(racingDatabase, {deleteUser: async () => {}}, now);
   assert.equal((await database.ref("friction_meta/owner/son_olay_zamani_ms").get()).val(), now);
 });
+
+
+test("opaque deletion proof survives Auth and UID tombstone cleanup without exposing identity", async () => {
+  const now = Date.now();
+  const key = "a".repeat(64);
+  await database.ref("account_deletion_requests/owner").set({uid: "owner", status: "pending", recoveryKey: key});
+  await backend.deleteAccountData(database, "owner", now - 8 * DAY);
+  const auth = {deleteUser: async () => {}};
+  await backend.cleanupAnalyticsData(database, auth, now);
+  await backend.cleanupAnalyticsData(database, auth, now + 3 * 60 * 60 * 1000);
+  assert.equal((await database.ref("account_deletion_requests/owner").get()).exists(), false);
+  assert.deepEqual((await database.ref(`account_deletion_receipts/${key}`).get()).val(), {status: "completed"});
+});
+
+
+test("scheduled cleanup removes expired and legacy station summaries while preserving fresh reports", async () => {
+  const now = Date.now();
+  await database.ref("station_status").set({
+    legacy: {durum: "aktif"}, expired: {durum: "riskli", validUntilMilliseconds: now - 1},
+    fresh: {durum: "aktif", validUntilMilliseconds: now + DAY},
+  });
+  await backend.cleanupAnalyticsData(database, {deleteUser: async () => {}}, now);
+  assert.deepEqual(Object.keys((await database.ref("station_status").get()).val()), ["fresh"]);
+});

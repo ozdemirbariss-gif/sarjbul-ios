@@ -60,21 +60,33 @@ public struct StationCommunityInsight: Codable, Hashable, Sendable {
     public var fields: [String: StationFieldVerification]
     public var occupancy: [String: OccupancyObservationBucket]
     public var updatedAt: String?
+    public var occupancyObservedAtMilliseconds: Int64?
 
     public init(
         fields: [String: StationFieldVerification] = [:],
         occupancy: [String: OccupancyObservationBucket] = [:],
-        updatedAt: String? = nil
+        updatedAt: String? = nil,
+        occupancyObservedAtMilliseconds: Int64? = nil
     ) {
         self.fields = fields
         self.occupancy = occupancy
         self.updatedAt = updatedAt
+        self.occupancyObservedAtMilliseconds = occupancyObservedAtMilliseconds
     }
 
     private enum CodingKeys: String, CodingKey {
         case fields = "alanlar"
         case occupancy = "saatlik_yogunluk"
         case updatedAt = "guncelleme_tarihi"
+        case occupancyObservedAtMilliseconds
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        fields = try values.decodeIfPresent([String: StationFieldVerification].self, forKey: .fields) ?? [:]
+        occupancy = try values.decodeIfPresent([String: OccupancyObservationBucket].self, forKey: .occupancy) ?? [:]
+        updatedAt = try values.decodeIfPresent(String.self, forKey: .updatedAt)
+        occupancyObservedAtMilliseconds = try values.decodeIfPresent(Int64.self, forKey: .occupancyObservedAtMilliseconds)
     }
 
     public func verification(for field: StationDataField) -> StationFieldVerification? {

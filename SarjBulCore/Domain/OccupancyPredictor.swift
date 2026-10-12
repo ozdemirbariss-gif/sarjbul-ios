@@ -27,7 +27,9 @@ public enum OccupancyPredictor {
     ) -> OccupancyPrediction {
         let weekday = calendar.component(.weekday, from: date)
         let hour = calendar.component(.hour, from: date)
-        let bucket = insight?.occupancy["\(weekday)-\(hour)"]
+        let age = insight?.occupancyObservedAtMilliseconds.map { date.timeIntervalSince1970 - Double($0) / 1_000 }
+        let current = age.map { $0 >= -5 && $0 <= 90 * 86_400 } ?? false
+        let bucket = current ? insight?.occupancy["\(weekday)-\(hour)"] : nil
         let prior = contextualPrior(station: station, weekday: weekday, hour: hour)
         let sampleCount = bucket?.total ?? 0
         let observedBusy = bucket?.busy ?? 0

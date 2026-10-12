@@ -2,6 +2,7 @@ const {setGlobalOptions} = require("firebase-functions/v2");
 const {onValueCreated, onValueWritten} = require("firebase-functions/v2/database");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const iosBackend = require("./ios-backend");
+const {aggregateReports, observedTime, DAY} = require("./community-aggregation");
 const {initializeApp} = require("firebase-admin/app");
 const {getAuth} = require("firebase-admin/auth");
 const {getDatabase} = require("firebase-admin/database");
@@ -53,47 +54,16 @@ exports.aggregateStationStatus = onValueWritten(
     async (event) => {
       const stationKey = event.params.stationKey;
       const database = getDatabase();
+      const now = Date.now();
       const reportsSnapshot = await database.ref(`yorumlar/${stationKey}`)
-          .orderByChild("tarih")
-          .limitToLast(120)
-          .get();
-
-      if (!reportsSnapshot.exists()) {
-        await database.ref(`station_status/${stationKey}`).remove();
-        return;
-      }
-
-      const reports = Object.values(reportsSnapshot.val() || {});
-      reports.sort((left, right) => String(right.tarih || "").localeCompare(String(left.tarih || "")));
-      const latest = reports[0] || {};
-      const classes = reports.map(classify);
-      const busyCount = classes.filter((value) => value === "mesgul").length;
-      const availableCount = classes.filter((value) => value === "bos").length;
-      const state = busyCount > availableCount ? "riskli" : availableCount > 0 ? "aktif" : "belirsiz";
-
-      const occupancy = {};
-      reports.forEach((report) => {
-        const date = new Date(report.tarih || "");
-        if (Number.isNaN(date.getTime())) return;
-        const turkeyDate = new Date(date.getTime() + 3 * 60 * 60 * 1000);
-        const key = `${turkeyDate.getUTCDay() + 1}-${turkeyDate.getUTCHours()}`;
-        occupancy[key] ||= {busy: 0, available: 0};
-        const reportClass = classify(report);
-        if (reportClass === "mesgul") occupancy[key].busy += 1;
-        if (reportClass === "bos") occupancy[key].available += 1;
-      });
-
-      const updatedAt = new Date().toISOString();
+          .orderByChild("observedAtMilliseconds").startAt(now - 90 * DAY).get();
+      const {status, occupancy, occupancyObservedAtMilliseconds} = aggregateReports(Object.values(reportsSnapshot.val() || {}), classify, now);
       await Promise.all([
-        database.ref(`station_status/${stationKey}`).set({
-          durum: state,
-          etiket: latest.durum || "Belirsiz",
-          toplam: reports.length,
-          guncelleme_tarihi: updatedAt,
-        }),
+        database.ref(`station_status/${stationKey}`).set(status),
         database.ref(`station_insights/${stationKey}`).update({
           saatlik_yogunluk: occupancy,
-          guncelleme_tarihi: updatedAt,
+          occupancyObservedAtMilliseconds,
+          guncelleme_tarihi: new Date(now).toISOString(),
         }),
       ]);
     },
@@ -105,8 +75,7 @@ exports.aggregateStationContributions = onValueWritten(
       const stationKey = event.params.stationKey;
       const database = getDatabase();
       const snapshot = await database.ref(`station_contributions/${stationKey}`)
-          .orderByChild("tarih")
-          .limitToLast(300)
+          .orderByChild("observedAtMilliseconds").startAt(Date.now() - 90 * DAY)
           .get();
 
       if (!snapshot.exists()) {
@@ -116,18 +85,21 @@ exports.aggregateStationContributions = onValueWritten(
 
       const latestByUserAndField = new Map();
       Object.values(snapshot.val() || {}).forEach((contribution) => {
-        const uid = String(contribution.uid || "");
+        const observed = observedTime(contribution, Date.now(), 90 * DAY);
+        if (observed === null) return;
+        const uid = String(contribution.uid);
         const values = contribution.degerler || {};
         Object.entries(values).forEach(([field, value]) => {
           const key = `${uid}:${field}`;
           const previous = latestByUserAndField.get(key);
-          if (!previous || String(contribution.tarih).localeCompare(String(previous.date)) > 0) {
+          if (!previous || observed > previous.observed) {
             latestByUserAndField.set(key, {
               uid,
               field,
               value: String(value).trim(),
               normalized: normalizeContributionValue(field, value),
-              date: contribution.tarih,
+              date: new Date(observed).toISOString(),
+              observed,
             });
           }
         });

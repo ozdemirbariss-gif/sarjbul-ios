@@ -13,7 +13,8 @@ final class AccountDeletionTests: XCTestCase {
         XCTAssertNil(store.session)
         XCTAssertEqual(persistence.authSession?.uid, "owner")
         XCTAssertEqual(persistence.favoriteStationKeys, ["saved-station"])
-        XCTAssertEqual(persistence.pendingAccountDeletion, PendingAccountDeletion(uid: "owner"))
+        XCTAssertEqual(persistence.pendingAccountDeletion?.uid, "owner")
+        XCTAssertEqual(persistence.pendingAccountDeletion?.recoveryKey?.count, 64)
         XCTAssertEqual(messages.current?.kind, .information)
         let deleted = await client.deletedTokens
         XCTAssertTrue(deleted.isEmpty)
@@ -96,6 +97,29 @@ final class AccountDeletionTests: XCTestCase {
         XCTAssertEqual(persistence.authSession?.uid, "replacement")
     }
 
+    func testOpaqueReceiptRecoversAfterAuthAndTombstoneHaveExpired() async throws {
+        let (persistence, client, _, _) = try fixture()
+        persistence.authSession = expiredSession()
+        persistence.pendingAccountDeletion = PendingAccountDeletion(uid: "owner", recoveryKey: String(repeating: "a", count: 64))
+        await client.setRefreshError(.sessionInvalidated)
+        await client.setRecoveryStatus(.completed)
+        let store = makeStore(persistence, client)
+        let result = await store.deleteAccount()
+        XCTAssertTrue(result)
+        XCTAssertNil(persistence.pendingAccountDeletion)
+        XCTAssertEqual(store.session?.uid, "replacement")
+    }
+
+    func testMissingRecoveryProofCannotClaimCleanup() async throws {
+        let (persistence, client, _, _) = try fixture()
+        persistence.authSession = expiredSession()
+        persistence.pendingAccountDeletion = PendingAccountDeletion(uid: "owner", recoveryKey: String(repeating: "a", count: 64))
+        await client.setRefreshError(.sessionInvalidated)
+        let result = await makeStore(persistence, client).deleteAccount()
+        XCTAssertFalse(result)
+        XCTAssertNotNil(persistence.pendingAccountDeletion)
+    }
+
     func testRefreshCannotSwitchDeletionToAnotherIdentity() async throws {
         let (persistence, client, _, _) = try fixture()
         persistence.authSession = expiredSession()
@@ -176,6 +200,9 @@ private final class DeletionSecureStorage: SecureStorage {
 
 private actor DeletionAuthClient: AuthClient {
     var status: AccountDeletionStatus = .pending
+    var recoveryStatus: AccountDeletionStatus?
+    func setRecoveryStatus(_ status: AccountDeletionStatus) { recoveryStatus = status }
+    func recoverAccountDeletion(recoveryKey: String) async throws -> AccountDeletionStatus? { recoveryStatus }
     var statusFailure = false
     var deletionFailure = false
     var refreshError: AuthError?

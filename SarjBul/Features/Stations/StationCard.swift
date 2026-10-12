@@ -45,6 +45,7 @@ struct StationCard: View {
         .task(id: routeTaskID) {
             guard let origin = search.userLocation else { return }
             route = await routeStore.route(origin: origin, station: candidate.station)
+            if let route { search.applyRoadRoute(route, stationID: candidate.id, origin: origin) }
         }
         .sheet(isPresented: $fullMapPresented) {
             FullRouteMapView(candidate: candidate, route: route)
@@ -117,7 +118,9 @@ struct StationCard: View {
 
     private var stationIdentity: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(rank == 1 ? settings.t("feed.best_match") : settings.t("feed.nearby_option"))
+            Text(rank == 1 && !candidate.hasRiskyStatus && candidate.roadDistanceVerified
+                 && candidate.distanceKm <= settings.profile.safeRangeKm
+                 ? settings.t("feed.best_match") : settings.t("feed.nearby_option"))
                 .font(.caption.weight(.heavy))
                 .foregroundStyle(SBColor.actionPrimary)
 
@@ -565,11 +568,11 @@ struct StationCard: View {
     }
 
     private var displayDistanceKm: Double {
-        route?.distanceKm ?? candidate.distanceKm
+        candidate.distanceKm
     }
 
     private var displayMinutes: Int {
-        route?.estimatedMinutes ?? candidate.estimatedMinutes
+        candidate.estimatedMinutes
     }
 
     private var displayArrivalCharge: Double {

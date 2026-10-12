@@ -5,6 +5,10 @@ import SarjBulCore
 @MainActor
 @Observable
 final class RouteStore {
+    private let provider: (@MainActor (UserLocation, Station) async -> StationRoute?)?
+
+    init(provider: (@MainActor (UserLocation, Station) async -> StationRoute?)? = nil) { self.provider = provider }
+
     private var routes: [RouteKey: StationRoute] = [:]
     private var failures: [RouteKey: Date] = [:]
     private var cachedAt: [RouteKey: Date] = [:]
@@ -23,6 +27,7 @@ final class RouteStore {
     }
 
     func route(origin: UserLocation, station: Station) async -> StationRoute? {
+        if let provider { return await provider(origin, station) }
         let key = RouteKey(origin: origin, stationID: station.id)
         if let cached = cachedRoute(origin: origin, station: station) { return cached }
         if let failedAt = failures[key], Date().timeIntervalSince(failedAt) < failureRetryInterval {

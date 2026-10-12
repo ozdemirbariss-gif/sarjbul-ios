@@ -133,7 +133,7 @@ struct ProductIntelligenceTests {
         let station = makeStation(id: "mall", power: 120)
         let insight = StationCommunityInsight(occupancy: [
             "2-18": OccupancyObservationBucket(busy: 8, available: 2)
-        ])
+        ], occupancyObservedAtMilliseconds: 1_784_570_400_000)
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
         let date = try #require(calendar.date(

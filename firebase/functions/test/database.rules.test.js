@@ -29,13 +29,13 @@ const cooldownKinds = [
     timeKey: "son_yorum_zamani_ms", dateKey: "son_yorum_zamani", cooldown: 60_000,
     payload: (uid, date) => ({
       kullanici: "Doğrulanmış Sürücü", yorum: "Çalışıyor", durum: "Uygun",
-      durum_sinifi: "bos", sinif_kaynagi: "ios_write_rule_v1", tarih: date.toISOString(), uid,
+      durum_sinifi: "bos", sinif_kaynagi: "ios_write_rule_v1", tarih: date.toISOString(), uid, observedAtMilliseconds: date.getTime(), receivedAtMilliseconds: serverTimestamp(),
     }),
   },
   {
     name: "contributions", root: "station_contributions", meta: "kullanici_dogrulama_meta",
     timeKey: "son_dogrulama_zamani_ms", dateKey: "son_dogrulama_zamani", cooldown: 30_000,
-    payload: (uid, date) => ({uid, kaynak: "ios", tarih: date.toISOString(), degerler: {price: "10 TL"}}),
+    payload: (uid, date) => ({uid, kaynak: "ios", tarih: date.toISOString(), observedAtMilliseconds: date.getTime(), receivedAtMilliseconds: serverTimestamp(), degerler: {price: "10 TL"}}),
   },
   {
     name: "demand events", root: "search_demand_events", meta: "search_demand_meta",
@@ -115,6 +115,7 @@ test("reports require the authenticated uid and canonical schema", async () => {
     durum: "Uygun",
     durum_sinifi: "bos",
     sinif_kaynagi: "ios_write_rule_v1",
+    observedAtMilliseconds: Date.now(), receivedAtMilliseconds: serverTimestamp(),
     tarih: new Date().toISOString(),
     uid: "owner",
   };
@@ -139,6 +140,7 @@ test("idempotency keys accept identical replay and reject conflicting overwrite"
     durum: "Uygun",
     durum_sinifi: "bos",
     sinif_kaynagi: "ios_write_rule_v1",
+    observedAtMilliseconds: Date.now() - 86_400_000, receivedAtMilliseconds: serverTimestamp(),
     tarih: new Date(Date.now() - 86_400_000).toISOString(),
     uid: "owner",
   };
@@ -204,7 +206,7 @@ test("demand events require all fields and reject extra fields", async () => {
 test("contribution values allow only the seven supported keys", async () => {
   const owner = testEnvironment.authenticatedContext("owner").database();
   const contribution = {
-    uid: "owner", kaynak: "ios", tarih: new Date().toISOString(),
+    uid: "owner", kaynak: "ios", observedAtMilliseconds: Date.now(), receivedAtMilliseconds: serverTimestamp(), tarih: new Date().toISOString(),
     degerler: {price: "10 TL", socket: "CCS", address: "Test", operator: "Test",
       lighting: "yes", camera: "no", open_24_hours: "yes"},
   };
@@ -326,4 +328,30 @@ test("pending and completed deletion receipts block new and replayed private wri
       await assertFails(update(ref(owner), atomicMutation(kind, "new", kind.payload("owner", new Date()))));
     }
   }
+});
+
+
+for (const kind of cooldownKinds.filter((item) => item.dateKey)) {
+  test(`${kind.name} reject invalid, future, stale and mutable observation times`, async () => {
+    const owner = testEnvironment.authenticatedContext("owner").database();
+    for (const time of ["tomorrow", Date.now() + 60_000, Date.now() - 8 * 86_400_000]) {
+      const payload = {...kind.payload("owner", new Date()), observedAtMilliseconds: time};
+      await assertFails(update(ref(owner), atomicMutation(kind, "bad-time", payload)));
+    }
+    const payload = kind.payload("owner", new Date());
+    await assertSucceeds(update(ref(owner), atomicMutation(kind, "valid", payload)));
+    await assertFails(update(ref(owner), atomicMutation(kind, "valid", {...payload, observedAtMilliseconds: Date.now() + 1000})));
+  });
+}
+
+test("deletion capability receipts cannot be listed or forged", async () => {
+  const key = "a".repeat(64);
+  await testEnvironment.withSecurityRulesDisabled(async (context) => {
+    await set(ref(context.database(), `account_deletion_receipts/${key}`), {status: "completed"});
+  });
+  const anonymous = testEnvironment.unauthenticatedContext().database();
+  await assertSucceeds(get(ref(anonymous, `account_deletion_receipts/${key}`)));
+  await assertFails(get(ref(anonymous, "account_deletion_receipts")));
+  await assertFails(set(ref(anonymous, `account_deletion_receipts/${key}`), {status: "completed"}));
+  await assertFails(get(ref(anonymous, "account_deletion_receipts/owner")));
 });

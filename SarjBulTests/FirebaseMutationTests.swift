@@ -84,6 +84,21 @@ import Testing
         try await makeClient(session).initiateAccountDeletion(uid: "owner", idToken: "token")
     }
 
+    @Test func deletionRecoveryUsesOnlyAnOpaqueKeyAndNoExpiredAuth() async throws {
+        let session = makeSession()
+        defer { session.invalidateAndCancel() }
+        let key = String(repeating: "a", count: 64)
+        MutationURLProtocol.handler = { request in
+            #expect(request.httpMethod == "GET")
+            #expect(request.url?.path == "/account_deletion_receipts/\(key).json")
+            let url = try #require(request.url)
+            #expect(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems == nil)
+            #expect(request.value(forHTTPHeaderField: "X-Firebase-AppCheck") == "app-check")
+            return (200, Data(#"{"status":"completed"}"#.utf8), [:])
+        }
+        #expect(try await makeClient(session).recoverAccountDeletion(recoveryKey: key) == .completed)
+    }
+
     @Test func receiptForAnotherIdentityIsRejected() async throws {
         let session = makeSession()
         defer { session.invalidateAndCancel() }

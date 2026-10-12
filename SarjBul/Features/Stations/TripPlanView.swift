@@ -12,6 +12,8 @@ struct TripPlanView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     summary
+                    Text(settings.t("catalog.charging_estimate"))
+                        .font(.caption).foregroundStyle(appearance.canvasSecondary)
                     if let destination = settings.destination {
                         PlaceResultMap(latitude: destination.latitude, longitude: destination.longitude)
                             .frame(height: 200)

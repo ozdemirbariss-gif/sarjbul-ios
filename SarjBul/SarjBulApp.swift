@@ -12,7 +12,7 @@ struct SarjBulApp: App {
         FirebaseBootstrap.configureIfAvailable()
         let appState = AppRuntime.state
         self.appState = appState
-        _routeStore = State(initialValue: RouteStore())
+        _routeStore = State(initialValue: appState.routeStore)
         _networkMonitor = State(initialValue: NetworkMonitor())
         AutonomousBackgroundRuntime.install(
             silentPushHandler: {

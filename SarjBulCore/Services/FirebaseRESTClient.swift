@@ -62,12 +62,30 @@ public struct FirebaseRESTClient: Sendable {
     }
 
     public func initiateAccountDeletion(uid: String, idToken: String) async throws {
+        try await initiateDeletion(uid: uid, idToken: idToken, recoveryKey: nil)
+    }
+
+    public func initiateAccountDeletion(uid: String, idToken: String, recoveryKey: String) async throws {
+        try await initiateDeletion(uid: uid, idToken: idToken, recoveryKey: recoveryKey)
+    }
+
+    public func recoverAccountDeletion(recoveryKey: String) async throws -> AccountDeletionStatus? {
+        guard recoveryKey.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil else {
+            throw FirebaseRESTError.invalidURL
+        }
+        let request = try await databaseRequest(url: databaseURL.appending(path: "account_deletion_receipts/\(recoveryKey).json"))
+        let (data, response) = try await data(for: request, partition: .authentication)
+        try validate(response: response, data: data)
+        return try JSONDecoder().decode(DeletionRecoveryReceipt?.self, from: data)?.status
+    }
+
+    private func initiateDeletion(uid: String, idToken: String, recoveryKey: String?) async throws {
         if try await accountDeletionStatus(uid: uid, idToken: idToken) != nil { return }
         let requestedAt = ISO8601DateFormatter().string(from: Date())
         do {
             try await putJSON(
                 path: "account_deletion_requests/\(uid).json", idToken: idToken,
-                body: AccountDeletionRequest(uid: uid, requestedAt: requestedAt, source: "ios")
+                body: AccountDeletionRequest(uid: uid, requestedAt: requestedAt, source: "ios", recoveryKey: recoveryKey)
             )
         } catch {
             // Another attempt may have created the same request before this response arrived.
@@ -189,7 +207,8 @@ public struct FirebaseRESTClient: Sendable {
             durum_sinifi: statusClass,
             sinif_kaynagi: "ios_write_rule_v1",
             tarih: now,
-            uid: uid
+            uid: uid,
+            observedAtMilliseconds: Int64(context.createdAt.timeIntervalSince1970 * 1_000)
         )
         let reportID = context.idempotencyKey.lowercased()
         let metadata = StationReportMetadata(
@@ -221,7 +240,8 @@ public struct FirebaseRESTClient: Sendable {
     ) async throws {
         let now = ISO8601DateFormatter().string(from: context.createdAt)
         let values = Dictionary(uniqueKeysWithValues: contribution.values.map { ($0.key.rawValue, $0.value) })
-        let payload = StationContributionPayload(values: values, date: now, uid: uid, source: "ios")
+        let payload = StationContributionPayload(values: values, date: now, uid: uid, source: "ios",
+                                                 observedAtMilliseconds: Int64(context.createdAt.timeIntervalSince1970 * 1_000))
         let contributionID = context.idempotencyKey.lowercased()
         let metadata = StationContributionMetadata(
             lastContributionAt: now,
@@ -469,14 +489,32 @@ public struct FirebaseRESTClient: Sendable {
 }
 
 public struct StationStatusSummary: Codable, Hashable, Sendable {
-    public var durum: String?
+    private var reportedState: String?
     public var etiket: String?
     public var toplam: Int?
+    public var observedAtMilliseconds: Int64?
+    public var validUntilMilliseconds: Int64?
 
-    public init(durum: String? = nil, etiket: String? = nil, toplam: Int? = nil) {
-        self.durum = durum
+    public var durum: String? { isCurrent() ? reportedState : nil }
+
+    public init(durum: String? = nil, etiket: String? = nil, toplam: Int? = nil, observedAt: Date = Date()) {
+        reportedState = durum
         self.etiket = etiket
         self.toplam = toplam
+        observedAtMilliseconds = Int64(observedAt.timeIntervalSince1970 * 1_000)
+        validUntilMilliseconds = observedAtMilliseconds.map { $0 + 86_400_000 }
+    }
+
+    public func isCurrent(at date: Date = Date()) -> Bool {
+        guard let observedAtMilliseconds, let validUntilMilliseconds else { return false }
+        let now = Int64(date.timeIntervalSince1970 * 1_000)
+        return observedAtMilliseconds <= now + 5_000 && now < validUntilMilliseconds
+            && validUntilMilliseconds <= observedAtMilliseconds + 86_400_000
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case reportedState = "durum"
+        case etiket, toplam, observedAtMilliseconds, validUntilMilliseconds
     }
 }
 
@@ -602,6 +640,8 @@ private struct StationReportPayload: Encodable {
     var sinif_kaynagi: String
     var tarih: String
     var uid: String
+    var observedAtMilliseconds: Int64
+    var receivedAtMilliseconds = FirebaseServerTimestamp()
 }
 
 // Cooldowns use server receipt time; the original offline event date stays in its payload.
@@ -643,8 +683,11 @@ private struct StationContributionPayload: Encodable {
     var date: String
     var uid: String
     var source: String
+    var observedAtMilliseconds: Int64
+    var receivedAtMilliseconds = FirebaseServerTimestamp()
 
     private enum CodingKeys: String, CodingKey {
+        case observedAtMilliseconds, receivedAtMilliseconds
         case values = "degerler"
         case date = "tarih"
         case uid
@@ -722,9 +765,12 @@ private struct AccountDeletionRequest: Encodable {
     var requestedAt: String
     var source: String
     var status = "pending"
+    var recoveryKey: String?
 }
 
 private struct AccountDeletionReceipt: Decodable {
     var uid: String
     var status: AccountDeletionStatus
 }
+
+private struct DeletionRecoveryReceipt: Decodable { var status: AccountDeletionStatus }

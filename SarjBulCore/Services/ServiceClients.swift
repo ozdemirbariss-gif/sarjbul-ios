@@ -3,9 +3,18 @@ import Foundation
 public protocol AuthClient: Sendable {
     func signInAnonymously() async throws -> FirebaseAuthSession
     func initiateAccountDeletion(uid: String, idToken: String) async throws
+    func initiateAccountDeletion(uid: String, idToken: String, recoveryKey: String) async throws
+    func recoverAccountDeletion(recoveryKey: String) async throws -> AccountDeletionStatus?
     func accountDeletionStatus(uid: String, idToken: String) async throws -> AccountDeletionStatus?
     func deleteAccount(idToken: String) async throws
     func refreshSession(refreshToken: String) async throws -> FirebaseAuthSession
+}
+
+public extension AuthClient {
+    func initiateAccountDeletion(uid: String, idToken: String, recoveryKey: String) async throws {
+        try await initiateAccountDeletion(uid: uid, idToken: idToken)
+    }
+    func recoverAccountDeletion(recoveryKey: String) async throws -> AccountDeletionStatus? { nil }
 }
 
 public enum AccountDeletionStatus: String, Decodable, Sendable {

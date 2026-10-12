@@ -96,7 +96,10 @@ final class SearchCoordinator {
     private let executionTrust: ExecutionTrustStore
     private let frictionTelemetry: FrictionTelemetryStore
     private let journeyRouteService = JourneyRouteService()
-    private let tripPlanner = ChargingTripPlanner()
+    private let roadValidator: RoadRouteValidator
+    private var planningCandidates: [StationCandidate] = []
+    private var decisionRevision = UUID()
+    private var statusExpiryTask: Task<Void, Never>?
     private var pendingStationKey: String?
     private var pendingQuickAction: PendingQuickAction?
     private var prepared = false
@@ -127,7 +130,8 @@ final class SearchCoordinator {
         habits: HabitStore,
         offlineSync: OfflineSyncCoordinator,
         executionTrust: ExecutionTrustStore,
-        frictionTelemetry: FrictionTelemetryStore
+        frictionTelemetry: FrictionTelemetryStore,
+        routeStore: RouteStore
     ) {
         self.stationData = stationData
         self.settings = settings
@@ -139,6 +143,7 @@ final class SearchCoordinator {
         self.offlineSync = offlineSync
         self.executionTrust = executionTrust
         self.frictionTelemetry = frictionTelemetry
+        roadValidator = RoadRouteValidator(routes: routeStore)
     }
 
     private var currentContext: SearchContext? {
@@ -151,7 +156,8 @@ final class SearchCoordinator {
     }
     var preparedCandidate: StationCandidate? {
         guard resultContext == nil || resultContext == currentContext else { return nil }
-        return routeCandidates.first ?? previousCandidates.first
+        let candidates = routeCandidates.isEmpty ? previousCandidates : routeCandidates
+        return candidates.first { !$0.hasRiskyStatus && $0.roadDistanceVerified && $0.distanceKm <= profileSafeRange }
     }
     var isSearching: Bool { state.isSearching }
     var canSearch: Bool { userLocation != nil && !isSearching }
@@ -198,10 +204,14 @@ final class SearchCoordinator {
         activeRequestID = nil
         activeContext = nil
         resultContext = nil
+        planningCandidates = []
+        statusExpiryTask?.cancel()
+        decisionRevision = UUID()
         previousCandidates = []
         state = .idle
         journeySnapshot = nil
         tripPlan = nil
+        WidgetSnapshotStore.clear()
         locationNeedsReview = false
     }
 
@@ -240,6 +250,9 @@ final class SearchCoordinator {
 
         searchTask?.cancel()
         if resultContext != context {
+            planningCandidates = []
+            statusExpiryTask?.cancel()
+            decisionRevision = UUID()
             previousCandidates = []
             state = .idle
             journeySnapshot = nil
@@ -290,12 +303,18 @@ final class SearchCoordinator {
         if context.destination != nil {
             searchFilters.rangeFilterEnabled = false
         }
-        let rawCandidates = await searchCandidates(
+        var rawCandidates = await searchCandidates(
             context: context,
             routePoints: snapshot?.points ?? [],
             filters: searchFilters
         )
         guard isCurrent(context, requestID: requestID) else { return }
+        if context.destination == nil {
+            rawCandidates = await roadValidator.candidates(rawCandidates, origin: context.origin, profile: context.profile,
+                                                          rangeFilterEnabled: context.filters.rangeFilterEnabled)
+            guard isCurrent(context, requestID: requestID) else { return }
+            rawCandidates = rawCandidates.sorted(preference: context.filters.preference.supportedValue)
+        }
         journeySnapshot = snapshot
         resultContext = context
 
@@ -347,7 +366,7 @@ final class SearchCoordinator {
         routePoints: [SarjBulCore.UserLocation],
         filters: StationFilters
     ) async -> [StationCandidate] {
-        let limit = context.destination == nil ? 24 : 120
+        let limit = context.destination == nil ? 40 : Int.max
         let candidates = await stationData.candidates(
             origin: context.origin,
             destination: context.destination,
@@ -364,7 +383,11 @@ final class SearchCoordinator {
         location: SarjBulCore.UserLocation,
         startedAt: Date
     ) async {
+        planningCandidates = []
+        statusExpiryTask?.cancel()
+        decisionRevision = UUID()
         previousCandidates = []
+        WidgetSnapshotStore.clear()
         state = .results([])
         if settings.destination == nil {
             locationNeedsReview = !stationData.stations.contains {
@@ -396,8 +419,17 @@ final class SearchCoordinator {
         location: SarjBulCore.UserLocation,
         startedAt: Date
     ) async {
-        let planningCandidates = habits.personalize(rawCandidates)
-        updateTripPlan(with: planningCandidates)
+        let context = currentContext
+        let revision = UUID()
+        decisionRevision = revision
+        let currentCandidates = rawCandidates.map { candidate in
+            var current = candidate
+            current.status = stationData.stationStatuses[candidate.station.statusKey] ?? stationData.stationStatuses[candidate.id]
+            return current
+        }
+        planningCandidates = habits.personalize(currentCandidates).sorted(preference: settings.filters.preference.supportedValue)
+        await updateTripPlan(with: planningCandidates)
+        guard context == currentContext, revision == decisionRevision, !Task.isCancelled else { return }
         let result = Array(planningCandidates.prefix(24))
         saveWidgetSnapshot(from: result)
         withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
@@ -405,6 +437,7 @@ final class SearchCoordinator {
             if presentResults { navigation.select(.routes) }
         }
         previousCandidates = result
+        scheduleStatusExpiry()
         frictionTelemetry.record(.outcomeReady)
         habits.recordSearch(filters: settings.filters)
         recordSearchProof(
@@ -417,24 +450,32 @@ final class SearchCoordinator {
         await recordDemandIfEnabled(origin: location, resultCount: result.count)
     }
 
-    private func updateTripPlan(with candidates: [StationCandidate]) {
-        guard let snapshot = journeySnapshot else {
+    private func updateTripPlan(with candidates: [StationCandidate]) async {
+        guard let snapshot = journeySnapshot, let origin = userLocation, let destination = settings.destination else {
             tripPlan = nil
             return
         }
-        tripPlan = tripPlanner.plan(
-            routeDistanceKm: snapshot.distanceKm,
-            candidates: candidates,
-            profile: settings.profile,
-            estimatedDrivingMinutes: snapshot.estimatedMinutes,
-            elevation: snapshot.elevation
-        )
+        let context = currentContext
+        let revision = decisionRevision
+        let plan = await roadValidator.plan(snapshot: snapshot, origin: origin, destination: destination,
+                                            candidates: candidates, profile: settings.profile)
+        guard context == currentContext, revision == decisionRevision else { return }
+        tripPlan = plan
+    }
+
+    func roadValidatedCandidates(_ candidates: [StationCandidate], origin: SarjBulCore.UserLocation,
+                                 profile: DrivingProfile) async -> [StationCandidate] {
+        await roadValidator.candidates(candidates, origin: origin, profile: profile, rangeFilterEnabled: true)
+            .sorted(preference: settings.filters.preference.supportedValue)
     }
 
     private func saveWidgetSnapshot(from candidates: [StationCandidate]) {
         guard let nearestFast = candidates
-            .filter({ $0.station.powerKW >= 50 })
-            .min(by: { $0.distanceKm < $1.distanceKm }) else { return }
+            .filter({ $0.chargingPowerKW >= 50 && !$0.hasRiskyStatus && $0.roadDistanceVerified && $0.distanceKm <= profileSafeRange })
+            .min(by: { $0.distanceKm < $1.distanceKm }) else {
+            WidgetSnapshotStore.clear()
+            return
+        }
         WidgetSnapshotStore.save(WidgetSnapshot(
             stationName: nearestFast.station.name,
             distanceKm: nearestFast.distanceKm,
@@ -458,6 +499,23 @@ final class SearchCoordinator {
     }
 
     func startNavigation(to candidate: StationCandidate, using preference: NavigationAppPreference) {
+        Task {
+            guard let origin = userLocation else { return }
+            let context = currentContext
+            guard let current = await stationData.directCandidate(station: candidate.station, origin: origin,
+                                                                  profile: settings.profile, filters: settings.filters),
+                  let verified = await roadValidator.candidate(current, origin: origin, profile: settings.profile),
+                  context == currentContext, !verified.hasRiskyStatus,
+                  verified.distanceKm <= settings.profile.safeRangeKm,
+                  (stationData.stationStatuses[candidate.station.statusKey] ?? stationData.stationStatuses[candidate.id])?.durum != "riskli" else {
+                messages.present(.localized(key: "route.safety_unavailable", kind: .error))
+                return
+            }
+            handoffNavigation(to: verified, using: preference)
+        }
+    }
+
+    private func handoffNavigation(to candidate: StationCandidate, using preference: NavigationAppPreference) {
         let isFirstChoice = settings.navigationAppPreference == nil
         settings.navigationAppPreference = preference
         if isFirstChoice { frictionTelemetry.navigationChoiceCompleted() }
@@ -549,7 +607,8 @@ final class SearchCoordinator {
     }
 
     func applyRealtime(_ event: StationRealtimeEvent) {
-        guard case .results(var candidates) = state else { return }
+        guard resultContext == currentContext, !planningCandidates.isEmpty || !state.candidates.isEmpty else { return }
+        var candidates = planningCandidates.isEmpty ? state.candidates : planningCandidates
         for index in candidates.indices {
             let key = candidates[index].station.statusKey
             let id = candidates[index].station.id
@@ -572,8 +631,50 @@ final class SearchCoordinator {
             candidates[index].score = StationScorer.score(candidate: candidates[index])
             candidates[index].badges = StationScorer.badges(for: candidates[index])
         }
-        state = .results(candidates)
-        previousCandidates = candidates
+        planningCandidates = candidates
+        refreshDecisions()
+    }
+
+    func applyRoadRoute(_ route: StationRoute, stationID: String, origin: SarjBulCore.UserLocation) {
+        guard origin == userLocation, resultContext == currentContext,
+              let index = planningCandidates.firstIndex(where: { $0.id == stationID }) else { return }
+        let old = planningCandidates[index]
+        guard !old.roadDistanceVerified || abs(old.distanceKm - route.distanceKm) > 0.01
+            || old.estimatedMinutes != route.estimatedMinutes else { return }
+        planningCandidates[index] = old.applyingRoadRoute(distanceKm: route.distanceKm, minutes: route.estimatedMinutes,
+                                                         profile: settings.profile)
+        if settings.destination == nil, settings.filters.rangeFilterEnabled,
+           route.distanceKm > settings.profile.safeRangeKm { planningCandidates.remove(at: index) }
+        refreshDecisions()
+    }
+
+    private func refreshDecisions() {
+        planningCandidates = planningCandidates.map { candidate in
+            var updated = candidate
+            updated.score = StationScorer.score(candidate: updated)
+            updated.badges = StationScorer.badges(for: updated)
+            return updated
+        }.sorted(preference: settings.filters.preference.supportedValue)
+        let visible = Array(planningCandidates.prefix(24))
+        state = .results(visible)
+        previousCandidates = visible
+        saveWidgetSnapshot(from: visible)
+        decisionRevision = UUID()
+        tripPlan = nil
+        scheduleStatusExpiry()
+        Task { await updateTripPlan(with: planningCandidates) }
+    }
+
+    private func scheduleStatusExpiry() {
+        statusExpiryTask?.cancel()
+        let now = Date().timeIntervalSince1970 * 1_000
+        guard let expiry = planningCandidates.compactMap({ $0.status?.validUntilMilliseconds })
+            .filter({ Double($0) > now }).min() else { return }
+        statusExpiryTask = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(max(0.1, (Double(expiry) - now) / 1_000))) } catch { return }
+            guard let self else { return }
+            refreshDecisions()
+        }
     }
 
     private var profileSafeRange: Double { settings.profile.safeRangeKm }
@@ -628,14 +729,17 @@ final class SearchCoordinator {
             relaxedFilters.rangeFilterEnabled = false
             relaxedFilters.minimumPowerKW = 0
             relaxedFilters.socketFilters = []
-            if let direct = await stationData.directCandidate(
+            if let estimate = await stationData.directCandidate(
                 station: station,
                 origin: origin,
                 profile: settings.profile,
                 filters: relaxedFilters
             ) {
                 guard context == currentContext else { return }
-                candidates.insert(direct, at: 0)
+                if let direct = await roadValidator.candidate(estimate, origin: origin, profile: settings.profile),
+                   context == currentContext {
+                    candidates.insert(direct, at: 0)
+                }
             }
         }
         state = .results(candidates)
@@ -685,7 +789,8 @@ final class SearchCoordinator {
                     (-90...90).contains($0.latitude) && (-180...180).contains($0.longitude)
                 } ?? false,
                 "candidate-found": !candidates.isEmpty,
-                "candidate-safe": candidates.first.map { !$0.hasRiskyStatus } ?? false
+                "road-distance-verified": candidates.first?.roadDistanceVerified ?? false,
+                "candidate-safe": candidates.first.map { !$0.hasRiskyStatus && $0.distanceKm <= profileSafeRange } ?? false
             ],
             contextKeys: executionTrust.contextKeys(
                 location: location,

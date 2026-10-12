@@ -171,15 +171,19 @@ final class AutonomousChargingAgentStore {
             filters: filters,
             limit: 20
         )
+        candidates = await search.roadValidatedCandidates(candidates, origin: location, profile: telemetry.drivingProfile)
         guard stationData.isOperational else { return false }
         let currentProposal = proposal ?? persistence.autonomousChargingProposal
-        let currentCandidate = await candidate(
+        var currentCandidate = await candidate(
             for: currentProposal,
             among: candidates,
             origin: location,
             profile: telemetry.drivingProfile,
             filters: filters
         )
+        if let estimate = currentCandidate {
+            currentCandidate = await search.roadValidatedCandidates([estimate], origin: location, profile: telemetry.drivingProfile).first
+        }
         let stationDataAge = persistence.stationDataLastRefreshedAt.map { now.timeIntervalSince($0) }
         let snapshot = AutomationSnapshot(
             isEnabled: settings.autonomousChargingPolicy.isEnabled,
@@ -209,6 +213,7 @@ final class AutonomousChargingAgentStore {
             )
         }
 
+        candidates = await search.roadValidatedCandidates(candidates, origin: location, profile: telemetry.drivingProfile)
         let routeAction = plan.actions.first {
             $0 == .prepareChargingRoute || $0 == .replacePreparedRoute
         }
@@ -453,12 +458,14 @@ final class AutonomousChargingAgentStore {
         }
         guard proposal.expiresAt > Date(),
               let station = await stationData.station(withKey: proposal.stationKey),
-              let candidate = await stationData.directCandidate(
+              let estimate = await stationData.directCandidate(
                 station: station,
                 origin: origin,
                 profile: settings.profile,
                 filters: settings.filters
               ),
+              let candidate = await search.roadValidatedCandidates([estimate], origin: origin, profile: settings.profile).first,
+              origin == search.userLocation,
               !candidate.hasRiskyStatus,
               candidate.arrivalChargePercent >= Double(settings.autonomousChargingPolicy.minimumArrivalPercent),
               candidate.score >= settings.autonomousChargingPolicy.minimumStationScore else {

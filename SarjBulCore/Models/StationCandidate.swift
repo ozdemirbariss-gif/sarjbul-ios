@@ -10,6 +10,8 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
     public var arrivalChargePercent: Double
     public var remainingSafeRangeKm: Double
     public var routeDeviationKm: Double
+    public var routeProgressKm: Double?
+    public var roadDistanceVerified: Bool
     public var score: Int
     public var badges: [StationBadge]
     public var communityInsight: StationCommunityInsight?
@@ -27,6 +29,8 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         arrivalChargePercent: Double,
         remainingSafeRangeKm: Double,
         routeDeviationKm: Double = 0,
+        routeProgressKm: Double? = nil,
+        roadDistanceVerified: Bool = false,
         score: Int,
         badges: [StationBadge],
         communityInsight: StationCommunityInsight? = nil,
@@ -41,6 +45,8 @@ public struct StationCandidate: Identifiable, Hashable, Sendable {
         self.arrivalChargePercent = arrivalChargePercent
         self.remainingSafeRangeKm = remainingSafeRangeKm
         self.routeDeviationKm = routeDeviationKm
+        self.routeProgressKm = routeProgressKm
+        self.roadDistanceVerified = roadDistanceVerified
         self.score = score
         self.badges = badges
         self.communityInsight = communityInsight

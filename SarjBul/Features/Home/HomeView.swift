@@ -752,6 +752,18 @@ struct HomeView: View {
                             accessibilityIdentifier: "average-consumption-input"
                         )
                     }
+                    HStack(alignment: .top, spacing: 12) {
+                        MetricInput(title: settings.t("catalog.ac_limit"), unit: "kW",
+                                    value: Binding(get: { settings.profile.maximumACPowerKW },
+                                                   set: { settings.profile.maximumACPowerKW = $0 }),
+                                    range: 1...43, step: 1, accessibilityIdentifier: "vehicle-ac-power-input")
+                        MetricInput(title: settings.t("catalog.dc_limit"), unit: "kW",
+                                    value: Binding(get: { settings.profile.maximumDCPowerKW },
+                                                   set: { settings.profile.maximumDCPowerKW = $0 }),
+                                    range: 1...500, step: 1, accessibilityIdentifier: "vehicle-dc-power-input")
+                    }
+                    Text(settings.t("catalog.charging_estimate"))
+                        .font(.caption).foregroundStyle(appearance.canvasSecondary)
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }

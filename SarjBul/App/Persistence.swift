@@ -4,6 +4,7 @@ import SarjBulCore
 struct PendingAccountDeletion: Codable, Equatable {
     var uid: String
     var serverConfirmed = false
+    var recoveryKey: String?
 }
 
 struct RecentStationRoute: Codable, Hashable, Identifiable {

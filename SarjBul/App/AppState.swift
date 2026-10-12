@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import MapKit
 import SarjBulCore
 
 @MainActor
@@ -9,6 +10,7 @@ final class AppState {
     let auth: AuthStore
     let stationData: StationDataStore
     let favorites: FavoritesStore
+    let routeStore: RouteStore
     let search: SearchCoordinator
     let navigation: NavigationCoordinator
     let deepLinks: DeepLinkRouter
@@ -29,7 +31,8 @@ final class AppState {
         clients: AppServiceClients,
         persistence: any AppPersistence,
         externalLinks: AppExternalLinks,
-        vehicleTelemetryClient: any VehicleTelemetryClient = ProfileVehicleTelemetryClient()
+        vehicleTelemetryClient: any VehicleTelemetryClient = ProfileVehicleTelemetryClient(),
+        routeStore: RouteStore = RouteStore()
     ) {
         let messages = AppMessagePresenter()
         let settings = UserSettingsStore(persistence: persistence, externalLinks: externalLinks)
@@ -85,7 +88,8 @@ final class AppState {
             habits: habits,
             offlineSync: offlineSync,
             executionTrust: executionTrust,
-            frictionTelemetry: frictionTelemetry
+            frictionTelemetry: frictionTelemetry,
+            routeStore: routeStore
         )
 
         self.messages = messages
@@ -93,6 +97,7 @@ final class AppState {
         self.auth = auth
         self.stationData = stationData
         self.favorites = favorites
+        self.routeStore = routeStore
         self.search = search
         self.navigation = navigation
         self.habits = habits
@@ -213,11 +218,26 @@ final class AppState {
         repository = config.stationRepository() ?? EmptyStationRepository()
         clients = config.serviceClients
         #endif
+        let routeStore: RouteStore
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("--ui-testing-") }) {
+            routeStore = RouteStore { origin, station in
+                let distance = DistanceCalculator.estimatedRoadDistanceKm(straightLineKm: DistanceCalculator.haversineKm(
+                    from: origin, toLatitude: station.latitude, longitude: station.longitude
+                ))
+                return StationRoute(stationID: station.id, distanceKm: distance,
+                                    expectedTravelTime: distance * 60, polyline: MKPolyline(), steps: [])
+            }
+        } else { routeStore = RouteStore() }
+        #else
+        routeStore = RouteStore()
+        #endif
         return AppState(
             repository: repository,
             clients: clients,
             persistence: makePersistence(),
-            externalLinks: links
+            externalLinks: links,
+            routeStore: routeStore
         )
     }
 

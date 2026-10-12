@@ -21,70 +21,114 @@ public enum FirebaseRealtimeEventDecoder {
         eventName: String = "put",
         data: Data
     ) throws -> [StationRealtimeEvent] {
-        guard let envelope = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let path = envelope["path"] as? String else { return [] }
-        let payload = envelope["data"]
+        var accumulator = FirebaseRealtimeEventAccumulator()
+        return try accumulator.decode(channel: channel, eventName: eventName, data: data)
+    }
+}
 
+/// One instance per SSE connection. Firebase patch events contain only the
+/// changed children, so merge them before decoding the station's full value.
+public struct FirebaseRealtimeEventAccumulator {
+    private var document: [String: Any] = [:]
+
+    public init() {}
+
+    public mutating func decode(
+        channel: FirebaseRealtimeEventDecoder.Channel,
+        eventName: String = "put",
+        data: Data
+    ) throws -> [StationRealtimeEvent] {
+        guard let envelope = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let path = envelope["path"] as? String,
+              let payload = envelope["data"],
+              eventName == "put" || eventName == "patch" else { return [] }
+        let components = path.split(separator: "/").map(String.init)
+        var next = document
+        var changedKeys = Set<String>()
+        let isSnapshot = components.isEmpty && eventName == "put"
+        if isSnapshot {
+            if payload is NSNull {
+                next = [:]
+            } else {
+                guard let values = payload as? [String: Any] else { throw FirebaseRealtimeDecodingError.invalidPayload }
+                next = values
+            }
+        } else if eventName == "patch" {
+            guard let updates = payload as? [String: Any] else { throw FirebaseRealtimeDecodingError.invalidPayload }
+            for (key, value) in updates {
+                let target = components + key.split(separator: "/").map(String.init)
+                guard let stationKey = target.first else { continue }
+                changedKeys.insert(stationKey)
+                Self.set(value, at: target[...], in: &next)
+            }
+        } else if let key = components.first {
+            changedKeys.insert(key)
+            Self.set(payload, at: components[...], in: &next)
+        }
+
+        let events: [StationRealtimeEvent]
         switch channel {
         case .statuses:
-            return decode(
-                path: path,
-                payload: payload,
-                isPatch: eventName == "patch",
+            events = try decodeValues(
+                next, changedKeys: changedKeys, isSnapshot: isSnapshot,
                 snapshot: StationRealtimeEvent.statusesSnapshot,
                 change: StationRealtimeEvent.statusChanged
             )
         case .insights:
-            return decode(
-                path: path,
-                payload: payload,
-                isPatch: eventName == "patch",
+            events = try decodeValues(
+                next, changedKeys: changedKeys, isSnapshot: isSnapshot,
                 snapshot: StationRealtimeEvent.insightsSnapshot,
                 change: StationRealtimeEvent.insightChanged
             )
         case .availability:
-            return decode(
-                path: path,
-                payload: payload,
-                isPatch: eventName == "patch",
+            events = try decodeValues(
+                next, changedKeys: changedKeys, isSnapshot: isSnapshot,
                 snapshot: StationRealtimeEvent.availabilitySnapshot,
                 change: StationRealtimeEvent.availabilityChanged
             )
         }
+        // A malformed payload must never replace good state or masquerade as deletion.
+        document = next
+        return events
     }
 
-    private static func decode<Value: Decodable>(
-        path: String,
-        payload: Any?,
-        isPatch: Bool,
+    private func decodeValues<Value: Decodable>(
+        _ values: [String: Any],
+        changedKeys: Set<String>,
+        isSnapshot: Bool,
         snapshot: ([String: Value]) -> StationRealtimeEvent,
         change: (String, Value?) -> StationRealtimeEvent
-    ) -> [StationRealtimeEvent] {
-        let components = path.split(separator: "/").map(String.init)
-        if components.isEmpty {
-            guard let dictionary = payload as? [String: Any] else { return [snapshot([:])] }
-            if isPatch {
-                return dictionary.map { key, value in
-                    change(key, value is NSNull ? nil : decodeValue(Value.self, from: value))
-                }
-            }
-            let values = dictionary.compactMapValues { decodeValue(Value.self, from: $0) }
-            return [snapshot(values)]
+    ) throws -> [StationRealtimeEvent] {
+        if isSnapshot {
+            return [snapshot(try values.mapValues { try Self.decodeValue(Value.self, from: $0) })]
         }
-
-        guard components.count == 1 else { return [] }
-        let key = components[0]
-        if payload == nil || payload is NSNull { return [change(key, nil)] }
-        return [change(key, decodeValue(Value.self, from: payload as Any))]
+        return try changedKeys.sorted().map { key in
+            change(key, try values[key].map { try Self.decodeValue(Value.self, from: $0) })
+        }
     }
 
-    private static func decodeValue<Value: Decodable>(_ type: Value.Type, from value: Any) -> Value? {
-        guard JSONSerialization.isValidJSONObject(value),
-              let data = try? JSONSerialization.data(withJSONObject: value) else { return nil }
+    private static func set(_ value: Any, at path: ArraySlice<String>, in node: inout [String: Any]) {
+        guard let key = path.first else { return }
+        if path.count == 1 {
+            node[key] = value is NSNull ? nil : value
+        } else {
+            var child = node[key] as? [String: Any] ?? [:]
+            set(value, at: path.dropFirst(), in: &child)
+            node[key] = child.isEmpty ? nil : child
+        }
+    }
+
+    private static func decodeValue<Value: Decodable>(_ type: Value.Type, from value: Any) throws -> Value {
+        guard JSONSerialization.isValidJSONObject(value) else { throw FirebaseRealtimeDecodingError.invalidPayload }
+        let data = try JSONSerialization.data(withJSONObject: value)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return try? decoder.decode(Value.self, from: data)
+        return try decoder.decode(Value.self, from: data)
     }
+}
+
+public enum FirebaseRealtimeDecodingError: Error {
+    case invalidPayload
 }
 
 public extension FirebaseRESTClient {
@@ -109,14 +153,8 @@ public extension FirebaseRESTClient {
                                 continuation: continuation
                             )
                         }
-                        group.addTask {
-                            try await consumeFirebaseStream(
-                                path: "live_availability.json",
-                                channel: .availability,
-                                idToken: idToken,
-                                continuation: continuation
-                            )
-                        }
+                        // Live availability comes from the configured OCPI gateway.
+                        // The database has no authorized live_availability channel.
                         try await group.waitForAll()
                     }
                     continuation.finish()
@@ -148,6 +186,10 @@ public extension FirebaseRESTClient {
                 retrySeconds = 1
             } catch is CancellationError {
                 throw CancellationError()
+            } catch FirebaseRESTError.requestFailed(_, let statusCode) where statusCode == 401 || statusCode == 403 {
+                // A fresh session/configuration must explicitly restart the stream.
+                // Reopening a denied request cannot repair its permissions.
+                return
             } catch {
                 try await Task.sleep(for: .seconds(retrySeconds))
                 retrySeconds = min(30, retrySeconds * 2)
@@ -178,20 +220,26 @@ public extension FirebaseRESTClient {
         }
         let (bytes, response) = try await session.bytes(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 500
-        guard statusCode < 300 else { throw URLError(.badServerResponse) }
+        guard statusCode < 300 else {
+            throw FirebaseRESTError.requestFailed("Realtime request denied or unavailable", statusCode: statusCode)
+        }
 
         var eventName = ""
         var dataLines: [String] = []
+        var accumulator = FirebaseRealtimeEventAccumulator()
         for try await line in bytes.lines {
             try Task.checkCancellation()
             if line.isEmpty {
+                if eventName == "cancel" || eventName == "auth_revoked" {
+                    throw FirebaseRESTError.requestFailed("Realtime authorization ended", statusCode: 403)
+                }
                 guard eventName == "put" || eventName == "patch" else {
                     eventName = ""
                     dataLines.removeAll(keepingCapacity: true)
                     continue
                 }
                 let payload = Data(dataLines.joined(separator: "\n").utf8)
-                for event in try FirebaseRealtimeEventDecoder.decode(
+                for event in try accumulator.decode(
                     channel: channel,
                     eventName: eventName,
                     data: payload

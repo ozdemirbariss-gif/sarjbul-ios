@@ -49,6 +49,10 @@ async function deleteAccountData(database, uid, now = Date.now()) {
     "search_demand_meta", "friction_meta", "push_tokens"]) {
     removals[`${collection}/${uid}`] = null;
   }
+  if (/^[a-f0-9]{64}$/.test(request.recoveryKey || "")) {
+    // Opaque capability proof contains no UID, dates or personal data. Keep it after Auth/tombstone expiry.
+    removals[`account_deletion_receipts/${request.recoveryKey}`] = {status: "completed"};
+  }
   // Keep the receipt: it blocks all writes with the old UID, even with a still-valid ID token.
   removals[`account_deletion_requests/${uid}/status`] = "completed";
   removals[`account_deletion_requests/${uid}/completedAtMilliseconds`] = now;
@@ -66,7 +70,7 @@ async function removeExpired(database, path, field, cutoff) {
     if (path.endsWith("_meta")) {
       // A new event may refresh this UID after the query; never erase its new cooldown.
       await Promise.all(Object.keys(removals).map((key) => database.ref(`${path}/${key}`).transaction((value) => {
-        if (value && typeof value[field] === "number" && value[field] <= cutoff) return null;
+        if (!value || (typeof value[field] === "number" && value[field] <= cutoff)) return null;
         return undefined;
       })));
     } else {
@@ -78,6 +82,17 @@ async function removeExpired(database, path, field, cutoff) {
 }
 
 async function cleanupAnalyticsData(database, auth, now = Date.now()) {
+  const statuses = await database.ref("station_status").get();
+  const expiredStatusKeys = [];
+  statuses.forEach((child) => {
+    const expiry = child.child("validUntilMilliseconds").val();
+    if (!Number.isFinite(expiry) || expiry <= now) expiredStatusKeys.push(child.key);
+  });
+  await Promise.all(expiredStatusKeys.map((key) => database.ref(`station_status/${key}`).transaction((value) => {
+    // Recheck inside the transaction so a concurrent fresh report is never erased.
+    if (!value || !Number.isFinite(value.validUntilMilliseconds) || value.validUntilMilliseconds <= now) return null;
+    return undefined;
+  })));
   await Promise.all([
     removeExpired(database, "friction_events", "createdAtMilliseconds", now - 7 * DAY),
     removeExpired(database, "search_demand_events", "createdAtMilliseconds", now - 7 * DAY),

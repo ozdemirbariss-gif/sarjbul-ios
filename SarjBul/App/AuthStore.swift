@@ -1,4 +1,5 @@
 import Observation
+import Security
 import SarjBulCore
 
 enum AuthState: Equatable, Sendable {
@@ -85,21 +86,33 @@ final class AuthStore {
                     deletionSession = try preservingIdentity(refreshed, current: deletionSession)
                     state = .active(deletionSession)
                     persistence.authSession = deletionSession
-                } catch let error as AuthError where error == .sessionInvalidated && pendingDeletion?.serverConfirmed == true {
-                    await finishDeletion()
-                    return true
+                } catch let error as AuthError where error == .sessionInvalidated {
+                    if pendingDeletion?.serverConfirmed == true {
+                        await finishDeletion()
+                        return true
+                    }
+                    if let key = pendingDeletion?.recoveryKey,
+                       try await client.recoverAccountDeletion(recoveryKey: key) == .completed {
+                        await finishDeletion()
+                        return true
+                    }
+                    throw error
                 }
             }
             if pendingDeletion == nil {
-                saveDeletion(PendingAccountDeletion(uid: deletionSession.uid))
+                saveDeletion(PendingAccountDeletion(uid: deletionSession.uid, recoveryKey: try makeRecoveryKey()))
                 await onSessionChanged?(nil)
             }
             if pendingDeletion?.serverConfirmed != true {
-                try await client.initiateAccountDeletion(uid: deletionSession.uid, idToken: deletionSession.idToken)
+                if let key = pendingDeletion?.recoveryKey {
+                    try await client.initiateAccountDeletion(uid: deletionSession.uid, idToken: deletionSession.idToken, recoveryKey: key)
+                } else {
+                    try await client.initiateAccountDeletion(uid: deletionSession.uid, idToken: deletionSession.idToken)
+                }
                 for attempt in 0..<deletionPollAttempts {
                     let status = try await client.accountDeletionStatus(uid: deletionSession.uid, idToken: deletionSession.idToken)
                     if status == .completed {
-                        saveDeletion(PendingAccountDeletion(uid: deletionSession.uid, serverConfirmed: true))
+                        saveDeletion(PendingAccountDeletion(uid: deletionSession.uid, serverConfirmed: true, recoveryKey: pendingDeletion?.recoveryKey))
                         break
                     }
                     if attempt + 1 < deletionPollAttempts { try await Task.sleep(for: .milliseconds(500)) }
@@ -117,6 +130,14 @@ final class AuthStore {
             present(error)
             return false
         }
+    }
+
+    private func makeRecoveryKey() throws -> String {
+        var bytes = [UInt8](repeating: 0, count: 32)
+        guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+            throw AuthError.serviceUnavailable
+        }
+        return bytes.map { String(format: "%02x", $0) }.joined()
     }
 
     private func saveDeletion(_ value: PendingAccountDeletion?) {
