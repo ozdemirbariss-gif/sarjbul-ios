@@ -27,7 +27,6 @@ struct HomeView: View {
     @State private var intentPrediction: SearchIntentPrediction?
     @State private var filtersBeforePrediction: StationFilters?
     @State private var didEvaluateIntentPrediction = false
-    @State private var navigationPickerPresented = false
 
     var body: some View {
         NavigationStack {
@@ -900,18 +899,13 @@ struct HomeView: View {
                 .padding(.bottom, 16)
 
             Button {
-                if settings.navigationAppPreference == nil {
-                    frictionTelemetry.navigationChoicePresented()
-                    navigationPickerPresented = true
-                } else {
-                    search.startNavigation(to: candidate)
-                }
+                search.startNavigation(to: candidate)
             } label: {
                 HStack {
-                    Text(settings.t("feed.start_route"))
+                    Text(settings.t("map.view_route"))
                         .font(.headline.weight(.heavy))
                     Spacer()
-                    Image(systemName: "arrow.up.right")
+                    Image(systemName: "map.fill")
                         .font(.headline.weight(.heavy))
                 }
                 .foregroundStyle(appearance.buttonForeground)
@@ -922,21 +916,7 @@ struct HomeView: View {
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("prepared-route-button")
-            .confirmationDialog(
-                settings.t("feed.choose_navigation"),
-                isPresented: $navigationPickerPresented,
-                titleVisibility: .visible
-            ) {
-                Button(settings.t("feed.apple_maps")) {
-                    search.startNavigation(to: candidate, using: .appleMaps)
-                }
-                Button(settings.t("feed.google_maps")) {
-                    search.startNavigation(to: candidate, using: .googleMaps)
-                }
-                Button(settings.t("status.cancel"), role: .cancel) {}
-            } message: {
-                Text(settings.t("feed.choose_navigation_hint"))
-            }
+            .disabled(search.isOpeningRoute)
 
             Button {
                 Haptic.tap()

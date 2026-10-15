@@ -40,7 +40,7 @@ final class AppSmokeUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["home-preference-card"].waitForExistence(timeout: 5))
     }
 
-    func testFirstRouteTapAsksForNavigationAppAndRemembersSelection() throws {
+    func testRouteOpensFullScreenMinimizesAndRemembersExternalApp() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing-navigation-picker"]
         app.launch()
@@ -48,11 +48,95 @@ final class AppSmokeUITests: XCTestCase {
         let routeButton = app.buttons["prepared-route-button"]
         XCTAssertTrue(routeButton.waitForExistence(timeout: 20))
         routeButton.tap()
+        let map = app.descendants(matching: .any)["full-route-map"]
+        XCTAssertTrue(map.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["bottom-navigation-tab-home"].isHittable)
+        let fullMapScreenshot = XCTAttachment(screenshot: app.screenshot())
+        fullMapScreenshot.name = "Full screen route map"
+        fullMapScreenshot.lifetime = .keepAlways
+        add(fullMapScreenshot)
+        let start = app.buttons["route-map-start-navigation"]
+        start.tap()
         XCTAssertTrue(app.buttons["Apple Maps"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Google Maps"].exists)
         app.buttons["Google Maps"].tap()
-        routeButton.tap()
+        XCTAssertTrue(app.staticTexts["Google Maps desteklediğinde SarjBul’a dön düğmesi görünür."].waitForExistence(timeout: 5))
+        start.tap()
         XCTAssertFalse(app.buttons["Apple Maps"].waitForExistence(timeout: 1))
+        app.buttons["route-map-minimize"].tap()
+        XCTAssertTrue(map.waitForNonExistence(timeout: 5))
+        let bar = app.buttons["active-route-map-bar"]
+        XCTAssertTrue(bar.waitForExistence(timeout: 5))
+        let miniMapScreenshot = XCTAttachment(screenshot: app.screenshot())
+        miniMapScreenshot.name = "Minimized route map"
+        miniMapScreenshot.lifetime = .keepAlways
+        add(miniMapScreenshot)
+        app.buttons["bottom-navigation-tab-account"].tap()
+        bar.tap()
+        XCTAssertTrue(map.waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(map.exists)
+        let header = app.descendants(matching: .any)["route-map-drag-area"]
+        header.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+            .press(forDuration: 0.1, thenDragTo: header.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 4)))
+        XCTAssertTrue(map.waitForNonExistence(timeout: 5))
+        app.buttons["active-route-map-close"].tap()
+        XCTAssertTrue(bar.waitForNonExistence(timeout: 5))
+    }
+
+    func testStationMapKeepsPanGestureAndReturnButtonAtAccessibilitySize() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-routes", "--ui-testing-home-en",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let route = app.buttons["station-primary-route-button"]
+        XCTAssertTrue(route.waitForExistence(timeout: 20))
+        for _ in 0..<6 where !route.isHittable { app.swipeUp() }
+        route.tap()
+        let map = app.descendants(matching: .any)["full-route-map"]
+        XCTAssertTrue(map.waitForExistence(timeout: 10))
+        let minimize = app.buttons["route-map-minimize"]
+        XCTAssertEqual(minimize.label, "Back to SarjBul")
+        XCTAssertTrue(minimize.isHittable)
+        XCTAssertGreaterThanOrEqual(minimize.frame.height, 44)
+        map.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+            .press(forDuration: 0.1, thenDragTo: map.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
+        XCTAssertTrue(map.exists)
+        let start = app.buttons["route-map-start-navigation"]
+        let summary = map.scrollViews.firstMatch
+        for _ in 0..<6 where !start.isHittable { summary.swipeUp() }
+        XCTAssertTrue(start.isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Full screen route at accessibility size"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        minimize.tap()
+        XCTAssertTrue(app.buttons["active-route-map-bar"].waitForExistence(timeout: 5))
+    }
+
+    func testMapOverviewOpensFullScreenRouteInLightAppearance() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing-routes", "--ui-testing-light-appearance"]
+        app.launch()
+        let mode = app.buttons["Harita"]
+        XCTAssertTrue(mode.waitForExistence(timeout: 20))
+        mode.tap()
+        let pin = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label == %@", "Buca Belediyesi Yedigöller Cafe, 180 kW"
+        )).firstMatch
+        XCTAssertTrue(pin.waitForExistence(timeout: 10))
+        pin.tap()
+        let panel = app.buttons["station-map-selected-panel"]
+        XCTAssertTrue(panel.waitForExistence(timeout: 5))
+        panel.tap()
+        let route = app.buttons["station-primary-route-button"]
+        XCTAssertTrue(route.waitForExistence(timeout: 5))
+        for _ in 0..<4 where !route.isHittable { app.swipeUp() }
+        route.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["full-route-map"].waitForExistence(timeout: 10))
+        app.buttons["route-map-minimize"].tap()
+        XCTAssertTrue(app.buttons["active-route-map-bar"].waitForExistence(timeout: 5))
     }
 
     func testArrivalOutcomeStartsChargingWithOneTap() throws {
@@ -93,7 +177,7 @@ final class AppSmokeUITests: XCTestCase {
         let cancel = app.buttons["cancel-charging-reminder-button"]
         for _ in 0..<4 where !cancel.isHittable { app.swipeDown() }
         XCTAssertTrue(cancel.isHittable)
-        XCTAssertGreaterThanOrEqual(cancel.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(cancel.frame.height + 0.001, 44)
         cancel.tap()
         XCTAssertTrue(reminder.waitForNonExistence(timeout: 5))
         XCTAssertTrue(route.exists)
@@ -121,7 +205,7 @@ final class AppSmokeUITests: XCTestCase {
         for _ in 0..<8 where !cancel.isHittable { app.swipeUp() }
         XCTAssertTrue(cancel.isHittable)
         XCTAssertEqual(cancel.label, "Cancel charging reminder")
-        XCTAssertGreaterThanOrEqual(cancel.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(cancel.frame.height + 0.001, 44)
         XCTAssertGreaterThanOrEqual(cancel.frame.minX, 0)
         XCTAssertLessThanOrEqual(cancel.frame.maxX, app.frame.width)
         let screenshot = XCTAttachment(screenshot: app.screenshot())

@@ -4,6 +4,7 @@ public enum DeepLinkRoute: Hashable, Sendable {
     case station(key: String)
     case nearestFast
     case home
+    case navigation
 }
 
 public enum DeepLinkRouteParser {
@@ -14,6 +15,9 @@ public enum DeepLinkRouteParser {
         }
         if url.host?.lowercased() == "home" {
             return .home
+        }
+        if url.host?.lowercased() == "navigation", url.path.isEmpty || url.path == "/" {
+            return .navigation
         }
         guard url.host?.lowercased() == "station",
               let encodedKey = url.pathComponents.dropFirst().first,

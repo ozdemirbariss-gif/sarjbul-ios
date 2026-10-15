@@ -24,6 +24,16 @@ Bu ekranlar `AppearanceUITests/testCaptureLightAppearanceScreens` ile gerçek iP
 
 <img src="Docs/screenshots/charging-suggestion.png" alt="Türkçe şarj önerisi ve kapalı gerekçe alanı" width="320"> <img src="Docs/screenshots/charging-suggestion-en.png" alt="İngilizce şarj önerisi ve tahmini değerler" width="320">
 
+### Uygulama içi harita
+
+**Rotayı görüntüle**, doğrulanmış yol rotasını uygulama içinde tam ekran açar. Üstteki tutamacı aşağı çekmek veya **SarjBul’a dön** düğmesine dokunmak haritayı küçültür. Rota, sekmeler arasında da görünen mini çubuktan yeniden açılır; çubuktaki × rotayı kapatır. Haritayı kaydırmak küçültme hareketinden bağımsızdır.
+
+**Navigasyonu başlat**, seçilen Apple Maps veya Google Maps uygulamasını açar ve tercihi hatırlar. Google Maps kuruluysa desteklenen callback bağlantısıyla SarjBul’a dönüş sunulur; kurulu değilse web rotası açılır. Apple Maps’ten iOS’un geri dönüş denetimi kullanılır. Dış uygulamadan dönüşte tam ekran rota korunur.
+
+<img src="Docs/screenshots/route-map/full-screen.png" alt="Uygulama içi tam ekran rota haritası" width="280"> <img src="Docs/screenshots/route-map/minimized.png" alt="Küçültülmüş rota çubuğu" width="280">
+
+Ekranlar deterministik simülatör testiyle alındı; istasyon ve rota metrikleri test verisidir. [Çekim kaydı](Docs/screenshots/route-map/capture.json).
+
 ### Varış Sonucu
 
 Uygulama, açılan rotadaki istasyona 250 metre içinde ulaşıldığını cihaz konumuyla doğrular ve ana ekranı tek bir sonraki adıma indirger. Şarj molası tek dokunuşla başlar.

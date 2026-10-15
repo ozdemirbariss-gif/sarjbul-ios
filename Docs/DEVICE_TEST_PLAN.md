@@ -17,6 +17,9 @@ Test eden:
 | Manuel başlangıç + Apple Maps | Seçilen başlangıç ve istasyon birlikte açılır | Bekliyor |
 | Manuel başlangıç + Google Maps | Seçilen başlangıç ve istasyon birlikte açılır | Bekliyor |
 | Cihaz konumu + navigasyon | Haritanın güncel konumu kullanılır; eksik harita izni kendi uygulamasında alınır | Bekliyor |
+| Uygulama içi rota | Tam ekran harita açılır; üst alan aşağı çekilince küçülür; harita kaydırma hareketi kapanmaya yol açmaz | Simülatörde geçti; gerçek cihaz bekliyor |
+| Mini rota çubuğu | Sekmeler arasında korunur, rotayı yeniden açar; × oturumu kapatır | Simülatörde geçti; gerçek cihaz bekliyor |
+| Harici haritadan dönüş | Google callback/iOS geri dönüşü aynı rota ekranını açar; dış uygulamanın kendi ekranı SarjBul tarafından kontrol edilmez | Gerçek cihazda bekliyor |
 | Google Maps kurulu değil | Bağlantı erişilebilir web hedefinde açılır; uygulama çökmez | Bekliyor |
 | Şarj/güç/soket filtreleri | Arama sonuçları yeni değerlere uyar; eski öneri kalmaz | Bekliyor |
 | Ağ kesilir ve geri gelir | Son veri kullanılabilir; kuyruktaki işlemler mükerrer yazılmadan tamamlanır | Bekliyor |

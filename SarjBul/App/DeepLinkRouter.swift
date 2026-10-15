@@ -22,6 +22,8 @@ final class DeepLinkRouter {
             await search.openNearestFast()
         case .home:
             navigation.select(.home)
+        case .navigation:
+            navigation.expandRouteMap()
         }
     }
 }

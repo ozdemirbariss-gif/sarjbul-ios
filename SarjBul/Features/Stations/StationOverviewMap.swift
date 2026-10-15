@@ -82,7 +82,7 @@ struct StationOverviewMap: View {
             }
         }
         .animation(.spring(response: 0.34, dampingFraction: 0.84), value: selectedID)
-        .sheet(item: $detailCandidate) { candidate in
+        .navigationDestination(item: $detailCandidate) { candidate in
             ScrollView {
                 StationCard(
                     candidate: candidate,
@@ -92,7 +92,8 @@ struct StationOverviewMap: View {
                 .padding(18)
             }
             .background(SBScreenBackground())
-            .presentationDetents([.large])
+            .navigationTitle(candidate.station.name)
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 
@@ -133,6 +134,7 @@ struct StationOverviewMap: View {
             .sbCardShadow()
         }
         .buttonStyle(SBPremiumButtonStyle())
+        .accessibilityIdentifier("station-map-selected-panel")
         .accessibilityHint(settings.t("map.open_detail"))
     }
 

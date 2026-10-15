@@ -18,13 +18,11 @@ struct StationCard: View {
     var total: Int
 
     @State private var route: StationRoute?
-    @State private var fullMapPresented = false
     @State private var detailsPresented = false
     @State private var contributionPresented = false
     @State private var storyShareItem: StationStoryShareItem?
     @State private var isGeneratingStory = false
     @State private var storyErrorPresented = false
-    @State private var navigationPickerPresented = false
     @ScaledMetric(relativeTo: .largeTitle) private var distanceTextSize = 54
     @ScaledMetric(relativeTo: .title) private var stationTitleSize = 25
 
@@ -41,16 +39,12 @@ struct StationCard: View {
         )
         .sbCardShadow()
         .sbCardContent()
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("station-route-card")
         .task(id: routeTaskID) {
             guard let origin = search.userLocation else { return }
             route = await routeStore.route(origin: origin, station: candidate.station)
             if let route { search.applyRoadRoute(route, stationID: candidate.id, origin: origin) }
-        }
-        .sheet(isPresented: $fullMapPresented) {
-            FullRouteMapView(candidate: candidate, route: route)
-                .environment(settings)
-                .environment(search)
         }
         .sheet(isPresented: $detailsPresented) {
             detailsSheet
@@ -98,7 +92,7 @@ struct StationCard: View {
         .onTapGesture {
             Haptic.tap()
             habits.recordInteraction(candidate, signal: .mapExpanded)
-            fullMapPresented = true
+            search.startNavigation(to: candidate)
         }
         .accessibilityLabel(settings.t("feed.expand_map"))
         .accessibilityAddTraits(.isButton)
@@ -185,13 +179,13 @@ struct StationCard: View {
         HStack(spacing: 0) {
             Button {
                 Haptic.tap()
-                startPreferredNavigation()
+                search.startNavigation(to: candidate)
             } label: {
                 HStack(spacing: 10) {
-                    Text(settings.t("feed.start_route"))
+                    Text(settings.t("map.view_route"))
                         .font(.headline.weight(.heavy))
                     Spacer(minLength: 8)
-                    Image(systemName: "arrow.up.right")
+                    Image(systemName: "map.fill")
                         .font(.headline.weight(.heavy))
                 }
                 .foregroundStyle(appearance.buttonForeground)
@@ -202,17 +196,7 @@ struct StationCard: View {
             }
             .buttonStyle(SBPremiumButtonStyle())
             .accessibilityIdentifier("station-primary-route-button")
-            .confirmationDialog(
-                settings.t("feed.choose_navigation"),
-                isPresented: $navigationPickerPresented,
-                titleVisibility: .visible
-            ) {
-                navigationButton(.appleMaps)
-                navigationButton(.googleMaps)
-                Button(settings.t("status.cancel"), role: .cancel) {}
-            } message: {
-                Text(settings.t("feed.choose_navigation_hint"))
-            }
+            .disabled(search.isOpeningRoute)
 
             Rectangle()
                 .fill(appearance.buttonForeground.opacity(0.14))
@@ -269,7 +253,7 @@ struct StationCard: View {
 
             Button {
                 habits.recordInteraction(candidate, signal: .mapExpanded)
-                fullMapPresented = true
+                search.startNavigation(to: candidate)
             } label: {
                 Label(settings.t("feed.expand_map"), systemImage: "arrow.up.left.and.arrow.down.right")
             }
@@ -317,8 +301,9 @@ struct StationCard: View {
             }
             .frame(width: 44, height: 44)
             .sbPremiumGlass(radius: 22, interactive: true)
-            .accessibilityIdentifier("station-actions-menu")
         }
+        .accessibilityIdentifier("station-actions-menu")
+        .accessibilityLabel(settings.t("feed.more_details"))
         .accessibilityLabel(settings.t("actions.station_tools"))
     }
 
@@ -577,15 +562,6 @@ struct StationCard: View {
 
     private var displayArrivalCharge: Double {
         settings.profile.arrivalChargePercent(distanceKm: displayDistanceKm)
-    }
-
-    private func startPreferredNavigation() {
-        if settings.navigationAppPreference == nil {
-            frictionTelemetry.navigationChoicePresented()
-            navigationPickerPresented = true
-        } else {
-            search.startNavigation(to: candidate)
-        }
     }
 
     private func navigationButton(_ preference: NavigationAppPreference) -> some View {

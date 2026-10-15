@@ -1,0 +1,14 @@
+{
+  "base_commit": "247619c",
+  "captured_at": "2026-10-15T17:21:07.730000+03:00",
+  "source": "Native iPhone simulator; local working tree; deterministic UI-test station and routing fixtures",
+  "device": "iPhone 17 Pro Max",
+  "os": "iOS Simulator 26.5",
+  "xcode": "Xcode 26.6 (17F113)",
+  "test": "AppSmokeUITests/testRouteOpensFullScreenMinimizesAndRemembersExternalApp",
+  "limitations": "Synthetic station data and mocked route metrics. Route geometry is empty in this fixture; live builds draw the MKDirections road polyline. Not a live price, availability or navigation demonstration.",
+  "screens": [
+    "full-screen.png",
+    "minimized.png"
+  ]
+}

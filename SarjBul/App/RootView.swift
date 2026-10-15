@@ -30,7 +30,13 @@ struct RootView: View {
                 }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if showsBottomNavigation {
-                        bottomNavigation
+                        VStack(spacing: 8) {
+                            if navigation.activeRouteMap != nil {
+                                ActiveRouteMapBar()
+                                    .padding(.horizontal, 16)
+                            }
+                            bottomNavigation
+                        }
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
@@ -40,6 +46,17 @@ struct RootView: View {
         .environment(\.appAppearance, settings.appearance)
         .environment(\.locale, settings.language.locale)
         .preferredColorScheme(settings.appearance.colorScheme)
+        .fullScreenCover(isPresented: Binding(
+            get: { navigation.routeMapPresented },
+            set: { navigation.routeMapPresented = $0 }
+        )) {
+            if let session = navigation.activeRouteMap {
+                FullRouteMapView(session: session)
+                    .environment(\.appAppearance, settings.appearance)
+                    .environment(\.locale, settings.language.locale)
+                    .preferredColorScheme(settings.appearance.colorScheme)
+            }
+        }
         .task {
             setInitialTabIfNeeded()
             await chargingSession.prepare()
@@ -81,7 +98,7 @@ struct RootView: View {
         }
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.24), value: networkMonitor.isConnected)
         .alert(messageTitle, isPresented: Binding(
-            get: { messages.current != nil },
+            get: { messages.current != nil && !navigation.routeMapPresented },
             set: { if !$0 { messages.dismiss() } }
         )) {
             if stationData.canRetryLoad {

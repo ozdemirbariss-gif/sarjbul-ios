@@ -69,11 +69,28 @@ enum ExternalNavigationHandoff {
         components?.queryItems = queryItems
         return components?.url
     }
+
+    // Google Maps supplies its own return button for this documented callback scheme.
+    static func googleMapsCallbackURL(origin: SarjBulCore.UserLocation?, destination: Station) -> URL? {
+        var components = URLComponents(string: "comgooglemaps-x-callback://")
+        var items = [
+            URLQueryItem(name: "daddr", value: "\(destination.latitude),\(destination.longitude)"),
+            URLQueryItem(name: "directionsmode", value: "driving"),
+            URLQueryItem(name: "x-source", value: "SarjBul"),
+            URLQueryItem(name: "x-success", value: "sarjbul://navigation")
+        ]
+        if let origin, origin.source == .manual {
+            items.append(URLQueryItem(name: "saddr", value: "\(origin.latitude),\(origin.longitude)"))
+        }
+        components?.queryItems = items
+        return components?.url
+    }
 }
 
 @MainActor
 @Observable
 final class SearchCoordinator {
+    private(set) var isOpeningRoute = false
     private struct SearchContext: Equatable {
         var origin: SarjBulCore.UserLocation
         var destination: JourneyDestination?
@@ -494,25 +511,43 @@ final class SearchCoordinator {
     }
 
     func startNavigation(to candidate: StationCandidate) {
-        guard let preference = settings.navigationAppPreference else { return }
-        startNavigation(to: candidate, using: preference)
+        Task { await showRouteMap(to: candidate) }
+    }
+
+    func showRouteMap(to candidate: StationCandidate) async {
+        _ = await prepareNavigation(to: candidate)
     }
 
     func startNavigation(to candidate: StationCandidate, using preference: NavigationAppPreference) {
         Task {
-            guard let origin = userLocation else { return }
-            let context = currentContext
-            guard let current = await stationData.directCandidate(station: candidate.station, origin: origin,
-                                                                  profile: settings.profile, filters: settings.filters),
-                  let verified = await roadValidator.candidate(current, origin: origin, profile: settings.profile),
-                  context == currentContext, !verified.hasRiskyStatus,
-                  verified.distanceKm <= settings.profile.safeRangeKm,
-                  (stationData.stationStatuses[candidate.station.statusKey] ?? stationData.stationStatuses[candidate.id])?.durum != "riskli" else {
-                messages.present(.localized(key: "route.safety_unavailable", kind: .error))
-                return
-            }
+            guard let verified = await prepareNavigation(to: candidate) else { return }
             handoffNavigation(to: verified, using: preference)
         }
+    }
+
+    private func prepareNavigation(to candidate: StationCandidate) async -> StationCandidate? {
+        guard !isOpeningRoute else { return nil }
+        isOpeningRoute = true
+        defer { isOpeningRoute = false }
+        guard let origin = userLocation else {
+            messages.present(.localized(key: "route.safety_unavailable", kind: .error))
+            return nil
+        }
+        let context = currentContext
+        guard let current = await stationData.directCandidate(station: candidate.station, origin: origin,
+                                                              profile: settings.profile, filters: settings.filters),
+              let route = await roadValidator.routes.route(origin: origin, station: current.station),
+              !Task.isCancelled, route.distanceKm.isFinite, route.distanceKm >= 0,
+              context == currentContext, !current.hasRiskyStatus,
+              route.distanceKm <= settings.profile.safeRangeKm,
+              (stationData.stationStatuses[candidate.station.statusKey] ?? stationData.stationStatuses[candidate.id])?.durum != "riskli" else {
+            messages.present(.localized(key: "route.safety_unavailable", kind: .error))
+            return nil
+        }
+        let verified = current.applyingRoadRoute(distanceKm: route.distanceKm, minutes: route.estimatedMinutes,
+                                                 profile: settings.profile)
+        navigation.openRouteMap(candidate: verified, origin: origin, route: route)
+        return verified
     }
 
     private func handoffNavigation(to candidate: StationCandidate, using preference: NavigationAppPreference) {
@@ -522,6 +557,7 @@ final class SearchCoordinator {
         let correctedRecommendation = preparedCandidate?.station.statusKey != candidate.station.statusKey
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--ui-testing-navigation-picker") {
+            navigation.recordExternalMap(preference, stationID: candidate.id)
             navigationDidOpen(candidate, correctedRecommendation: correctedRecommendation)
             return
         }
@@ -530,8 +566,10 @@ final class SearchCoordinator {
         case .appleMaps:
             let succeeded = openInAppleMaps(candidate)
             if succeeded {
+                navigation.recordExternalMap(preference, stationID: candidate.id)
                 navigationDidOpen(candidate, correctedRecommendation: correctedRecommendation)
             } else {
+                messages.present(.localized(key: "map.open_failed", kind: .error))
                 frictionTelemetry.navigationHandoff(
                     succeeded: false,
                     station: candidate.station,
@@ -553,10 +591,11 @@ final class SearchCoordinator {
     }
 
     private func openInGoogleMaps(_ candidate: StationCandidate, correctedRecommendation: Bool) {
-        guard let url = ExternalNavigationHandoff.googleMapsURL(
-            origin: userLocation,
-            destination: candidate.station
-        ) else {
+        let callbackURL = ExternalNavigationHandoff.googleMapsCallbackURL(origin: userLocation, destination: candidate.station)
+        let url = callbackURL.flatMap { UIApplication.shared.canOpenURL($0) ? $0 : nil }
+            ?? ExternalNavigationHandoff.googleMapsURL(origin: userLocation, destination: candidate.station)
+        guard let url else {
+            messages.present(.localized(key: "map.open_failed", kind: .error))
             frictionTelemetry.navigationHandoff(
                 succeeded: false,
                 station: candidate.station,
@@ -568,8 +607,10 @@ final class SearchCoordinator {
             Task { @MainActor in
                 guard let self else { return }
                 if succeeded {
+                    self.navigation.recordExternalMap(.googleMaps, stationID: candidate.id)
                     self.navigationDidOpen(candidate, correctedRecommendation: correctedRecommendation)
                 } else {
+                    self.messages.present(.localized(key: "map.open_failed", kind: .error))
                     self.frictionTelemetry.navigationHandoff(
                         succeeded: false,
                         station: candidate.station,

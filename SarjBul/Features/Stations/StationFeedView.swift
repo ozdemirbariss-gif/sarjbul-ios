@@ -266,6 +266,7 @@ struct StationFeedView: View {
         } else {
             StationOverviewMap(candidates: candidates)
                 .padding(.top, 82)
+                .padding(.bottom, 110)
         }
     }
 

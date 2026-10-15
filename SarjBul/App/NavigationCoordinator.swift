@@ -1,4 +1,5 @@
 import Observation
+import SarjBulCore
 import SwiftUI
 
 enum AppTab: Hashable, Sendable {
@@ -12,6 +13,13 @@ enum AppRoute: Hashable, Sendable {
     case station(key: String)
 }
 
+struct ActiveRouteMap {
+    let candidate: StationCandidate
+    let origin: UserLocation
+    let route: StationRoute
+    var externalApp: NavigationAppPreference?
+}
+
 @MainActor
 @Observable
 final class NavigationCoordinator {
@@ -20,6 +28,32 @@ final class NavigationCoordinator {
     var routesPath = NavigationPath()
     var savedPath = NavigationPath()
     var accountPath = NavigationPath()
+    private(set) var activeRouteMap: ActiveRouteMap?
+    var routeMapPresented = false
+
+    func openRouteMap(candidate: StationCandidate, origin: UserLocation, route: StationRoute) {
+        activeRouteMap = ActiveRouteMap(candidate: candidate, origin: origin, route: route)
+        routeMapPresented = true
+    }
+
+    func expandRouteMap() {
+        guard activeRouteMap != nil else { return }
+        routeMapPresented = true
+    }
+
+    func collapseRouteMap() {
+        routeMapPresented = false
+    }
+
+    func recordExternalMap(_ preference: NavigationAppPreference, stationID: String) {
+        guard activeRouteMap?.candidate.id == stationID else { return }
+        activeRouteMap?.externalApp = preference
+    }
+
+    func closeRouteMap() {
+        routeMapPresented = false
+        activeRouteMap = nil
+    }
 
     func select(_ tab: AppTab) {
         self.tab = tab

@@ -163,6 +163,73 @@ final class SearchCoordinatorTests: XCTestCase {
         XCTAssertEqual(app.search.userLocation?.capturedAt, observed)
     }
 
+    func testRouteOpensInsideAppWithoutExternalPreferenceAndSurvivesMinimizing() async throws {
+        let app = try makeApp(repository: SearchTestRepository())
+        app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)
+        await app.search.prepareOutcome()
+        let candidate = try XCTUnwrap(app.search.preparedCandidate)
+        await app.search.showRouteMap(to: candidate)
+        XCTAssertTrue(app.navigation.routeMapPresented)
+        XCTAssertEqual(app.navigation.activeRouteMap?.candidate.id, candidate.id)
+        XCTAssertNil(app.settings.navigationAppPreference)
+        XCTAssertNil(app.navigation.activeRouteMap?.externalApp)
+        XCTAssertTrue(app.favorites.recentRoutes.isEmpty)
+        app.navigation.collapseRouteMap()
+        app.search.reset()
+        app.routeStore.invalidate()
+        XCTAssertFalse(app.navigation.routeMapPresented)
+        XCTAssertEqual(app.navigation.activeRouteMap?.route.stationID, candidate.id)
+        let callback = try XCTUnwrap(URL(string: "sarjbul://navigation"))
+        await app.deepLinks.handle(callback)
+        XCTAssertTrue(app.navigation.routeMapPresented)
+        app.navigation.closeRouteMap()
+        await app.deepLinks.handle(callback)
+        XCTAssertFalse(app.navigation.routeMapPresented)
+        XCTAssertNil(app.navigation.activeRouteMap)
+    }
+
+    func testRoutePreviewRejectsNewFaultAndUnavailableRoadRoute() async throws {
+        let statuses = SearchTestStatusClient()
+        let availability = SearchTestRouteAvailability()
+        let routes = RouteStore { _, station in
+            availability.isAvailable ? StationRoute(stationID: station.id, distanceKm: 1,
+                expectedTravelTime: 120, polyline: MKPolyline(), steps: []) : nil
+        }
+        let app = try makeApp(repository: SearchTestRepository(), routeStore: routes, statusClient: statuses)
+        app.search.updateLocation(latitude: 38.4, longitude: 27.1, source: .manual)
+        await app.search.prepareOutcome()
+        let candidate = try XCTUnwrap(app.search.preparedCandidate)
+        availability.isAvailable = false
+        await app.search.showRouteMap(to: candidate)
+        XCTAssertNil(app.navigation.activeRouteMap)
+        XCTAssertNotNil(app.messages.current)
+        availability.isAvailable = true
+        await statuses.markRisky(candidate.station.statusKey)
+        await app.stationData.reloadStatuses()
+        await app.search.showRouteMap(to: candidate)
+        XCTAssertNil(app.navigation.activeRouteMap)
+        XCTAssertFalse(app.navigation.routeMapPresented)
+    }
+
+    func testGoogleCallbackIncludesReturnLinkAndOnlySharesManualOrigin() throws {
+        let station = SearchTestRepository.stations[0]
+        for source in [UserLocation.Source.manual, .device, .appleMaps] {
+            let origin = UserLocation(latitude: 38.3939, longitude: 27.1891, source: source)
+            let url = try XCTUnwrap(ExternalNavigationHandoff.googleMapsCallbackURL(origin: origin, destination: station))
+            let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+            let values = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).compactMap { item in
+                item.value.map { (item.name, $0) }
+            })
+            XCTAssertEqual(url.scheme, "comgooglemaps-x-callback")
+            XCTAssertEqual(values["x-success"], "sarjbul://navigation")
+            XCTAssertEqual(values["x-source"], "SarjBul")
+            XCTAssertEqual(values["daddr"], "\(station.latitude),\(station.longitude)")
+            XCTAssertEqual(values["directionsmode"], "driving")
+            XCTAssertEqual(values["saddr"], source == .manual ? "38.3939,27.1891" : nil)
+        }
+        XCTAssertNil(DeepLinkRouteParser.parse(try XCTUnwrap(URL(string: "sarjbul://navigation/unknown"))))
+    }
+
     func testAppleSearchCoordinatesAreOnlyPassedToAppleMaps() throws {
         let origin = UserLocation(latitude: 38.4, longitude: 27.1, source: .appleMaps)
         let station = SearchTestRepository.stations[0]
@@ -206,14 +273,15 @@ final class SearchCoordinatorTests: XCTestCase {
         XCTAssertFalse((components.queryItems ?? []).contains { $0.name == "origin" })
     }
 
-    private func makeApp(repository: any StationRepository, routeStore: RouteStore? = nil) throws -> AppState {
+    private func makeApp(repository: any StationRepository, routeStore: RouteStore? = nil,
+                         statusClient: any StatusClient = UnavailableStatusClient()) throws -> AppState {
         let name = "SearchCoordinatorTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         addTeardownBlock { UserDefaults(suiteName: name)?.removePersistentDomain(forName: name) }
         let persistence = SystemAppPersistence(defaults: defaults, secureStorage: SearchTestSecureStorage())
         let app = AppState(repository: repository, clients: AppServiceClients(
             auth: UnavailableAuthClient(), favorites: UnavailableFavoritesClient(),
-            status: UnavailableStatusClient(), demandAnalytics: UnavailableDemandAnalyticsClient(),
+            status: statusClient, demandAnalytics: UnavailableDemandAnalyticsClient(),
             realtime: UnavailableRealtimeStationClient(), pushTokens: UnavailablePushTokenClient(),
             liveAvailability: UnavailableLiveAvailabilityClient(), isConfigured: false
         ), persistence: persistence, externalLinks: .empty, routeStore: routeStore ?? RouteStore { origin, station in
@@ -225,6 +293,27 @@ final class SearchCoordinatorTests: XCTestCase {
         })
         app.settings.filters = StationFilters(preference: .nearest)
         return app
+    }
+}
+
+@MainActor
+private final class SearchTestRouteAvailability {
+    var isAvailable = true
+}
+
+private actor SearchTestStatusClient: StatusClient {
+    private var values: [String: StationStatusSummary] = [:]
+
+    func markRisky(_ key: String) { values[key] = StationStatusSummary(durum: "riskli") }
+    func stationStatuses(idToken: String?) async throws -> [String: StationStatusSummary] { values }
+    func stationCommunityInsights(idToken: String?) async throws -> [String: StationCommunityInsight] { [:] }
+    func sendStationReport(stationKey: String, status: String, comment: String, uid: String,
+                           idToken: String, context: ServiceMutationContext) async throws {
+        throw ServiceClientError.notConfigured
+    }
+    func sendStationContribution(stationKey: String, contribution: StationContribution, uid: String,
+                                 idToken: String, context: ServiceMutationContext) async throws {
+        throw ServiceClientError.notConfigured
     }
 }
 

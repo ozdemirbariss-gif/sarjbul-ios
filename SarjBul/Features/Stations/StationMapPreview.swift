@@ -58,7 +58,7 @@ struct StationMapPreview: View {
     }
 
     private func updateCamera() {
-        if let route {
+        if let route, route.polyline.pointCount > 1 {
             let padded = route.polyline.boundingMapRect.insetBy(dx: -1_500, dy: -1_500)
             position = .rect(padded)
             return
@@ -79,33 +79,6 @@ struct StationMapPreview: View {
                 center: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude),
                 span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
             ))
-        }
-    }
-}
-
-struct FullRouteMapView: View {
-    @Environment(UserSettingsStore.self) private var settings
-    @Environment(SearchCoordinator.self) private var search
-    @Environment(\.dismiss) private var dismiss
-    let candidate: StationCandidate
-    let route: StationRoute?
-
-    var body: some View {
-        NavigationStack {
-            StationMapPreview(
-                station: candidate.station,
-                origin: search.userLocation,
-                route: route,
-                interactive: true
-            )
-            .ignoresSafeArea(edges: .bottom)
-            .navigationTitle(candidate.station.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(settings.t("status.ok")) { dismiss() }
-                }
-            }
         }
     }
 }

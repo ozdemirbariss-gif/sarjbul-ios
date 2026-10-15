@@ -3,7 +3,8 @@
 ## Uygulama içinde tamamlananlar
 
 - MapKit rota, trafik, adres arama ve Apple Maps aktarımı
-- Google Maps HTTPS rota aktarımı
+- Google Maps callback rota aktarımı (`x-source=SarjBul`, `x-success=sarjbul://navigation`); kurulu değilse HTTPS alternatifi
+- Tam ekran uygulama içi MapKit rotası, aşağı çekerek küçültme ve sekmeler arasında kalıcı mini rota çubuğu
 - Firebase Auth/Realtime Database, token yenileme, App Check ve Crashlytics
 - Uzaktan istasyon verisi, ETag cache ve offline fallback
 - Yerel şarj hatırlatıcısı
@@ -60,3 +61,9 @@ Open-Meteo Elevation istemcisi kaldırılmıştır. Hedefli rota rakım düzeltm
 ## CarPlay
 
 Onay ve portal etkinleştirmesi tamamlandı. Uygulama `CPPointOfInterestTemplate` ile en fazla 12 istasyon, `CPListTemplate` ile favoriler ve `CPInformationTemplate` ile istasyon detayı sunar. Rota Apple Maps'e aktarılır. Doğrulama kayıtları ve kalan simülatör/gerçek araç kontrolleri [CARPLAY_REQUEST.md](CARPLAY_REQUEST.md) dosyasındadır.
+
+## Haritadan uygulamaya dönüş
+
+Rota önizlemesi `NavigationCoordinator` içinde başlangıç, doğrulanmış yol geometrisi ve istasyonla tutulur. Uygulama arka plana geçince arama/rota cache’i sıfırlansa da açık harita oturumu korunur. Önizleme açmak varış takibini başlatmaz; rota geçmişi ve varış telemetrisi yalnızca başarılı dış harita aktarımında kaydedilir. Dış aktarım öncesinde güncel konum, yol mesafesi, menzil ve istasyon durumu yeniden doğrulanır.
+
+[Google Maps iOS URL şeması](https://developers.google.com/maps/documentation/urls/ios-urlscheme) destekleniyorsa callback bağlantısı kullanılır. `sarjbul://navigation` yalnızca bellekteki mevcut rotayı tekrar açar; dışarıdan istasyon veya hedef kabul etmez. Apple Maps ekranına SarjBul özel denetim ekleyemez; geri dönüşü iOS sağlar. Harici uygulamaların ekranı aşağı çekerek kapatılamaz; bu hareket SarjBul içindeki tam ekran haritada çalışır.
